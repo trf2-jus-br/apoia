@@ -3,8 +3,16 @@ export type IAGenerated = {
     model: string
     prompt: string
     sha256: string
+    prompt_payload?: string | null
     generation: string
     attempt: number | null
+    dossier_id?: number | null
+    document_id?: number | null
+    cachedInputTokens?: number | null
+    inputTokens?: number | null
+    outputTokens?: number | null
+    reasoningTokens?: number | null
+    approximate_cost?: number | null
 }
 
 export type IASystem = {
@@ -16,8 +24,16 @@ export type IAGeneration = {
     model: string
     prompt: string
     sha256: string
+    prompt_payload?: string | null
     generation?: string
     attempt: number | null
+    dossier_id?: number | null
+    document_id?: number | null
+    cachedInputTokens?: number | null
+    inputTokens?: number | null
+    outputTokens?: number | null
+    reasoningTokens?: number | null
+    approximate_cost?: number | null
 }
 
 export type AIBatchIdAndEnumId = {

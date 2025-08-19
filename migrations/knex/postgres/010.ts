@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 export async function up(knex: Knex): Promise<void> {
-  const sql = fs.readFileSync(path.resolve(__dirname, '../../postgres/migration-005.sql'), 'utf8');
+  const sql = fs.readFileSync(path.resolve(__dirname, '../../postgres/migration-010.sql'), 'utf8');
   return knex.raw(sql);
 }
 

@@ -5,10 +5,10 @@
     "scripts": {
         "dev": "next dev --turbopack -p 8081",
         "build": "npx next-swagger-doc-cli next-swagger-doc.json && next build",
-        "start": "next start -p 8081",
+        "start": "npm run migrate && next start -p 8081",
         "lint": "next lint",
         "knex": "ts-node -P tsconfig.knex.json node_modules/knex/bin/cli.js",
-        "migrate:pg": "cross-env DB_CLIENT=pg npm run knex -- migrate:latest",
+        "migrate": "npm run knex -- migrate:latest",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"
