@@ -93,3 +93,5 @@ data:
   # JFRJ_MNI_ENDPOINT_URL: "https://eproc-ws.jfrj.jus.br/eproc/ws/controlador_ws.php?srv=intercomunicacao2.2"
   # JFES_MNI_WSDL_URL: "https://eproc-ws.jfes.jus.br/eproc/wsdl.php?srv=intercomunicacao2.2"
   # JFES_MNI_ENDPOINT_URL: "https://eproc-ws.jfes.jus.br/eproc/ws/controlador_ws.php?srv=intercomunicacao2.2"
+
+  PDPJ_JWK: '{"e": "AQAB", "kty": "RSA",  "n": "2lfctxbCT2UWsBMC1rlpmWRcmDRS-EN0opirHzUsgHf7VJCyN0beKchy3biKQeXhgoirWR-f9uufn6Wl_swtua4D-Nw73g6bUCaXHdPWEmNPZb-BML_ebKSJBXCrEMtvOU-LctGKhuNcaAkoYUYVhdVLlQIs_3b6QWtXC8OCJHzIkeKZG9gJX2uon5W8sjU86gOyU7FNdwpZ1-dJmLWiW2YEcXgu4yJfVzg-zHzIriOHASXZC-0luHR-EOtHsC28bg2pLNyrOINO80Mfh4DWhTHcElKOTjc5jll3Y0MjRCML6xTjBzlMFawSKUpzgDvnUgetZDObcafQrk_OY1M9tQ"}'

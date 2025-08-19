@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { headers } from "next/headers"
 import { verify } from 'crypto'
-import { verifyJweToken } from './utils/jwt'
+import { verifyJweToken, verifyJwkSignedToken } from './utils/jwt'
 import { envString } from './utils/env'
 
 export type UserType = {
@@ -14,9 +14,47 @@ export type UserType = {
 
 export const getCurrentUser = async (): Promise<UserType | undefined> => {
     const headersList = await headers()
+
     const authorization = headersList.get("authorization")
+    if (authorization?.startsWith('Bearer PDPJ ')) {
+        const pdpjAuthorization = authorization.replace('Bearer PDPJ ', '')
+        try {
+            const claims: any = await verifyJwkSignedToken(pdpjAuthorization, envString('PDPJ_JWK'))
+
+            // Aggregate roles from realm_access and resource_access
+            const roleSet = new Set<string>()
+            if (claims?.realm_access?.roles) (claims.realm_access.roles as string[]).forEach(r => roleSet.add(r))
+            if (claims?.resource_access) {
+                Object.values(claims.resource_access as Record<string, any>).forEach((svc: any) => {
+                    (svc?.roles as string[] | undefined)?.forEach(r => roleSet.add(r))
+                })
+            }
+            const roles = Array.from(roleSet)
+
+            // Determine the tribunal from claims
+            let seqTribunal: number | undefined = undefined
+            if (Array.isArray(claims['allowed-origins']) && claims['allowed-origins'].includes('https://eproc.jfrj.jus.br')) {
+                seqTribunal = 4
+            }
+
+            return {
+                name: claims.name,
+                email: claims.email,
+                preferredUsername: claims.preferred_username,
+                iss: claims.iss,
+                accessToken: pdpjAuthorization,
+                corporativo: seqTribunal ? [{ seq_tribunal_pai: seqTribunal }] : undefined,
+                roles,
+                image: { password: undefined as any, system: undefined as any }
+            }
+        } catch (error) {
+            console.error('Invalid pdpj-authorization token:', error)
+            return undefined
+        }
+    }
+
     if (authorization) {
-        const claims = await verifyJweToken(authorization)
+        const claims: any = await verifyJweToken(authorization)
         return { name: claims.name, email: claims.name, image: { password: claims.password, system: claims.system } }
     }
 

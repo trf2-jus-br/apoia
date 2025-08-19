@@ -184,6 +184,88 @@
         }
       }
     },
+    "/api/v1/internal-prompt/{name}": {
+      "get": {
+        "description": "Retorna a definição interna de um prompt pelo nome.",
+        "tags": [
+          "ai"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Nome interno do prompt (chat, analise, indice, linguagem-simples, etc.)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Definição interna do prompt (PromptDefinitionType)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
+                    "systemPrompt": {
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "type": "string"
+                    },
+                    "jsonSchema": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "template": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "cacheControl": {
+                      "oneOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "kind": "chat",
+                  "systemPrompt": "Sistema de assistência jurídica",
+                  "prompt": "Responda de forma clara",
+                  "model": "gpt-4"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Prompt não encontrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    },
     "/api/v1/process/{number}/analysis": {
       "get": {
         "description": "Analisa um processo judicial, produzindo resumo das principais peças e gerando o conteúdo dos produtos pertinentes",

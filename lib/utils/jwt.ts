@@ -60,3 +60,12 @@ export const verifyJweToken = async (token: string): Promise<TokenClaims> => {
 
   return payload as unknown as TokenClaims
 }
+
+// Verify a token using a JWK public key
+export const verifyJwkSignedToken = async (token: string, jwkAsString: string): Promise<TokenClaims> => {
+  const jwk = JSON.parse(jwkAsString)
+  const key = await jose.importJWK(jwk, 'RS256')
+  const { payload, protectedHeader } = await jose.jwtVerify(token, key, {})
+
+  return payload as unknown as TokenClaims
+}
