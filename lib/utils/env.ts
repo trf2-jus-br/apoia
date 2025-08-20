@@ -89,12 +89,17 @@ const buildParamsList = () => {
 
 export const paramsList = buildParamsList()
 
+const decryptedValueCache: { [key: string]: string } = {}
+
 export const envString = (name: string): string | undefined => {
     if (process.env[`${name}_ENCRYPTED`] !== undefined) {
+        if (decryptedValueCache[name]) return decryptedValueCache[name]
         const encryptedValue = process.env[`${name}_ENCRYPTED`]
         if (!encryptedValue) return undefined
         const cryptr = new Cryptr(envString('PROPERTY_SECRET') as string, {})
-        return cryptr.decrypt(encryptedValue)
+        const decrypted = cryptr.decrypt(encryptedValue)
+        decryptedValueCache[name] = decrypted
+        return decrypted
     }
     return process.env[name]
 }

@@ -9,7 +9,6 @@ import UserMenu from "../components/user-menu"
 import Link from 'next/link'
 import Image from 'next/image'
 import '@mdxeditor/editor/style.css'
-import { NavigationLink } from "@/components/NavigationLink"
 import { GoogleAnalytics } from '@next/third-parties/google'
 
 // The following import prevents a Font Awesome icon server-side rendering bug,
@@ -18,8 +17,8 @@ import '@fortawesome/fontawesome-svg-core/styles.css';
 // Prevent fontawesome from adding its CSS since we did it manually above:
 import { config } from '@fortawesome/fontawesome-svg-core';
 import { envString } from "@/lib/utils/env"
-import { getCurrentUser, isUserCorporativo } from "@/lib/user"
-import LayoutLogout from "@/components/layout-logout"
+import NonCorporateUserWarning from "@/components/non-corporate-user-warning"
+import { Suspense } from "react"
 config.autoAddCss = false; /* eslint-disable import/first */
 
 
@@ -28,9 +27,6 @@ export default async function RootLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const user = await getCurrentUser()
-    const nonCorporateUser = user && !(await isUserCorporativo(user))
-
     return (
         <html lang="pt-BR">
             <head>
@@ -52,36 +48,10 @@ export default async function RootLayout({
                         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                             <span className="navbar-toggler-icon"></span>
                         </button>
-                        {user && !nonCorporateUser && <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                            <NavItem>
-                                <NavigationLink href="/chat" text="Chat" />
-                            </NavItem>
-                            <NavItem>
-                                <NavigationLink href="/process" text="Síntese" />
-                            </NavItem>
-                            <NavItem>
-                                <NavigationLink href="/community/reset" text="Prompts" />
-                            </NavItem>
-                            <NavItem>
-                                <NavigationLink href="/revision" text="Revisão de Texto" />
-                            </NavItem>
-                            <NavItem>
-                                <NavigationLink href="/headnote" text="Ementa" />
-                            </NavItem>
-                        </div>}
-                        <UserMenu />
+                        <Suspense fallback={null}><UserMenu /></Suspense>
                     </Container>
                 </Navbar>
-                {nonCorporateUser
-                    ? <Container><div className="alert alert-danger mt-5 text-center">
-                        Para acessar a Apoia, <LayoutLogout />.<br />
-                        O login via Gov.br não dá acesso à Apoia. <br />
-                        Para mais informações, consulte o <Link href="https://trf2.gitbook.io/apoia/entrando-na-apoia" className="alert-link">Manual da Apoia</Link>.</div></Container>
-                    : <NextAuthProvider>
-                        <div className="content">
-                            {children}
-                        </div>
-                    </NextAuthProvider>}
+                <Suspense fallback={null}><NonCorporateUserWarning /></Suspense>
                 {envString('GOOGLE_ANALYTICS_ID') && <GoogleAnalytics gaId={envString('GOOGLE_ANALYTICS_ID')} />}
             </body>
         </html>

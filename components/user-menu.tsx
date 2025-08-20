@@ -10,7 +10,7 @@ import { NavigationLink } from './NavigationLink';
 import { envString } from '@/lib/utils/env';
 import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
-import { isUserCorporativo } from '@/lib/user';
+import { getCurrentUser, isUserCorporativo } from '@/lib/user';
 import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-server';
 import ErrorSpan from './error-span';
 import Cryptr from 'cryptr';
@@ -25,11 +25,33 @@ export default async function UserMenu({ }: {}) {
         // </NavItem>
 
         const model = await getSelectedModelName()
-        const user = session?.user
-        const userCorporativo = user && !!await isUserCorporativo(user)
+        const user = await getCurrentUser()
+        const corporateUser = user && !!await isUserCorporativo(user)
         const apiKeyProvided = !!(await getSelectedModelParams()).apiKey
 
-        return (
+        const nonCorporateUser = user && !(await isUserCorporativo(user))
+
+
+
+        return (<>
+            {user && corporateUser && <div className="collapse navbar-collapse" id="navbarSupportedContent">
+                <NavItem>
+                    <NavigationLink href="/chat" text="Chat" />
+                </NavItem>
+                <NavItem>
+                    <NavigationLink href="/process" text="Síntese" />
+                </NavItem>
+                <NavItem>
+                    <NavigationLink href="/community/reset" text="Prompts" />
+                </NavItem>
+                <NavItem>
+                    <NavigationLink href="/revision" text="Revisão de Texto" />
+                </NavItem>
+                <NavItem>
+                    <NavigationLink href="/headnote" text="Ementa" />
+                </NavItem>
+            </div>}
+
             <ul className="navbar-nav me-1 mb-2x mb-lg-0x">
                 {((envString('ACCESS_ARENA') || '').split(';').includes(user?.name) || user?.roles?.includes('apoia-role-arena')) &&
                     (<NavItem>
@@ -49,11 +71,11 @@ export default async function UserMenu({ }: {}) {
                         <UserMenuAnonymize />
                         {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
                         {user && <li><UserMenuSignout /></li>}
-                        {user && userCorporativo && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}
+                        {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}
                     </ul>
                 </li>
             </ul>
-        );
+        </>)
     } catch (error) {
         const cryptr = new Cryptr(envString('PROPERTY_SECRET') as string, {})
         const encrypted = cryptr.encrypt(error.stack as string)
