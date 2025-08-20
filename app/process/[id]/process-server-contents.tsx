@@ -13,6 +13,7 @@ import { DadosDoProcessoType, StatusDeLancamento } from '@/lib/proc/process-type
 import { cookies } from 'next/headers'
 import { buildFooterFromPieces } from '@/lib/utils/footer'
 import ProcessFooter from './process-client-footer'
+import { simpleHashCode } from '@/lib/utils/utils'
 
 export const maxDuration = 60 // seconds
 
@@ -24,7 +25,7 @@ export async function ChoosePiecesServer({ pDadosDoProcesso, statusDeSintese, re
     if (!dadosDoProcesso || dadosDoProcesso.errorMsg)
         return ''
 
-    return <ChoosePieces dadosDoProcesso={dadosDoProcesso} key={`${dadosDoProcesso.tipoDeSintese}:${canonicalPieces(dadosDoProcesso.pecasSelecionadas.map(p => p.id))}`} statusDeSintese={statusDeSintese} ready={ready} />
+    return <ChoosePieces dadosDoProcesso={dadosDoProcesso} key={simpleHashCode(JSON.stringify(dadosDoProcesso))} statusDeSintese={statusDeSintese} ready={ready} />
 }
 
 export default async function ProcessServerContents({ id, kind, pieces, ready }: { id: string, kind?: string, pieces?: string, ready?: boolean }) {

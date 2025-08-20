@@ -112,10 +112,11 @@ export default function ChoosePieces({ dadosDoProcesso, statusDeSintese, ready }
         else
             updatedSearchParams.delete("pieces")
         updatedSearchParams.set("kind", kind)
-        updatedSearchParams.set("ready", 'true')
+        const ready = updatedSearchParams.get("ready") === 'true'
+        if (!ready) updatedSearchParams.set("ready", 'true')
         const current = updatedSearchParams.toString()
         if (original === current) return
-        setReloading(true)
+        if (ready) setReloading(true)
         router.push(pathname + "?" + updatedSearchParams.toString())
     }
 

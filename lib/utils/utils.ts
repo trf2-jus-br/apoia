@@ -203,7 +203,7 @@ export const obfuscateString = (str: string): string => {
     // String.prototype.slice(indexStart) (if negative, treated as sourceLength + indexStart)
     const firstPart = word.slice(0, 3);
     const lastPart = word.slice(-3); // Extracts the last 3 characters. If word.length < 3, it takes the whole word.
-    
+
     return `${firstPart}***${lastPart}`;
   } else {
     // Rule: "first word complete and all other words should be replaced by 
@@ -219,3 +219,12 @@ export const obfuscateString = (str: string): string => {
     return [firstWord, ...otherWordsObfuscated].join(' ');
   }
 };
+
+export function simpleHashCode(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = 31 * h + str.charCodeAt(i);
+    h |= 0; // Convert to 32bit integer
+  }
+  return h;
+}
