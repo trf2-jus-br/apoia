@@ -141,7 +141,7 @@ export const preprocess = (text: string, definition: PromptDefinitionType, data:
         text = libFormat(definition.format, text)
 
     if (complete && visualization !== undefined) {
-        let textoOriginal = diffSource || data.textos[0].texto
+        const textoOriginal = (diffSource !== undefined ? diffSource : data?.textos?.[0]?.texto) ?? ''
 
         // text = text.replace(/<snippet>/g, '[').replace(/<\/snippet>/g, ']')
 
