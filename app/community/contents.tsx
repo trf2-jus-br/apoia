@@ -117,6 +117,8 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
         } else {
             setDadosDoProcesso(null)
         }
+        // loadProcess is stable; suppress exhaustive-deps for number change only
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [numeroDoProcesso])
 
     useEffect(() => {

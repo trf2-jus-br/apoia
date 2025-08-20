@@ -52,6 +52,11 @@ export default async function RootLayout({
                     </Container>
                 </Navbar>
                 <Suspense fallback={null}><NonCorporateUserWarning /></Suspense>
+                <NextAuthProvider>
+                    <div className="content">
+                        {children}
+                    </div>
+                </NextAuthProvider>
                 {envString('GOOGLE_ANALYTICS_ID') && <GoogleAnalytics gaId={envString('GOOGLE_ANALYTICS_ID')} />}
             </body>
         </html>

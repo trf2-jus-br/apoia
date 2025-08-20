@@ -88,7 +88,9 @@ const SwaggerUI = ({
         })
 
         setSystem(systemInstance)
-    }, [])
+        // No cleanup API provided by swagger-ui for manual constructor
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [plugins, spec, url, layout, defaultModelsExpandDepth, defaultModelRendering, presets, requestInterceptor, responseInterceptor, onComplete, docExpansion, supportedSubmitMethods, queryConfigEnabled, defaultModelExpandDepth, displayOperationId, tryItOutEnabled, displayRequestDuration, requestSnippetsEnabled, requestSnippets, showMutatedRequest, deepLinking, showExtensions, showCommonExtensions, filter, persistAuthorization, withCredentials, initialState, oauth2RedirectUrl])
 
     useEffect(() => {
         if (system) {
@@ -101,7 +103,7 @@ const SwaggerUI = ({
                 }
             }
         }
-    }, [system, url])
+    }, [system, url, prevUrl])
 
     useEffect(() => {
         if (system) {
@@ -116,7 +118,7 @@ const SwaggerUI = ({
                 system.specActions.updateSpec(updatedSpec)
             }
         }
-    }, [system, spec])
+    }, [system, spec, prevSpec])
 
     return SwaggerUIComponent ? <SwaggerUIComponent /> : null
 }

@@ -95,6 +95,7 @@ export default function PrefsForm(params) {
             setData(newData)
             return
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data])
 
     return (

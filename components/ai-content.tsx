@@ -140,6 +140,8 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         if (initialized.current) return
         initialized.current = true
         run()
+        // run has stable identity inside component; ignore exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const color = getColor(current, errormsg)

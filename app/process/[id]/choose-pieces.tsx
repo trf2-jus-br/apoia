@@ -56,6 +56,7 @@ function ChoosePiecesForm({ dadosDoProcesso, onSave, onClose, statusDeSintese, r
         if (tipoDeSintese !== originalTipoRef.current) {
             updateSelectedPieces()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tipoDeSintese])
 
     const alteredPieces = canonicalPieces(selectedIds) !== baselineCanonicalPiecesRef.current

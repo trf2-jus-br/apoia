@@ -68,13 +68,15 @@ export default function TestBuilder({ kind, testset, prompt, model }: { kind: st
             try {
                 fetchStream()
             } catch (e) {
-                setErrormsg(e.message)
+                setErrormsg((e as Error).message)
             }
         }
 
         if (initialized.current) return
         initialized.current = true
         run()
+        // fetchStream is stable in this component scope; suppress exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const json = parse(current || '{}')

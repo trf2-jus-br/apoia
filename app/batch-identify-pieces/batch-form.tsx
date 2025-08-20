@@ -73,6 +73,7 @@ export default function ProcessNumberForm(params) {
         if (running) {
             setTimeout(executeNext)
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [running, ready, error])
 
     const handleClick = (e: FormEvent) => {

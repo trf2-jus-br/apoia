@@ -29,7 +29,7 @@ export default function WootricSurvey( {user, token}:  {user: any, token: string
         return () => {
             document.body.removeChild(script);
         };
-    }, []);
+    }, [token, user.email]);
 
     return null; // No UI, just inject the script
 }

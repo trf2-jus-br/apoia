@@ -140,11 +140,13 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
 
     useEffect(() => {
         setSelectedPieces(chooseSelectedPieces(dadosDoProcesso.pecas, prompt.content.piece_strategy, prompt.content.piece_descr))
-    }, [prompt])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [prompt, dadosDoProcesso.pecas])
 
     useEffect(() => {
         setLoadingPiecesProgress(0)
         getSelectedPiecesContents()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedPieces])
 
     useEffect(() => {
@@ -178,4 +180,4 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
         <p style={{ textAlign: 'center' }}>Este documento foi gerado pela Apoia, ferramenta de inteligência artificial desenvolvida exclusivamente para facilitar a triagem de acervo, e não substitui a elaboração de relatório específico em cada processo, a partir da consulta manual aos eventos dos autos. Textos gerados por inteligência artificial podem conter informações imprecisas ou incorretas.</p>
         <p style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}) ${buildFooterFromPieces(model, selectedPieces.map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
     </div >
-}    
+}

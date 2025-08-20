@@ -71,6 +71,7 @@ export default function PromptConfig({ kind, setPromptConfig }: { kind: string, 
             setCurrent(storedConfig)
             setPromptConfig(storedConfig)
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const onSave = (newConfig: PromptConfigType) => {

@@ -84,6 +84,8 @@ export default function ProcessNumberForm(params) {
         if (running) {
             setTimeout(executeNext) //, 30000)
         }
+        // executeNext depends on current mutable arrays; acceptable to ignore exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [running, ready, error])
 
     const handleClick = (e: FormEvent) => {

@@ -3,7 +3,7 @@ import { getCurrentUser } from '../user'
 import { envString } from './env'
 
 
-export default {
+const fetcherUtil = {
     fetcher: (...args) => fetch(...args).then(res => res.json()),
 
     authorization: async () => {
@@ -105,9 +105,11 @@ export default {
 
     processError(error, setErrorMessage) {
         if (error && error.message && error.message === "NEXT_REDIRECT") throw error
-        const message = error.message || error || 'Erro desconhecido'
+        const message = (error && error.message) || error || 'Erro desconhecido'
         if (setErrorMessage) setErrorMessage(message)
         return message
     }
 
 }
+
+export default fetcherUtil

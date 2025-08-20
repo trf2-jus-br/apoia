@@ -3,9 +3,9 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev --turbopack -p 8081",
-        "build": "npx next-swagger-doc-cli next-swagger-doc.json && next build",
-        "start": "next start -p 8081",
+        "dev": "cross-env DOTENV_CONFIG_QUIET=true next dev --turbopack -p 8081",
+        "build": "cross-env DOTENV_CONFIG_QUIET=true npx next-swagger-doc-cli next-swagger-doc.json && cross-env DOTENV_CONFIG_QUIET=true next build",
+        "start": "cross-env DOTENV_CONFIG_QUIET=true next start -p 8081",
         "lint": "next lint",
         "knex": "ts-node -P tsconfig.knex.json node_modules/knex/bin/cli.js",
         "migrate:pg": "cross-env DB_CLIENT=pg npm run knex -- migrate:latest",

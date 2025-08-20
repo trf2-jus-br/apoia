@@ -49,17 +49,18 @@ const nextConfig = {
                 }
             ]
         }
-        // if (!isServer) {
-        //     config.plugins.push(
-        //         new webpack.ContextReplacementPlugin(
-        //             /knex\/lib\/migrations\/util/,
-        //             (context) => {
-        //                 // Remove the critical dependency warning
-        //                 delete context.dependencies[0].critical;
-        //             }
-        //         )
-        //     );
-        // }
+        // Suppress known dynamic require warnings from third-party libs.
+        config.ignoreWarnings = [
+            ...(config.ignoreWarnings || []),
+            {
+                module: /nunjucks[\\/]src[\\/]node-loaders\.js/,
+                message: /Critical dependency: the request of a dependency is an expression/
+            },
+            {
+                module: /swagger-jsdoc[\\/]src[\\/]utils\.js/,
+                message: /Critical dependency: the request of a dependency is an expression/
+            }
+        ]
         return config
     },
     // experimental: {

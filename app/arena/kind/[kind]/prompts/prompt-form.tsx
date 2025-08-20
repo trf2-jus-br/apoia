@@ -12,7 +12,7 @@ import { useState } from 'react'
 import _ from 'lodash'
 import PromptTest from './prompt-test'
 import { IATestset } from '@/lib/db/mysql-types'
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { getTestsetById } from '../testsets/testset-actions'
 import { slugify } from '@/lib/utils/utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -35,14 +35,15 @@ export default function PromptForm(props) {
     const pristine = _.isEqual(data, { ...initialState })
     const [testset, setTestset] = useState(undefined as IATestset | undefined)
 
-    const loadTests = async () => {
+    const loadTests = useCallback(async () => {
         if (!data.testset_id) {
             setTestset(undefined)
             return
         }
         if (data.testset_id === testset?.id) return
         setTestset(await getTestsetById(data.testset_id))
-    }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.testset_id, testset?.id])
 
     const updateYaml = (newData) => {
         setYaml(yamlps.dump(newData.content))
@@ -90,7 +91,7 @@ export default function PromptForm(props) {
 
     useEffect(() => {
         loadTests()
-    }, [data.testset_id])
+    }, [data.testset_id, loadTests])
 
     return (
         <div className="row mb-5">

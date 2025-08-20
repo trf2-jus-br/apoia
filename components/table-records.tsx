@@ -63,11 +63,13 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
     useEffect(() => {
         table.setPageSize(currentPageSize)
         table.setPageIndex(0)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPageSize])
 
     useEffect(() => {
         if (selectedIds)
             table.setRowSelection(selectedIds ? selectedIds.reduce((acc, value) => ({ ...acc, [value]: true }), {}) : {})
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedIds])
 
     useEffect(() => {
@@ -75,6 +77,7 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
             const selected = Object.keys(rowSelection).reduce((acc, value) => rowSelection[value] ? [...acc, value] : acc, [] as string[])
             onSelectdIdsChanged(selected)
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rowSelection])
 
     return (

@@ -14,7 +14,7 @@ export default function ProcessNumberForm({ id, onChange }: { id: string, onChan
     useEffect(() => {
         if (number?.length == 20)
             onChange(number)
-    }, [number])
+    }, [number, onChange])
 
     return (
         <>
