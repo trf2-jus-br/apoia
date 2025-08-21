@@ -133,7 +133,6 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
                             <tr key={'p-' + idx} className="table-warning fw-semibold">
                                 <td colSpan={groupBy === 'process' ? 4 : 4}>{groupBy === 'process' ? 'Subtotal do Processo' : 'Subtotal do Usuário'}</td>
                                 <td className="text-end">{r.generations_count}</td>
-                                <td className="text-end">{r.approximate_cost_sum.toFixed(4)}</td>
                                 <td className="text-end">{usdBrl ? formatterBRL.format(r.approximate_cost_sum * usdBrl) : '-'}</td>
                             </tr>
                         ) : (
@@ -145,7 +144,6 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
                                 <td>{formatDate(r.first_generation_at)}</td>
                                 <td>{formatDate(r.last_generation_at)}</td>
                                 <td className="text-end">{r.generations_count}</td>
-                                <td className="text-end">{r.approximate_cost_sum?.toFixed(4)}</td>
                                 <td className="text-end">{usdBrl ? formatterBRL.format(r.approximate_cost_sum * usdBrl) : '-'}</td>
                             </tr>
                         ))}
@@ -155,7 +153,6 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
                         <tr className="table-secondary fw-semibold">
                             <td colSpan={4}>Total Geral</td>
                             <td className="text-end">{grandTotals.generations}</td>
-                            <td className="text-end">{grandTotals.cost.toFixed(4)}</td>
                             <td className="text-end">{usdBrl ? formatterBRL.format(grandTotalsBRL.cost) : '-'}</td>
                         </tr>
                     </tfoot>
