@@ -396,7 +396,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                 <AiContent key={numeroDoProcesso + outrosNumerosDeProcessos}
                     definition={getInternalPrompt('litigancia-predatoria')}
                     data={{ textos }}
-                    options={{ cacheControl: true }} config={promptConfig} />
+                    options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined}/>
 
                 <Chat definition={getInternalPrompt('chat')} data={{ textos }} key={calcSha256({ textos })} />
             </>}

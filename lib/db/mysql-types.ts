@@ -8,10 +8,10 @@ export type IAGenerated = {
     attempt: number | null
     dossier_id?: number | null
     document_id?: number | null
-    cachedInputTokens?: number | null
-    inputTokens?: number | null
-    outputTokens?: number | null
-    reasoningTokens?: number | null
+    cached_input_tokens?: number | null
+    input_tokens?: number | null
+    output_tokens?: number | null
+    reasoning_tokens?: number | null
     approximate_cost?: number | null
 }
 
@@ -29,10 +29,10 @@ export type IAGeneration = {
     attempt: number | null
     dossier_id?: number | null
     document_id?: number | null
-    cachedInputTokens?: number | null
-    inputTokens?: number | null
-    outputTokens?: number | null
-    reasoningTokens?: number | null
+    cached_input_tokens?: number | null
+    input_tokens?: number | null
+    output_tokens?: number | null
+    reasoning_tokens?: number | null
     approximate_cost?: number | null
 }
 
@@ -342,4 +342,15 @@ export type IAUserUpdateFields = {
     court_id?: number | null
     court_name?: string | null
     state_abbreviation?: string | null
+}
+
+export type IAUsageReportRow = {
+    user_id: number | null
+    user_name: string | null // nome completo do usuário
+    dossier_id: number | null
+    dossier_code: string | null
+    first_generation_at: Date | null
+    last_generation_at: Date | null
+    generations_count: number
+    approximate_cost_sum: number
 }

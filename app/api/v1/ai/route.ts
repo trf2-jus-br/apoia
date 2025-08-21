@@ -49,28 +49,88 @@ async function getPromptDefinition(kind: string, promptSlug?: string, promptId?:
 
 /**
  * @swagger
- * 
  * /api/v1/ai:
  *   post:
- *     description: Gera uma resposta a partir de diversos parâmetros de configuração de prompt e dados obtido de um processo
+ *     summary: Executa um prompt de IA e retorna a resposta (stream ou texto)
+ *     description: Gera uma resposta a partir de diversos parâmetros de configuração de prompt e dados obtidos de um processo ou texto arbitrário.
  *     tags:
  *       - ai
  *     security:
  *       - BearerAuth: []
- *     parameters:
- *       - in: body
- *         name: body
- *         required: true
- *         description: Parâmetros de configuração do prompt e dados
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [kind, data]
+ *             properties:
+ *               kind:
+ *                 type: string
+ *                 description: "Identificador do prompt interno ou personalizado (ex: chat, resumo, prompt-123)."
+ *               promptSlug:
+ *                 type: string
+ *                 description: Slug de um prompt oficial para o tipo indicado em kind.
+ *               promptId:
+ *                 type: integer
+ *                 description: ID numérico de um prompt salvo.
+ *               data:
+ *                 type: object
+ *                 description: "Dados de entrada (ex: numeroDoProcesso, textos, etc) dependentes do prompt."
+ *               overrideSystemPrompt:
+ *                 type: string
+ *                 description: Sobrescreve o system prompt.
+ *               overridePrompt:
+ *                 type: string
+ *                 description: Sobrescreve o prompt principal.
+ *               overrideJsonSchema:
+ *                 type: string
+ *                 description: Força um JSON Schema para validação da saída.
+ *               overrideFormat:
+ *                 type: string
+ *                 description: "Formato alternativo (ex: MARKDOWN, HTML, JSON_LINES)."
+ *               overrideTemplate:
+ *                 type: string
+ *                 description: Template de composição (caso use prompts internos com placeholders).
+ *               cacheControl:
+ *                 type: boolean
+ *                 description: Ativa/desativa mecanismo de cache da geração.
+ *               modelSlug:
+ *                 type: string
+ *                 description: Modelo de IA a ser usado (sobrescreve configuração padrão).
+ *               extra:
+ *                 type: string
+ *                 description: Texto adicional concatenado ao prompt final.
+ *               dossierCode:
+ *                 type: string
+ *                 description: Código do dossiê / processo usado para auditoria.
+ *               documentId:
+ *                 type: string
+ *                 description: Identificador de documento associado (quando aplicável).
  *     responses:
  *       200:
- *         description: Resposta do assistente
+ *         description: Resposta do assistente (texto plano ou JSON se jsonSchema for utilizado).
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *           application/json:
+ *             schema:
+ *               type: string
+ *               description: Conteúdo textual serializado ou objeto conforme schema solicitado.
+ *       400:
+ *         description: Requisição inválida (parâmetros incorretos / prompt inexistente).
+ *       401:
+ *         description: Não autorizado.
+ *       405:
+ *         description: Erro durante a execução do prompt ou comunicação com o provedor.
  */
 export async function POST(request: Request) {
     try {
         const user = await getCurrentUser()
         if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
 
+        // Update user details
         const userFields = user.corporativo?.length ? {
             name: user.corporativo?.[0]?.nom_usuario || null,
             cpf: user.corporativo?.[0]?.num_cpf || null,
@@ -96,6 +156,10 @@ export async function POST(request: Request) {
             }
         }
 
+        // Get context to be submitted to the streamContent function and be used in the logs
+        const dossierCode = body.dossierCode
+        const documentId = body.documentId
+
         const definition = await getPromptDefinition(kind, promptSlug, promptId)
         const data: any = body.data
         const options: PromptOptionsType = {
@@ -120,7 +184,7 @@ export async function POST(request: Request) {
             definitionWithOptions.prompt += '\n\n' + body.extra
 
         const executionResults: PromptExecutionResultsType = {}
-        const result = await streamContent(definitionWithOptions, data, executionResults)
+        const result = await streamContent(definitionWithOptions, data, executionResults, {dossierCode})
 
         if (typeof result === 'string') {
             return new Response(result, { status: 200 })

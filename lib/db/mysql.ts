@@ -634,10 +634,14 @@ export class Dao {
     static async insertIAGeneration(data: mysqlTypes.IAGeneration): Promise<mysqlTypes.IAGenerated | undefined> {
         if (!knex) return
         const created_by = await getCurrentUserId()
-        const { model, prompt, sha256, generation, attempt } = data
+        const {
+            model, prompt, sha256, prompt_payload, generation, attempt,
+            dossier_id, document_id,
+            cached_input_tokens, input_tokens, output_tokens, reasoning_tokens, approximate_cost } = data
         const [inserted] = await knex('ia_generation').insert({
-            model,
-            prompt, sha256, generation, attempt, created_by
+            model, prompt, sha256, prompt_payload, generation, attempt,
+            dossier_id, document_id,
+            cached_input_tokens, input_tokens, output_tokens, reasoning_tokens, approximate_cost, created_by
         }).returning('id')
         const result = await knex('ia_generation').select<mysqlTypes.IAGenerated>('*').where('id', getId(inserted)).first()
         return result
@@ -844,7 +848,7 @@ export class Dao {
             // Update user fields if provided and different from existing values
             if (userFields) {
                 const updates: Partial<mysqlTypes.IAUserUpdateFields> = {}
-                
+
                 // Check each field and add to updates if provided and different
                 if (userFields.name !== undefined && userFields.name !== user.name) {
                     updates.name = userFields.name
@@ -870,7 +874,7 @@ export class Dao {
                 if (userFields.state_abbreviation !== undefined && userFields.state_abbreviation !== user.state_abbreviation) {
                     updates.state_abbreviation = userFields.state_abbreviation
                 }
-                
+
                 // Perform update if there are changes
                 if (Object.keys(updates).length > 0) {
                     await knex('ia_user').update(updates).where({ id: user.id })
@@ -1006,6 +1010,65 @@ export class Dao {
                 throw new Error(`Limite diário de gastos do tribunal foi atingido, por favor, aguarde até amanhã para poder usar novamente.`)
             }
         }
+    }
+
+    /**
+     * Relatório de uso de IA agrupado por processo ou por usuário.
+     * @param cpfs Lista de CPFs (sem pontuação) ou vazio para todos
+     * @param startDate Data inicial (inclusive) no formato YYYY-MM-DD
+     * @param endDate Data final (inclusive) no formato YYYY-MM-DD
+     * @param groupBy 'process' | 'user'
+     */
+    static async retrieveIAUsageReport(params: { cpfs?: string[], startDate?: string, endDate?: string, groupBy: 'process' | 'user' }): Promise<mysqlTypes.IAUsageReportRow[]> {
+        if (!knex) return []
+        const { cpfs, startDate, endDate, groupBy } = params
+        const g = knex('ia_generation as g')
+            .leftJoin('ia_dossier as d', 'd.id', 'g.dossier_id')
+            .leftJoin('ia_user as u', 'u.id', 'g.created_by')
+            .select(
+                knex.raw('u.id as user_id'),
+                knex.raw('u.username as username'),
+                knex.raw('u.name as user_name'),
+                knex.raw('u.cpf as cpf'),
+                knex.raw('d.id as dossier_id'),
+                knex.raw('d.code as dossier_code'),
+                knex.raw('MIN(g.created_at) as first_generation_at'),
+                knex.raw('MAX(g.created_at) as last_generation_at'),
+                knex.raw('COUNT(g.id) as generations_count'),
+                knex.raw('COALESCE(SUM(g.approximate_cost),0) as approximate_cost_sum')
+            )
+            .whereNotNull('g.dossier_id')
+
+        if (cpfs && cpfs.length > 0) {
+            g.whereIn('u.cpf', cpfs.map(c => c.trim()))
+        }
+        if (startDate) {
+            g.andWhere('g.created_at', '>=', startDate + ' 00:00:00')
+        }
+        if (endDate) {
+            g.andWhere('g.created_at', '<=', endDate + ' 23:59:59')
+        }
+
+        g.groupBy('d.id', 'd.code', 'u.id', 'u.username', 'u.name', 'u.cpf')
+
+        if (groupBy === 'process') {
+            g.orderBy('d.code').orderBy('u.name')
+        } else {
+            g.orderBy('u.name').orderBy('d.code')
+        }
+
+        const rows: any[] = await g
+        return rows.map(r => ({
+            user_id: r.user_id ? Number(r.user_id) : null,
+            username: r.username ?? null,
+            user_name: r.user_name ?? null,
+            dossier_id: r.dossier_id ? Number(r.dossier_id) : null,
+            dossier_code: r.dossier_code ?? null,
+            first_generation_at: r.first_generation_at ? new Date(r.first_generation_at) : null,
+            last_generation_at: r.last_generation_at ? new Date(r.last_generation_at) : null,
+            generations_count: Number(r.generations_count) || 0,
+            approximate_cost_sum: Number(r.approximate_cost_sum) || 0,
+        })) as any
     }
 }
 

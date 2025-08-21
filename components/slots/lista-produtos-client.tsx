@@ -38,7 +38,7 @@ const onReady = (Frm: FormHelper, requests: GeneratedContent[], idx: number, con
     }
 }
 
-function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number) {
+function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number, dossierCode: string) {
     const request = requests[idx]
 
     const informationExtractionVariableName = `_information_extraction_${idx}`
@@ -56,7 +56,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number)
     if (request.produto === P.PEDIDOS && pedidos) {
         return <Pedidos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
     } else if (request.produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS && pedidos) {
-        return <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
+        return <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={request} Frm={Frm} key={idx} dossierCode={dossierCode} />
     } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction) {
         // console.log('requestSlot: information_extraction', request.internalPrompt?.prompt, information_extraction)
         return <div key={idx}>
@@ -72,7 +72,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number)
         <AiTitle request={request} />
         <Suspense fallback={ResumoDePecaLoading()}>
             <AiContent definition={request.internalPrompt} data={request.data} key={`prompt: ${request.promptSlug} data: ${dataHash}`} onBusy={() => onBusy(Frm, requests, idx)} onReady={(content) => onReady(Frm, requests, idx, content)}
-                visualization={request.internalPrompt.template ? VisualizationEnum.DIFF_HIGHLIGHT_INCLUSIONS : undefined} diffSource={request.internalPrompt.template ? preprocessTemplate(request.internalPrompt.template) : undefined} />
+                visualization={request.internalPrompt.template ? VisualizationEnum.DIFF_HIGHLIGHT_INCLUSIONS : undefined} diffSource={request.internalPrompt.template ? preprocessTemplate(request.internalPrompt.template) : undefined} dossierCode={dossierCode} />
         </Suspense>
     </div>
 }
@@ -89,7 +89,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests }: { dadosDoProcesso
     Frm.update(data, setData, EMPTY_FORM_STATE)
 
     return <>{requests.map((request, idx) => {
-        return requestSlot(Frm, requests, idx)
+        return requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso)
     })}
 
         {/* <p>{JSON.stringify(data)}</p> */}

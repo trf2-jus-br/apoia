@@ -59,7 +59,7 @@ export default function Test(params: { tests: TestFileType[] }) {
             </div>
             {!hidden && !refresh && <>
                 <h2 className="mt-3">{test.infoDeProduto.titulo}</h2>
-                <AiContent definition={test.infoDeProduto} data={{ textos: test.textos }} />
+                <AiContent definition={test.infoDeProduto} data={{ textos: test.textos }} dossierCode={undefined} />
             </>}
         </>
     )
