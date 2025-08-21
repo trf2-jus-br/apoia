@@ -55,25 +55,24 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
     const formatterBRL = useMemo(() => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }), [])
     const formatterUSD = useMemo(() => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }), [])
 
-    const tableRows = useMemo(() => {
+    // Build grouped structure for rowspan rendering
+    const groups = useMemo(() => {
         const keyed: Record<string, any[]> = {}
         rows.forEach(r => {
             const key = groupBy === 'process' ? r.dossier_code : r.username
-            if (!keyed[key || '']) keyed[key || ''] = []
-            keyed[key || ''].push(r)
+            const finalKey = key || ''
+            if (!keyed[finalKey]) keyed[finalKey] = []
+            keyed[finalKey].push(r)
         })
-        const output: any[] = []
-        Object.entries(keyed).forEach(([k, arr]) => {
-            arr.forEach(r => output.push(r))
-            if (arr.length > 1) {
-                const partial = arr.reduce((acc, r) => ({
-                    generations_count: acc.generations_count + r.generations_count,
-                    approximate_cost_sum: acc.approximate_cost_sum + r.approximate_cost_sum
-                }), { generations_count: 0, approximate_cost_sum: 0 })
-                output.push({ _partial: true, key: k, generations_count: partial.generations_count, approximate_cost_sum: partial.approximate_cost_sum })
-            }
+        return Object.entries(keyed).map(([key, arr]) => {
+            const totals = arr.reduce((acc, r) => ({
+                generations_count: acc.generations_count + r.generations_count,
+                approximate_cost_sum: acc.approximate_cost_sum + r.approximate_cost_sum
+            }), { generations_count: 0, approximate_cost_sum: 0 })
+            const hasSubtotal = arr.length > 1
+            const rowSpan = arr.length + (hasSubtotal ? 1 : 0)
+            return { key, rows: arr, totals, hasSubtotal, rowSpan }
         })
-        return output
     }, [rows, groupBy])
 
     return (
@@ -129,25 +128,40 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
                         </tr>
                     </thead>
                     <tbody>
-                        {tableRows.map((r, idx) => r._partial ? (
-                            <tr key={'p-' + idx} className="table-warning fw-semibold">
-                                <td colSpan={groupBy === 'process' ? 4 : 4}>{groupBy === 'process' ? 'Subtotal do Processo' : 'Subtotal do Usuário'}</td>
-                                <td className="text-end">{r.generations_count}</td>
-                                <td className="text-end">{usdBrl ? formatterBRL.format(r.approximate_cost_sum * usdBrl) : '-'}</td>
-                            </tr>
-                        ) : (
-                            <tr key={idx}>
-                                {groupBy === 'process' && <td>{r.dossier_code}</td>}
-                                {groupBy === 'user' && <td>{maiusculasEMinusculas(r.user_name) || r.username}</td>}
-                                {groupBy === 'user' && <td>{r.dossier_code}</td>}
-                                {groupBy === 'process' && <td>{maiusculasEMinusculas(r.user_name) || r.username}</td>}
-                                <td>{formatDate(r.first_generation_at)}</td>
-                                <td>{formatDate(r.last_generation_at)}</td>
-                                <td className="text-end">{r.generations_count}</td>
-                                <td className="text-end">{usdBrl ? formatterBRL.format(r.approximate_cost_sum * usdBrl) : '-'}</td>
-                            </tr>
-                        ))}
-                        {rows.length === 0 && !loading && <tr><td colSpan={10} className="text-center text-muted">Nenhum dado</td></tr>}
+                        {groups.map(group => {
+                            const first = group.rows[0]
+                            const groupValue = groupBy === 'process' ? first.dossier_code : (maiusculasEMinusculas(first.user_name) || first.username)
+                            return (
+                                <React.Fragment key={group.key || 'blank'}>
+                                    <tr>
+                                        <td rowSpan={group.rowSpan}>{groupValue}</td>
+                                        <td>{groupBy === 'process' ? (maiusculasEMinusculas(first.user_name) || first.username) : first.dossier_code}</td>
+                                        <td>{formatDate(first.first_generation_at)}</td>
+                                        <td>{formatDate(first.last_generation_at)}</td>
+                                        <td className="text-end">{first.generations_count}</td>
+                                        <td className="text-end">{usdBrl ? formatterBRL.format(first.approximate_cost_sum * usdBrl) : '-'}</td>
+                                    </tr>
+                                    {group.rows.slice(1).map((r, idx) => (
+                                        <tr key={(group.key || 'blank') + '-' + idx}>
+                                            <td>{groupBy === 'process' ? (maiusculasEMinusculas(r.user_name) || r.username) : r.dossier_code}</td>
+                                            <td>{formatDate(r.first_generation_at)}</td>
+                                            <td>{formatDate(r.last_generation_at)}</td>
+                                            <td className="text-end">{r.generations_count}</td>
+                                            <td className="text-end">{usdBrl ? formatterBRL.format(r.approximate_cost_sum * usdBrl) : '-'}</td>
+                                        </tr>
+                                    ))}
+                                    {group.hasSubtotal && (
+                                        <tr className="table-warning fw-semibold">
+                                            {/* grouping cell already occupied via rowSpan */}
+                                            <td colSpan={3}>{groupBy === 'process' ? 'Subtotal do Processo' : 'Subtotal do Usuário'}</td>
+                                            <td className="text-end">{group.totals.generations_count}</td>
+                                            <td className="text-end">{usdBrl ? formatterBRL.format(group.totals.approximate_cost_sum * usdBrl) : '-'}</td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            )
+                        })}
+                        {rows.length === 0 && !loading && <tr><td colSpan={6} className="text-center text-muted">Nenhum dado</td></tr>}
                     </tbody>
                     <tfoot>
                         <tr className="table-secondary fw-semibold">
