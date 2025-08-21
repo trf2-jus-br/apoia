@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import dayjs from 'dayjs'
 import { Container, Row, Col, Form, Button, Table, Spinner } from 'react-bootstrap'
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
@@ -20,6 +20,11 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
     const [loading, setLoading] = useState(false)
     const [rows, setRows] = useState<any[]>([])
     const [error, setError] = useState<string | null>(null)
+
+    // Limpa os registros quando filtros mudam
+    useEffect(() => {
+        if (rows.length) setRows([])
+    }, [cpfInput, startDate, endDate, groupBy])
 
     const cpfs = useMemo(() => cpfInput.split(',').map(c => c.trim()).filter(Boolean), [cpfInput])
 
@@ -114,7 +119,7 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
             </Form>
             {error && <div className="alert alert-danger py-2">{error}</div>}
             <div className="table-responsive">
-                <Table striped bordered hover size="sm" className="align-middle">
+                <Table striped hover size="sm" className="align-middle">
                     <thead className="table-light">
                         <tr>
                             {groupBy === 'process' && <th>Processo</th>}
