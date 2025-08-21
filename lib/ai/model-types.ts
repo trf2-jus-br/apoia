@@ -64,6 +64,7 @@ const ModelArray: ModelArrayType[] = [
     // { id: 19, name: 'azure-gpt-5-mini', provider: ModelProvider.AZURE, inputTokenPPM: 0.25, outputTokenPPM: 2, status: StatusDeLancamento.PUBLICO },
     // { id: 20, name: 'azure-gpt-5-nano', provider: ModelProvider.AZURE, inputTokenPPM: 0.05, outputTokenPPM: 0.4, status: StatusDeLancamento.PUBLICO },
     // { id: 21, name: 'azure-gpt-5', provider: ModelProvider.AZURE, inputTokenPPM: 1.25, outputTokenPPM: 10, status: StatusDeLancamento.PUBLICO },
+    // { id: 21, name: 'azure-gpt-5-chat', provider: ModelProvider.AZURE, inputTokenPPM: 1.25, outputTokenPPM: 10, status: StatusDeLancamento.PUBLICO },
     { id: 19, name: 'azure-gpt-4.1-mini', provider: ModelProvider.AZURE, inputTokenPPM: 0.4, outputTokenPPM: 1.6, status: StatusDeLancamento.PUBLICO },
     { id: 20, name: 'azure-gpt-4.1-nano', provider: ModelProvider.AZURE, inputTokenPPM: 0.1, outputTokenPPM: 0.4, status: StatusDeLancamento.PUBLICO },
     { id: 21, name: 'azure-gpt-4.1', provider: ModelProvider.AZURE, inputTokenPPM: 2, outputTokenPPM: 8, status: StatusDeLancamento.PUBLICO },

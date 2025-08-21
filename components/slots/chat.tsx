@@ -240,6 +240,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                                         value={input}
                                         placeholder=""
                                         onChange={(e) => setInput(e.target.value)}
+                                        autoFocus
                                     />
                                     <button className="btn btn-secondary btn-outline-light" type="submit">Enviar</button>
                                 </div>
