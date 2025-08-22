@@ -224,6 +224,21 @@ O requerente necessita de cirurgia, o que demonstra a gravidade da doença e a n
 ###### Tg_Impug_Nova_Pericia_Justificativa
 - Justifique a resposta fornecida 2 campos acima.
 
+###### Tg_Fundamentacao
+- Escreva um texto fundamentando a decisão de improcedência.
+- Não há necessidade de incluir a data da perícia ou o número do evento.
+- Atenha-se ao caso concreto. Para isso, analise o laudo pericial que está entre os marcadores <laudo> e </laudo>. Se houver laudo complementar pericial, ele deve ser incorporado à fundamentação com a premissa de que se trata de esclarecimentos, correção ou complementação do laudo pericial original. 
+- Considerando que será mantido o texto original da sentença, não replique, no trecho a ser incluído, o que já está nos fundamentos do texto original.
+- Evite mencionar a(s) patologia(s) e CID(s) citada(s) no laudo pericial e/ou laudo complementar. Prefira referências como “patologia(s) da parte autora” ou qualquer termo que evite nominar as doenças. Admite-se menção às patologias de forma direta quando elas não forem estigmatizantes e sua menção seja importante para a fundamentação que está sendo construída.
+- Evite transcrição de trechos do laudo pericial. Procure ressaltar o que é mais importante com as próprias palavras.
+- Devem ser incluídas apenas informações referentes à análise pericial realizada, descartando-se referência bibliográficas, ou explicações genéricas sobre as patologias, a menos que sejam fundamentais para a compreensão da conclusão a que o laudo chegou.
+- A fundamentação a ser inserida deve possuir mais de 100 e menos de 300 palavras, a depender da quantidade de informações sobre os exames realizados durante a perícia, ou considerações específicas sobre o caso concreto, podendo-se admitir até 500 palavras nos casos mais complexos (em que o laudo traga muita informação específica sobre a análise pericial realizada).
+- Devem ser usados os elementos de informação que contribuam para a fundamentação no sentido da inexistência de incapacidade, podendo ser combinados quaisquer dos segmentos do laudo: história clínica, anamnese, exame físico ou de estado mental, conclusão, etc. 
+- Poderá ser mencionado algo que conste na impugnação com vistas a gerar um contraponto. Ex: Embora a impugnação mencione... resta claro, pelo que consta no laudo, que...
+- Atenha-se primordialmente à análise dos elementos fáticos para gerar o(s) acréscimo(s) de fundamentação. A inclusão de argumentos jurídicos só é permitida se o texto original da sentença não tratar (nem mesmo genericamente) alguma questão jurídica levantada na impugnação.
+- Evite expressões como “detalhada”, “minuciosa”, “detida”, “criteriosa”, “de forma completa” e suas variações, para se referir ao laudo pericial, trabalho do perito, ou ao exame pericial. A força dos argumentos, em seu conjunto, deve prevalecer sobre a força isolada das palavras. 
+- A escolha entre inserir um único trecho abrangente de fundamentação ou inserir trechos menores em diferentes pontos do texto original deve ser feita com base no critério de melhor fluidez redacional, a fim de manter a coesão e a naturalidade da sentença.
+
 
 # FORMAT
 
@@ -250,6 +265,8 @@ Rejeito a alegação de prescrição quinquenal, pois, apesar da previsão legal
 {% endif %}
 
 Para o recebimento de auxílio por incapacidade temporária, mister se faz que a parte demandante atenda aos requisitos legais ditados pelo art. 59 da Lei nº 8.213/91, quais sejam: ostentar a qualidade de segurado, atender o prazo de carência fixado em lei e constatação de incapacidade para o seu trabalho ou para a sua atividade habitual por mais de 15 dias consecutivos. Já em relação à aposentadoria por incapacidade permanente é necessário, além do preenchimento dos dois primeiros requisitos acima descritos, que haja incapacidade insuscetível de reabilitação para o exercício de atividade que garanta subsistência, nos termos do art. 42 da Lei nº 8.213/91.
+
+{{Tg_Fundamentacao}}
 
 A perícia judicial realizada em {{Dt_Pericia}} atestou que a parte autora encontra-se apta ao exercício de suas atividades laborais. Pelas conclusões médicas constantes no laudo de evento {{Ev_Laudo}}, a situação fática vivida pela parte autora não atende ao requisito legal de incapacidade para a concessão do benefício pretendido. 
 
