@@ -7,490 +7,743 @@ import json from './cnis.json'
 // Load environment variables
 config({ path: '.env.local' });
 
-// ===== Tipos de entrada (CNIS) =====
+// ===== Tipos de entrada =====
 type NaturezaVinculo =
-  | "EMPREGADO"
-  | "CONTRIBUINTE_INDIVIDUAL"
-  | "NAO_INFORMADO"
-  | string;
+    | "EMPREGADO"
+    | "CONTRIBUINTE_INDIVIDUAL"
+    | "BENEFICIO_INCAPACIDADE"
+    | "NAO_INFORMADO"
+    | string;
 
 interface PeriodoContribuicao {
-  dataInicial: string; // "dd/MM/yyyy"
-  dataFinal: string;   // "dd/MM/yyyy"
-  descricao: string;
-  formaContagem: "COMUM" | string;
-  naturezaVinculo: NaturezaVinculo;
-  contarCarencia: boolean;
-  observacao?: string;
-  prioritario?: boolean;
+    dataInicial: string; // "dd/MM/yyyy"
+    dataFinal: string;   // "dd/MM/yyyy"
+    descricao: string;
+    formaContagem: "COMUM" | string;
+    naturezaVinculo: NaturezaVinculo;
+    contarCarencia: boolean;
+    observacao?: string;
+    prioritario?: boolean;
 }
 
 interface Salario {
-  competencia: string; // "MM/yyyy"
-  valor: number;
+    competencia: string; // "MM/yyyy"
+    valor: number;
 }
 
 interface CnisJson {
-  dadosSegurado: {
-    nit: string;
-    cpf: string;
-    nome: string;
-    nascimento: string;
-    mae: string;
-  };
-  periodosContribuicao: PeriodoContribuicao[];
-  salarios: Salario[];
+    dadosSegurado: {
+        nit: string;
+        cpf: string;
+        nome: string;
+        nascimento: string;
+        mae: string;
+    };
+    periodosContribuicao: PeriodoContribuicao[];
+    salarios: Salario[];
 }
 
-// ===== Tipos de saída =====
-type StatusQualidade = "contribuindo" | "em_graca" | "sem_qualidade";
+// ===== Parâmetros =====
+interface PoliticaParametros {
+    referencia: string | Date;           // DII/DER
+    carenciaExigida?: number;            // default 12
+    isencaoCarencia?: boolean;           // default false
+    mesesReaquisicaoCarenciaPosPerda?: number; // default 6 (art. 27-A)
+    exigirPagamentoParaCI?: boolean;     // default true
+    hasDesempregoComprovado?: () => boolean; // default () => false
+    habilitarGraça24Se120?: boolean;     // default true
+    diaVencimentoContribuicao?: number;  // default 15 (para “manteve QS até”)
+}
 
-interface SegmentoQualidade {
-  inicio: string;       // "yyyy-MM"
-  fim: string;          // "yyyy-MM" (inclusive)
-  status: StatusQualidade;
+// ===== Saída =====
+type StatusQualidade = "contribuindo" | "em_graca" | "sem_qualidade";
+type CarenciaStatus = "em_formacao" | "cumprida" | "isenta" | "nao_aplica";
+type TipoIntervalo = "Recolhimentos" | "Benefício" | "Em graça" | "Sem qualidade" | "Ativo sem carência";
+
+interface TimelineSegmento {
+    // chaves mensais (internas)
+    inicioYM: string; // "yyyy-MM"
+    fimYM: string;    // "yyyy-MM"
+    // datas com dia (para exibição)
+    inicio: string;   // "dd/MM/yyyy"
+    fim: string;      // "dd/MM/yyyy"
+
+    tipo: TipoIntervalo;
+    statusQS: StatusQualidade;
+    statusCarencia: CarenciaStatus;
+
+    mesesNoIntervalo: number;     // número de competências no segmento
+    mesesContamCarencia: number;  // competências válidas p/ carência dentro do segmento
 }
 
 interface ResultadoElegibilidade {
-  referencia: string; // "yyyy-MM" da DII/DER (ou data de corte)
-  qualidadeNaReferencia: boolean;
-  statusNaReferencia: StatusQualidade;
+    referencia: string; // "yyyy-MM"
+    qualidadeNaReferencia: boolean;
+    statusNaReferencia: StatusQualidade;
 
-  // Carência
-  carenciaMesesConsiderados: number;
-  carenciaExigida: number;       // normalmente 12
-  carenciaCumprida: boolean;
-  isencaoCarencia: boolean;      // param: acidente/doença grave, etc.
+    // Carência
+    carenciaMesesConsiderados: number;
+    carenciaExigida: number;
+    carenciaCumprida: boolean;
+    isencaoCarencia: boolean;
 
-  // Perda de qualidade & período de graça
-  tevePerdaQualidadeNoHistorico: boolean;
-  dataPerdaMaisRecente?: string; // "yyyy-MM" (primeiro mês sem qualidade após fim da graça)
-  periodoGracaAtual?: { inicio: string; fim: string; meses: number };
+    // Perdas / graça
+    tevePerdaQualidadeNoHistorico: boolean;
+    dataPerdaMaisRecente?: string; // "yyyy-MM"
+    periodoGracaAtual?: { inicio: string; fim: string; meses: number };
 
-  // Estatísticas úteis
-  totalCompetenciasContribuidas: number;
-  totalCompetenciasDesdeUltimaPerda: number;
-  tem120CompetenciasHistoricas: boolean;
+    // Estatísticas
+    totalCompetenciasContribuidas: number;
+    totalCompetenciasDesdeUltimaPerda: number;
+    tem120CompetenciasHistoricas: boolean;
 
-  // Linha do tempo (segmentos agregados)
-  timeline: SegmentoQualidade[];
+    // Timeline final
+    timeline: TimelineSegmento[];
 }
 
-// ===== Parâmetros de política =====
-interface PoliticaParametros {
-  // Data de referência para avaliação (DII/DER). Aceita "dd/MM/yyyy" ou "yyyy-MM" ou Date.
-  referencia: string | Date;
-
-  // Exigência de carência (meses) para benefício por incapacidade (padrão: 12).
-  carenciaExigida?: number;
-
-  // Há isenção de carência (acidente/doença do trabalho ou doença grave)?
-  isencaoCarencia?: boolean;
-
-  // Após perda de qualidade, nº mínimo de novas contribuições para voltar a contar períodos antigos na carência (art. 27-A).
-  // Muitos cenários práticos consideram 6 para benefícios por incapacidade. Deixe configurável.
-  mesesReaquisicaoCarenciaPosPerda?: number; // default: 6
-
-  // Para CI (contribuinte individual), exigir salário/competência paga para contar carência?
-  exigirPagamentoParaCI?: boolean; // default: true
-
-  // Função para indicar se há desemprego comprovado no intervalo em que a graça é calculada.
-  // Se retornar true para o "ciclo" atual (após cessação), soma-se +12 meses de graça.
-  // Se não tiver ainda, retorne sempre false por padrão ou implemente sua heurística.
-  hasDesempregoComprovado?: () => boolean;
-
-  // Deve aplicar extensão de 24 meses de graça quando houver >= 120 contribuições históricas?
-  habilitarGraça24Se120?: boolean; // default: true
-}
-
-// ===== Utilidades de data/competência =====
+// ===== Utils =====
 const pad2 = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
 function parseBrDate(d: string): Date {
-  // "dd/MM/yyyy"
-  const [dd, mm, yyyy] = d.split("/").map(Number);
-  return new Date(yyyy, mm - 1, dd);
+    const [dd, mm, yyyy] = d.split("/").map(Number);
+    return new Date(yyyy, mm - 1, dd);
 }
-
 function parseCompetencia(c: string): { y: number; m: number } {
-  // "MM/yyyy"
-  const [mm, yyyy] = c.split("/").map(Number);
-  return { y: yyyy, m: mm };
+    const [mm, yyyy] = c.split("/").map(Number);
+    return { y: yyyy, m: mm };
 }
+function toYM(y: number, m: number) { return `${y}-${pad2(m)}`; }
+function fromDateToYM(d: Date) { return { y: d.getFullYear(), m: d.getMonth() + 1 }; }
+function firstDMY(y: number, m: number) { return `01/${pad2(m)}/${y}`; }
+function lastDayOfMonth(y: number, m: number) { return new Date(y, m, 0).getDate(); } // m:1..12
+function lastDMY(y: number, m: number) { return `${pad2(lastDayOfMonth(y, m))}/${pad2(m)}/${y}`; }
 
-function toCompetenciaStr(y: number, m: number): string {
-  return `${y}-${pad2(m)}`;
+function addMonths(y: number, m: number, delta: number) {
+    const base = new Date(y, m - 1, 1);
+    base.setMonth(base.getMonth() + delta);
+    return { y: base.getFullYear(), m: base.getMonth() + 1 };
 }
-
-function addMonths(y: number, m: number, delta: number): { y: number; m: number } {
-  const base = new Date(y, m - 1, 1);
-  base.setMonth(base.getMonth() + delta);
-  return { y: base.getFullYear(), m: base.getMonth() + 1 };
+function* iterYM(inicio: { y: number; m: number }, fim: { y: number; m: number }) {
+    let cur = { ...inicio };
+    while (cur.y < fim.y || (cur.y === fim.y && cur.m <= fim.m)) {
+        yield { ...cur };
+        cur = addMonths(cur.y, cur.m, 1);
+    }
 }
-
-function* iterCompetencias(inicio: { y: number; m: number }, fim: { y: number; m: number }) {
-  let cur = { ...inicio };
-  while (cur.y < fim.y || (cur.y === fim.y && cur.m <= fim.m)) {
-    yield { ...cur };
-    cur = addMonths(cur.y, cur.m, 1);
-  }
-}
-
-function maxCompetencia(a: { y: number; m: number }, b: { y: number; m: number }) {
-  if (a.y > b.y) return a;
-  if (a.y < b.y) return b;
-  return a.m >= b.m ? a : b;
-}
-
-function minCompetencia(a: { y: number; m: number }, b: { y: number; m: number }) {
-  if (a.y < b.y) return a;
-  if (a.y > b.y) return b;
-  return a.m <= b.m ? a : b;
-}
-
-function fromDateToCompetencia(d: Date) {
-  return { y: d.getFullYear(), m: d.getMonth() + 1 };
-}
-
 function parseReferencia(ref: string | Date): { y: number; m: number } {
-  if (ref instanceof Date) return fromDateToCompetencia(ref);
-  if (/^\d{4}-\d{2}$/.test(ref)) {
-    const [yy, mm] = ref.split("-").map(Number);
-    return { y: yy, m: mm };
-  }
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(ref as string)) {
-    return fromDateToCompetencia(parseBrDate(ref as string));
-  }
-  if (/^\d{2}\/\d{4}$/.test(ref as string)) {
-    const { y, m } = parseCompetencia(ref as string);
-    return { y, m };
-  }
-  // fallback: hoje
-  const today = new Date();
-  return fromDateToCompetencia(today);
+    if (ref instanceof Date) return fromDateToYM(ref);
+    if (/^\d{4}-\d{2}$/.test(ref)) {
+        const [yy, mm] = ref.split("-").map(Number);
+        return { y: yy, m: mm };
+    }
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(ref as string)) return fromDateToYM(parseBrDate(ref as string));
+    if (/^\d{2}\/\d{4}$/.test(ref as string)) {
+        const { y, m } = parseCompetencia(ref as string);
+        return { y, m };
+    }
+    return fromDateToYM(new Date());
 }
 
-// ===== Núcleo: cálculo =====
+// ===== Núcleo =====
 export function calcularBeneficioIncapacidade(
-  cnis: CnisJson,
-  params: PoliticaParametros
+    cnis: CnisJson,
+    params: PoliticaParametros
 ): ResultadoElegibilidade {
-  const {
-    carenciaExigida = 12,
-    isencaoCarencia = false,
-    mesesReaquisicaoCarenciaPosPerda = 6,
-    exigirPagamentoParaCI = true,
-    hasDesempregoComprovado = () => false,
-    habilitarGraça24Se120 = true,
-  } = params;
+    const {
+        carenciaExigida = 12,
+        isencaoCarencia = false,
+        mesesReaquisicaoCarenciaPosPerda = 6,
+        exigirPagamentoParaCI = true,
+        hasDesempregoComprovado = () => false,
+        habilitarGraça24Se120 = true,
+        diaVencimentoContribuicao = 15,
+    } = params;
 
-  const ref = parseReferencia(params.referencia);
+    const ref = parseReferencia(params.referencia);
 
-  // 1) Construir conjunto de competências com contribuição "válida" para CARÊNCIA.
-  //    Regras:
-  //    - Empregado: conta mês de vínculo (contarCarencia=true), independentemente de valor em salários;
-  //    - CI: por padrão exigimos haver salário na competência (exigirPagamentoParaCI=true);
-  //    - Outros: se contarCarencia=true, conta competência.
-  const competenciasPagas = new Set<string>(
-    cnis.salarios.map((s) => {
-      const { y, m } = parseCompetencia(s.competencia);
-      return toCompetenciaStr(y, m);
-    })
-  );
+    // --- índices mensais ---
+    const competenciasPagas = new Set<string>(
+        cnis.salarios.map((s) => {
+            const { y, m } = parseCompetencia(s.competencia);
+            return toYM(y, m);
+        })
+    );
 
-  // Mapa: competencia => se conta para carência
-  const contribuiParaCarencia = new Set<string>();
+    const contaCarencia = new Set<string>(); // meses que contam carência
+    const temVinculo = new Set<string>();    // meses com vínculo (exclui benefício)
+    const ehBeneficio = new Set<string>();   // meses com benefício por incapacidade
 
-  // Também marcamos "há vínculo" (útil para status "contribuindo")
-  const haVinculo = new Set<string>();
+    // Mapas de dia para benefício (bordas reais por mês)
+    const beneficioStartDay = new Map<string, number>(); // ym -> dia inicial no mês
+    const beneficioEndDay = new Map<string, number>();   // ym -> dia final no mês
 
-  for (const p of cnis.periodosContribuicao) {
-    const ini = fromDateToCompetencia(parseBrDate(p.dataInicial));
-    const fim = fromDateToCompetencia(parseBrDate(p.dataFinal));
-    for (const c of iterCompetencias(ini, fim)) {
-      const key = toCompetenciaStr(c.y, c.m);
-      haVinculo.add(key);
+    // Indexação dos períodos
+    for (const p of cnis.periodosContribuicao) {
+        const iniDate = parseBrDate(p.dataInicial);
+        const fimDate = parseBrDate(p.dataFinal);
+        const ini = fromDateToYM(iniDate);
+        const fim = fromDateToYM(fimDate);
 
-      if (!p.contarCarencia) continue;
+        const isBenef = p.naturezaVinculo === "BENEFICIO_INCAPACIDADE";
 
-      if (p.naturezaVinculo === "EMPREGADO") {
-        contribuiParaCarencia.add(key);
-      } else if (p.naturezaVinculo === "CONTRIBUINTE_INDIVIDUAL") {
-        if (!exigirPagamentoParaCI || competenciasPagas.has(key)) {
-          contribuiParaCarencia.add(key);
+        for (const c of iterYM(ini, fim)) {
+            const ym = toYM(c.y, c.m);
+
+            if (isBenef) {
+                ehBeneficio.add(ym);
+                // bordas por mês
+                const firstMonth = (c.y === ini.y && c.m === ini.m);
+                const lastMonth = (c.y === fim.y && c.m === fim.m);
+
+                const sd = firstMonth ? iniDate.getDate() : 1;
+                const ed = lastMonth ? fimDate.getDate() : lastDayOfMonth(c.y, c.m);
+
+                // Se houver sobreposição de benefícios, consolida min/max
+                beneficioStartDay.set(ym, Math.min(beneficioStartDay.get(ym) ?? sd, sd));
+                beneficioEndDay.set(ym, Math.max(beneficioEndDay.get(ym) ?? ed, ed));
+
+            } else {
+                // vínculo "não-benefício"
+                temVinculo.add(ym);
+
+                if (!p.contarCarencia) continue;
+
+                if (p.naturezaVinculo === "EMPREGADO" || p.naturezaVinculo === "NAO_INFORMADO") {
+                    contaCarencia.add(ym);
+                } else if (p.naturezaVinculo === "CONTRIBUINTE_INDIVIDUAL") {
+                    if (!exigirPagamentoParaCI || competenciasPagas.has(ym)) {
+                        contaCarencia.add(ym);
+                    }
+                } else {
+                    if (competenciasPagas.has(ym)) contaCarencia.add(ym);
+                }
+            }
         }
-      } else {
-        // NAO_INFORMADO / outros
-        // critério conservador: se houver salário OR explicitamente desejar contar
-        if (competenciasPagas.has(key)) {
-          contribuiParaCarencia.add(key);
-        } else {
-          // opcionalmente, pode-se contar todo vínculo se desejar:
-          // contribuiParaCarencia.add(key);
-        }
-      }
     }
-  }
 
-  // 2) Determinar faixa temporal principal
-  //    Do primeiro mês com qualquer vínculo até a referência (no mínimo),
-  //    expandindo 36 meses além do último vínculo para fechar um ciclo de graça.
-  if (haVinculo.size === 0) {
-    const refStr = toCompetenciaStr(ref.y, ref.m);
-    return {
-      referencia: refStr,
-      qualidadeNaReferencia: false,
-      statusNaReferencia: "sem_qualidade",
-      carenciaMesesConsiderados: 0,
-      carenciaExigida,
-      carenciaCumprida: isencaoCarencia ? true : 0 >= carenciaExigida,
-      isencaoCarencia,
-      tevePerdaQualidadeNoHistorico: true,
-      totalCompetenciasContribuidas: 0,
-      totalCompetenciasDesdeUltimaPerda: 0,
-      tem120CompetenciasHistoricas: false,
-      timeline: [
-        { inicio: refStr, fim: refStr, status: "sem_qualidade" }
-      ],
+    // Se não há nenhum vínculo/benefício indexado
+    const allCovered = Array.from(new Set([...temVinculo, ...ehBeneficio])).sort();
+    if (allCovered.length === 0) {
+        const refStr = toYM(ref.y, ref.m);
+        return {
+            referencia: refStr,
+            qualidadeNaReferencia: false,
+            statusNaReferencia: "sem_qualidade",
+            carenciaMesesConsiderados: 0,
+            carenciaExigida,
+            carenciaCumprida: isencaoCarencia ? true : 0 >= carenciaExigida,
+            isencaoCarencia,
+            tevePerdaQualidadeNoHistorico: true,
+            totalCompetenciasContribuidas: 0,
+            totalCompetenciasDesdeUltimaPerda: 0,
+            tem120CompetenciasHistoricas: false,
+            timeline: [{
+                inicioYM: refStr, fimYM: refStr,
+                inicio: firstDMY(ref.y, ref.m), fim: lastDMY(ref.y, ref.m),
+                tipo: "Sem qualidade",
+                statusQS: "sem_qualidade",
+                statusCarencia: isencaoCarencia ? "isenta" : "nao_aplica",
+                mesesNoIntervalo: 1,
+                mesesContamCarencia: 0,
+            }],
+        };
+    }
+
+    const [y0, m0] = allCovered[0].split("-").map(Number);
+    const inicioGlobal = { y: y0, m: m0 };
+    const lastKey = allCovered[allCovered.length - 1];
+    const [yl, ml] = lastKey.split("-").map(Number);
+    const ultimoCoberto = { y: yl, m: ml };
+
+    const fimSimulacao = (() => {
+        const plus36 = addMonths(ultimoCoberto.y, ultimoCoberto.m, 36);
+        if (plus36.y > ref.y || (plus36.y === ref.y && plus36.m > ref.m)) return plus36;
+        return ref;
+    })();
+
+    // --- Simulação mês a mês ---
+    type Mes = {
+        ym: string; y: number; m: number;
+        conta: boolean;
+        vinculo: boolean;
+        beneficio: boolean;
+        statusQS: StatusQualidade;
     };
-  }
 
-  const allKeys = Array.from(haVinculo);
-  allKeys.sort();
-  const [y0, m0] = allKeys[0].split("-").map(Number);
-  const inicioGlobal = { y: y0, m: m0 };
+    const meses: Mes[] = [];
 
-  // Última competência com qualquer vínculo
-  const lastKey = allKeys[allKeys.length - 1];
-  const [yl, ml] = lastKey.split("-").map(Number);
-  const ultimoVinculo = { y: yl, m: ml };
+    let contHist = 0;
+    let contDesdePerda = 0;
+    let estoqueGraca = 0;
+    let tevePerda = false;
+    let dataPerdaMaisRecente: string | undefined;
 
-  // Vamos simular até o máx( referência, último vínculo + 36 meses )
-  const fimSimulacao = maxCompetencia(ref, addMonths(ultimoVinculo.y, ultimoVinculo.m, 36));
+    // Abrir graça somente quando cessa contribuição E não há vínculo/benefício (QS passará a depender só da graça)
+    const recomputaGraca = () => {
+        let base = 12;
+        if (habilitarGraça24Se120 && contHist >= 120) base = 24;
+        if (hasDesempregoComprovado()) base += 12;
+        return base;
+    };
 
-  // 3) Simulação mês a mês: status e perdas
-  type MesInfo = {
-    key: string; // yyyy-MM
-    contribui: boolean;    // conta para carência
-    temVinculo: boolean;   // houve vínculo/emprego no mês
-    status: StatusQualidade;
-  };
+    let prevConta = false;
 
-  let contHistoricoTotal = 0;     // total de competências contribuídas (histórico inteiro)
-  let contDesdeUltimaPerda = 0;   // competências contribuídas desde a última perda
-  let emGraçaAposCessar = 0;      // "estoque" de meses em graça após cessar contribuições
-  let emCicloSemQualidade = false;
-  let tevePerdaQualidade = false;
-  let dataPerdaMaisRecente: string | undefined;
+    for (const c of iterYM(inicioGlobal, fimSimulacao)) {
+        const ym = toYM(c.y, c.m);
+        const conta = contaCarencia.has(ym);
+        const vinc = temVinculo.has(ym);
+        const benef = ehBeneficio.has(ym);
 
-  const meses: MesInfo[] = [];
+        if (conta) { contHist++; contDesdePerda++; }
 
-  // Para carência na referência: precisamos identificar a última perda antes/até a referência
-  let ultimaPerdaAntesDaReferencia: string | undefined;
-
-  // Função auxiliar para recomputar estoque de graça quando cessar contribuição:
-  const recomputaGraca = (qtdContribDesdeUltimaPerda: number) => {
-    // Regra base: 12
-    let base = 12;
-    if (habilitarGraça24Se120 && contHistoricoTotal >= 120) base = 24;
-    if (hasDesempregoComprovado()) base += 12;
-    return base;
-  };
-
-  // Vamos varrer mês a mês
-  let anteriorContribuiu = false;
-  let estoqueGraça = 0;
-
-  for (const c of iterCompetencias(inicioGlobal, fimSimulacao)) {
-    const key = toCompetenciaStr(c.y, c.m);
-    const temVinculo = haVinculo.has(key);
-    const contribui = contribuiParaCarencia.has(key);
-
-    // Atualiza contadores quando há contribuição que conta
-    if (contribui) {
-      contHistoricoTotal++;
-      contDesdeUltimaPerda++;
-      anteriorContribuiu = true;
-      estoqueGraça = 0; // enquanto contribui, não “consome” graça
-    } else {
-      // se no mês passado contribuiu e agora não contribui, abrimos novo ciclo de graça
-      if (anteriorContribuiu) {
-        estoqueGraça = recomputaGraca(contDesdeUltimaPerda);
-        anteriorContribuiu = false;
-      }
-    }
-
-    let status: StatusQualidade;
-
-    if (contribui || temVinculo) {
-      // Critério prático para status "contribuindo": houve contribuição (carência) OU vínculo ativo
-      status = "contribuindo";
-      emCicloSemQualidade = false;
-    } else if (estoqueGraça > 0) {
-      status = "em_graca";
-      estoqueGraça -= 1;
-      emCicloSemQualidade = false;
-    } else {
-      // sem qualidade a partir daqui até nova contribuição
-      status = "sem_qualidade";
-      if (!emCicloSemQualidade) {
-        // marca início de uma perda
-        tevePerdaQualidade = true;
-        dataPerdaMaisRecente = dataPerdaMaisRecente ?? key;
-        // se esta perda ocorre antes/até a referência, guardamos
-        const refKey = toCompetenciaStr(ref.y, ref.m);
-        if (!ultimaPerdaAntesDaReferencia && key <= refKey) {
-          ultimaPerdaAntesDaReferencia = key;
+        // Abrir graça APENAS se parou de contribuir e também não há vínculo nem benefício no mês
+        if (prevConta && !conta && !vinc && !benef) {
+            estoqueGraca = recomputaGraca();
         }
-      }
-      emCicloSemQualidade = true;
-      // em ciclo sem qualidade: contribuições anteriores só voltarão a contar para carência
-      // depois que houver "mesesReaquisicaoCarenciaPosPerda" novas contribuições futuramente.
-      contDesdeUltimaPerda = 0;
+
+        let statusQS: StatusQualidade;
+        if (conta || vinc || benef) {
+            statusQS = "contribuindo";
+        } else if (estoqueGraca > 0) {
+            statusQS = "em_graca";
+            estoqueGraca -= 1;
+        } else {
+            statusQS = "sem_qualidade";
+            if (!tevePerda) dataPerdaMaisRecente = dataPerdaMaisRecente ?? ym;
+            tevePerda = true;
+            contDesdePerda = 0;
+        }
+
+        meses.push({ ym, y: c.y, m: c.m, conta, vinculo: vinc, beneficio: benef, statusQS });
+        prevConta = conta;
     }
 
-    meses.push({ key, contribui, temVinculo, status });
-  }
+    const refYM = toYM(ref.y, ref.m);
+    const mesRef = meses.find((x) => x.ym === refYM) ?? meses[meses.length - 1];
+    const statusNaReferencia = mesRef.statusQS;
+    const qualidadeNaReferencia = statusNaReferencia !== "sem_qualidade";
 
-  // 4) Agregar timeline por segmentos
-  const timeline: SegmentoQualidade[] = [];
-  let cur: SegmentoQualidade | null = null;
-  for (const m of meses) {
-    if (!cur) {
-      cur = { inicio: m.key, fim: m.key, status: m.status };
-      continue;
+    // --- Carência até referência (art. 27-A parametrizado) ---
+    const blocos: { inicioYM: string; fimYM: string; contribs: number }[] = [];
+    let contando = false, inicioBlocoYM = "", contribs = 0, ultimaPerdaAntesRef: string | undefined;
+
+    for (const m of meses) {
+        if (m.ym > refYM) break;
+        if (m.statusQS === "sem_qualidade") {
+            if (contando) { blocos.push({ inicioYM: inicioBlocoYM, fimYM: m.ym, contribs }); contando = false; contribs = 0; }
+            ultimaPerdaAntesRef = m.ym;
+            continue;
+        }
+        if (!contando) { contando = true; inicioBlocoYM = m.ym; contribs = 0; }
+        if (m.conta) contribs++;
     }
-    if (m.status === cur.status) {
-      cur.fim = m.key;
+    if (contando) blocos.push({ inicioYM: inicioBlocoYM, fimYM: refYM, contribs });
+
+    const blocoCorrente = blocos[blocos.length - 1] ?? { contribs: 0, inicioYM: refYM, fimYM: refYM };
+    const contribsCorrente = blocoCorrente.contribs;
+
+    let carenciaMesesConsiderados = contribsCorrente;
+    if (ultimaPerdaAntesRef) {
+        if (contribsCorrente >= mesesReaquisicaoCarenciaPosPerda) {
+            for (let i = 0; i < blocos.length - 1; i++) carenciaMesesConsiderados += blocos[i].contribs;
+        }
     } else {
-      timeline.push(cur);
-      cur = { inicio: m.key, fim: m.key, status: m.status };
+        for (let i = 0; i < blocos.length - 1; i++) carenciaMesesConsiderados += blocos[i].contribs;
     }
-  }
-  if (cur) timeline.push(cur);
 
-  // 5) Status e período de graça "vigente" na referência
-  const refKey = toCompetenciaStr(ref.y, ref.m);
-  const mesRef = meses.find((m) => m.key === refKey) ?? meses[meses.length - 1];
-  const statusNaReferencia = mesRef.status;
-  const qualidadeNaReferencia = statusNaReferencia !== "sem_qualidade";
+    const carenciaCumprida = isencaoCarencia ? true : carenciaMesesConsiderados >= carenciaExigida;
 
-  // encontro o segmento que contém a referência, para expor período de graça atual (se for o caso)
-  let periodoGracaAtual: ResultadoElegibilidade["periodoGracaAtual"] = undefined;
-  if (statusNaReferencia === "em_graca") {
-    const seg = timeline.find((s) => s.inicio <= refKey && s.fim >= refKey && s.status === "em_graca");
-    if (seg) {
-      // meses no segmento
-      let count = 0;
-      for (const c of iterCompetencias(
-        { y: Number(seg.inicio.slice(0, 4)), m: Number(seg.inicio.slice(5, 7)) },
-        { y: Number(seg.fim.slice(0, 4)), m: Number(seg.fim.slice(5, 7)) }
-      )) count++;
-      periodoGracaAtual = { inicio: seg.inicio, fim: seg.fim, meses: count };
-    }
-  }
-
-  // 6) Cálculo de carência até a referência com regra de perda/reaquisição (art. 27-A parametrizado)
-  //    Estratégia: dividimos em "blocos" separados por períodos "sem_qualidade".
-  //    O bloco corrente (que contém a referência) conta integralmente.
-  //    Os blocos anteriores só contam se, APÓS a última perda pré-referência,
-  //    houver >= mesesReaquisicaoCarenciaPosPerda contribuições (no bloco corrente).
-  const blocos: { inicio: string; fim: string; contribs: number }[] = [];
-  let contando = false;
-  let inicioBloco = "";
-  let contribsNoBloco = 0;
-
-  for (const m of meses) {
-    if (m.key > refKey) break;
-    const contaEsteMes = m.contribui; // só meses que contam para carência
-    if (m.status === "sem_qualidade") {
-      // fecha bloco se estava contando
-      if (contando) {
-        blocos.push({ inicio: inicioBloco, fim: m.key, contribs: contribsNoBloco });
-        contando = false;
-        contribsNoBloco = 0;
-      }
-      continue;
-    }
-    // em "contribuindo" ou "em_graca", mas apenas "contribui" soma carência
-    if (!contando) {
-      contando = true;
-      inicioBloco = m.key;
-      contribsNoBloco = 0;
-    }
-    if (contaEsteMes) contribsNoBloco++;
-  }
-  if (contando) {
-    blocos.push({ inicio: inicioBloco, fim: refKey, contribs: contribsNoBloco });
-  }
-
-  // Identifica o último bloco (corrente)
-  const blocoCorrente = blocos[blocos.length - 1] ?? { contribs: 0, inicio: refKey, fim: refKey };
-  const contribsCorrente = blocoCorrente.contribs;
-
-  // Se houve perda antes da referência, somar blocos anteriores depende de ter atingido o limiar de reaquisição no bloco corrente
-  let carenciaMesesConsiderados = contribsCorrente;
-  if (ultimaPerdaAntesDaReferencia) {
-    if (contribsCorrente >= mesesReaquisicaoCarenciaPosPerda) {
-      // reabilita blocos anteriores
-      for (let i = 0; i < blocos.length - 1; i++) carenciaMesesConsiderados += blocos[i].contribs;
+    // --- Overlay de Carência mês a mês (até fimSimulacao, para fechar segmentos) ---
+    const overlay: Record<string, CarenciaStatus> = {};
+    if (isencaoCarencia) {
+        for (const m of meses) overlay[m.ym] = "isenta";
     } else {
-      // não soma blocos anteriores
+        const ateRef = meses.filter(x => x.ym <= refYM);
+        const contribAntesDoCiclo = (inicioYM: string) =>
+            ateRef.filter(x => x.conta && x.ym < inicioYM).length;
+
+        let emCiclo = false;
+        let inicioCicloYM = "";
+        let houvePerdaAnterior = false;
+        let contribDesdePerda = 0;
+        let reab = false;
+
+        for (const m of ateRef) {
+            if (m.statusQS === "sem_qualidade") {
+                overlay[m.ym] = "nao_aplica";
+                houvePerdaAnterior = true;
+                emCiclo = false; inicioCicloYM = ""; contribDesdePerda = 0; reab = false;
+                continue;
+            }
+            if (!emCiclo) {
+                emCiclo = true;
+                inicioCicloYM = m.ym;
+                contribDesdePerda = 0;
+                reab = !houvePerdaAnterior; // 1º ciclo: reab=true
+            }
+            if (m.conta) contribDesdePerda++;
+            if (!reab && contribDesdePerda >= mesesReaquisicaoCarenciaPosPerda) reab = true;
+
+            const base = reab ? contribAntesDoCiclo(inicioCicloYM) : 0;
+            const carNoMes = base + contribDesdePerda;
+
+            if (m.statusQS === "contribuindo" || m.statusQS === "em_graca") {
+                overlay[m.ym] = carNoMes >= carenciaExigida ? "cumprida" : "em_formacao";
+            } else overlay[m.ym] = "nao_aplica";
+        }
+        for (const m of meses.filter(x => x.ym > refYM)) {
+            overlay[m.ym] = (m.statusQS === "sem_qualidade") ? "nao_aplica" : (carenciaCumprida ? "cumprida" : "em_formacao");
+        }
     }
-  } else {
-    // nunca perdeu qualidade: soma tudo
-    if (blocos.length > 1) {
-      for (let i = 0; i < blocos.length - 1; i++) carenciaMesesConsiderados += blocos[i].contribs;
+
+    // --- Função para derivar o "tipo" do mês ---
+    const tipoDoMes = (m: Mes): TipoIntervalo => {
+        if (m.statusQS === "sem_qualidade") return "Sem qualidade";
+        if (m.statusQS === "em_graca") return "Em graça";
+        // statusQS === "contribuindo"
+        if (m.beneficio) return "Benefício";
+        if (m.conta) return "Recolhimentos";
+        if (m.vinculo && !m.conta) return "Ativo sem carência";
+        return "Recolhimentos"; // fallback conservador
+    };
+
+    // --- Montagem da timeline (agregando por tipo + statusCarencia) ---
+    const timeline: TimelineSegmento[] = [];
+    let seg: TimelineSegmento | null = null;
+
+    const pushOrExtend = (m: Mes) => {
+        const tipo = tipoDoMes(m);
+        const sQS = m.statusQS;
+        const sCar = overlay[m.ym] ?? "nao_aplica";
+        const contrib = m.conta ? 1 : 0;
+
+        const sameKey = seg
+            && seg.tipo === tipo
+            && seg.statusQS === sQS
+            && seg.statusCarencia === sCar;
+
+        if (!sameKey) {
+            // fecha anterior
+            if (seg) timeline.push(seg);
+            // abre novo
+            const inicioYM = m.ym;
+            const fimYM = m.ym;
+
+            const { y, m: mm } = { y: m.y, m: m.m };
+            let inicioDMY = firstDMY(y, mm);
+            let fimDMY = lastDMY(y, mm);
+
+            if (tipo === "Benefício") {
+                const sd = beneficioStartDay.get(inicioYM) ?? 1;
+                const ed = beneficioEndDay.get(fimYM) ?? lastDayOfMonth(y, mm);
+                inicioDMY = `${pad2(sd)}/${pad2(mm)}/${y}`;
+                fimDMY = `${pad2(ed)}/${pad2(mm)}/${y}`;
+            }
+
+            seg = {
+                inicioYM, fimYM,
+                inicio: inicioDMY,
+                fim: fimDMY,
+                tipo, statusQS: sQS, statusCarencia: sCar,
+                mesesNoIntervalo: 1,
+                mesesContamCarencia: contrib,
+            };
+            return;
+        }
+
+        // estende
+        seg.fimYM = m.ym;
+        seg.mesesNoIntervalo += 1;
+        seg.mesesContamCarencia += contrib;
+
+        // ajustar datas com dia (bordas)
+        const { y, m: mm } = { y: m.y, m: m.m };
+        if (tipo === "Benefício") {
+            // início: manter o já calculado (do 1º mês); fim: pegar borda do último mês
+            const ed = beneficioEndDay.get(m.ym) ?? lastDayOfMonth(y, mm);
+            seg.fim = `${pad2(ed)}/${pad2(mm)}/${y}`;
+        } else {
+            // datas padrão (1º e último dia do mês)
+            seg.fim = lastDMY(y, mm);
+        }
+    };
+
+    for (const m of meses) pushOrExtend(m);
+    if (seg) timeline.push(seg);
+
+    // período de graça "atual" se a referência estiver dentro de um segmento Em graça
+    let periodoGracaAtual: ResultadoElegibilidade["periodoGracaAtual"] = undefined;
+    if (statusNaReferencia === "em_graca") {
+        const s = timeline.find(s => s.statusQS === "em_graca" && s.inicioYM <= refYM && s.fimYM >= refYM);
+        if (s) periodoGracaAtual = { inicio: s.inicioYM, fim: s.fimYM, meses: s.mesesNoIntervalo };
     }
-  }
 
-  // Isenção de carência anula exigência
-  const carenciaCumprida = isencaoCarencia ? true : carenciaMesesConsiderados >= carenciaExigida;
+    // Estatísticas
+    const totalCompetenciasContribuidas = Array.from(contaCarencia).length;
+    const totalCompetenciasDesdeUltimaPerda = blocoCorrente.contribs;
+    const tem120CompetenciasHistoricas = totalCompetenciasContribuidas >= 120;
 
-  // 7) Estatísticas auxiliares
-  const totalCompetenciasContribuidas = Array.from(contribuiParaCarencia).length;
+    return {
+        referencia: refYM,
+        qualidadeNaReferencia,
+        statusNaReferencia,
 
-  // contribuições desde a última perda (antes da referência)
-  let totalCompetenciasDesdeUltimaPerda = contribsCorrente;
-  if (!ultimaPerdaAntesDaReferencia) {
-    // nunca perdeu
-    totalCompetenciasDesdeUltimaPerda = carenciaMesesConsiderados;
-  }
+        carenciaMesesConsiderados,
+        carenciaExigida,
+        carenciaCumprida,
+        isencaoCarencia,
 
-  const tem120CompetenciasHistoricas = totalCompetenciasContribuidas >= 120;
+        tevePerdaQualidadeNoHistorico: tevePerda,
+        dataPerdaMaisRecente,
+        periodoGracaAtual,
 
-  return {
-    referencia: refKey,
-    qualidadeNaReferencia,
-    statusNaReferencia,
+        totalCompetenciasContribuidas,
+        totalCompetenciasDesdeUltimaPerda,
+        tem120CompetenciasHistoricas,
 
-    carenciaMesesConsiderados,
-    carenciaExigida,
-    carenciaCumprida,
-    isencaoCarencia,
-
-    tevePerdaQualidadeNoHistorico: tevePerdaQualidade,
-    dataPerdaMaisRecente: dataPerdaMaisRecente,
-    periodoGracaAtual,
-
-    totalCompetenciasContribuidas,
-    totalCompetenciasDesdeUltimaPerda,
-    tem120CompetenciasHistoricas,
-
-    timeline,
-  };
+        timeline,
+    };
 }
+
+// ===== Formatter (nova versão) =====
+interface FormatterOpts {
+    diaVencimento?: number;         // p/ "Manteve QS até", default 15
+    incluirAtivoSemCarencia?: boolean; // se true, imprime "Ativo sem carência"
+}
+
+export function formatarTimelineParaLaudo(
+    r: ResultadoElegibilidade,
+    opts: FormatterOpts = {}
+): string[] {
+    const { diaVencimento = 15, incluirAtivoSemCarencia = false } = opts;
+
+    const linhas: string[] = [];
+    let totalDesdeUltimaPerda = 0;
+    let contador = 0;
+
+    // helper: data dd/MM/yyyy do "15 do mês seguinte ao fim"
+    const manteveAte = (fimYM: string) => {
+        let [y, m] = fimYM.split("-").map(Number);
+        m += 1; if (m === 13) { m = 1; y += 1; }
+        return `${pad2(diaVencimento)}/${pad2(m)}/${y}`;
+    };
+
+    for (let i = 0; i < r.timeline.length; i++) {
+        const seg = r.timeline[i];
+
+        // Zera acumulado na perda (após um "Em graça" vem "Sem qualidade")
+        if (seg.tipo === "Sem qualidade") {
+            totalDesdeUltimaPerda = 0;
+            continue;
+        }
+
+        // Imprime apenas Recolhimentos / Benefício (e opcionalmente "Ativo sem carência")
+        const imprime =
+            seg.tipo === "Recolhimentos" ||
+            seg.tipo === "Benefício" ||
+            (incluirAtivoSemCarencia && seg.tipo === "Ativo sem carência");
+
+        if (imprime) {
+            contador++;
+
+            // "Contribuições": regra especial para Benefício (usa mesesNoIntervalo)
+            const contribs = seg.tipo === "Benefício"
+                ? seg.mesesNoIntervalo
+                : seg.mesesContamCarencia;
+
+            const palavra = contribs === 1 ? "Contribuição" : "Contribuições";
+
+            // Total acumulado desde a última perda:
+            if (seg.tipo === "Benefício") {
+                totalDesdeUltimaPerda += seg.mesesNoIntervalo;
+            } else if (seg.tipo === "Recolhimentos") {
+                totalDesdeUltimaPerda += seg.mesesContamCarencia;
+            } else if (seg.tipo === "Ativo sem carência") {
+                // por padrão, NÃO soma no total; mude aqui se quiser incluir:
+                // totalDesdeUltimaPerda += seg.mesesNoIntervalo;
+            }
+
+            linhas.push(
+                `${contador} – ${seg.inicio} a ${seg.fim} – ${seg.tipo} – ` +
+                `${contribs} ${palavra} - Total: ${totalDesdeUltimaPerda} sem perda QS.`
+            );
+
+            // Se o próximo segmento é "Em graça", imprime a linha de Período de Graça
+            const prox = r.timeline[i + 1];
+            if (prox && prox.tipo === "Em graça") {
+                const mesesGraca = prox.mesesNoIntervalo;
+                linhas.push(
+                    `** Perda da qualidade de segurado - Período de Graça: ${mesesGraca} ` +
+                    `meses / Manteve QS até: ${manteveAte(prox.fimYM)}.`
+                );
+            }
+        }
+    }
+
+    return linhas;
+}
+
+export function formatarTimelineParaLaudoAgrupado(
+    r: ResultadoElegibilidade,
+    opts: FormatterOpts = {}
+): string[] {
+    const { diaVencimento = 15, incluirAtivoSemCarencia = false } = opts;
+
+    const tl = r.timeline;
+    const linhas: string[] = [];
+    let totalDesdeUltimaPerda = 0;
+    let contador = 0;
+
+    const pad2 = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    const plural = (n: number, s: string, p: string) => (n === 1 ? s : p);
+
+    const manteveAte = (fimYM: string) => {
+        let [y, m] = fimYM.split("-").map(Number);
+        m += 1; if (m === 13) { m = 1; y += 1; }
+        return `${pad2(diaVencimento)}/${pad2(m)}/${y}`;
+    };
+
+    const add1MonthYM = (ym: string): string => {
+        let [y, m] = ym.split("-").map(Number);
+        ({ y, m } = ((): { y: number; m: number } => {
+            const d = new Date(y, m - 1, 1);
+            d.setMonth(d.getMonth() + 1);
+            return { y: d.getFullYear(), m: d.getMonth() + 1 };
+        })());
+        return `${y}-${pad2(m)}`;
+    };
+
+    // Decide se imprimimos um tipo específico
+    const aceitaTipo = (t: TipoIntervalo) =>
+        t === "Recolhimentos" || t === "Benefício" || (incluirAtivoSemCarencia && t === "Ativo sem carência");
+
+    for (let i = 0; i < tl.length; i++) {
+        const seg = tl[i];
+
+        // Reset de total ao entrar em "Sem qualidade"
+        if (seg.tipo === "Sem qualidade") {
+            totalDesdeUltimaPerda = 0;
+            continue;
+        }
+
+        // "Em graça" não vira linha própria; a notificação é anexada ao bloco anterior
+        if (seg.tipo === "Em graça") continue;
+
+        if (!aceitaTipo(seg.tipo)) {
+            // ignorar segmentos que não imprimimos
+            continue;
+        }
+
+        // Inicia um bloco agrupado
+        let blocoInicio = seg.inicio;
+        let blocoFim = seg.fim;
+        let blocoInicioYM = seg.inicioYM;
+        let blocoFimYM = seg.fimYM;
+        const blocoTipo = seg.tipo;
+        const blocoQS = seg.statusQS; // deve ser "contribuindo"
+        let viuCumprida = (seg.statusCarencia === "cumprida");
+
+        // contribuições do bloco
+        let contribsBloco = (blocoTipo === "Benefício")
+            ? seg.mesesNoIntervalo
+            : seg.mesesContamCarencia;
+
+        // Estende enquanto:
+        // - próximo é do mesmo tipo e statusQS,
+        // - mês é contíguo,
+        // - e a única diferença permitida é a troca "em_formacao" -> "cumprida".
+        let j = i + 1;
+        while (j < tl.length) {
+            const nxt = tl[j];
+
+            // Paradas naturais: fim, troca de tipo/QS, gap de meses, ou segmentos não-imprimíveis no meio
+            if (nxt.tipo === "Sem qualidade") break;
+            if (nxt.tipo === "Em graça") break; // não atravessa a graça
+            if (!aceitaTipo(nxt.tipo)) break;
+            if (nxt.tipo !== blocoTipo) break;
+            if (nxt.statusQS !== blocoQS) break;
+            if (nxt.inicioYM !== add1MonthYM(blocoFimYM)) break;
+
+            // Regra da carência dentro do bloco:
+            // - Pode permanecer igual;
+            // - Pode mudar de "em_formacao" -> "cumprida";
+            // - Não pode voltar de "cumprida" -> "em_formacao".
+            const car = nxt.statusCarencia;
+            if (car === "cumprida") {
+                viuCumprida = true;
+            } else if (car === "em_formacao") {
+                if (viuCumprida) break; // não permitir regressão
+            } else {
+                // "isenta" / "nao_aplica" quebram o bloco (não são só a troca em_formacao->cumprida)
+                break;
+            }
+
+            // Estende o bloco
+            blocoFim = nxt.fim;
+            blocoFimYM = nxt.fimYM;
+            contribsBloco += (blocoTipo === "Benefício")
+                ? nxt.mesesNoIntervalo
+                : nxt.mesesContamCarencia;
+
+            j++;
+        }
+
+        // Emite a linha do bloco
+        contador++;
+        const palavra = plural(contribsBloco, "Contribuição", "Contribuições");
+
+        // Atualiza Total desde a última perda
+        if (blocoTipo === "Recolhimentos") {
+            totalDesdeUltimaPerda += contribsBloco;
+        } else if (blocoTipo === "Benefício") {
+            totalDesdeUltimaPerda += contribsBloco; // segue seu exemplo
+        } else if (blocoTipo === "Ativo sem carência") {
+            // por padrão não soma; altere se quiser:
+            // totalDesdeUltimaPerda += (blocoMeses ?? 0);
+        }
+
+        linhas.push(
+            `${contador} – ${blocoInicio} a ${blocoFim} – ${blocoTipo} – ` +
+            `${contribsBloco} ${palavra} - Total: ${totalDesdeUltimaPerda} sem perda QS.`
+        );
+
+        // Se o primeiro segmento imediatamente após o bloco é "Em graça", imprime a linha de Período de Graça.
+        const prox = tl[j];
+        if (prox && prox.tipo === "Em graça") {
+            const mesesGraca = prox.mesesNoIntervalo;
+            linhas.push(
+                `** Perda da qualidade de segurado - Período de Graça: ${mesesGraca} ` +
+                `meses / Manteve QS até: ${manteveAte(prox.fimYM)}.`
+            );
+        }
+
+        // Pula os segmentos consumidos no bloco
+        i = j - 1;
+    }
+
+    return linhas;
+}
+
 
 const resultado = calcularBeneficioIncapacidade(json, {
-  referencia: "06/2025",             // DII ou DER (pode ser "dd/MM/yyyy" também)
-  carenciaExigida: 12,
-  isencaoCarencia: false,            // true em caso de acidente/doença do trabalho ou doença grave
-  mesesReaquisicaoCarenciaPosPerda: 6,
-  exigirPagamentoParaCI: true,
-  hasDesempregoComprovado: () => false, // plugue sua verificação (ex.: SINE/CAGED/CadÚnico)
-  habilitarGraça24Se120: true,
+    referencia: "06/2025",
+    carenciaExigida: 12,
+    isencaoCarencia: false,
+    mesesReaquisicaoCarenciaPosPerda: 6,
+    exigirPagamentoParaCI: true,
+    hasDesempregoComprovado: () => false,
+    habilitarGraça24Se120: true,
+    diaVencimentoContribuicao: 15,
 });
 
-console.log(resultado);
+console.log(resultado.timeline);
+
+// 2) Gerar laudo (linhas)
+const linhas = formatarTimelineParaLaudoAgrupado(resultado, {
+    diaVencimento: 15,
+    incluirAtivoSemCarencia: false,
+});
+
+console.log(linhas.join("\n"));
 
 
