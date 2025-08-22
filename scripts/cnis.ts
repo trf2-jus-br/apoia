@@ -71,6 +71,7 @@ interface TimelineSegmento {
     tipo: TipoIntervalo;
     statusQS: StatusQualidade;
     statusCarencia: CarenciaStatus;
+    naturezaVinculo?: NaturezaVinculo | string; // natureza predominante (ou BENEFICIO_INCAPACIDADE) no segmento
 
     mesesNoIntervalo: number;     // número de competências no segmento
     mesesContamCarencia: number;  // competências válidas p/ carência dentro do segmento
@@ -176,6 +177,11 @@ export function calcularBeneficioIncapacidade(
     // Mapas de dia para benefício (bordas reais por mês)
     const beneficioStartDay = new Map<string, number>(); // ym -> dia inicial no mês
     const beneficioEndDay = new Map<string, number>();   // ym -> dia final no mês
+    // Bordas para vínculos (não-benefício)
+    const vinculoStartDay = new Map<string, number>();
+    const vinculoEndDay = new Map<string, number>();
+    // Naturezas por mês
+    const naturezasPorMes = new Map<string, Set<NaturezaVinculo>>();
 
     // Indexação dos períodos
     for (const p of cnis.periodosContribuicao) {
@@ -205,6 +211,17 @@ export function calcularBeneficioIncapacidade(
             } else {
                 // vínculo "não-benefício"
                 temVinculo.add(ym);
+                // natureza para o mês
+                if (!naturezasPorMes.has(ym)) naturezasPorMes.set(ym, new Set());
+                naturezasPorMes.get(ym)!.add(p.naturezaVinculo as NaturezaVinculo);
+
+                // bordas por mês do vínculo (para refletir datas reais na timeline)
+                const firstMonth = (c.y === ini.y && c.m === ini.m);
+                const lastMonth = (c.y === fim.y && c.m === fim.m);
+                const sd = firstMonth ? iniDate.getDate() : 1;
+                const ed = lastMonth ? fimDate.getDate() : lastDayOfMonth(c.y, c.m);
+                vinculoStartDay.set(ym, Math.min(vinculoStartDay.get(ym) ?? sd, sd));
+                vinculoEndDay.set(ym, Math.max(vinculoEndDay.get(ym) ?? ed, ed));
 
                 if (!p.contarCarencia) continue;
 
@@ -268,6 +285,7 @@ export function calcularBeneficioIncapacidade(
         vinculo: boolean;
         beneficio: boolean;
         statusQS: StatusQualidade;
+    naturezaVinculo?: NaturezaVinculo | string;
     };
 
     const meses: Mes[] = [];
@@ -293,6 +311,15 @@ export function calcularBeneficioIncapacidade(
         const conta = contaCarencia.has(ym);
         const vinc = temVinculo.has(ym);
         const benef = ehBeneficio.has(ym);
+        let naturezaVinculo: string | undefined;
+        if (benef) naturezaVinculo = "BENEFICIO_INCAPACIDADE";
+        else if (vinc) {
+            const set = naturezasPorMes.get(ym);
+            if (set) {
+                if (set.size === 1) naturezaVinculo = Array.from(set)[0];
+                else naturezaVinculo = Array.from(set).sort().join(","); // múltiplas naturezas no mesmo mês
+            }
+        }
 
         if (conta) { contHist++; contDesdePerda++; }
 
@@ -314,7 +341,7 @@ export function calcularBeneficioIncapacidade(
             contDesdePerda = 0;
         }
 
-        meses.push({ ym, y: c.y, m: c.m, conta, vinculo: vinc, beneficio: benef, statusQS });
+    meses.push({ ym, y: c.y, m: c.m, conta, vinculo: vinc, beneficio: benef, statusQS, naturezaVinculo });
         prevConta = conta;
     }
 
@@ -416,11 +443,13 @@ export function calcularBeneficioIncapacidade(
         const sQS = m.statusQS;
         const sCar = overlay[m.ym] ?? "nao_aplica";
         const contrib = m.conta ? 1 : 0;
+        const natureza = m.naturezaVinculo; // pode ser undefined em graça / sem qualidade
 
         const sameKey = seg
             && seg.tipo === tipo
             && seg.statusQS === sQS
-            && seg.statusCarencia === sCar;
+            && seg.statusCarencia === sCar
+            && seg.naturezaVinculo === natureza; // quebra quando muda natureza
 
         if (!sameKey) {
             // fecha anterior
@@ -438,6 +467,12 @@ export function calcularBeneficioIncapacidade(
                 const ed = beneficioEndDay.get(fimYM) ?? lastDayOfMonth(y, mm);
                 inicioDMY = `${pad2(sd)}/${pad2(mm)}/${y}`;
                 fimDMY = `${pad2(ed)}/${pad2(mm)}/${y}`;
+            } else if (tipo === "Recolhimentos" || tipo === "Ativo sem carência") {
+                // usar bordas reais do(s) vínculo(s) no mês
+                const sd = vinculoStartDay.get(inicioYM) ?? 1;
+                const ed = vinculoEndDay.get(fimYM) ?? lastDayOfMonth(y, mm);
+                inicioDMY = `${pad2(sd)}/${pad2(mm)}/${y}`;
+                fimDMY = `${pad2(ed)}/${pad2(mm)}/${y}`;
             }
 
             seg = {
@@ -445,6 +480,7 @@ export function calcularBeneficioIncapacidade(
                 inicio: inicioDMY,
                 fim: fimDMY,
                 tipo, statusQS: sQS, statusCarencia: sCar,
+                naturezaVinculo: natureza,
                 mesesNoIntervalo: 1,
                 mesesContamCarencia: contrib,
             };
@@ -453,8 +489,8 @@ export function calcularBeneficioIncapacidade(
 
         // estende
         seg.fimYM = m.ym;
-        seg.mesesNoIntervalo += 1;
-        seg.mesesContamCarencia += contrib;
+    seg.mesesNoIntervalo += 1;
+    seg.mesesContamCarencia += contrib;
 
         // ajustar datas com dia (bordas)
         const { y, m: mm } = { y: m.y, m: m.m };
@@ -463,8 +499,13 @@ export function calcularBeneficioIncapacidade(
             const ed = beneficioEndDay.get(m.ym) ?? lastDayOfMonth(y, mm);
             seg.fim = `${pad2(ed)}/${pad2(mm)}/${y}`;
         } else {
-            // datas padrão (1º e último dia do mês)
-            seg.fim = lastDMY(y, mm);
+            if (tipo === "Recolhimentos" || tipo === "Ativo sem carência") {
+                const ed = vinculoEndDay.get(m.ym) ?? lastDayOfMonth(y, mm);
+                seg.fim = `${pad2(ed)}/${pad2(mm)}/${y}`;
+            } else {
+                // datas padrão (1º e último dia do mês)
+                seg.fim = lastDMY(y, mm);
+            }
         }
     };
 
@@ -725,6 +766,147 @@ export function formatarTimelineParaLaudoAgrupado(
 }
 
 
+// ===== Tabela Markdown da Timeline =====
+interface MarkdownDetalhadoOpts {
+    diaVencimento?: number;             // default 15
+    incluirAtivoSemCarencia?: boolean;  // default false
+    incluirSemQualidade?: boolean;      // default true (para ver perdas explícitas)
+}
+
+// Novo formato solicitado: Natureza | Início | Fim | Contribuições | Meses | Tipo | DataPerda
+export function gerarMarkdownTimelineDetalhado(
+    r: ResultadoElegibilidade,
+    opts: MarkdownDetalhadoOpts = {}
+): string {
+    const {
+        diaVencimento = 15,
+        incluirAtivoSemCarencia = false,
+        incluirSemQualidade = true // manter opção, mas agora não gera linha; apenas influencia perda se começar em Sem qualidade
+    } = opts;
+
+    const addMes = (ym: string) => {
+        let [y, m] = ym.split('-').map(Number);
+        m += 1; if (m === 13) { m = 1; y += 1; }
+        return `${y}-${pad2(m)}`;
+    };
+    const manteveAte = (fimYM: string) => {
+        const nxt = addMes(fimYM);
+        const [y, m] = nxt.split('-').map(Number);
+        return `${pad2(diaVencimento)}/${pad2(m)}/${y}`;
+    };
+    const addOneDay = (d: string) => {
+        const [dd, mm, yyyy] = d.split('/').map(Number);
+        const dt = new Date(yyyy, mm - 1, dd + 1);
+        return `${pad2(dt.getDate())}/${pad2(dt.getMonth() + 1)}/${dt.getFullYear()}`;
+    };
+
+    type Linha = {
+        Natureza: string;
+        Inicio: string;
+        Fim: string;
+        Contribuicoes: string;
+        Meses: string;
+        Tipo: string;
+        CarenciaAte: string;
+        DataLimiteQS: string;
+        PerdeuQS: string;
+    };
+
+    const linhas: Linha[] = [];
+    const tl = r.timeline;
+    // Controle de contribuições acumuladas para cálculo linha a linha
+    const carenciaExigida = r.carenciaExigida;
+    let contribAcumulada = 0; // soma de competências válidas antes da linha
+
+    for (let i = 0; i < tl.length; i++) {
+        const seg = tl[i];
+        if (seg.tipo === 'Em graça' || seg.tipo === 'Sem qualidade') continue; // não gerar linha própria
+        if (seg.tipo === 'Ativo sem carência' && !incluirAtivoSemCarencia) continue;
+
+        // Contribuições conforme regras anteriores
+        let contrib = 0;
+        if (seg.tipo === 'Recolhimentos') contrib = seg.mesesContamCarencia;
+        else if (seg.tipo === 'Benefício') contrib = seg.mesesNoIntervalo;
+
+        // Procurar sequência de graça imediatamente após o segmento
+        let j = i + 1;
+        let ultimoGraca: TimelineSegmento | undefined;
+        while (j < tl.length && tl[j].tipo === 'Em graça') {
+            ultimoGraca = tl[j];
+            j++;
+        }
+        const proxDepoisGraca = tl[j];
+
+        let dataLimiteQS = '';
+        let perdeu = 'Não';
+        if (ultimoGraca) {
+            dataLimiteQS = manteveAte(ultimoGraca.fimYM);
+            if (proxDepoisGraca && proxDepoisGraca.tipo === 'Sem qualidade') {
+                // Perda ocorre no dia seguinte à data limite
+                perdeu = 'Sim';
+                // Mantemos dataLimiteQS como requerido; perda sinalizada pela coluna
+            }
+        } else {
+            // Sem bloco de graça: se em seguida vem Sem qualidade direto (caso raro)
+            if (tl[i + 1] && tl[i + 1].tipo === 'Sem qualidade') {
+                // Não há graça, perda no dia seguinte ao fim do segmento
+                const [dd, mm, yyyy] = seg.fim.split('/').map(Number);
+                const dt = new Date(yyyy, mm - 1, dd + 1);
+                dataLimiteQS = seg.fim; // manteve até o fim do próprio segmento
+                perdeu = 'Sim';
+            }
+        }
+
+        const natureza = seg.naturezaVinculo ? String(seg.naturezaVinculo) : '-';
+
+        // CarenciaAte: se ainda não cumpriu antes do início do segmento e este segmento inclui a competência que completa.
+        let carenciaAte = '';
+        if (seg.tipo === 'Recolhimentos') {
+            if (contribAcumulada < carenciaExigida) {
+                const faltam = carenciaExigida - contribAcumulada;
+                if (faltam <= seg.mesesContamCarencia) {
+                    // A carência se cumpre dentro deste segmento
+                    // Calcular o YM da competência onde completa: adicionar (faltam-1) meses ao inicioYM
+                    let [y, m] = seg.inicioYM.split('-').map(Number);
+                    let add = faltam - 1;
+                    while (add > 0) { m++; if (m === 13) { m = 1; y++; } add--; }
+                    const lastDay = new Date(y, m, 0).getDate();
+                    carenciaAte = `${pad2(lastDay)}/${pad2(m)}/${y}`;
+                }
+            }
+            // Atualiza acumulado após processar a linha
+            contribAcumulada += seg.mesesContamCarencia;
+            if (contribAcumulada > carenciaExigida) contribAcumulada = carenciaExigida;
+        }
+
+        linhas.push({
+            Natureza: natureza,
+            Inicio: seg.inicio,
+            Fim: seg.fim,
+            Contribuicoes: String(contrib),
+            Meses: String(seg.mesesNoIntervalo),
+            Tipo: seg.tipo,
+            CarenciaAte: carenciaAte,
+            DataLimiteQS: dataLimiteQS,
+            PerdeuQS: perdeu === 'Sim' ? 'Sim' : '',
+        });
+    }
+
+    const headers: (keyof Linha)[] = ['Natureza', 'Inicio', 'Fim', 'Contribuicoes', 'Meses', 'Tipo', 'CarenciaAte', 'DataLimiteQS', 'PerdeuQS'];
+    const widths: Record<keyof Linha, number> = {
+        Natureza: 8, Inicio: 5, Fim: 3, Contribuicoes: 14, Meses: 5, Tipo: 4, CarenciaAte: 11, DataLimiteQS: 12, PerdeuQS: 8,
+    };
+    for (const h of headers) {
+        for (const l of linhas) widths[h] = Math.max(widths[h], l[h].length, h.length);
+    }
+    const pad = (s: string, w: number) => s + ' '.repeat(w - s.length);
+    const headerLine = '| ' + headers.map(h => pad(h, widths[h])).join(' | ') + ' |';
+    const sepLine = '| ' + headers.map(h => '-'.repeat(widths[h])).join(' | ') + ' |';
+    const body = linhas.map(l => '| ' + headers.map(h => pad(l[h], widths[h])).join(' | ') + ' |');
+    return [headerLine, sepLine, ...body].join('\n');
+}
+
+
 const resultado = calcularBeneficioIncapacidade(json, {
     referencia: "06/2025",
     carenciaExigida: 12,
@@ -736,14 +918,8 @@ const resultado = calcularBeneficioIncapacidade(json, {
     diaVencimentoContribuicao: 15,
 });
 
-console.log(resultado.timeline);
-
-// 2) Gerar laudo (linhas)
-const linhas = formatarTimelineParaLaudoAgrupado(resultado, {
-    diaVencimento: 15,
-    incluirAtivoSemCarencia: false,
-});
-
-console.log(linhas.join("\n"));
+// Apenas tabela Markdown detalhada
+const tabelaDetalhada = gerarMarkdownTimelineDetalhado(resultado, { diaVencimento: 15, incluirAtivoSemCarencia: false, incluirSemQualidade: true });
+console.log(tabelaDetalhada);
 
 
