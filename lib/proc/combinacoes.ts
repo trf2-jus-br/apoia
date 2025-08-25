@@ -55,6 +55,7 @@ export enum P {
     CHAT = 'Chat',
     RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL = 'Relatório de Processo Coletivo ou Criminal',
     MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS = 'Minuta de Despacho de Acordo 9 dias',
+    PREV_APESP_PONTOS_CONTROVERTIDOS = 'Relatório de Pontos Controvertidos APESP',
     PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
@@ -89,6 +90,7 @@ export const ProdutosValidos = {
     [P.CHAT]: { titulo: P.CHAT, prompt: 'chat', plugins: [] },
     [P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL]: { titulo: P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL, prompt: 'relatorio-de-processo-coletivo-ou-criminal', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
     [P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS]: { titulo: P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS, prompt: 'minuta-de-despacho-de-acordo-9-dias', plugins: [] },
+    [P.PREV_APESP_PONTOS_CONTROVERTIDOS]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS, prompt: 'prev-apesp-pontos-controvertidos', plugins: [] },
     [P.PREV_BI_ANALISE_DE_LAUDO]: { titulo: P.PREV_BI_ANALISE_DE_LAUDO, prompt: 'prev-bi-analise-de-laudo', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
@@ -292,6 +294,14 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Relatório de Acervo',
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.RESUMO]
+    },
+
+    PREV_APESP_PONTOS_CONTROVERTIDOS: {
+        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        sort: 1000,
+        nome: 'Relatório de Pontos Controvertidos APESP',
+        padroes: padroesBasicosPrimeiraInstancia,
+        produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS, P.CHAT]
     },
 
     PREV_BI_ANALISE_DE_LAUDO: {
