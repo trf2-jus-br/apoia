@@ -77,7 +77,7 @@ export const promptExecuteBuilder = (definition: PromptDefinitionType, data: Pro
     prompt = fixPromptForAutoJson(prompt)
 
     if (prompt && !definition.jsonSchema) {
-        definition.jsonSchema = promptJsonSchemaFromPromptMarkdown(prompt)
+        definition.jsonSchema = promptJsonSchemaFromPromptMarkdown(prompt, true)
     }
 
     const promptContent: string = applyTextsAndVariables(prompt, data, definition.jsonSchema, definition.template)

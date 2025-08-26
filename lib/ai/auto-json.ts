@@ -5,12 +5,13 @@ export const INFORMATION_EXTRACTION_TITLE = '## Instruções para o Preenchiment
 
 // Tipo para representar as variáveis do prompt
 export type PromptVariableType = {
-    separatorName?: string // Nome do separador, se houver
-    name: string
-    label?: string
-    type: 'object' | 'string' | 'number' | 'boolean' | 'date' | 'string-long'
+    separatorName?: string // Nome do separador (usado apenas no flatten e somente na primeira variável de um grupo)
+    name: string // nome sanitizado (sem [] )
+    label?: string // rótulo original (pode conter [])
+    type: 'object' | 'array-object' | 'string' | 'number' | 'boolean' | 'date' | 'string-long'
     description: string
-    properties?: PromptVariableType[]
+    properties?: PromptVariableType[] // filhos (object) ou definição de item (array-object)
+    headingLevel: number // nível do heading (3..6)
 }
 
 export const isInformationExtractionPrompt = (prompt: string): boolean => {
@@ -20,97 +21,209 @@ export const isInformationExtractionPrompt = (prompt: string): boolean => {
 
 // Função para extrair a estrutura de variáveis do markdown
 export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType[] | undefined => {
-    // Primeiro, tenta o formato padrão com instruções JSON
-    const jsonInstructionsRegex = new RegExp(`^${INFORMATION_EXTRACTION_TITLE}\\s*$`, 'gms');
-    const jsonParts = md.split(jsonInstructionsRegex)
+    const jsonInstructionsRegex = new RegExp(`^${INFORMATION_EXTRACTION_TITLE}\\s*$`, 'gms')
+    const parts = md.split(jsonInstructionsRegex)
+    if (parts.length < 2) return undefined
 
-    if (jsonParts.length < 2) return undefined
+    // Pega bloco após o título até antes do próximo heading de nível 1 ou 2
+    let instructionsMd = parts[1]
+    const endRegex = /(^##?\s+.+$)/gms
+    const split = instructionsMd.split(endRegex)
+    instructionsMd = split[0]
 
-    // Formato padrão com instruções JSON
-    let instructionsMd = jsonParts[1]
+    const lines = instructionsMd.split(/\r?\n/)
 
-    // Find the end of the JSON instructions
-    const endRegex = /(?:^##? .+\s*)$/gms;
-    const endParts = instructionsMd.split(endRegex)
-    instructionsMd = endParts[0]
+    const headingRegex = /^(?<hashes>#{3,6})\s+(?<name>[^#].*?)\s*(?:\s+-\s+(?<label>[^\s].*[^\s]))?\s*$/
+    
 
-    const typeFromName = (name: string): 'object' | 'string' | 'number' | 'boolean' | 'date' | 'string-long' => {
+    const roots: PromptVariableType[] = []
+    const stack: PromptVariableType[] = []
+
+    const typeFromName = (name: string): 'string' | 'number' | 'boolean' | 'date' | 'string-long' => {
         if (/^Dt[A-Z0-9_]/.test(name)) return 'date'
         if (/^Ev[A-Z0-9_]/.test(name)) return 'string'
         if (/^Nr[A-Z0-9_]/.test(name)) return 'number'
         if (/^Lo[A-Z0-9_]/.test(name)) return 'boolean'
         if (/^Tx[A-Z0-9_]/.test(name)) return 'string'
         if (/^Tg[A-Z0-9_]/.test(name)) return 'string-long'
-        if (name.toLowerCase().includes('texto') || name.toLowerCase().includes('resumo') || name.toLowerCase().includes('conclusão')) return 'string-long'
+        const lower = name.toLowerCase()
+        if (lower.includes('texto') || lower.includes('resumo') || lower.includes('conclusão')) return 'string-long'
         return 'string'
     }
 
-    // Read every line of the JSON instructions. If it is a level 3 header, add it to the variables, if it is a level 5 header, add it to the properties of the last variable
-    const lines = instructionsMd.split('\n')
-    const variables: PromptVariableType[] = []
-    let currentVariable: PromptVariableType | null = null
+    const allNodes: PromptVariableType[] = []
 
-    for (const line of lines) {
-        // console.log(`Parsing line: ${line}`)
-        const level3Header = line.match(/^(###\s+)(?<name>[^\s].+)\s*$/)
-        const level6Header = line.match(/^(###### )(?<name>[^\s]+)(?:\s+-\s+(?<label>[^\s].*[^\s]))?\s*$/)
-        const description = line.match(/^(?!#{1,6}\s)[^\s].*$/)
+    let lastNode: PromptVariableType | undefined
 
-        if (level3Header) {
-            const label = level3Header.groups.name
-            const name = fixVariableName(label) // Garante que o nome não exceda 64 caracteres
-            currentVariable = {
-                name,
-                label,
-                type: 'object',
-                description: ''
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        const headingMatch = line.match(headingRegex)
+        if (headingMatch) {
+            const hashes = headingMatch.groups.hashes
+            const rawName = headingMatch.groups.name.trim() // parte antes de " - descrição"
+            const level = hashes.length
+            const rawHasArray = /\[\]$/.test(rawName)
+            if (level === 6 && rawHasArray) {
+                throw new Error(`Heading nível 6 não pode ser array: ${rawName}`)
             }
-            variables.push(currentVariable)
-        } else if (level6Header && currentVariable) {
-            const name = level6Header.groups.name
-            const fixedName = fixVariableName(name) // Garante que o nome não exceda 64 caracteres
-            if (name !== fixedName) {
-                throw new Error(`Nome da variável "${name}" é inválido, tente substituir por "${fixedName}".`)
-            }
-            const label = level6Header.groups.label || name
-            if (!currentVariable.properties) currentVariable.properties = []
-            currentVariable.properties.push({
+            const isArray = rawHasArray && level <= 5
+            const baseName = rawName.replace(/\[\]$/, '')
+            const name = fixVariableName(baseName)
+            const displayLabel = headingMatch.groups.label || (isArray ? baseName : baseName)
+            const node: PromptVariableType = {
                 name,
-                label,
-                type: typeFromName(name),
-                description: ''
-            })
-            currentVariable.type = 'object' // Se tem propriedades, é um objeto
-        } else if (description && currentVariable) {
-            // Captura a descrição da variável atual
-            if (!currentVariable.description && line.trim()) {
-                currentVariable.description = line.trim()
+                label: displayLabel,
+                type: isArray ? 'array-object' : 'object',
+                description: '',
+                properties: [],
+                headingLevel: level
+            }
+
+            // Empilha
+            while (stack.length && stack[stack.length - 1].headingLevel >= level) {
+                stack.pop()
+            }
+            if (stack.length === 0) {
+                roots.push(node)
+            } else {
+                const parent = stack[stack.length - 1]
+                parent.properties = parent.properties || []
+                parent.properties.push(node)
+            }
+            stack.push(node)
+            allNodes.push(node)
+            lastNode = node
+        } else if (line.trim() && !/^#{1,6}\s/.test(line)) {
+            // Descrição: primeira linha não-heading para o último node sem descrição
+            if (lastNode && !lastNode.description) {
+                lastNode.description = line.trim()
             }
         }
     }
 
-    // Garante que todas as variáveis tenham pelo menos o nome como descrição
-    variables.forEach(variable => {
-        if (!variable.description) {
-            variable.description = variable.name
-        }
-    })
+    // Ajusta tipos (field vs object) e validações
+    const errors: string[] = []
 
-    return variables
+    const visit = (node: PromptVariableType) => {
+        if (node.type === 'array-object') {
+            if (!node.properties || node.properties.length === 0) {
+                errors.push(`Array "${node.label}" não possui filhos.`)
+            }
+        } else {
+            // Diferenciar field de object
+            if (node.properties && node.properties.length > 0) {
+                // Se tem filhos e não era array, permanece 'object'
+                node.type = 'object'
+            } else {
+                // Field
+                node.type = typeFromName(node.name)
+                delete node.properties
+            }
+        }
+        if (node.headingLevel === 6) {
+            if (node.type === 'object' || node.type === 'array-object') {
+                errors.push(`Heading nível 6 deve ser variável primitiva: ${node.label}`)
+            }
+        }
+            if (node.properties) {
+            // Verifica duplicados no mesmo nível
+            const seen = new Set<string>()
+            for (const child of node.properties) {
+                if (seen.has(child.name)) {
+                    errors.push(`Nome duplicado "${child.name}" em "${node.label}".`)
+                }
+                seen.add(child.name)
+            }
+            node.properties.forEach(visit)
+        }
+        if (!node.description) node.description = node.name
+    }
+
+    roots.forEach(visit)
+
+    if (errors.length) {
+        throw new Error(errors.join('\n'))
+    }
+
+    return roots
 }
 
-export const flatternPromptVariables = (variables: PromptVariableType[]): PromptVariableType[] => {
+// Flatten avançado:
+// - Remove objetos (object) expondo fields e arrays (array-object) descendentes.
+// - Arrays têm suas propriedades internas normalizadas: objetos internos são "abertos" (suas propriedades sobem)
+//   apenas para exibição; campos primitivos permanecem; arrays aninhados permanecem.
+// - separatorName atribuído somente ao primeiro item (field ou array) de cada caminho de objetos (caminho = labels dos objetos ancestrais).
+// - Fields ou arrays diretamente na raiz não recebem separatorName.
+export const flatternPromptVariables = (variables: PromptVariableType[] | undefined): PromptVariableType[] => {
     if (!variables || variables.length === 0) return []
 
-    const flattern = variables.flatMap(variable => {
-        if (variable.type === 'object' && variable.properties && variable.properties.length > 0) {
-            variable.properties[0].separatorName = variable.label
-            return Object.values(variable.properties)
-        }
-        return variable
+    const result: PromptVariableType[] = []
+    const firstEmittedForPath = new Set<string>()
+
+    const pathKey = (objPath: string[]) => objPath.join(' > ')
+
+    const cloneShallow = (v: PromptVariableType): PromptVariableType => ({
+        name: v.name,
+        label: v.label,
+        type: v.type,
+        description: v.description,
+        headingLevel: v.headingLevel,
+        properties: v.properties ? [...v.properties] : undefined
     })
-    // console.log(`Flattened variables: ${JSON.stringify(flattern, null, 2)}`)
-    return flattern
+
+    const flattenArrayProperties = (arrNode: PromptVariableType): PromptVariableType[] => {
+        if (!arrNode.properties) return []
+        const collected: PromptVariableType[] = []
+        const dfs = (nodes: PromptVariableType[]) => {
+            for (const n of nodes) {
+                if (n.type === 'object' && n.properties) {
+                    dfs(n.properties)
+                } else if (n.type === 'array-object') {
+                    // Recursivamente normaliza arrays aninhados
+                    const cloned = cloneShallow(n)
+                    cloned.properties = flattenArrayProperties(n)
+                    collected.push(cloned)
+                } else if (n.type !== 'object') { // field
+                    collected.push(cloneShallow(n))
+                }
+            }
+        }
+        dfs(arrNode.properties)
+        return collected
+    }
+
+    const walk = (nodes: PromptVariableType[], objectPathLabels: string[]) => {
+        for (const node of nodes) {
+            if (node.type === 'array-object') {
+                const cloned = cloneShallow(node)
+                // Normaliza propriedades internas para exibição
+                cloned.properties = flattenArrayProperties(node)
+                const path = pathKey(objectPathLabels)
+                if (path && !firstEmittedForPath.has(path)) {
+                    cloned.separatorName = path
+                    firstEmittedForPath.add(path)
+                }
+                result.push(cloned)
+                // NÃO desce além — arrays não expandem seus filhos como variáveis individuais
+            } else if (node.type === 'object') {
+                // Desce, acumulando caminho
+                walk(node.properties || [], [...objectPathLabels, node.label || node.name])
+            } else { // field
+                const path = pathKey(objectPathLabels)
+                const cloned = cloneShallow(node)
+                if (path && !firstEmittedForPath.has(path)) {
+                    cloned.separatorName = path
+                    firstEmittedForPath.add(path)
+                }
+                result.push(cloned)
+            }
+        }
+    }
+
+    walk(variables, [])
+
+    // console.log('Flattened variables:', JSON.stringify(result, null, 2))
+    return result
 }
 
 const mapTypeToJsonSchema = (type: string): string => {
@@ -123,51 +236,57 @@ const mapTypeToJsonSchema = (type: string): string => {
     return type // For other types, return as is
 }
 
-export const promptJsonSchemaFromPromptMarkdown = (md: string): string | undefined => {
-    let variables = flatternPromptVariables(parsePromptVariablesFromMarkdown(md))
+export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean = false): string | undefined => {
+    let roots = parsePromptVariablesFromMarkdown(md)
+    if (flatten) {
+        roots = flatternPromptVariables(roots)
+    }
+    if (!roots || roots.length === 0) return undefined
 
-    if (!variables || variables.length === 0) return undefined
-
-    // Converte as variáveis para o formato do JSON Schema
-    const properties: Record<string, any> = {}
-    for (const variable of variables) {
-        const variableSchema: any = { type: mapTypeToJsonSchema(variable.type) }
-        if (variable.properties && Object.keys(variable.properties).length > 0) {
-            variableSchema.properties = {}
-            for (const [propName, prop] of Object.entries(variable.properties)) {
-                variableSchema.properties[propName] = {
-                    type: mapTypeToJsonSchema(prop.type),
-                    description: prop.description
+    const nodeToSchema = (node: PromptVariableType): any => {
+        if (node.type === 'array-object') {
+            // items é um objeto que contém as propriedades diretas do array
+            const itemsObj: any = { type: 'object', properties: {}, additionalProperties: false }
+            if (node.properties) {
+                for (const child of node.properties) {
+                    itemsObj.properties[child.name] = nodeToSchema(child)
                 }
+                const req = Object.keys(itemsObj.properties)
+                if (req.length) itemsObj.required = req
             }
+            const arrSchema: any = { type: 'array', items: itemsObj, description: node.description }
+            return arrSchema
         }
-        properties[variable.name] = variableSchema
+        if (node.type === 'object') {
+            const obj: any = { type: 'object', properties: {}, additionalProperties: false, description: node.description }
+            if (node.properties) {
+                for (const child of node.properties) {
+                    obj.properties[child.name] = nodeToSchema(child)
+                }
+                const req = Object.keys(obj.properties)
+                if (req.length) obj.required = req
+            }
+            return obj
+        }
+        // field
+        return { type: mapTypeToJsonSchema(node.type), description: node.description }
     }
 
-    const schema = {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "type": "object",
-        "additionalProperties": false,
-        "properties": properties
+    const properties: Record<string, any> = {}
+    for (const root of roots) {
+        properties[root.name] = nodeToSchema(root)
     }
 
-    const addRequiredFields = (obj: any) => {
-        if (obj.type === 'object' && obj.properties) {
-            const requiredProperties = Object.keys(obj.properties);
-            if (requiredProperties.length > 0) {
-                obj.required = requiredProperties
-            }
-            obj.additionalProperties = false
-            for (const key in obj.properties) {
-                addRequiredFields(obj.properties[key]);
-            }
-        }
-    };
-
-    addRequiredFields(schema);
+    const schema: any = {
+        $schema: 'http://json-schema.org/draft-04/schema#',
+        type: 'object',
+        additionalProperties: false,
+        properties
+    }
+    const rootReq = Object.keys(properties)
+    if (rootReq.length) schema.required = rootReq
 
     const json = JSON.stringify(schema, null, 2)
-    // console.log(`JSON Schema gerado: ${json}`)
     return json
 }
 

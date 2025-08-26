@@ -103,7 +103,8 @@
             "<rootDir>"
         ],
         "moduleNameMapper": {
-            "^@/(.*)$": "<rootDir>/$1"
+            "^@/(.*)$": "<rootDir>/$1",
+            "\\.(md)$": "<rootDir>/txtTransformer.js"
         },
         "transform": {
             "\\.txt$": "<rootDir>/txtTransformer.js"

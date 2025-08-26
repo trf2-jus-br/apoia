@@ -64,6 +64,30 @@ const Variable: React.FC<{ variable: PromptVariableType; index: number, Frm: For
     </>
 }
 
+const Array: React.FC<{ variable: PromptVariableType; index: number, Frm: FormHelper, variableName: string }> = ({ variable, index, Frm, variableName }) => {
+    const a = Frm.get(`${variableName}.${variable.name}`)
+    console.log('length:', `${variableName}.${variable.name}`, a?.length)
+    // console.log(`Array: variableName=${variableName}, a=${JSON.stringify(a)}`)
+    return <>
+        {variable.label && <div className="col-12"><h4 className={`${index ? 'mt-3' : 'mt-0'} mb-1`}>{variable.label.replace(/_/g, ' ')}</h4></div>}
+        {a?.length &&
+            a.map((_: any, index: number) => (
+                <div className="col col-12">
+                    <div className="row">
+                        <div className="col col-auto">{index + 1}.</div>
+                        <div className="col">
+                            <div className="row">
+                                {variable.properties.map((property, index2) => (
+                                    <Variable key={index2} variable={property} index={index2} Frm={Frm} variableName={`${variableName}.${variable.name}[${index}]`} />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+    </>
+}
+
 export const InformationExtractionForm: React.FC<PromptFormProps> = ({ promptMarkdown, promptFormat, Frm, variableName }) => {
     const variables = flatternPromptVariables(parsePromptVariablesFromMarkdown(promptMarkdown))
     // if (!variables || variables.length === 0) return null
@@ -94,7 +118,9 @@ export const InformationExtractionForm: React.FC<PromptFormProps> = ({ promptMar
         <div className="alert alert-warning">
             <div className="row">
                 {variables.map((variable, index) => (
-                    <Variable key={index} variable={variable} index={index} Frm={Frm} variableName={variableName} />
+                    variable.type === 'array-object'
+                        ? <Array key={index} variable={variable} index={index} Frm={Frm} variableName={variableName} />
+                        : <Variable key={index} variable={variable} index={index} Frm={Frm} variableName={variableName} />
                 ))}
             </div>
         </div>

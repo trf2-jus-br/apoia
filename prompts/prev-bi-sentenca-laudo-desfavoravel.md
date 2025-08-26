@@ -52,7 +52,7 @@ Este objeto reflete informações constantes nos documentos petição inicial e 
 
 ###### Tg_Resumo_Inicial - Resumo da Petição Inicial
 - O resumo deve: 
-  - começar obrigatoriamente com: "Trata-se de ação previdenciária, por meio da qual a parte autora pretende a condenação do INSS a” completando a frase com os pedidos (ex: concessão / restabelecimento do benefício de auxílio por incapacidade temporária e sua conversão em aposentadora por invalidez permanente). Também devem ser citados eventuais pedidos de acréscimo de 25% e/ou dano moral. 
+  - começar obrigatoriamente com: "Trata-se de ação previdenciária, por meio da qual a parte autora pretende a condenação do INSS a" completando a frase com os pedidos (ex: concessão / restabelecimento do benefício de auxílio por incapacidade temporária e sua conversão em aposentadora por invalidez permanente). Também devem ser citados eventuais pedidos de acréscimo de 25% e/ou dano moral. 
   - mencionar, se presentes, o número do benefício (NB) no formato nnn.nnn.nnn-n e a data de início dos atrasados pretendidos (no caso de restabelecimento, geralmente a DCB, e, no caso de concessão, geralmente a DER).
   - indicar os principais fundamentos, mas sem mencionar nominalmente as patologias, evitando reproduzir linguagem estigmatizante ou sensacionalista.
 - Se não houver petição inicial, deixe o campo em branco.
@@ -117,7 +117,7 @@ REGRAS:
 - Justifique a resposta fornecida 2 campos acima.
 
 ###### Lo_Impug_Respostas_Superficiais
-- Diversos quesitos no laudo pericial apresentam respostas do tipo “sim” / “não”, superficiais, ou muito breves, sem aprofundamento ou sem fundamentação adequada
+- Diversos quesitos no laudo pericial apresentam respostas do tipo "sim" / "não", superficiais, ou muito breves, sem aprofundamento ou sem fundamentação adequada
 
 ###### Tx_Impug_Respostas_Superficiais_Duvida
 - Se houver alguma dúvida em relação à reposta fornecida no campo acima, informe ela aqui. Caso o contrário, deixe em branco.
@@ -229,14 +229,14 @@ O requerente necessita de cirurgia, o que demonstra a gravidade da doença e a n
 - Não há necessidade de incluir a data da perícia ou o número do evento.
 - Atenha-se ao caso concreto. Para isso, analise o laudo pericial que está entre os marcadores <laudo> e </laudo>. Se houver laudo complementar pericial, ele deve ser incorporado à fundamentação com a premissa de que se trata de esclarecimentos, correção ou complementação do laudo pericial original. 
 - Considerando que será mantido o texto original da sentença, não replique, no trecho a ser incluído, o que já está nos fundamentos do texto original.
-- Evite mencionar a(s) patologia(s) e CID(s) citada(s) no laudo pericial e/ou laudo complementar. Prefira referências como “patologia(s) da parte autora” ou qualquer termo que evite nominar as doenças. Admite-se menção às patologias de forma direta quando elas não forem estigmatizantes e sua menção seja importante para a fundamentação que está sendo construída.
+- Evite mencionar a(s) patologia(s) e CID(s) citada(s) no laudo pericial e/ou laudo complementar. Prefira referências como "patologia(s) da parte autora" ou qualquer termo que evite nominar as doenças. Admite-se menção às patologias de forma direta quando elas não forem estigmatizantes e sua menção seja importante para a fundamentação que está sendo construída.
 - Evite transcrição de trechos do laudo pericial. Procure ressaltar o que é mais importante com as próprias palavras.
 - Devem ser incluídas apenas informações referentes à análise pericial realizada, descartando-se referência bibliográficas, ou explicações genéricas sobre as patologias, a menos que sejam fundamentais para a compreensão da conclusão a que o laudo chegou.
 - A fundamentação a ser inserida deve possuir mais de 100 e menos de 300 palavras, a depender da quantidade de informações sobre os exames realizados durante a perícia, ou considerações específicas sobre o caso concreto, podendo-se admitir até 500 palavras nos casos mais complexos (em que o laudo traga muita informação específica sobre a análise pericial realizada).
 - Devem ser usados os elementos de informação que contribuam para a fundamentação no sentido da inexistência de incapacidade, podendo ser combinados quaisquer dos segmentos do laudo: história clínica, anamnese, exame físico ou de estado mental, conclusão, etc. 
 - Poderá ser mencionado algo que conste na impugnação com vistas a gerar um contraponto. Ex: Embora a impugnação mencione... resta claro, pelo que consta no laudo, que...
 - Atenha-se primordialmente à análise dos elementos fáticos para gerar o(s) acréscimo(s) de fundamentação. A inclusão de argumentos jurídicos só é permitida se o texto original da sentença não tratar (nem mesmo genericamente) alguma questão jurídica levantada na impugnação.
-- Evite expressões como “detalhada”, “minuciosa”, “detida”, “criteriosa”, “de forma completa” e suas variações, para se referir ao laudo pericial, trabalho do perito, ou ao exame pericial. A força dos argumentos, em seu conjunto, deve prevalecer sobre a força isolada das palavras. 
+- Evite expressões como "detalhada", "minuciosa", "detida", "criteriosa", "de forma completa" e suas variações, para se referir ao laudo pericial, trabalho do perito, ou ao exame pericial. A força dos argumentos, em seu conjunto, deve prevalecer sobre a força isolada das palavras. 
 - A escolha entre inserir um único trecho abrangente de fundamentação ou inserir trechos menores em diferentes pontos do texto original deve ser feita com base no critério de melhor fluidez redacional, a fim de manter a coesão e a naturalidade da sentença.
 
 
@@ -307,7 +307,7 @@ O requerimento de maiores esclarecimentos através de novos quesitos, não se ju
 {% call condicao(Lo_Impug_Especialidade_Perito, Tx_Impug_Especialidade_Perito_Duvida) -%}
 Em que pese a irresignação quanto à ausência de especialidade médica do perito na área relativa à patologia da parte autora, não foi verificada qualquer contradição nas respostas ofertadas pelo mesmo.
 
-Vale dizer que a jurisprudência da Turma Nacional de Uniformização é no sentido que “a realização de perícia por médico especialista só é necessária em casos especialíssimos e maior complexidade, como, por exemplo, no caso de doença rara”. (PEDILEF nºs 200972500071996, 200872510048413, 200872510018627 e 200872510031462).
+Vale dizer que a jurisprudência da Turma Nacional de Uniformização é no sentido que "a realização de perícia por médico especialista só é necessária em casos especialíssimos e maior complexidade, como, por exemplo, no caso de doença rara". (PEDILEF nºs 200972500071996, 200872510048413, 200872510018627 e 200872510031462).
 
 Deve-se salientar que o auxiliar do juízo está devidamente cadastrado nos sistemas da Justiça Federal e é plenamente capaz de realizar perícias no que concerne à possibilidade de retorno ao labor. Caso houvesse alguma dúvida quanto à emissão de um parecer conclusivo, certamente o próprio expert teria mencionado.
 
