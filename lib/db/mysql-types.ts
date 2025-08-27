@@ -353,4 +353,20 @@ export type IAUsageReportRow = {
     last_generation_at: Date | null
     generations_count: number
     approximate_cost_sum: number
+    user_cpf?: string | null
+}
+
+export type IAUsageDetailRow = {
+    id: number
+    dossier_code: string | null
+    user_id: number | null
+    username: string | null
+    user_name: string | null
+    user_cpf: string | null
+    created_at: Date | null
+    generation: string | null
+    prompt_payload: string | null
+    approximate_cost: number | null
+    model?: string | null
+    prompt?: string | null
 }
