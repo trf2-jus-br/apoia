@@ -1,6 +1,6 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments, faShieldAlt } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
@@ -53,11 +53,11 @@ export default async function HomePage() {
             color: "text-secondary"
         },
         {
-            icon: faShieldAlt,
-            title: "Auditoria",
-            description: "Gere um relatório de auditoria sobre o uso da IA",
+            icon: faDollar,
+            title: "Relatório de Uso de IA",
+            description: "Informe-se sobre o uso da IA e custos associados",
             href: "/report/ai-usage",
-            color: "text-dark"
+            color: "text-success"
         },
     ]
 

@@ -1019,9 +1019,9 @@ export class Dao {
      * @param endDate Data final (inclusive) no formato YYYY-MM-DD
      * @param groupBy 'process' | 'user'
      */
-    static async retrieveIAUsageReport(params: { cpfs?: string[], startDate?: string, endDate?: string, groupBy: 'process' | 'user' }): Promise<mysqlTypes.IAUsageReportRow[]> {
+    static async retrieveIAUsageReport(params: { processes?: string[], cpfs?: string[], startDate?: string, endDate?: string, groupBy: 'process' | 'user' }): Promise<mysqlTypes.IAUsageReportRow[]> {
         if (!knex) return []
-        const { cpfs, startDate, endDate, groupBy } = params
+        const { processes, cpfs, startDate, endDate, groupBy } = params
         const g = knex('ia_generation as g')
             .leftJoin('ia_dossier as d', 'd.id', 'g.dossier_id')
             .leftJoin('ia_user as u', 'u.id', 'g.created_by')
@@ -1039,6 +1039,9 @@ export class Dao {
             )
             .whereNotNull('g.dossier_id')
 
+        if (processes && processes.length > 0) {
+            g.whereIn('d.code', processes)
+        }
         if (cpfs && cpfs.length > 0) {
             g.whereIn('u.cpf', cpfs.map(c => c.trim()))
         }
@@ -1057,7 +1060,9 @@ export class Dao {
             g.orderBy('u.name').orderBy('d.code')
         }
 
+        // console.log('SQL:', g.toQuery())
         const rows: any[] = await g
+
         return rows.map(r => ({
             user_id: r.user_id ? Number(r.user_id) : null,
             username: r.username ?? null,

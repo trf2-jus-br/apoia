@@ -11,9 +11,10 @@ function formatDate(dt?: Date | null) {
     return dayjs(dt).format('DD/MM/YYYY HH:mm')
 }
 
-interface Props { usdBrl?: number | null }
+interface Props { usdBrl?: number | null, isModerator: boolean }
 
-export default function IAUsageReportClient({ usdBrl }: Props) {
+export default function IAUsageReportClient({ usdBrl, isModerator }: Props) {
+    const [processInput, setProcessInput] = useState('')
     const [cpfInput, setCpfInput] = useState('')
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
@@ -27,6 +28,7 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
         if (rows.length) setRows([])
     }, [cpfInput, startDate, endDate, groupBy])
 
+    const processes = useMemo(() => processInput.split(',').map(p => p.trim()).filter(Boolean), [processInput])
     const cpfs = useMemo(() => cpfInput.split(',').map(c => c.replace(/\D/g, '').trim()).filter(Boolean), [cpfInput])
     const noCpfsProvided = cpfs.length === 0
     const effectiveGroupBy = useMemo<'process' | 'user'>(() => (groupBy === 'user' && noCpfsProvided) ? 'process' : groupBy, [groupBy, noCpfsProvided])
@@ -39,7 +41,7 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
             const res = await fetch('/api/v1/report/ai-usage', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cpfs, startDate, endDate, groupBy })
+                body: JSON.stringify({ processes, cpfs, startDate, endDate, groupBy })
             })
             if (!res.ok) throw new Error(await res.text())
             const data = await res.json()
@@ -97,12 +99,29 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
             </div>
             <Form onSubmit={load} className="mb-3 d-print-none">
                 <Row className="g-3 align-items-end">
-                    <Col sm={12} md={4} >
-                        <Form.Group controlId="cpfs">
-                            <Form.Label>CPFs</Form.Label>
-                            <Form.Control placeholder="CPFs separados por vírgula (opcional)" value={cpfInput} onChange={e => setCpfInput(e.target.value)} />
+                    <Col sm={12} md={6} >
+                        <Form.Group controlId="processos">
+                            <Form.Label>Processos</Form.Label>
+                            <Form.Control placeholder="Processos separados por vírgula (opcional)" value={processInput} onChange={e => setProcessInput(e.target.value)} />
                         </Form.Group>
                     </Col>
+                    {isModerator && <>
+                        <Col sm={12} md={6} >
+                            <Form.Group controlId="cpfs">
+                                <Form.Label>CPFs</Form.Label>
+                                <Form.Control placeholder="CPFs separados por vírgula (opcional)" value={cpfInput} onChange={e => setCpfInput(e.target.value)} />
+                            </Form.Group>
+                        </Col>
+                        <Col xs={6} md={2}>
+                            <Form.Group controlId="groupBy">
+                                <Form.Label>Agrupar por</Form.Label>
+                                <Form.Select value={groupBy} onChange={e => setGroupBy(e.target.value as any)}>
+                                    <option value='process'>Processo</option>
+                                    <option value='user'>Usuário</option>
+                                </Form.Select>
+                            </Form.Group>
+                        </Col></>
+                    }
                     <Col sm={6} md={2}>
                         <Form.Group controlId="startDate">
                             <Form.Label>Data Início</Form.Label>
@@ -115,88 +134,83 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
                             <Form.Control type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
                         </Form.Group>
                     </Col>
-                    <Col xs={6} md={2}>
-                        <Form.Group controlId="groupBy">
-                            <Form.Label>Agrupar por</Form.Label>
-                            <Form.Select value={groupBy} onChange={e => setGroupBy(e.target.value as any)}>
-                                <option value='process'>Processo</option>
-                                <option value='user'>Usuário</option>
-                            </Form.Select>
-                        </Form.Group>
-                    </Col>
-                    <Col xs={6} md={3} lg={2} className="d-grid">
-                        <Button type="submit" variant="primary" disabled={loading}>{loading && <Spinner size="sm" className="me-2" />}Consultar</Button>
+                    <Col xs={6} md={2} className="d-grid">
+                        <Button type="submit" variant="primary" disabled={loading}>{loading ? <Spinner size="sm" className="me-2" /> : 'Consultar'}</Button>
                     </Col>
                 </Row>
             </Form>
             {error && <div className="alert alert-danger py-2">{error}</div>}
-            <div className="table-responsive">
-                <Table striped hover size="sm" className="align-middle">
-                    <thead className="table-light">
-                        <tr>
-                            {effectiveGroupBy === 'process' && <th>Processo</th>}
-                            {effectiveGroupBy === 'user' && <th>Usuário</th>}
-                            {/* segunda coluna (eixo cruzado) somente se não for modo usuário único sem CPFs */}
-                            {!(noCpfsProvided && groupBy === 'user') && (
-                                effectiveGroupBy === 'process' ? (!noCpfsProvided && <th>Usuário</th>) : <th>Processo</th>
-                            )}
-                            <th>Primeiro Uso</th>
-                            <th>Último Uso</th>
-                            <th className="text-end">Usos</th>
-                            <th className="text-end">Consumo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {groups.map(group => {
-                            const first = group.rows[0]
-                            const groupValue = effectiveGroupBy === 'process' ? first.dossier_code : (maiusculasEMinusculas(first.user_name) || first.username)
-                            const showOtherAxis = !(noCpfsProvided && groupBy === 'user') && (effectiveGroupBy === 'user' || !noCpfsProvided)
-                            const otherAxisFirst = effectiveGroupBy === 'process' ? (maiusculasEMinusculas(first.user_name) || first.username) : first.dossier_code
-                            const subtotalColSpan = (showOtherAxis ? 1 : 0) + 2 // (other axis?) + Primeiro + Último
-                            return (
-                                <React.Fragment key={group.key || 'blank'}>
-                                    <tr>
-                                        <td rowSpan={group.rowSpan}>{groupValue}</td>
-                                        {showOtherAxis && <td>{otherAxisFirst}</td>}
-                                        <td>{formatDate(first.first_generation_at)}</td>
-                                        <td>{formatDate(first.last_generation_at)}</td>
-                                        <td className="text-end">{first.generations_count}</td>
-                                        <td className="text-end">{usdBrl ? formatterBRL.format(first.approximate_cost_sum * usdBrl) : '-'}</td>
-                                    </tr>
-                                    {group.rows.slice(1).map((r, idx) => (
-                                        <tr key={(group.key || 'blank') + '-' + idx}>
-                                            {showOtherAxis && <td>{effectiveGroupBy === 'process' ? (maiusculasEMinusculas(r.user_name) || r.username) : r.dossier_code}</td>}
-                                            <td>{formatDate(r.first_generation_at)}</td>
-                                            <td>{formatDate(r.last_generation_at)}</td>
-                                            <td className="text-end">{r.generations_count}</td>
-                                            <td className="text-end">{usdBrl ? formatterBRL.format(r.approximate_cost_sum * usdBrl) : '-'}</td>
+            {rows?.length > 0 && <>
+                <div className="table-responsive">
+                    <Table striped hover size="sm" className="align-middle">
+                        <thead className="table-light">
+                            <tr>
+                                {effectiveGroupBy === 'process' && <th>Processo</th>}
+                                {effectiveGroupBy === 'user' && <th>Usuário</th>}
+                                {/* segunda coluna (eixo cruzado) somente se não for modo usuário único sem CPFs */}
+                                {!(noCpfsProvided && groupBy === 'user') && (
+                                    effectiveGroupBy === 'process' ? (!noCpfsProvided && <th>Usuário</th>) : <th>Processo</th>
+                                )}
+                                <th>Primeiro Uso</th>
+                                <th>Último Uso</th>
+                                <th className="text-end">Usos</th>
+                                <th className="text-end">Consumo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {groups.map(group => {
+                                const first = group.rows[0]
+                                const groupValue = effectiveGroupBy === 'process' ? first.dossier_code : (maiusculasEMinusculas(first.user_name) || first.username)
+                                const showOtherAxis = !(noCpfsProvided && groupBy === 'user') && (effectiveGroupBy === 'user' || !noCpfsProvided)
+                                const otherAxisFirst = effectiveGroupBy === 'process' ? (maiusculasEMinusculas(first.user_name) || first.username) : first.dossier_code
+                                const subtotalColSpan = (showOtherAxis ? 1 : 0) + 2 // (other axis?) + Primeiro + Último
+                                return (
+                                    <React.Fragment key={group.key || 'blank'}>
+                                        <tr>
+                                            <td rowSpan={group.rowSpan}>{groupValue}</td>
+                                            {showOtherAxis && <td>{otherAxisFirst}</td>}
+                                            <td>{formatDate(first.first_generation_at)}</td>
+                                            <td>{formatDate(first.last_generation_at)}</td>
+                                            <td className="text-end">{first.generations_count}</td>
+                                            <td className="text-end">{usdBrl ? formatterBRL.format(first.approximate_cost_sum * usdBrl) : '-'}</td>
                                         </tr>
-                                    ))}
-                                    {group.hasSubtotal && (
-                                        <tr className="table-warning fw-semibold">
-                                            <td colSpan={subtotalColSpan}>{effectiveGroupBy === 'process' ? 'Subtotal do Processo' : 'Subtotal do Usuário'}</td>
-                                            <td className="text-end">{group.totals.generations_count}</td>
-                                            <td className="text-end">{usdBrl ? formatterBRL.format(group.totals.approximate_cost_sum * usdBrl) : '-'}</td>
-                                        </tr>
-                                    )}
-                                </React.Fragment>
-                            )
-                        })}
-                        {rows.length === 0 && !loading && (() => { const totalCols = 1 + ( (effectiveGroupBy === 'user' || !noCpfsProvided) ? 1 : 0 ) + 2 + 2; return <tr><td colSpan={totalCols} className="text-center text-muted">Nenhum dado</td></tr> })()}
-                    </tbody>
-                    <tfoot>
-                        {(() => { const showOtherAxis = !(noCpfsProvided && groupBy === 'user') && (effectiveGroupBy === 'user' || !noCpfsProvided); const footerColSpan = 1 + (showOtherAxis ? 1 : 0) + 2; return (
-                        <tr className="table-secondary fw-semibold">
-                            <td colSpan={footerColSpan}>Total Geral</td>
-                            <td className="text-end">{grandTotals.generations}</td>
-                            <td className="text-end">{usdBrl ? formatterBRL.format(grandTotalsBRL.cost) : '-'}</td>
-                        </tr>) })()}
-                    </tfoot>
-                </Table>
-            </div>
-            <div className="mb-2 small text-muted">
-                {usdBrl ? <>Cotação usada: 1 USD = {formatterBRL.format(usdBrl)} (PTAX)</> : 'Cotação indisponível'}
-            </div>
+                                        {group.rows.slice(1).map((r, idx) => (
+                                            <tr key={(group.key || 'blank') + '-' + idx}>
+                                                {showOtherAxis && <td>{effectiveGroupBy === 'process' ? (maiusculasEMinusculas(r.user_name) || r.username) : r.dossier_code}</td>}
+                                                <td>{formatDate(r.first_generation_at)}</td>
+                                                <td>{formatDate(r.last_generation_at)}</td>
+                                                <td className="text-end">{r.generations_count}</td>
+                                                <td className="text-end">{usdBrl ? formatterBRL.format(r.approximate_cost_sum * usdBrl) : '-'}</td>
+                                            </tr>
+                                        ))}
+                                        {group.hasSubtotal && (
+                                            <tr className="table-warning fw-semibold">
+                                                <td colSpan={subtotalColSpan}>{effectiveGroupBy === 'process' ? 'Subtotal do Processo' : 'Subtotal do Usuário'}</td>
+                                                <td className="text-end">{group.totals.generations_count}</td>
+                                                <td className="text-end">{usdBrl ? formatterBRL.format(group.totals.approximate_cost_sum * usdBrl) : '-'}</td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                )
+                            })}
+                            {rows.length === 0 && !loading && (() => { const totalCols = 1 + ((effectiveGroupBy === 'user' || !noCpfsProvided) ? 1 : 0) + 2 + 2; return <tr><td colSpan={totalCols} className="text-center text-muted">Nenhum dado</td></tr> })()}
+                        </tbody>
+                        <tfoot>
+                            {(() => {
+                                const showOtherAxis = !(noCpfsProvided && groupBy === 'user') && (effectiveGroupBy === 'user' || !noCpfsProvided); const footerColSpan = 1 + (showOtherAxis ? 1 : 0) + 2; return (
+                                    <tr className="table-secondary fw-semibold">
+                                        <td colSpan={footerColSpan}>Total Geral</td>
+                                        <td className="text-end">{grandTotals.generations}</td>
+                                        <td className="text-end">{usdBrl ? formatterBRL.format(grandTotalsBRL.cost) : '-'}</td>
+                                    </tr>)
+                            })()}
+                        </tfoot>
+                    </Table>
+                </div>
+                <div className="mb-2 small text-muted">
+                    {usdBrl ? <>Cotação usada: 1 USD = {formatterBRL.format(usdBrl)} (PTAX)</> : 'Cotação indisponível'}
+                </div></>
+            }
         </Container>
     )
 }
