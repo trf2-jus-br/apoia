@@ -2,7 +2,7 @@
 
 // Direct API access without dependencies
 import { config } from 'dotenv';
-import json from './cnis.json'
+// import json from './cnis.json'
 
 // Load environment variables
 config({ path: '.env.local' });
