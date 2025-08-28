@@ -111,3 +111,8 @@ export type GeneratedContent = {
     peca?: T,
 }
 
+export type PromptAdditionalInformationType = {
+    dossierCode?: string,
+    documentId?: string
+}
+

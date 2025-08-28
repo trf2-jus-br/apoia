@@ -1,10 +1,10 @@
 'use server'
 
 import { streamText, StreamTextResult, LanguageModel, streamObject, StreamObjectResult, DeepPartial, ModelMessage, generateText, ToolSet, stepCountIs } from 'ai'
-import { IAGenerated } from '../db/mysql-types'
+import { IAGenerated, IAGeneration } from '../db/mysql-types'
 import { Dao } from '../db/mysql'
-import { assertCourtId, assertCurrentUser } from '../user'
-import { PromptDataType, PromptDefinitionType, PromptExecutionResultsType, PromptOptionsType, TextoType } from '@/lib/ai/prompt-types'
+import { assertCourtId, assertCurrentUser, assertSystemCode, UserType } from '../user'
+import { PromptAdditionalInformationType, PromptDataType, PromptDefinitionType, PromptExecutionResultsType, PromptOptionsType, TextoType } from '@/lib/ai/prompt-types'
 import { promptExecuteBuilder, waitForTexts } from './prompt'
 import { calcSha256 } from '../utils/hash'
 import { envString } from '../utils/env'
@@ -13,6 +13,7 @@ import { getModel } from './model-server'
 import { modelCalcUsage } from './model-types'
 import { cookies } from 'next/headers';
 import { clipPieces } from './clip-pieces'
+import { assert } from 'console'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await Dao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -20,10 +21,23 @@ export async function retrieveFromCache(sha256: string, model: string, prompt: s
     return undefined
 }
 
-export async function saveToCache(sha256: string, model: string, prompt: string, generated: string, attempt: number | null): Promise<number | undefined> {
-    const inserted = await Dao.insertIAGeneration({ sha256, model, prompt, generation: generated, attempt })
+async function saveToCache(data: IAGeneration): Promise<number | undefined> {
+    const inserted = await Dao.insertIAGeneration(data)
     if (!inserted) return undefined
     return inserted.id
+}
+
+async function saveLog(user: UserType, additionalInformation: PromptAdditionalInformationType, model: string, usage, sha256: string, kind: string, text: string, attempt: number, messages: ModelMessage[]) {
+    const system_id = await Dao.assertSystemId(await assertSystemCode(user))
+    const dossier_id = additionalInformation?.dossierCode ? (await Dao.assertIADossierId(additionalInformation.dossierCode, system_id, undefined, undefined)) : null
+    const calculedUsage = modelCalcUsage(model, usage.inputTokens || 0 + usage.cachedInputTokens || 0, usage.reasoningTokens || 0 + usage.outputTokens || 0)
+    const generationId = await saveToCache({
+        sha256, model, prompt: kind, generation: text, attempt: attempt || null,
+        prompt_payload: JSON.stringify(messages), dossier_id, document_id: null,
+        cached_input_tokens: usage.cachedInputTokens || 0, input_tokens: usage.inputTokens || 0, output_tokens: usage.outputTokens || 0, reasoning_tokens: usage.reasoningTokens || 0,
+        approximate_cost: calculedUsage.approximate_cost
+    })
+    return generationId
 }
 
 // write response to a file for debugging
@@ -73,8 +87,7 @@ export async function writeUsage(usage, model: string, user_id: number | undefin
     if (user_id && court_id)
         await Dao.addToIAUserDailyUsage(user_id, court_id, calculedUsage.input_tokens, calculedUsage.output_tokens, calculedUsage.approximate_cost)
 }
-
-export async function streamContent(definition: PromptDefinitionType, data: PromptDataType, results?: PromptExecutionResultsType):
+export async function streamContent(definition: PromptDefinitionType, data: PromptDataType, results?: PromptExecutionResultsType, additionalInformation?: PromptAdditionalInformationType):
     Promise<StreamTextResult<ToolSet, Partial<any>> | StreamObjectResult<DeepPartial<any>, any, never> | string> {
     // const user = await getCurrentUser()
     // if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
@@ -116,10 +129,10 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     // writeResponseToFile(definition, messages, "antes de executar")
     // if (1 == 1) throw new Error('Interrupted')
 
-    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, results, attempt, apiKeyFromEnv)
+    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, additionalInformation, results, attempt, apiKeyFromEnv)
 }
 
-export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>):
+export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>):
     Promise<StreamTextResult<ToolSet, Partial<any>> | StreamObjectResult<DeepPartial<any>, any, never> | string> {
     const pUser = assertCurrentUser()
     const user = await pUser
@@ -161,7 +174,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                 if (apiKeyFromEnv)
                     writeUsage(usage, model, user_id, court_id)
                 if (cacheControl !== false) {
-                    const generationId = await saveToCache(sha256, model, kind, text, attempt || null)
+                    const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, messages)
                     if (results) results.generationId = generationId
                 }
                 writeResponseToFile(kind, messages, text)
@@ -185,7 +198,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                 if (apiKeyFromEnv)
                     writeUsage(usage, model, user_id, court_id)
                 if (cacheControl !== false) {
-                    const generationId = await saveToCache(sha256, model, kind, JSON.stringify(object), attempt || null)
+                    const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, JSON.stringify(object), attempt, messages)
                     if (results) results.generationId = generationId
                 }
                 writeResponseToFile(kind, messages, JSON.stringify(object))

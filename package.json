@@ -8,7 +8,6 @@
         "start": "cross-env DOTENV_CONFIG_QUIET=true next start -p 8081",
         "lint": "next lint",
         "knex": "ts-node -P tsconfig.knex.json node_modules/knex/bin/cli.js",
-        "migrate:pg": "cross-env DB_CLIENT=pg npm run knex -- migrate:latest",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"
@@ -45,6 +44,7 @@
         "axios": "^1.11.0",
         "bootstrap": "^5.3.7",
         "cryptr": "^6.3.0",
+        "dayjs": "^1.11.13",
         "diff-htmls": "^0.0.1",
         "diff-match-patch": "^1.0.5",
         "eureka-js-client": "^4.5.0",

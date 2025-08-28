@@ -8,7 +8,7 @@ import { calcSha256 } from "@/lib/utils/hash"
 import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
 import { Button } from "react-bootstrap"
 
-export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, Frm }: { pedidos: any[], request: GeneratedContent, Frm: FormHelper }) => {
+export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, Frm, dossierCode }: { pedidos: any[], request: GeneratedContent, Frm: FormHelper, dossierCode: string }) => {
     const tiposDeLiminar = [
         { id: 'NAO', name: 'Não' },
         { id: 'SIM', name: 'Sim' },
@@ -74,7 +74,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, Frm }: { 
                 </div>
             </div>
             <h2>Sentença</h2>
-            <AiContent definition={prompt} data={data} key={`prompt: 'sentenca', data: ${calcSha256(data)}`} />
+            <AiContent definition={prompt} data={data} key={`prompt: 'sentenca', data: ${calcSha256(data)}`} dossierCode={dossierCode} />
         </>
     }
 

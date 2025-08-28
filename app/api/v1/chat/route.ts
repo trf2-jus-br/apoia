@@ -61,6 +61,7 @@ export async function POST(req: Request) {
         modelRef,
         convertToModelMessages(messages),
         '', // sha256
+        {}, // additionalInformation
         {}, // results
         null, // attempt
         apiKeyFromEnv,

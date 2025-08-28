@@ -32,7 +32,7 @@ export const spinner = (s: string, complete: boolean): string => {
     return s
 }
 
-export default function AiContent(params: { definition: PromptDefinitionType, data: PromptDataType, options?: PromptOptionsType, config?: PromptConfigType, visualization?: VisualizationEnum, diffSource?: string, onBusy?: () => void, onReady?: (content: ContentType) => void }) {
+export default function AiContent(params: { definition: PromptDefinitionType, data: PromptDataType, options?: PromptOptionsType, config?: PromptConfigType, visualization?: VisualizationEnum, dossierCode: string, diffSource?: string, onBusy?: () => void, onReady?: (content: ContentType) => void }) {
     const [current, setCurrent] = useState('')
     const [complete, setComplete] = useState(false)
     const [errormsg, setErrormsg] = useState('')
@@ -61,7 +61,8 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
             cacheControl: params.options?.cacheControl,
             modelSlug: params.config?.model_slug,
             promptSlug: params.config?.prompt_slug,
-            extra: params.config?.extra
+            extra: params.config?.extra,
+            dossierCode: params.dossierCode,
         }
 
         if (params.onBusy) params.onBusy()

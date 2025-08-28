@@ -1,16 +1,9 @@
 'use client'
 
-import { Suspense, useState } from 'react'
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
-import { ResumoDePecaLoading } from '@/components/loading'
-import { calcSha256 } from '@/lib/utils/hash'
-import { ContentType, GeneratedContent, PromptDefinitionType } from '@/lib/ai/prompt-types'
-import AiContent from '@/components/ai-content'
-import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support'
-import { P } from '@/lib/proc/combinacoes'
-import Chat from '../../components/slots/chat'
+import { GeneratedContent, PromptDefinitionType } from '@/lib/ai/prompt-types'
+import { FormHelper } from '@/lib/ui/form-support'
 import { DadosDoProcessoType } from '@/lib/proc/process-types'
-import { IAPromptList } from '@/lib/db/mysql-types'
 import { promptExecuteBuilder } from '@/lib/ai/prompt'
 
 const Frm = new FormHelper(true)

@@ -72,6 +72,12 @@ export const assertCurrentUser = async () => {
     return user
 }
 
+export const assertSystemCode = async (user: UserType) => {
+    const systemCode = user?.image?.system || 'PDPJ'
+    if (!systemCode) throw new Error('System code not found')
+    return systemCode
+}
+
 export const isUserStaging = async (user: UserType) => {
     return user.iss === 'https://sso.stg.cloud.pje.jus.br/auth/realms/pje'
 }

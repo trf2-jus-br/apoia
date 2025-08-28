@@ -45,7 +45,7 @@ export default function Revison() {
                     infoDeProduto={{ produto: P.REVISAO, dados: [], titulo: 'Revisão', prompt: 'revisao', plugins: [] }}
                     textos={[{ descr: 'Texto', slug: 'texto', texto: markdown }]} /> */}
                 <h2 className="mt-3">Refinamento</h2>
-                <AiContent definition={getInternalPrompt('refinamento')} data={{ textos: [{ descr: 'Texto', slug: 'texto', texto: markdown }] }} config={promptConfig} visualization={VisualizationEnum.DIFF} />
+                <AiContent definition={getInternalPrompt('refinamento')} data={{ textos: [{ descr: 'Texto', slug: 'texto', texto: markdown }] }} config={promptConfig} visualization={VisualizationEnum.DIFF} dossierCode={undefined} />
             </>}
         </>
     )

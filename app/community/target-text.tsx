@@ -75,7 +75,7 @@ export default function TargetText({ prompt, visualization, apiKeyProvided }: { 
                         <AiContent
                             definition={definition}
                             data={{ textos: [{ descr: textoDescr, slug: slugify(textoDescr), texto: markdown }] }}
-                            options={{ cacheControl: true }} config={promptConfig} visualization={visualization} />
+                            options={{ cacheControl: true }} config={promptConfig} visualization={visualization} dossierCode={undefined} />
                         <Print numeroDoProcesso={slugify(prompt.name)} />
                     </>
                     : <PromptParaCopiar></PromptParaCopiar>

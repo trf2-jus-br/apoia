@@ -57,7 +57,7 @@ export default function TargetText({ prompt }: { prompt: IAPrompt }) {
                 <AiContent
                     definition={definition}
                     data={{ textos: [{ descr: textoDescr, slug: slugify(textoDescr), texto: markdown }] }}
-                    options={{ cacheControl: true }} config={promptConfig} />
+                    options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined} />
             </>}
         </div>
     )

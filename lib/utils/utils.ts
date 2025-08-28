@@ -14,6 +14,7 @@ export const primeiroEUltimoNome = (nome: string): string => {
 }
 
 export const maiusculasEMinusculas = (s) => {
+  if (!s) return s
   let sb = "";
   let f = true;
 

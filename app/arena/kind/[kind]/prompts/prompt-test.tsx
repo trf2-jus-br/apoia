@@ -80,7 +80,7 @@ export default function PromptTest(params: {
                         overrideJsonSchema: params.overrideJsonSchema || '',
                         overrideFormat: params.overrideFormat || '',
                         cacheControl: true
-                    }} />
+                    }} dossierCode={undefined} />
             </>}
         </>
     )

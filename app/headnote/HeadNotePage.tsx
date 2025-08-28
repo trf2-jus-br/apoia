@@ -58,7 +58,7 @@ export default function Revison() {
                     definition={getInternalPrompt('ementa')}
                     // data={{ textos: [{ descr: 'EXTRATO DE ATA', slug: 'extrato-de-ata', texto: `ÓRGÃO JULGADOR: ${orgaoJulgador}\nTIPO DE DECISÁO: UNÂMINE` }, { descr: 'Voto', slug: 'voto', texto: markdown }] }}
                     data={{ textos: [{ descr: 'Voto', slug: 'voto', texto: markdown }] }}
-                    options={{ cacheControl: true }} config={promptConfig} />
+                    options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined}/>
             </>}
         </div>
     )

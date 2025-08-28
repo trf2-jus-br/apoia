@@ -1,6 +1,6 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faShieldAlt } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
@@ -51,6 +51,13 @@ export default async function HomePage() {
             description: "Crie ementas jurídicas com base em decisões",
             href: "/headnote",
             color: "text-secondary"
+        },
+        {
+            icon: faShieldAlt,
+            title: "Auditoria",
+            description: "Gere um relatório de auditoria sobre o uso da IA",
+            href: "/report/ai-usage",
+            color: "text-dark"
         },
     ]
 
