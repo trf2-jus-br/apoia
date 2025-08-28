@@ -7,6 +7,7 @@ import Link from 'next/link';
 // This is a React Server Component
 export default async function NonCorporateUserWarning({ }: {}) {
     const user = await getCurrentUser()
+    if (!user) return null
     const corporateUser = user && !!await isUserCorporativo(user)
     if (corporateUser) return null
     return (

@@ -58,21 +58,25 @@ export default async function UserMenu({ }: {}) {
                         <NavigationLink href="/arena" text="Arena" />
                     </NavItem>)}
                 <li className="nav-item dropdown">
-                    {user
-                        ?
-                        <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            {user?.image?.system ? `${user?.name}/${user?.image?.system}` : `${maiusculasEMinusculas(primeiroEUltimoNome(user?.name))}/PDPJ`}
-                        </a>
-                        : <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Configurações
-                        </a>}
-                    <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
-                        <UserMenuAnonymize />
-                        {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
-                        {user && <li><UserMenuSignout /></li>}
-                        {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}
-                    </ul>
+                    {!user
+                        ? <Link className="dropdown-item" href="/auth/signin">Login</Link>
+                        : <>{
+                            user
+                                ?
+                                <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {user?.image?.system ? `${user?.name}/${user?.image?.system}` : `${maiusculasEMinusculas(primeiroEUltimoNome(user?.name))}/PDPJ`}
+                                </a>
+                                : <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Configurações
+                                </a>}
+                            <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
+                                <UserMenuAnonymize />
+                                {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
+                                {user && <li><UserMenuSignout /></li>}
+                                {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}
+                            </ul></>
+                    }
                 </li>
             </ul>
         </>)
