@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Teste Diff (Estático)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+        }
+        
+        .vis-btns button {
+            /* min-width: 160px; */
+        }
+        
+        .log-box {
+            max-height: 220px;
+            overflow: auto;
+            font-size: .75rem;
+        }
+        
+        textarea {
+            font-family: Consolas, monospace;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container py-3">
+        <h4 class="mb-3">Teste de Diff (HTML Estático)</h4>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Markdown Original</label>
+                <textarea id="oldText" class="form-control" rows="14"># Documento Original
+
+Texto inicial para testes.
+
+- Item A
+ - Item B</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Markdown Novo</label>
+                <textarea id="newText" class="form-control" rows="14"># Documento Revisado
+
+Texto inicial para testes com **alterações**.
+
+- Item A
+- Item B modificado
+- Item C (novo)</textarea>
+            </div>
+        </div>
+
+        <hr class="my-4" />
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Modo</label>
+                <select id="mode" class="form-select">
+                    <option value="window" selected>Window (_blank)</option>
+                    <option value="iframe">Iframe</option>
+                    <option value="modal">Modal</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Visualizações (clique para (des)selecionar)</label>
+                <div id="visButtons" class="vis-btns"></div>
+            </div>
+            <div class="col-md-3 d-flex justify-content-end">
+                <div class="d-flex gap-2 ms-auto flex-wrap">
+                    <button id="startBtn" class="btn btn-success">Diff</button>
+                    <button id="closeBtn" class="btn btn-outline-secondary">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="iframeContainer" class="mt-4 border rounded" style="min-height:620px; background:#fafafa; display:none;"></div>
+
+        <div class="mt-4">
+            <h6>Logs</h6>
+            <ul id="logs" class="list-unstyled log-box"></ul>
+        </div>
+    </div>
+
+    <script src="/diff.js"></script>
+    <script>
+        (function() {
+            const VIS_OPTIONS = [{
+                    id: 0,
+                    label: 'Diferença'
+                }, // DIFF
+                {
+                    id: 1,
+                    label: 'Diferença Compacta'
+                }, // DIFF_COMPACT
+                {
+                    id: 3,
+                    label: 'Texto Editado'
+                }, // TEXT_EDITED
+                {
+                    id: 4,
+                    label: 'Texto Original'
+                } // TEXT_ORIGINAL
+            ];
+            const selected = new Set(VIS_OPTIONS.map(v => v.id));
+            const visButtonsDiv = document.getElementById('visButtons');
+            const logsUl = document.getElementById('logs');
+            const iframeContainer = document.getElementById('iframeContainer');
+            let lastApi = null;
+
+            function log(msg) {
+                const li = document.createElement('li');
+                li.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+                logsUl.prepend(li);
+                while (logsUl.children.length > 300) logsUl.removeChild(logsUl.lastChild);
+            }
+
+            function rebuildButtons() {
+                visButtonsDiv.innerHTML = '';
+                VIS_OPTIONS.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn me-2 ' + (selected.has(opt.id) ? 'btn-primary' : 'btn-outline-primary');
+                    btn.textContent = opt.label;
+                    btn.addEventListener('click', () => {
+                        if (selected.has(opt.id)) selected.delete(opt.id);
+                        else selected.add(opt.id);
+                        rebuildButtons();
+                    });
+                    visButtonsDiv.appendChild(btn);
+                });
+            }
+            rebuildButtons();
+
+            document.getElementById('startBtn').addEventListener('click', () => {
+                if (!window.ApoiaDiff) {
+                    log('ApoiaDiff não carregado');
+                    return;
+                }
+                const visArray = VIS_OPTIONS.filter(o => selected.has(o.id)).map(o => o.id);
+                if (!visArray.length) {
+                    log('Selecione ao menos uma visualização');
+                    return;
+                }
+                const mode = document.getElementById('mode').value;
+                const oldMarkdown = document.getElementById('oldText').value;
+                const newMarkdown = document.getElementById('newText').value;
+                iframeContainer.style.display = mode === 'iframe' ? 'block' : 'none';
+                try {
+                    lastApi = window.ApoiaDiff.start({
+                        oldMarkdown,
+                        newMarkdown,
+                        visualizations: visArray,
+                        mode,
+                        container: mode === 'iframe' ? iframeContainer : undefined,
+                        onApproved: md => log('Aprovado (tamanho=' + md.length + ')'),
+                        onCancel: () => log('Cancelado')
+                    });
+                    log('Diff iniciado (cid=' + lastApi.correlationId + ')');
+                } catch (e) {
+                    log('Erro: ' + (e && e.message || e));
+                }
+            });
+
+            document.getElementById('closeBtn').addEventListener('click', () => {
+                if (lastApi) {
+                    try {
+                        lastApi.close();
+                        log('Sessão fechada manualmente');
+                    } catch (e) {
+                        log('Erro ao fechar: ' + e.message);
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>

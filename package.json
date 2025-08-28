@@ -50,6 +50,7 @@
         "eureka-js-client": "^4.5.0",
         "http": "^0.0.1-security",
         "ia": "^0.0.1-beta",
+        "dompurify": "^3.1.6",
         "js-yaml": "^4.1.0",
         "jsdom": "^26.1.0",
         "json-canonicalize": "^2.0.0",

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Diff Simple Test</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="font-family:system-ui,Arial,sans-serif;background:#f8f9fa;">
+    <div class="container py-3">
+        <h5 class="mb-3">Diff Simple Test</h5>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Original</label>
+                <textarea id="old" class="form-control" rows="12" style="font-family:Consolas,monospace;"># Documento Original
+
+Texto inicial para testes.
+
+- Item A
+ - Item B</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Novo</label>
+                <textarea id="new" class="form-control" rows="12" style="font-family:Consolas,monospace;"># Documento Revisado
+
+Texto inicial para testes com **alterações**.
+
+- Item A
+- Item B modificado
+- Item C (novo)</textarea>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-3">
+            <button id="diffBtn" class="btn btn-success">Diff</button>
+        </div>
+        <div class="mt-3">
+            <h6 class="mb-1">Logs</h6>
+            <ul id="logs" class="list-unstyled border rounded p-2 bg-white" style="max-height:200px;overflow:auto;font-size:.75rem;margin:0;"></ul>
+        </div>
+    </div>
+    <script src="/diff.js"></script>
+    <script>
+        (function() {
+            const logsEl = document.getElementById('logs');
+
+            function log(m) {
+                const li = document.createElement('li');
+                li.textContent = new Date().toLocaleTimeString() + " " + m;
+                logsEl.prepend(li);
+                while (logsEl.children.length > 200) logsEl.removeChild(logsEl.lastChild);
+            }
+            const btn = document.getElementById('diffBtn');
+            btn.addEventListener('click', () => {
+                if (!window.ApoiaDiff) {
+                    log('ApoiaDiff não carregado');
+                    return;
+                }
+                const oldMd = document.getElementById('old').value;
+                const newMd = document.getElementById('new').value;
+                try {
+                    const api = window.ApoiaDiff.start({
+                        oldMarkdown: oldMd,
+                        newMarkdown: newMd,
+                        visualizations: [0, 1, 3, 4], // todos
+                        mode: 'window',
+                        onApproved: md => log('Aprovado (' + md.length + ' chars)'),
+                        onCancel: () => log('Cancelado')
+                    });
+                    log('Diff iniciado (cid=' + api.correlationId + ')');
+                } catch (e) {
+                    log('Erro: ' + (e && e.message || e));
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
