@@ -64,7 +64,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copia diretórios de migrations (estrutura simples)
 COPY --from=builder /app/migrations/postgres/knex /app/migrations/postgres/knex
-COPY --from=builder /app/migrations/mysql/knex /app/migrations/mysql/knex
+# COPY --from=builder /app/migrations/mysql/knex /app/migrations/mysql/knex
 
 #USER nextjs
 USER root
