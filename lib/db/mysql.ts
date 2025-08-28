@@ -1019,9 +1019,9 @@ export class Dao {
      * @param endDate Data final (inclusive) no formato YYYY-MM-DD
      * @param groupBy 'process' | 'user'
      */
-    static async retrieveIAUsageReport(params: { cpfs?: string[], startDate?: string, endDate?: string, groupBy: 'process' | 'user' }): Promise<mysqlTypes.IAUsageReportRow[]> {
+    static async retrieveIAUsageReport(params: { processes?: string[], cpfs?: string[], startDate?: string, endDate?: string, groupBy: 'process' | 'user' }): Promise<mysqlTypes.IAUsageReportRow[]> {
         if (!knex) return []
-        const { cpfs, startDate, endDate, groupBy } = params
+        const { processes, cpfs, startDate, endDate, groupBy } = params
         const g = knex('ia_generation as g')
             .leftJoin('ia_dossier as d', 'd.id', 'g.dossier_id')
             .leftJoin('ia_user as u', 'u.id', 'g.created_by')
@@ -1039,6 +1039,9 @@ export class Dao {
             )
             .whereNotNull('g.dossier_id')
 
+        if (processes && processes.length > 0) {
+            g.whereIn('d.code', processes)
+        }
         if (cpfs && cpfs.length > 0) {
             g.whereIn('u.cpf', cpfs.map(c => c.trim()))
         }
@@ -1057,7 +1060,9 @@ export class Dao {
             g.orderBy('u.name').orderBy('d.code')
         }
 
+        // console.log('SQL:', g.toQuery())
         const rows: any[] = await g
+
         return rows.map(r => ({
             user_id: r.user_id ? Number(r.user_id) : null,
             username: r.username ?? null,
@@ -1068,7 +1073,60 @@ export class Dao {
             last_generation_at: r.last_generation_at ? new Date(r.last_generation_at) : null,
             generations_count: Number(r.generations_count) || 0,
             approximate_cost_sum: Number(r.approximate_cost_sum) || 0,
+            user_cpf: r.cpf ?? null,
         })) as any
+    }
+
+    static async retrieveIAUsageDetail(params: { dossier_code: string, user_cpf?: string, startDate?: string, endDate?: string, isModerator: boolean, currentUserCpf?: string }): Promise<mysqlTypes.IAUsageDetailRow[]> {
+        if (!knex) return []
+        const { dossier_code, user_cpf, startDate, endDate, isModerator, currentUserCpf } = params
+        const q = knex('ia_generation as g')
+            .leftJoin('ia_dossier as d', 'd.id', 'g.dossier_id')
+            .leftJoin('ia_user as u', 'u.id', 'g.created_by')
+            .select(
+                'g.id as id',
+                'd.code as dossier_code',
+                'u.id as user_id',
+                'u.username as username',
+                'u.name as user_name',
+                'u.cpf as user_cpf',
+                'g.created_at as created_at',
+                'g.generation as generation',
+                'g.prompt_payload as prompt_payload',
+                'g.approximate_cost as approximate_cost',
+                'g.model as model',
+                'g.prompt as prompt'
+            )
+            .where('d.code', dossier_code)
+            .whereNotNull('g.dossier_id')
+
+        if (startDate) q.andWhere('g.created_at', '>=', startDate + ' 00:00:00')
+        if (endDate) q.andWhere('g.created_at', '<=', endDate + ' 23:59:59')
+
+        if (isModerator) {
+            if (user_cpf) q.andWhere('u.cpf', user_cpf)
+        } else {
+            const enforcedCpf = (currentUserCpf || '').replace(/\D/g, '')
+            if (!enforcedCpf) return []
+            q.andWhere('u.cpf', enforcedCpf)
+        }
+
+        q.orderBy('g.created_at', 'asc')
+        const rows: any[] = await q
+        return rows.map(r => ({
+            id: Number(r.id),
+            dossier_code: r.dossier_code ?? null,
+            user_id: r.user_id ? Number(r.user_id) : null,
+            username: r.username ?? null,
+            user_name: r.user_name ?? null,
+            user_cpf: r.user_cpf ?? null,
+            created_at: r.created_at ? new Date(r.created_at) : null,
+            generation: r.generation ?? null,
+            prompt_payload: r.prompt_payload ?? null,
+            approximate_cost: r.approximate_cost != null ? Number(r.approximate_cost) : null,
+            model: r.model ?? null,
+            prompt: r.prompt ?? null,
+        }))
     }
 }
 

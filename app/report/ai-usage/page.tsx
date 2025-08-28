@@ -1,4 +1,4 @@
-import { assertCurrentUser } from '@/lib/user'
+import { assertCurrentUser, isUserModerator } from '@/lib/user'
 import IAUsageReportClient from './ia-usage-report-client'
 
 async function fetchDollar() {
@@ -10,8 +10,8 @@ async function fetchDollar() {
 }
 
 export default async function IAUsageReportPage() {
-    await assertCurrentUser()
+    const user = await assertCurrentUser()
     const usdBrl = await fetchDollar()
     console.log('USD/BRL rate:', usdBrl)
-    return <IAUsageReportClient usdBrl={usdBrl} />
+    return <IAUsageReportClient usdBrl={usdBrl} isModerator={await isUserModerator(user)} />
 }
