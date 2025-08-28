@@ -22,9 +22,9 @@ export default function IAUsageReportClient({ usdBrl }: Props) {
     const [rows, setRows] = useState<any[]>([])
     const [error, setError] = useState<string | null>(null)
 
-    // Limpa os registros quando filtros mudam
+    // Limpa os registros quando filtros mudam (não depende de rows para evitar warning de dependências)
     useEffect(() => {
-        if (rows.length) setRows([])
+        setRows([])
     }, [cpfInput, startDate, endDate, groupBy])
 
     const cpfs = useMemo(() => cpfInput.split(',').map(c => c.replace(/\D/g, '').trim()).filter(Boolean), [cpfInput])

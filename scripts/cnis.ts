@@ -907,19 +907,19 @@ export function gerarMarkdownTimelineDetalhado(
 }
 
 
-const resultado = calcularBeneficioIncapacidade(json, {
-    referencia: "06/2025",
-    carenciaExigida: 12,
-    isencaoCarencia: false,
-    mesesReaquisicaoCarenciaPosPerda: 6,
-    exigirPagamentoParaCI: true,
-    hasDesempregoComprovado: () => false,
-    habilitarGraça24Se120: true,
-    diaVencimentoContribuicao: 15,
-});
+// const resultado = calcularBeneficioIncapacidade(json, {
+//     referencia: "06/2025",
+//     carenciaExigida: 12,
+//     isencaoCarencia: false,
+//     mesesReaquisicaoCarenciaPosPerda: 6,
+//     exigirPagamentoParaCI: true,
+//     hasDesempregoComprovado: () => false,
+//     habilitarGraça24Se120: true,
+//     diaVencimentoContribuicao: 15,
+// });
 
-// Apenas tabela Markdown detalhada
-const tabelaDetalhada = gerarMarkdownTimelineDetalhado(resultado, { diaVencimento: 15, incluirAtivoSemCarencia: false, incluirSemQualidade: true });
-console.log(tabelaDetalhada);
+// // Apenas tabela Markdown detalhada
+// const tabelaDetalhada = gerarMarkdownTimelineDetalhado(resultado, { diaVencimento: 15, incluirAtivoSemCarencia: false, incluirSemQualidade: true });
+// console.log(tabelaDetalhada);
 
 

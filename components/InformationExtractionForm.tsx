@@ -72,7 +72,7 @@ const Array: React.FC<{ variable: PromptVariableType; index: number, Frm: FormHe
         {variable.label && <div className="col-12"><h4 className={`${index ? 'mt-3' : 'mt-0'} mb-1`}>{variable.label.replace(/_/g, ' ')}</h4></div>}
         {a?.length &&
             a.map((_: any, index: number) => (
-                <div className="col col-12">
+                <div key={index} className="col col-12">
                     <div className="row">
                         <div className="col col-auto">{index + 1}.</div>
                         <div className="col">
