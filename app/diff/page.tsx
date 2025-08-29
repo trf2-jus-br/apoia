@@ -115,7 +115,7 @@ const DiffPage: React.FC = () => {
     return (
         <div className="container py-3" style={{ fontFamily: 'system-ui, sans-serif' }}>
             <div className="d-flex align-items-center mb-3">
-                <h5 className="me-auto mb-0">Comparação de Textos</h5>
+                <h2 className="me-auto mb-0">Refinamento de Texto</h2>
             </div>
             <div className="row mb-3">
                 <div className="col">
@@ -140,7 +140,6 @@ const DiffPage: React.FC = () => {
             <div className="border rounded p-3" style={{ background: '#fff', maxHeight: '70vh', overflow: 'auto' }}>
                 <div dangerouslySetInnerHTML={{ __html: html }} />
             </div>
-            <p className="text-muted mt-3 small">CID: {cid}</p>
         </div>
     );
 };

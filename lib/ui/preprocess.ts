@@ -129,6 +129,15 @@ const limparDiff = (d: string) => {
     return d
 }
 
+const compactarDiff = (html: string): string => {
+    // Remove espaços em branco e quebras de linha desnecessárias
+    if (!html) return html
+    return html.replace(
+        /(?:<del class="diff[a-z]+">([^<]+?)<\/del><ins class="diff[a-z]+">([^<]+?)<\/ins>)/g,
+        '<span class="replaceInline" title="$1">$2</span>'
+    )
+}
+
 export type PreprocessReturnType = {
     text: string
     templateTable?: string
@@ -157,7 +166,7 @@ export const preprocess = (text: string, definition: PromptDefinitionType, data:
                 // return converter.makeHtml(mddiff(texto as string, text, true))
                 return { text: diff(converter.makeHtml(textoOriginal as string), converter.makeHtml(text), { blocksExpression }) }
             case VisualizationEnum.DIFF_COMPACT:
-                return { text: converter.makeHtml(diffAndCompact(textoOriginal as string, text)) }
+                return { text: compactarDiff(diff(converter.makeHtml(textoOriginal as string), converter.makeHtml(text), { blocksExpression })) }
             case VisualizationEnum.DIFF_HIGHLIGHT_INCLUSIONS: {
                 // console.log('textoOriginal', textoOriginal)
                 // console.log('textoResultado', text)
