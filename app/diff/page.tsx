@@ -102,7 +102,7 @@ const DiffPage: React.FC = () => {
     // Compute visualization
     const html = useMemo(() => {
         try {
-            if (!initReceived) return '<p>Aguardando dados...</p>';
+            if (!initReceived) return '';
             const result = preprocess(newMarkdown, { format: undefined } as any, { textos: [{ texto: oldMarkdown }] } as any, true, activeVis, oldMarkdown);
             // Sanitize
             return DOMPurify.sanitize(result.text, { USE_PROFILES: { html: true } });
@@ -117,7 +117,7 @@ const DiffPage: React.FC = () => {
             <div className="d-flex align-items-center mb-3">
                 <h2 className="me-auto mb-0">Refinamento de Texto</h2>
             </div>
-            <div className="row mb-3">
+            <div className="row mb-1">
                 <div className="col">
                     {allowedVisualizations.map(v => {
                         const info = Visualization.find(i => i.id === v);
@@ -125,7 +125,7 @@ const DiffPage: React.FC = () => {
                             <button
                                 key={v}
                                 onClick={() => setActiveVis(v)}
-                                className={`btn btn-sm me-2 ${activeVis === v ? 'btn-primary' : 'btn-outline-primary'}`}
+                                className={`btn btn-sm me-2 mb-2 ${activeVis === v ? 'btn-primary' : 'btn-outline-primary'}`}
                             >{info?.descr || v}</button>
                         );
                     })}
@@ -135,11 +135,12 @@ const DiffPage: React.FC = () => {
                     <button onClick={approve} className="btn btn-success btn-sm">Aprovar</button>
                 </div>
             </div>
-            {!initReceived && <div className="alert alert-info py-2">Aguardando dados do chamador...</div>}
+            {!initReceived && <div className="alert alert-info py-2">Aguardando texto original e refinado...</div>}
             {error && <div className="alert alert-danger py-2">{error}</div>}
-            <div className="border rounded p-3" style={{ background: '#fff', maxHeight: '70vh', overflow: 'auto' }}>
-                <div dangerouslySetInnerHTML={{ __html: html }} />
-            </div>
+            {html &&
+                <div className="border rounded p-3" style={{ background: '#fff', maxHeight: '70vh', overflow: 'auto' }}>
+                    <div dangerouslySetInnerHTML={{ __html: html }} />
+                </div>}
         </div>
     );
 };

@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from 'next/link'
 import { Button, ButtonGroup, Dropdown, DropdownButton, Form } from "react-bootstrap"
 import { Instance, Matter, Scope, Share } from "../proc/process-types"
-import { maxDuration } from "@/app/batch/page"
 
 const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void, options?: any) => {
     return {
