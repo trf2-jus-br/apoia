@@ -3,12 +3,13 @@
 import { applyTextsAndVariables } from '@/lib/ai/prompt';
 import { PromptDataType, PromptDefinitionType } from '@/lib/ai/prompt-types';
 import { faEdit, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { faFileLines, faSackDollar, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faSackDollar, faUsers, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { DefaultChatTransport, UIMessage, UITool, UITools } from 'ai';
+import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
 import showdown from 'showdown'
-import { ReactElement, useState } from 'react';
+import { ReactElement, useRef, useState } from 'react';
+import TextareaAutosize from 'react-textarea-autosize'
 import { Modal, Button, Form } from 'react-bootstrap';
 import { set } from 'zod/v4';
 
@@ -99,9 +100,15 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const [processNumber, setProcessNumber] = useState('');
     const [currentSuggestion, setCurrentSuggestion] = useState('');
     const [input, setInput] = useState('')
+    const [files, setFiles] = useState<FileList | undefined>(undefined)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [clientError, setClientError] = useState<string | null>(null)
     const initialMessages: UIMessage[] = [{ id: "system", role: 'system', parts: [{ type: 'text', text: applyTextsAndVariables(params.definition.systemPrompt, params.data) }] }]
     const { messages, setMessages, sendMessage, error, clearError } =
-        useChat({ transport: new DefaultChatTransport({ api: `/api/v1/chat${params.withTools ? '?withTools=true' : ''}` }), messages: initialMessages })
+        useChat({
+            transport: new DefaultChatTransport({ api: `/api/v1/chat${params.withTools ? '?withTools=true' : ''}` }),
+            messages: initialMessages,
+        })
 
     const handleEditMessage = (idx: number) => {
         const message = messages[idx]
@@ -114,7 +121,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
     const setFocusToChatInput = () => {
         setTimeout(() => {
-            const inputElement = document.getElementById('chat-input') as HTMLInputElement;
+            const inputElement = document.getElementById('chat-input') as (HTMLInputElement | HTMLTextAreaElement);
             if (inputElement) {
                 inputElement.focus();
                 const length = inputElement.value.length;
@@ -126,9 +133,59 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const handleSubmitAndSetFocus = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (input.trim() === '') return;
-        const msg: UIMessage = { id: undefined, role: 'user', parts: [{ type: 'text', text: input }] }
-        sendMessage(msg)
+        setClientError(null)
+        // Build file parts (Data URLs already handled by useChat transport)
+        const buildFileParts = async () => {
+            if (!files || files.length === 0) return [] as any[]
+            const MAX_FILES = 3
+            const MAX_SINGLE_BYTES = 10 * 1024 * 1024 // 10MB
+            const MAX_TOTAL_BYTES = 30 * 1024 * 1024 // 30MB
+            if (files.length > MAX_FILES) {
+                setClientError(`Máximo de ${MAX_FILES} PDFs por mensagem.`)
+                return []
+            }
+            let total = 0
+            for (const f of Array.from(files)) {
+                if (f.type !== 'application/pdf') {
+                    setClientError(`Arquivo não é PDF: ${f.name}`)
+                    return []
+                }
+                if (f.size > MAX_SINGLE_BYTES) {
+                    setClientError(`Arquivo ${f.name} excede 10MB.`)
+                    return []
+                }
+                total += f.size
+                if (total > MAX_TOTAL_BYTES) {
+                    setClientError('Tamanho total dos PDFs excede 30MB.')
+                    return []
+                }
+            }
+            // Convert to Data URLs
+            const convertFilesToDataURLs = async (filesLocal: FileList) => {
+                return Promise.all(Array.from(filesLocal).map(file => new Promise<any>((resolve, reject) => {
+                    const reader = new FileReader()
+                    reader.onload = () => {
+                        resolve({
+                            type: 'file',
+                            filename: file.name,
+                            mediaType: file.type,
+                            url: reader.result as string,
+                        })
+                    }
+                    reader.onerror = reject
+                    reader.readAsDataURL(file)
+                })))
+            }
+            return await convertFilesToDataURLs(files)
+        }
+        buildFileParts().then(fileParts => {
+            if (clientError) return
+            const msg: UIMessage = { id: undefined, role: 'user', parts: [{ type: 'text', text: input }, ...fileParts] }
+            sendMessage(msg)
+        })
         setInput('')
+        if (fileInputRef.current) fileInputRef.current.value = ''
+        setFiles(undefined)
         setFocusToChatInput()
     }
 
@@ -200,7 +257,18 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                                     <FontAwesomeIcon onClick={() => handleEditMessage(idx)} icon={faEdit} className="text-white align-bottom" />
                                 </div>
                                 <div className={`col col-auto mb-0`}>
-                                    <div className={`text-wrap mb-3 rounded chat-content chat-user`} dangerouslySetInnerHTML={{ __html: preprocessar(m, m.role) }} />
+                                    <div className={`text-wrap mb-1 rounded chat-content chat-user`} dangerouslySetInnerHTML={{ __html: preprocessar(m, m.role) }} />
+                                    {/* Attached PDFs */}
+                                    {m.parts?.filter((p: any) => p.type === 'file' && p.mediaType === 'application/pdf').length > 0 && (
+                                        <div className="mb-3 mt-1">
+                                            {m.parts.filter((p: any) => p.type === 'file' && p.mediaType === 'application/pdf').map((p: any, i: number) => (
+                                                <span key={i} className="badge bg-primary text-white me-1 mb-1">
+                                                    <FontAwesomeIcon icon={faFileLines} className="me-1" />
+                                                    {p.filename || 'arquivo.pdf'}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             : m.role === 'assistant' &&
@@ -229,21 +297,71 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                             </div>
                         </div>
                     </div>}
+                    {clientError && <div className="row justify-content-start">
+                        <div className="col col-auto mb-0">
+                            <div className='alert alert-warning'>
+                                <button type="button" className="btn-close float-end" aria-label="Close" onClick={(e) => { e.preventDefault(); setClientError(null) }}></button>
+                                <b>Aviso:</b> {clientError}
+                            </div>
+                        </div>
+                    </div>}
 
                     <div className="rowx">
                         <div className="xcol xcol-12">
                             <form onSubmit={handleSubmitAndSetFocus} className="mt-auto">
                                 <div className="input-group">
-                                    <input
+                                    <button className="btn btn-secondary btn-outline-light" type="button" onClick={() => fileInputRef.current?.click()} title="Anexar PDFs">
+                                        <FontAwesomeIcon icon={faPaperclip} />
+                                    </button>
+                                    <TextareaAutosize
                                         id="chat-input"
                                         className="form-control bg-secondary text-white"
                                         value={input}
                                         placeholder=""
                                         onChange={(e) => setInput(e.target.value)}
+                                        minRows={1}
+                                        maxRows={8}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                // submit
+                                                const form = (e.currentTarget as any).closest('form') as HTMLFormElement
+                                                if (form) {
+                                                    e.preventDefault()
+                                                    form.requestSubmit()
+                                                }
+                                            }
+                                        }}
                                         autoFocus
                                     />
                                     <button className="btn btn-secondary btn-outline-light" type="submit">Enviar</button>
                                 </div>
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    multiple
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => {
+                                        if (e.target.files) setFiles(e.target.files)
+                                    }}
+                                />
+                                {files && files.length > 0 && <div className="mt-2 small d-flex flex-wrap align-items-center">
+                                    {Array.from(files).map((f, i) => (
+                                        <span key={i} className="badge bg-primary text-white me-1 mb-1">
+                                            <FontAwesomeIcon icon={faFileLines} className="me-1" />
+                                            {f.name}
+                                        </span>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        className="badge bg-secondary text-white border-0 me-1 mb-1"
+                                        style={{ cursor: 'pointer' }}
+                                        title="Remover anexos"
+                                        onClick={() => { setFiles(undefined); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                                    >
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </div>}
                             </form>
                         </div>
                     </div>

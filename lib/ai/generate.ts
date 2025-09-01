@@ -10,10 +10,11 @@ import { calcSha256 } from '../utils/hash'
 import { envString } from '../utils/env'
 import { anonymizeText } from '../anonym/anonym'
 import { getModel } from './model-server'
-import { modelCalcUsage } from './model-types'
+import { modelCalcUsage, Model, FileTypeEnum } from './model-types'
 import { cookies } from 'next/headers';
 import { clipPieces } from './clip-pieces'
 import { assert } from 'console'
+import { pdfToText } from '../pdf/pdf'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await Dao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -139,12 +140,66 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
     const user_id = await Dao.assertIAUserId(user.preferredUsername || user.name)
     const court_id = await assertCourtId(user)
 
-    if (!structuredOutputs) {//} || model.startsWith('aws-')) {
+    // --- PDF processing & logging sanitization ---
+    const modelSupportsPdf = () => {
+        const details = Object.values(Model).find(m => m.name === model)
+        return !!details?.supportedFileTypes?.includes(FileTypeEnum.PDF)
+    }
+    const processedMessagesModel: ModelMessage[] = []
+    const processedMessagesLog: ModelMessage[] = []
+    for (const m of messages) {
+        if (!Array.isArray((m as any).content)) { processedMessagesModel.push(m); processedMessagesLog.push(m); continue }
+        const newPartsModel: any[] = []
+        const newPartsLog: any[] = []
+        for (const part of (m as any).content) {
+            if (part?.type === 'file' && part.mediaType === 'application/pdf') {
+                if (!modelSupportsPdf()) {
+                    try {
+                        if (part.url?.startsWith('data:')) {
+                            const base64 = part.url.split(',')[1]
+                            const binary = Buffer.from(base64, 'base64')
+                            if (binary.length < 5 * 1024 * 1024) {
+                                const extracted = await pdfToText(binary.buffer.slice(binary.byteOffset, binary.byteOffset + binary.byteLength), {})
+                                const textPart = { type: 'text', text: `CONTEUDO_PDF_EXTRAIDO(${part.filename}):\n${extracted.slice(0, 15000)}${extracted.length > 15000 ? '\n...[truncado]' : ''}` }
+                                newPartsModel.push(textPart)
+                                newPartsLog.push(textPart)
+                                continue
+                            } else {
+                                const tooBig = { type: 'text', text: `PDF(${part.filename}) muito grande para extração local (>5MB).` }
+                                newPartsModel.push(tooBig)
+                                newPartsLog.push(tooBig)
+                                continue
+                            }
+                        }
+                    } catch (e) {
+                        const fail = { type: 'text', text: `Falha ao extrair PDF(${part.filename}).` }
+                        newPartsModel.push(fail)
+                        newPartsLog.push(fail)
+                        continue
+                    }
+                }
+                // supported: keep original for model; sanitized for log
+                newPartsModel.push(part)
+                if (part.url?.startsWith('data:')) {
+                    newPartsLog.push({ ...part, url: `data:application/pdf;base64,[omitted:${part.filename}]` })
+                } else {
+                    newPartsLog.push(part)
+                }
+            } else {
+                newPartsModel.push(part)
+                newPartsLog.push(part)
+            }
+        }
+        processedMessagesModel.push({ ...(m as any), content: newPartsModel })
+        processedMessagesLog.push({ ...(m as any), content: newPartsLog })
+    }
+
+    if (!structuredOutputs) { // text streaming branch
         console.log('streaming text', kind) //, messages, modelRef)
         if (apiKeyFromEnv) {
             await Dao.assertIAUserDailyUsageId(user_id, court_id)
         }
-        writeResponseToFile(kind, messages, 'antes de executar')
+    writeResponseToFile(kind, processedMessagesLog, 'antes de executar')
         // if (model.startsWith('aws-')) {
         //     const { text, usage } = await generateText({
         //         model: modelRef as LanguageModel,
@@ -162,7 +217,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
         // } else {
         const pResult = streamText({
             model: modelRef as LanguageModel,
-            messages,
+            messages: processedMessagesModel,
             maxRetries: 0,
             onStepFinish: ({ text, usage }) => {
                 process.stdout.write(text)
@@ -174,10 +229,10 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                 if (apiKeyFromEnv)
                     writeUsage(usage, model, user_id, court_id)
                 if (cacheControl !== false) {
-                    const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, messages)
+                    const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, processedMessagesLog)
                     if (results) results.generationId = generationId
                 }
-                writeResponseToFile(kind, messages, text)
+                writeResponseToFile(kind, processedMessagesLog, text)
             },
             tools,
             stopWhen: stepCountIs(10)
@@ -192,16 +247,16 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
         }
         const pResult = streamObject({
             model: modelRef as LanguageModel,
-            messages,
+            messages: processedMessagesModel,
             maxRetries: 1,
             onFinish: async ({ object, usage }) => {
                 if (apiKeyFromEnv)
                     writeUsage(usage, model, user_id, court_id)
                 if (cacheControl !== false) {
-                    const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, JSON.stringify(object), attempt, messages)
+                    const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, JSON.stringify(object), attempt, processedMessagesLog)
                     if (results) results.generationId = generationId
                 }
-                writeResponseToFile(kind, messages, JSON.stringify(object))
+                writeResponseToFile(kind, processedMessagesLog, JSON.stringify(object))
             },
             schemaName: `schema${kind}`,
             schemaDescription: `A schema for the prompt ${kind}`,
