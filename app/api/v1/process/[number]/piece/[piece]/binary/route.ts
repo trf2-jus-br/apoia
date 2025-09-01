@@ -53,7 +53,8 @@ export async function GET(
   try {
     const username = user?.email
     const password = user?.image?.password ? decrypt(user?.image.password) : undefined
-    const interop = getInterop(username, password)
+    const system = user?.image?.system
+    const interop = getInterop(system, username, password)
     await interop.init()
 
     const { buffer, contentType } = await interop.obterPeca(params.number, params.piece, true)

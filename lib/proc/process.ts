@@ -88,8 +88,9 @@ export type ObterDadosDoProcessoType = {
 export const getInteropFromUser = async (user: UserType): Promise<Interop> => {
     const username = user?.email
     const password = user?.image?.password ? decrypt(user?.image.password) : undefined
+    const system = user?.image?.system
 
-    const interop = getInterop(username, password)
+    const interop = getInterop(system, username, password)
     await interop.init()
     return interop
 }
@@ -288,8 +289,9 @@ export const obterDadosDoProcesso2 = async ({ numeroDoProcesso, pUser, pieces, c
         const user = await pUser
         const username = user?.email
         const password = user?.image?.password ? decrypt(user?.image.password) : undefined
+        const system = user?.image?.system
 
-        const interop = getInterop(username, password)
+        const interop = getInterop(system, username, password)
         await interop.init()
 
         const dadosDoProcesso = await interop.consultarProcesso(numeroDoProcesso)

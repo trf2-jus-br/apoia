@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     try {
         // const body = JSON.parse(JSON.stringify(request.body))
         const body = await request.json()
-        const autenticado = await getInterop(body.email, body.password).autenticar(body.system)
+        const autenticado = await getInterop(body.system, body.email, body.password).autenticar(body.system)
 
         if (!autenticado)
             throw new Error('Usuário ou senha inválidos')

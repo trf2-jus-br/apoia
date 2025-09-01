@@ -45,7 +45,7 @@ import { getInterop } from '@/lib/interop/interop'
 export async function POST(request: Request) {
     try {
         const body = await request.json()
-        const autenticado = await getInterop(body.email, body.password).autenticar(body.system)
+        const autenticado = await getInterop(body.system, body.email, body.password).autenticar(body.system)
 
         if (!autenticado)
             throw new Error('Usuário ou senha inválidos')

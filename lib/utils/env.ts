@@ -135,6 +135,8 @@ export const getEnvStringPrefixedIfUserIsAllowed = (username: string, key: strin
 
 export type System = {
     system: string,
+    kind: string,
+    api: string,
     wsdl: string,
     endpoint: string,
     validation: string,
@@ -144,6 +146,8 @@ const systemsList = process.env.SYSTEMS?.split(',').map(system => system.trim())
 
 export const systems = systemsList.map(system => ({
     system,
+    kind: process.env[`${system}_KIND`] as string,
+    api: process.env[`${system}_API_URL`] as string,
     wsdl: process.env[`${system}_MNI_WSDL_URL`] as string,
     endpoint: process.env[`${system}_MNI_ENDPOINT_URL`] as string,
     validation: process.env[`${system}_VALIDATION_MESSAGE`] as string || 'Processo não encontrado',

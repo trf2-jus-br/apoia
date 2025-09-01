@@ -140,6 +140,7 @@ export const obterConteudoDaPeca = async (dossier_id: number, numeroDoProcesso: 
             case 'text/plain':
                 return { conteudo: await obterTextoSimples(buffer, document_id) }
             case 'text/html':
+            case 'text/html;charset=ISO-8859-1':
                 return { conteudo: await obterTextoDeHtml(buffer, document_id) }
             case 'application/pdf':
                 return { conteudo: await obterTextoDePdf(buffer, document_id) }
