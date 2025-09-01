@@ -160,12 +160,12 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                             const binary = Buffer.from(base64, 'base64')
                             if (binary.length < 10 * 1024 * 1024) {
                                 const extracted = await pdfToText(binary.buffer.slice(binary.byteOffset, binary.byteOffset + binary.byteLength), {})
-                                const textPart = { type: 'text', text: `CONTEUDO_PDF_EXTRAIDO(${part.filename}):\n${extracted.slice(0, 15000)}${extracted.length > 15000 ? '\n...[truncado]' : ''}` }
+                                const textPart = { type: 'text', text: `CONTEUDO_PDF_EXTRAIDO(${part.filename}):\n${extracted.slice(0, 150000)}${extracted.length > 150000 ? '\n...[truncado]' : ''}` }
                                 newPartsModel.push(textPart)
                                 newPartsLog.push(textPart)
                                 continue
                             } else {
-                                const tooBig = { type: 'text', text: `PDF(${part.filename}) muito grande para extração local (>5MB).` }
+                                const tooBig = { type: 'text', text: `PDF(${part.filename}) muito grande para extração local (>10MB).` }
                                 newPartsModel.push(tooBig)
                                 newPartsLog.push(tooBig)
                                 continue
