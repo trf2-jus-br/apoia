@@ -2,7 +2,8 @@ import { System, systems } from '@/lib/utils/env'
 import { assertCurrentUser } from '@/lib/user'
 import pLimit from 'p-limit'
 import { Interop, ObterPecaType } from './interop'
-import { DadosDoProcessoType, PecaType } from '../proc/process-types'
+import { aggregateProcessos } from './pdpj'
+import { DadosDoProcessoType, Instance, PecaType } from '../proc/process-types'
 import { parseYYYYMMDDHHMMSS } from '../utils/utils'
 import { assertNivelDeSigilo, verificarNivelDeSigilo } from '../proc/sigilo'
 import { tua } from '../proc/tua'
@@ -84,59 +85,59 @@ export class InteropBalcaojus implements Interop {
         }
     }
 
-    public consultarProcesso = async (numeroDoProcesso: string): Promise<DadosDoProcessoType[]> => {
+    public consultarProcesso = async (numeroDoProcesso: string, sistemaAlternativo?: string): Promise<DadosDoProcessoType[]> => {
         if (!this.token) await this.autenticar(this.system.system)
 
-        // 1) Descobrir sistema correto via /validar
+        const isRecursive = !!sistemaAlternativo
         const headers: Record<string, string> = { 'Accept': 'application/json' }
         if (this.token) headers.Authorization = `${this.token}`
-        let sistemaConsulta
-        const validarUrl = `${this.system.api}/processo/validar?numero=${numeroDoProcesso}`
-        const respValidar = await fetch(validarUrl, { method: 'GET', headers })
-        const bodyValidar = await respValidar.json()
-        console.log(bodyValidar)
-        if (respValidar.ok) {
-            const list = Array.isArray(bodyValidar?.list) ? bodyValidar.list : []
-            if (list.length > 0 && list[0]?.sistema) {
-                sistemaConsulta = list[0].sistema
-            }
+
+        // Descobrir sistema se não informado (apenas na chamada raiz)
+        let sistemaConsulta = sistemaAlternativo
+        if (!sistemaConsulta) {
+            try {
+                const validarUrl = `${this.system.api}/processo/validar?numero=${numeroDoProcesso}`
+                const respValidar = await fetch(validarUrl, { method: 'GET', headers })
+                const bodyValidar = await respValidar.json()
+                if (respValidar.ok) {
+                    const list = Array.isArray(bodyValidar?.list) ? bodyValidar.list : []
+                    if (list.length > 0 && list[0]?.sistema) sistemaConsulta = list[0].sistema
+                }
+            } catch { /* ignore */ }
         }
 
-        // 2) Consulta efetiva
-        const url = `${this.system.api}/processo/${numeroDoProcesso}/consultar?sistema=${encodeURIComponent(sistemaConsulta)}`
+        // Consulta principal
+        const url = `${this.system.api}/processo/${numeroDoProcesso}/consultar?sistema=${encodeURIComponent(sistemaConsulta || '')}`
         const resp = await fetch(url, { method: 'GET', headers })
-        if (!resp.ok) {
-            throw new Error(`Erro ao consultar processo (${resp.status})`)
-        }
+        if (!resp.ok) return []
         const body = await resp.json()
         const value = body?.value
-        if (!value?.dadosBasicos) {
-            throw new Error('Resposta inválida do serviço de consulta de processo')
-        }
+        if (!value?.dadosBasicos) return []
         const dadosBasicos = value.dadosBasicos
         const sigilo = '' + (dadosBasicos.nivelSigilo ?? dadosBasicos.nivelSigilo === 0 ? dadosBasicos.nivelSigilo : '')
-        if (verificarNivelDeSigilo())
-            assertNivelDeSigilo(sigilo)
+        if (verificarNivelDeSigilo()) assertNivelDeSigilo(sigilo)
 
         const dataAjuizamento = dadosBasicos.dataAjuizamento
         const ajuizamento = dataAjuizamento ? parseYYYYMMDDHHMMSS(dataAjuizamento) : undefined
         const nomeOrgaoJulgador = dadosBasicos.orgaoJulgador?.nomeOrgao
         const codigoDaClasse = parseInt(dadosBasicos.classeProcessual, 10)
         const numero = dadosBasicos.numero || numeroDoProcesso
+        const instancia = sistemaConsulta === 'br.jus.trf2.eproc' ? Instance.SEGUNDO_GRAU : Instance.PRIMEIRO_GRAU
 
-        // Map movimentos por identificador para lookup rápido
+        // Movimentos
         const movimentos: any[] = Array.isArray(value.movimento) ? value.movimento : []
         const movimentoMap = new Map<string, any>()
         for (const mov of movimentos) {
             if (mov?.identificadorMovimento) movimentoMap.set('' + mov.identificadorMovimento, mov)
         }
 
+        // Documentos -> Peças
         const documentos: any[] = Array.isArray(value.documento) ? value.documento : []
         const pecas: PecaType[] = []
         for (const doc of documentos) {
             const mov = movimentoMap.get('' + doc.movimento)
             pecas.push({
-                id: buildPecaId(sistemaConsulta, doc.idDocumento),
+                id: buildPecaId(sistemaConsulta || '', doc.idDocumento),
                 numeroDoEvento: '' + (doc.movimento ?? ''),
                 descricaoDoEvento: mov?.movimentoLocal?.descricao || '',
                 descr: (doc.descricao || doc.tipoDocumentoLocal || '').toUpperCase(),
@@ -151,12 +152,9 @@ export class InteropBalcaojus implements Interop {
                 dataHora: doc.dataHora ? parseYYYYMMDDHHMMSS(doc.dataHora) : undefined,
             })
         }
-
         const parseRotulo = (rotulo: string) => {
-            const match = rotulo.match(/^([A-Z]+)(\d+)$/)
-            if (match) {
-                return { letters: match[1], number: parseInt(match[2], 10) }
-            }
+            const match = rotulo?.match(/^([A-Z]+)(\d+)$/)
+            if (match) return { letters: match[1], number: parseInt(match[2], 10) }
             return { letters: '', number: 0 }
         }
         pecas.sort((a, b) => {
@@ -177,7 +175,7 @@ export class InteropBalcaojus implements Interop {
             return a.id.localeCompare(b.id)
         })
 
-        // descobrir primeira OAB do polo ativo
+        // OAB polo ativo
         let oabPoloAtivo: string | undefined = undefined
         try {
             const polos = Array.isArray(dadosBasicos.polo) ? dadosBasicos.polo : []
@@ -188,7 +186,45 @@ export class InteropBalcaojus implements Interop {
         } catch { /* ignore */ }
 
         const classe = tua[codigoDaClasse]
-        return [{ numeroDoProcesso: numero, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, oabPoloAtivo }]
+        const respLista: DadosDoProcessoType[] = [{ numeroDoProcesso: numero, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, oabPoloAtivo, instancia: instancia.name }]
+
+        // Processos vinculados (recursão no mesmo sistema)
+        // const vinculados = dadosBasicos?.ProcessosVinculados || dadosBasicos?.processosVinculados
+        // if (Array.isArray(vinculados)) {
+        //     for (const vinc of vinculados) {
+        //         const numeroVinc = vinc?.numeroDoProcesso || vinc?.numero || vinc?.numeroProcesso
+        //         if (numeroVinc !== numeroDoProcesso) {
+        //             try {
+        //                 const vincResp = await this.consultarProcesso(numeroVinc, sistemaConsulta)
+        //                 if (vincResp.length) respLista.push(...vincResp)
+        //             } catch { /* ignore */ }
+        //         }
+        //     }
+        // }
+
+        // Cross-system apenas na chamada raiz (para evitar loops)
+        if (!isRecursive) {
+            const crossTargets: string[] = []
+            if (sistemaConsulta === 'br.jus.trf2.eproc') {
+                crossTargets.push('br.jus.jfrj.eproc', 'br.jus.jfes.eproc')
+            } else if (sistemaConsulta === 'br.jus.jfrj.eproc' || sistemaConsulta === 'br.jus.jfes.eproc') {
+                crossTargets.push('br.jus.trf2.eproc')
+            }
+            for (const target of crossTargets) {
+                try {
+                    const otherResp = await this.consultarProcesso(numeroDoProcesso, target)
+                    if (otherResp.length) {
+                        respLista.push(...otherResp)
+                        break
+                    }
+                } catch { /* ignore */ }
+            }
+        }
+
+        if (!isRecursive && respLista.length > 1) {
+            try { aggregateProcessos(respLista) } catch { /* ignore */ }
+        }
+        return respLista
     }
 
     public obterPeca = async (numeroDoProcesso, idDaPeca, binary?: boolean): Promise<ObterPecaType> => {
