@@ -157,7 +157,7 @@ export async function GET(req: Request, props: { params: Promise<{ name: string 
     }
 
     // index by unit
-    if (true) {
+    if (false) {
         // console.log('originalIndex', JSON.stringify(originalTriageItems.map(ti => ({ descr: ti.descr, count: ti.items.length }))))
         const units = [...new Set(Object.values(mappingByUnit))] as string[]
         const preprocessUnitToSort = (unit: string) => {
