@@ -55,8 +55,8 @@ export enum P {
     CHAT = 'Chat',
     RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL = 'Relatório de Processo Coletivo ou Criminal',
     MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS = 'Minuta de Despacho de Acordo 9 dias',
-    PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA = 'Relatório de Pontos Controvertidos APESP - Primeira Instância',
-    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA = 'Relatório de Pontos Controvertidos APESP - Segunda Instância',
+    PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA = 'Relatório de Pontos Controvertidos de Aposentadoria Especial - Primeira Instância',
+    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA = 'Relatório de Pontos Controvertidos de Aposentadoria Especial - Segunda Instância',
     PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
@@ -301,7 +301,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
-        nome: 'Relatório de Pontos Controvertidos APESP - Primeira Instância',
+        nome: 'Relatório de Pontos Controvertidos em Aposentadoria Especial - Primeira Instância',
         padroes: padroesBasicosPrimeiraInstancia,
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, P.CHAT]
     },
@@ -309,7 +309,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
-        nome: 'Relatório de Pontos Controvertidos APESP - Segunda Instância',
+        nome: 'Relatório de Pontos Controvertidos em Aposentadoria Especial - Segunda Instância',
         padroes: padroesBasicosSegundaInstancia,
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, P.CHAT]
     },

@@ -18,14 +18,9 @@ Por favor, leia com atenção a peça a seguir e resuma as os pontos mais import
 
 {{textos}}
 
-Antes de escrever o resumo final, organize seus pensamentos em um <scratchpad>, anotando os pontos chave que você precisa incluir, como:
-- Defesa processual, com os correspondentes argumentos de fato e de direito e os artigos de lei apontados na peça, se houver.
-- Defesa de mérito, com os correspondentes argumentos de fato e de direito e os artigos de lei apontados na peça, se houver.
-
-Depois de organizar o esboço, escreva o resumo final dentro das tags <result>. Certifique-se de:
+Certifique-se de:
 - Resumir a defesa processual (se houver)
 - Resumir a defesa de mérito (se houver)
 - Usar uma linguagem jurídica formal
 - Formatar o texto usando Markdown
-
-Escreva somente dentro das tags <scratchpad> e <result>, não inclua nenhum outro texto fora delas. Não repita as instruções no resumo.
+- Não repita as instruções no resumo.

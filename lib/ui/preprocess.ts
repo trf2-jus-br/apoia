@@ -14,6 +14,15 @@ const divExtension = () => [{
 
 const converter = new showdown.Converter({ tables: true, extensions: [divExtension] })
 
+const makeHtml = (text: string) => {
+    let html = converter.makeHtml(text)
+
+    // ensure plain <table> gets bootstrap classes
+    html = html.replace(/<table\s*>/g, '<table class="table table-striped table-info table-sm">')
+
+    return html
+}
+
 export const enum VisualizationEnum {
     DIFF,
     DIFF_COMPACT,
@@ -164,26 +173,26 @@ export const preprocess = (text: string, definition: PromptDefinitionType, data:
         switch (visualization) {
             case VisualizationEnum.DIFF:
                 // return converter.makeHtml(mddiff(texto as string, text, true))
-                return { text: diff(converter.makeHtml(textoOriginal as string), converter.makeHtml(text), { blocksExpression }) }
+                return { text: diff(makeHtml(textoOriginal as string), makeHtml(text), { blocksExpression }) }
             case VisualizationEnum.DIFF_COMPACT:
-                return { text: compactarDiff(diff(converter.makeHtml(textoOriginal as string), converter.makeHtml(text), { blocksExpression })) }
+                return { text: compactarDiff(diff(makeHtml(textoOriginal as string), makeHtml(text), { blocksExpression })) }
             case VisualizationEnum.DIFF_HIGHLIGHT_INCLUSIONS: {
                 // console.log('textoOriginal', textoOriginal)
                 // console.log('textoResultado', text)
                 const textoOriginalLimpo = limparMarcadoresDeIfESnippet(textoOriginal as string)
                 const textoResultadoLimpo = limparMarcadoresDeIfESnippet(text)
-                let d = diff(converter.makeHtml(textoOriginalLimpo), converter.makeHtml(textoResultadoLimpo), { blocksExpression })
+                let d = diff(makeHtml(textoOriginalLimpo), makeHtml(textoResultadoLimpo), { blocksExpression })
                 const diffLimpo = limparDiff(d)
                 return { text: diffLimpo, templateTable: textoOriginal.includes('<snippet ') ? diffTable(textoOriginal as string, text) : undefined }
             }
             case VisualizationEnum.TEXT_EDITED:
-                return { text: converter.makeHtml(text) }
+                return { text: makeHtml(text) }
             case VisualizationEnum.TEXT_ORIGINAL:
-                return { text: converter.makeHtml(textoOriginal as string) }
+                return { text: makeHtml(textoOriginal as string) }
         }
     }
 
-    text = converter.makeHtml(text)
+    text = makeHtml(text)
 
     // Replace all <!-- add: ... --> with the addition (the content after <!-- add: and before -->)
     text = text.replace(/<!--\s*add:\s*([\s\S]+?)-->/g, (_, addition) => addition.trim());

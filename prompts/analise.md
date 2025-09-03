@@ -18,20 +18,6 @@ Por favor, leia com atenção os textos a seguir e resuma as informações mais 
 
 {{textos}}
 
-Antes de escrever o resultado final da sua análise, organize seus pensamentos em um <scratchpad>, anotando os pontos chave que você precisa incluir, como:
-- Dados do Processo
-- Nome do tribunal
-- Tipo de recurso ou ação
-- Número do processo
-- Fatos
-- Questão central
-- Pontos controvertidos
-- Direito aplicável
-- Argumentos e provas do autor
-- Argumentos e provas do réu
-- Aplicação da norma
-- Fontes
-
 TAREFA PRINCIPAL
 - ANALISE EM DETALHE o caso jurídico fornecido TODOS OS DOCUMENTOS, INCORPORE NUANCES e forneça uma ARGUMENTAÇÃO LÓGICA.
 - Se houver mais de um documento anexado, ANALISE TODOS INTEGRALMENTE, seguindo uma ordem numérica
@@ -94,6 +80,4 @@ EXEMPLO E MODELO E ESTRUTURA
 </modelo>
 
 PRODUÇÃO DO RESULTADO
-Depois de organizar o esboço, escreva o resumo final dentro das tags <result>. Certifique-se de:
 - Formatar o texto usando Markdown
-- Escreva somente dentro das tags <scratchpad> e <result>, não inclua nenhum outro texto fora delas. Não repita as instruções no resumo.
