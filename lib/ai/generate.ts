@@ -47,7 +47,7 @@ function writeResponseToFile(kind: string, messages: ModelMessage[], text: strin
     if (envString('NODE_ENV') === 'development' && path) {
         const fs = require('fs')
         const currentDate = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').split('.')[0]
-        fs.writeFileSync(`${path}/${currentDate}-${kind}.txt`, `${messages[0].content}\n\n${messages[1]?.content}\n\n---\n\n${text}`)
+        fs.writeFileSync(`${path}/${currentDate}-${kind}.txt`, `${messages[0].content}${messages[1]?.content ? `\n\n${messages[1].content}` : ''}\n\n---\n\n${text}`)
     }
 }
 

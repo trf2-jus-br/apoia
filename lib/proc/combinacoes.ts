@@ -17,6 +17,7 @@ export enum T {
     LAUDO_PERICIA = 'LAUDO/PERÍCIA',
     CERTIDAO = 'CERTIDÃO',
     CADASTRO_NACIONAL_DE_INFORMACOES_SOCIAIS = 'CADASTRO NACIONAL DE INFORMAÇÕES SOCIAIS',
+    PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO = 'PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO',
     DESPACHO_DECISAO = 'DESPACHO/DECISÃO',
     SENTENCA = 'SENTENÇA',
     EMBARGOS_DE_DECLARACAO = 'EMBARGOS DE DECLARAÇÃO',
@@ -55,8 +56,8 @@ export enum P {
     CHAT = 'Chat',
     RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL = 'Relatório de Processo Coletivo ou Criminal',
     MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS = 'Minuta de Despacho de Acordo 9 dias',
-    PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA = 'Relatório de Pontos Controvertidos de Aposentadoria Especial - Primeira Instância',
-    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA = 'Relatório de Pontos Controvertidos de Aposentadoria Especial - Segunda Instância',
+    PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA = 'Relatório de Aposentadoria Especial - Primeira Instância',
+    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA = 'Relatório de Aposentadoria Especial - Segunda Instância',
     PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
@@ -131,6 +132,7 @@ const pecasRelevantes1aInstancia = [
     T.LAUDO,
     T.LAUDO_PERICIA,
     T.CADASTRO_NACIONAL_DE_INFORMACOES_SOCIAIS,
+    T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO,
     T.PARECER,
     T.CERTIDAO,
     T.ATESTADO_DE_PERMANENCIA,
@@ -148,6 +150,11 @@ const pecasRelevantes2aInstanciaRecursos = [
     T.AGRAVO_INTERNO,
     T.EMBARGOS_DE_DECLARACAO,
     T.RECURSO_INOMINADO,
+    T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO,
+]
+
+const pecasRelevantes2aInstanciaAntesDaSentenca = [
+    T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO,
 ]
 
 const pecasRelevantes2aInstanciaContrarrazoes = [
@@ -161,8 +168,8 @@ const pecasRelevantes2aInstancia = [
 ]
 
 const padroesApelacao = [
-    [ANY({ capture: [T.PETICAO_INICIAL] }), EXACT(T.PETICAO_INICIAL), ANY(), EXACT(T.SENTENCA), ANY(), OR(...pecasRelevantes2aInstanciaRecursos), ANY(), OR(...pecasRelevantes2aInstanciaContrarrazoes), ANY({ capture: [T.PARECER] })],
-    [ANY({ capture: [T.PETICAO_INICIAL] }), EXACT(T.PETICAO_INICIAL), ANY(), EXACT(T.SENTENCA), ANY(), OR(...pecasRelevantes2aInstanciaRecursos), ANY({ capture: [...pecasRelevantes2aInstanciaContrarrazoes, T.PARECER] })],
+    [ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantes2aInstanciaAntesDaSentenca] }), EXACT(T.PETICAO_INICIAL), ANY({capture: pecasRelevantes2aInstanciaAntesDaSentenca}), EXACT(T.SENTENCA), ANY(), OR(...pecasRelevantes2aInstanciaRecursos), ANY(), OR(...pecasRelevantes2aInstanciaContrarrazoes), ANY({ capture: [T.PARECER] })],
+    [ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantes2aInstanciaAntesDaSentenca] }), EXACT(T.PETICAO_INICIAL), ANY({capture: pecasRelevantes2aInstanciaAntesDaSentenca}), EXACT(T.SENTENCA), ANY(), OR(...pecasRelevantes2aInstanciaRecursos), ANY({ capture: [...pecasRelevantes2aInstanciaContrarrazoes, T.PARECER] })],
 ]
 
 const padroesPeticaoInicialEContestacao = [

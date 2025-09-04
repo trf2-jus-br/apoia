@@ -254,7 +254,7 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
                 const req = Object.keys(itemsObj.properties)
                 if (req.length) itemsObj.required = req
             }
-            const arrSchema: any = { type: 'array', items: itemsObj, description: node.description }
+            const arrSchema: any = { type: 'array', items: itemsObj }
             return arrSchema
         }
         if (node.type === 'object') {
@@ -269,7 +269,7 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
             return obj
         }
         // field
-        return { type: mapTypeToJsonSchema(node.type), description: node.description }
+        return { type: mapTypeToJsonSchema(node.type) }
     }
 
     const properties: Record<string, any> = {}
