@@ -301,7 +301,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
-        nome: 'Relatório de Pontos Controvertidos em Aposentadoria Especial - Primeira Instância',
+        nome: 'Relatório de Aposentadoria Especial - Primeira Instância',
         padroes: padroesBasicosPrimeiraInstancia,
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, P.CHAT]
     },
@@ -309,7 +309,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
-        nome: 'Relatório de Pontos Controvertidos em Aposentadoria Especial - Segunda Instância',
+        nome: 'Relatório de Aposentadoria Especial - Segunda Instância',
         padroes: padroesBasicosSegundaInstancia,
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, P.CHAT]
     },

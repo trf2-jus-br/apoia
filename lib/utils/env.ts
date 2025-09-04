@@ -55,6 +55,7 @@ enum EnvPrivateEnum {
     TESTS_PATH,
     SAVE_PROMPT_RESULTS_PATH,
     OCR_URL,
+    TIKA_URL,
     MODEL_ALLOWED_USERS,
 }
 

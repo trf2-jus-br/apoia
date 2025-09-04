@@ -44,24 +44,49 @@ export const ocrPdf = async (buffer: ArrayBuffer, documentId: number) =>
 
 // Método que recebe um buffer de um PDF, faz um post http para o serviço de OCR e retorna o PDF processado pelo OCR
 const ocrPdfSemLimite = async (buffer: ArrayBuffer, documentId: number) => {
-    console.log('ocrPdf', buffer.byteLength)
-    const url = envString('OCR_URL') as string
-    const formData = new FormData()
-    const file = new Blob([buffer], { type: 'application/pdf' })
-    formData.append('file', file)
-    const res = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        signal: AbortSignal.timeout(1800000), // 30 minutes timeout
-    })
-    if (res.status !== 200) {
-        if (res.headers.get('content-type') === 'application/json') {
-            const errorMsg = (await res.json()).error
-            throw new Error(`Erro ao processar documento ${documentId} pelo OCR: ${errorMsg}`)
+    if (envString('OCR_URL')) {
+        console.log('ocrPdf', buffer.byteLength)
+        const url = envString('OCR_URL') as string
+        const formData = new FormData()
+        const file = new Blob([buffer], { type: 'application/pdf' })
+        formData.append('file', file)
+        const res = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            signal: AbortSignal.timeout(1800000), // 30 minutes timeout
+        })
+        if (res.status !== 200) {
+            if (res.headers.get('content-type') === 'application/json') {
+                const errorMsg = (await res.json()).error
+                throw new Error(`Erro ao processar documento ${documentId} pelo OCR: ${errorMsg}`)
+            }
+            throw new Error(`Erro ao processar documento ${documentId} pelo OCR`)
         }
-        throw new Error(`Erro ao processar documento ${documentId} pelo OCR`)
+        return await res.arrayBuffer()
     }
-    return await res.arrayBuffer()
+    if (envString('TIKA_URL')) {
+        console.log('tikaPdf', buffer.byteLength)
+        const url = envString('TIKA_URL') as string
+        const res = await fetch(url, {
+            method: 'PUT',
+            body: new Uint8Array(buffer),
+            headers: {
+            'Content-Type': 'application/pdf',
+            'Accept': 'text/plain',
+            'X-Tika-PDFocrStrategy': 'AUTO',
+            'X-Tika-OCRLanguage': 'por'
+            },
+            signal: AbortSignal.timeout(1800000), // 30 minutes timeout
+        })
+        if (res.status !== 200) {
+            if (res.headers.get('content-type') === 'application/json') {
+                const errorMsg = (await res.json()).error
+                throw new Error(`Erro ao processar documento ${documentId} pelo Tika: ${errorMsg}`)
+            }
+            throw new Error(`Erro ao processar documento ${documentId} pelo Tika`)
+        }
+        return await res.arrayBuffer()
+    }
 }
 
 const atualizarConteudoDeDocumento = async (documentId: number, contentSource: number, content: string) => {
@@ -75,7 +100,7 @@ const obterTextoDePdf = async (buffer: ArrayBuffer, documentId: number) => {
     const { pages, chars } = obterPaginasECaracteres(texto)
 
     // PDF tem texto suficiente para se considerar que não será necessário realizar o OCR
-    if (chars / pages.length > 500 || !envString('OCR_URL')) {
+    if (chars / pages.length > 500 || (!envString('OCR_URL') && !envString('TIKA_URL'))) {
         return atualizarConteudoDeDocumento(documentId, IADocumentContentSource.PDF, texto)
     }
 
@@ -88,13 +113,13 @@ const obterTextoDePdf = async (buffer: ArrayBuffer, documentId: number) => {
     }
     const ocrTexto = await pdfToText(ocrBuffer, {})
     const { pages: ocrPages, chars: ocrChars } = obterPaginasECaracteres(ocrTexto)
-    
+
     // PDF processado pelo OCR tem mais texto que o original
     if (ocrChars) {
         return atualizarConteudoDeDocumento(documentId, IADocumentContentSource.OCR, ocrTexto)
     } else if (chars) {
         return atualizarConteudoDeDocumento(documentId, IADocumentContentSource.PDF, texto)
-    }    
+    }
     if (!ocrTexto || ocrTexto.trim().length < 500) {
         console.warn(`OCR não retornou texto para o documento ${documentId}. Considerando como OCR_VAZIO.`)
         return atualizarConteudoDeDocumento(documentId, IADocumentContentSource.OCR_VAZIO, TEXTO_PECA_PDF_OCR_VAZIO)
