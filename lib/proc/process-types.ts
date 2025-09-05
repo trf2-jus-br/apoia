@@ -87,7 +87,8 @@ export const Instance: InstanceType = InstanceArray.reduce((acc, cur, idx) => {
 const MatterArray = [
     { id: 1, name: 'CIVEL', descr: 'Cível', acronym: 'Cív' },
     { id: 2, name: 'CRIMINAL', descr: 'Criminal', acronym: 'Cri' },
-    { id: 3, name: 'TRABALHISTA', descr: 'Trabalhista', acronym: 'Trab' },
+    { id: 3, name: 'ELEITORAL', descr: 'Eleitoral', acronym: 'Ele' },
+    { id: 4, name: 'TRABALHISTA', descr: 'Trabalhista', acronym: 'Trab' },
 ]
 export type MatterValueType = EnumOfObjectsValueType & { descr: string, acronym: string }
 export type MatterType = { [key: string]: MatterValueType }
