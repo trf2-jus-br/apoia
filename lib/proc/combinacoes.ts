@@ -1,6 +1,6 @@
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
-import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR } from "./pattern"
+import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
 import { PecaType, StatusDeLancamento } from "./process-types"
 
 // Enum com os tipos de peças
@@ -138,23 +138,50 @@ const pecasRelevantes1aInstancia = [
     T.ATESTADO_DE_PERMANENCIA,
 ]
 
-const pecasRelevantesTR = [
-    T.RECURSO_INOMINADO,
-    T.CONTRARRAZOES
+const pecasQueIniciamFaseDeConhecimento = [
+    T.PETICAO_INICIAL,
 ]
 
-const pecasRelevantes2aInstanciaRecursos = [
+const pecasQueIniciamFaseDeTurmaRecursal = [
+    T.RECURSO_INOMINADO,
+]
+
+const pecasQueIniciamFaseDeRecursoDe2aInstancia = [
+    T.APELACAO,
+    T.RECURSO,
+    T.AGRAVO,
+];
+
+const pecasQueIniciamFases = [
+    ...pecasQueIniciamFaseDeConhecimento,
+    ...pecasQueIniciamFaseDeTurmaRecursal,
+    ...pecasQueIniciamFaseDeRecursoDe2aInstancia
+]
+
+const pecasQueFinalizamFaseDeConhecimento = [
+    T.SENTENCA,
+]
+
+const pecasQueFinalizamFaseDeTurmaRecursal = [
+    T.ACORDAO,
+]
+
+const pecasQueFinalizamFaseDeRecursoDe2aInstancia = [
+    T.ACORDAO,
+]
+
+const pecasQueFinalizamFases = [
+    ...pecasQueFinalizamFaseDeConhecimento,
+    ...pecasQueFinalizamFaseDeTurmaRecursal,
+    ...pecasQueFinalizamFaseDeRecursoDe2aInstancia
+]
+
+const pecasQueRepresentamRecursoPara2aInstancia = [
     T.APELACAO,
     T.RECURSO,
     T.AGRAVO,
     T.AGRAVO_INTERNO,
     T.EMBARGOS_DE_DECLARACAO,
-    T.RECURSO_INOMINADO,
-    T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO,
-]
-
-const pecasRelevantes2aInstanciaAntesDaSentenca = [
-    T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO,
 ]
 
 const pecasRelevantes2aInstanciaContrarrazoes = [
@@ -162,24 +189,85 @@ const pecasRelevantes2aInstanciaContrarrazoes = [
     T.CONTRARRAZOES_AO_RECURSO_DE_APELACAO
 ]
 
+const pecasRelevantes2aInstanciaRecursos = [
+    ...pecasQueRepresentamRecursoPara2aInstancia,
+    ...pecasRelevantes2aInstanciaContrarrazoes,
+    T.PARECER,
+]
+
+const pecasRelevantesDaFaseDeConhecimentoPara2aInstancia = [
+    T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO,
+]
+
 const pecasRelevantes2aInstancia = [
     ...pecasRelevantes2aInstanciaRecursos,
     ...pecasRelevantes2aInstanciaContrarrazoes
 ]
 
-const padroesApelacao = [
-    [ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantes2aInstanciaAntesDaSentenca] }), EXACT(T.PETICAO_INICIAL), ANY({capture: pecasRelevantes2aInstanciaAntesDaSentenca}), EXACT(T.SENTENCA), ANY(), OR(...pecasRelevantes2aInstanciaRecursos), ANY(), OR(...pecasRelevantes2aInstanciaContrarrazoes), ANY({ capture: [T.PARECER] })],
-    [ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantes2aInstanciaAntesDaSentenca] }), EXACT(T.PETICAO_INICIAL), ANY({capture: pecasRelevantes2aInstanciaAntesDaSentenca}), EXACT(T.SENTENCA), ANY(), OR(...pecasRelevantes2aInstanciaRecursos), ANY({ capture: [...pecasRelevantes2aInstanciaContrarrazoes, T.PARECER] })],
+export const padraoApelacaoAberta = [
+    ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
+    EXACT(T.SENTENCA),
+    ANY(),
+    PHASE('Apelação Aberta'),
+    OR(...pecasQueRepresentamRecursoPara2aInstancia),
+    ANY({
+        capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFases
+    })
 ]
 
-const padroesPeticaoInicialEContestacao = [
-    [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [...pecasRelevantes1aInstancia] }), OR(...pecasQueRepresentamContestacao), ANY({ capture: [...pecasRelevantes1aInstancia] })],
-    [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [...pecasRelevantes1aInstancia] })],
+export const padraoApelacaoFechada = [
+    ...padraoApelacaoAberta,
+    PHASE('Apelação Fechada'),
+    EXACT(T.ACORDAO),
+    ANY({ except: pecasQueIniciamFases })
 ]
 
-const padroesBasicosPrimeiraInstancia = [
-    [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [...pecasRelevantes1aInstancia] }), OR(...pecasQueRepresentamContestacao), ANY({ capture: [...pecasRelevantes1aInstancia] }), EXACT(T.SENTENCA), ANY({ capture: [...pecasRelevantes1aInstancia] })],
-    ...padroesPeticaoInicialEContestacao,
+export const padroesApelacao = [
+    padraoApelacaoFechada,
+    padraoApelacaoAberta,
+]
+
+export const padraoTurmaRecursalAberta = [
+    ANY({ capture: [...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
+    EXACT(T.PETICAO_INICIAL),
+    ANY({ capture: [...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
+    EXACT(T.SENTENCA),
+    PHASE('Turma Recursal Aberta'),
+    OR(...pecasQueIniciamFaseDeTurmaRecursal),
+    ANY({
+        capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFaseDeTurmaRecursal
+    })    
+]    
+
+export const padraoTurmaRecursalFechada = [
+    ...padraoTurmaRecursalAberta,
+    PHASE('Turma Recursal Fechada'),
+    EXACT(T.ACORDAO),
+    ANY({ except: pecasQueIniciamFases })
+]    
+
+export const padroesTurmaRecursal = [
+    padraoTurmaRecursalFechada,
+    padraoTurmaRecursalAberta,
+]
+
+export const padraoConhecimentoAberta = [
+    ANY({ capture: [...pecasRelevantes1aInstancia] }),
+    PHASE('Conhecimento Aberta'),
+    EXACT(T.PETICAO_INICIAL),
+    ANY({ capture: [...pecasRelevantes1aInstancia], except: pecasQueIniciamFases}),
+]    
+
+export const padraoConhecimentoFechada = [
+    ...padraoConhecimentoAberta,
+    PHASE('Conhecimento Fechada'),
+    EXACT(T.SENTENCA),
+    ANY({ except: pecasQueIniciamFases })
+]    
+
+export const padroesConhecimento = [
+    padraoConhecimentoFechada,
+    padraoConhecimentoAberta,
 ]
 
 const padroesBasicosSegundaInstancia = [
@@ -188,15 +276,13 @@ const padroesBasicosSegundaInstancia = [
 
 const padroesMinimosSegundaInstancia = [
     ...padroesBasicosSegundaInstancia,
-    [ANY({ capture: [T.PETICAO_INICIAL] }), EXACT(T.PETICAO_INICIAL), ANY({ capture: [...pecasRelevantes2aInstancia] })]
+    ...padroesConhecimento,
 ]
 
 const padroesBasicos = [
     ...padroesBasicosSegundaInstancia,
-    [ANY(), EXACT(T.SENTENCA), ANY(), OR(T.APELACAO, T.RECURSO, T.RECURSO_INOMINADO), ANY()],
-    [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [...pecasRelevantes1aInstancia] }), OR(T.CONTESTACAO, T.INFORMACAO_EM_MANDADO_DE_SEGURANCA, T.DEFESA_PREVIA_DEFESA_PRELIMINAR_RESPOSTA_DO_REU), ANY(), EXACT(T.SENTENCA), ANY()],
-    ...padroesPeticaoInicialEContestacao,
-    [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [...pecasRelevantes1aInstancia] })]
+    ...padroesTurmaRecursal,
+    ...padroesConhecimento
 ]
 
 // "inicial contestação sentença, embargos de declaração, sentença, apelação, contrarrazoes de apelação"
@@ -220,7 +306,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.PUBLICO,
         sort: 3,
         nome: 'Minuta de Sentença',
-        padroes: padroesPeticaoInicialEContestacao,
+        padroes: padroesConhecimento,
         produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.CHAT]
     },
     RESUMOS: {
@@ -309,7 +395,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Primeira Instância',
-        padroes: padroesBasicosPrimeiraInstancia,
+        padroes: padroesConhecimento,
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, P.CHAT]
     },
 
@@ -317,7 +403,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Segunda Instância',
-        padroes: padroesBasicosSegundaInstancia,
+        padroes: [padraoApelacaoAberta],
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, P.CHAT]
     },
 
@@ -325,7 +411,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
         nome: 'Análise de Laudo Pericial BI',
-        padroes: padroesBasicosPrimeiraInstancia,
+        padroes: padroesConhecimento,
         // padroes: [
         //     [ANY(), ANY({ capture: [T.LAUDO, T.LAUDO_PERICIA] })],
         // ],
@@ -336,7 +422,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
         nome: 'Sentença BI - Laudo Favorável',
-        padroes: padroesBasicosPrimeiraInstancia,
+        padroes: padroesConhecimento,
         produtos: [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, P.CHAT]
     },
 
@@ -344,7 +430,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
         nome: 'Sentença BI - Laudo Desfavorável',
-        padroes: padroesBasicosPrimeiraInstancia,
+        padroes: padroesConhecimento,
         produtos: [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, P.CHAT]
     },
 
@@ -380,7 +466,7 @@ export interface InfoDeProduto {
 
 const PieceStrategyArray = [
     { id: 1, name: 'MAIS_RELEVANTES', descr: 'Peças mais relevantes', pattern: padroesBasicos },
-    { id: 1, name: 'MAIS_RELEVANTES_PRIMEIRA_INSTANCIA', descr: 'Peças mais relevantes para 1ª Instância', pattern: padroesBasicosPrimeiraInstancia },
+    { id: 1, name: 'MAIS_RELEVANTES_PRIMEIRA_INSTANCIA', descr: 'Peças mais relevantes para 1ª Instância', pattern: padroesConhecimento },
     { id: 1, name: 'MAIS_RELEVANTES_SEGUNDA_INSTANCIA', descr: 'Peças mais relevantes para 2ª Instância', pattern: padroesMinimosSegundaInstancia },
     { id: 2, name: 'PETICAO_INICIAL', descr: 'Petição inicial', pattern: TipoDeSinteseMap.PEDIDOS.padroes },
     { id: 2, name: 'PETICAO_INICIAL_E_ANEXOS', descr: 'Petição inicial e anexos', pattern: TipoDeSinteseMap.LITIGANCIA_PREDATORIA.padroes },
@@ -431,17 +517,20 @@ export const selecionarPecasPorPadraoComFase = (pecas: PecaType[], padroes: Matc
     }
     if (matches.length === 0) return { pecas: null }
 
+    console.log(matches[0].phasesMatched.map(p => p.phase))
+    console.log(matches[0].lastPhase?.phase)
+
     // Seleciona o match cuja última peça em uma operação de EXACT ou OR é a mais recente
     let matchSelecionado: MatchFullResult | null = null
     let idxUltimaPecaRelevanteDoMatchSelecionado = -1
     for (const m of matches) {
         // Encontra a última operação do tipo EXACT ou OR com peças capturadas
-    let idx = m.items.length - 1
-    while (idx >= 0 && !((m.items[idx].operator.type === 'ANY' || m.items[idx].operator.type === 'SOME') && m.items[idx].captured.length)) idx--
+        let idx = m.items.length - 1
+        while (idx >= 0 && !((m.items[idx].operator.type === 'ANY' || m.items[idx].operator.type === 'SOME') && m.items[idx].captured.length)) idx--
         if (idx < 0) continue
 
         // Encontra a última peça capturada
-    const ultimaPecaRelevante = m.items[idx].captured[m.items[idx].captured.length - 1]
+        const ultimaPecaRelevante = m.items[idx].captured[m.items[idx].captured.length - 1]
         const idxUltimaPecaRelevante = indexById[ultimaPecaRelevante.id]
         if (idxUltimaPecaRelevante > idxUltimaPecaRelevanteDoMatchSelecionado) {
             matchSelecionado = m
@@ -453,12 +542,12 @@ export const selecionarPecasPorPadraoComFase = (pecas: PecaType[], padroes: Matc
     if (matchSelecionado === null) {
         for (const m of matches) {
             // Encontra a última operação do tipo EXACT ou OR
-        let idx = m.items.length - 1
-        while (idx >= 0 && m.items[idx].captured.length === 0) idx--
+            let idx = m.items.length - 1
+            while (idx >= 0 && m.items[idx].captured.length === 0) idx--
             if (idx < 0) continue
 
             // Encontra a última peça capturada
-        const ultimaPecaRelevante = m.items[idx].captured[m.items[idx].captured.length - 1]
+            const ultimaPecaRelevante = m.items[idx].captured[m.items[idx].captured.length - 1]
             const idxUltimaPecaRelevante = indexById[ultimaPecaRelevante.id]
             if (idxUltimaPecaRelevante > idxUltimaPecaRelevanteDoMatchSelecionado) {
                 matchSelecionado = m

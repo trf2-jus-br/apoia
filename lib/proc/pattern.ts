@@ -11,6 +11,7 @@ export interface Documento {
 export interface MatchOptions {
   capture?: T[]
   except?: T[]
+  greedy?: boolean // quando true, tenta consumir o máximo possível (mais distante) antes de retroceder
 }
 
 // Tipos de operadores
@@ -24,8 +25,12 @@ export const EXACT = (docType: T, captureAllInSameEvent?: boolean, phase?: strin
 export const OR = (...docTypes: T[]) => ({ type: 'OR' as const, docTypes })
 export const ANY = (options?: MatchOptions, phase?: string) => ({ type: 'ANY' as const, options, phase })
 export const SOME = (options?: MatchOptions, phase?: string) => ({ type: 'SOME' as const, options, phase })
+// Versões explícitas que setam greedy em options
+export const ANY_GREEDY = (options?: MatchOptions, phase?: string) => ANY({ ...options, greedy: true }, phase)
+export const SOME_GREEDY = (options?: MatchOptions, phase?: string) => SOME({ ...options, greedy: true }, phase)
 // Helper sugar: ANY_EXCEPT(T.A, T.B) === ANY({ except: [T.A, T.B] })
 export const ANY_EXCEPT = (...docTypes: T[]) => ANY({ except: docTypes })
+export const ANY_EXCEPT_GREEDY = (...docTypes: T[]) => ANY({ except: docTypes, greedy: true })
 // PHASE marker operator (ANY vazio com phase) para marcar pontos sem capturar docs
 export const PHASE = (name: string) => ANY(undefined, name)
 
@@ -59,7 +64,7 @@ function matchFromIndex(
   if (patternIdx < 0 && docIdx < 0) {
     // resolve lastPhase
     const lastPhase = resolveLastPhase(phases)
-  return { items: matched, phasesMatched: phases, lastPhase }
+    return { items: matched, phasesMatched: phases, lastPhase }
   }
   if (patternIdx < 0) return null
 
@@ -72,7 +77,7 @@ function matchFromIndex(
         const captured: Documento[] = [document];
         let currentIdx = docIdx + 1;
         if (operator.captureAllInSameEvent) {
-          while (currentIdx < documents.length) { 
+          while (currentIdx < documents.length) {
             const currentDoc = documents[currentIdx]
             if (currentDoc.numeroDoEvento !== document.numeroDoEvento) break
             captured.push(currentDoc)
@@ -106,74 +111,79 @@ function matchFromIndex(
       }
       return null;
     case 'ANY': {
-      let currentIdx = docIdx;
-      const captured: Documento[] = [];
+      // Pré-calcula todos os consumos possíveis (0..N) e depois tenta na ordem conforme greedy
+      const candidates: { captured: Documento[]; nextDocIdx: number }[] = []
+      let currentIdx = docIdx
+      let capturedWorking: Documento[] = []
 
-      // 1. Always try empty (zero-length) consumption first (greedy fallback handled by recursion)
-      const newPhasesEmpty = operator.phase ? addPhase(phases, operator, patternIdx, [{ operator, captured }, ...matched], documents) : phases
-      const emptyMatch = matchFromIndex(
-        documents,
-        pattern,
-        patternIdx - 1,
-        currentIdx,
-        [{ operator, captured }, ...matched],
-        newPhasesEmpty
-      )
-      if (emptyMatch) return emptyMatch
+      // Consumo zero
+      candidates.push({ captured: [], nextDocIdx: currentIdx })
 
-      // 2. Consume backwards while not hitting an except boundary.
       while (currentIdx >= 0) {
         const currentDoc = documents[currentIdx]
-        // Boundary: stop expanding when encountering an excluded type.
         if (operator.options?.except?.includes(currentDoc.tipo)) break
-
         if (operator.options?.capture && (operator.options.capture.length === 0 || operator.options.capture.includes(currentDoc.tipo))) {
-          // unshift to preserve chronological order inside the captured slice
-          captured.unshift(currentDoc)
+          capturedWorking = [currentDoc, ...capturedWorking]
         }
+        currentIdx--
+        candidates.push({ captured: [...capturedWorking], nextDocIdx: currentIdx })
+      }
 
-        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [{ operator, captured }, ...matched], documents) : phases
-        const matchPrev = matchFromIndex(
+      const order = operator.options?.greedy ? [...candidates.keys()].reverse() : [...candidates.keys()]
+      for (const idx of order) {
+        const cand = candidates[idx]
+        const item: MatchResultItem = { operator, captured: cand.captured }
+        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [item, ...matched], documents) : phases
+        const attempt = matchFromIndex(
           documents,
           pattern,
           patternIdx - 1,
-          currentIdx - 1,
-          [{ operator, captured }, ...matched],
+          cand.nextDocIdx,
+          [item, ...matched],
           newPhases
         )
-        if (matchPrev) return matchPrev
-
-        currentIdx--
+        if (attempt) return attempt
       }
-      // No match found with this ANY configuration
       return null
     }
     case 'SOME': {
-      let currentIdx = docIdx;
-      const captured: Documento[] = [];
+      const candidates: { captured: Documento[]; nextDocIdx: number }[] = []
+      let currentIdx = docIdx
+      let capturedWorking: Documento[] = []
 
       while (currentIdx >= 0) {
-        const currentDoc = documents[currentIdx];
+        const currentDoc = documents[currentIdx]
         if (operator.options?.except?.includes(currentDoc.tipo)) break
-
-        if (operator.options?.capture && (operator.options.capture.length === 0 || operator.options.capture.includes(currentDoc.tipo)))
-          captured.unshift(currentDoc)
-
-        if (captured.length) {
-          const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [{ operator, captured }, ...matched], documents) : phases
-          const matchPrevious = matchFromIndex(
-            documents,
-            pattern,
-            patternIdx - 1,
-            currentIdx - 1,
-            [{ operator, captured }, ...matched],
-            newPhases
-          )
-          if (matchPrevious) return matchPrevious
+        if (operator.options?.capture && (operator.options.capture.length === 0 || operator.options.capture.includes(currentDoc.tipo))) {
+          if (operator.options?.greedy) {
+            // Para greedy, cada documento capturável vira um candidato isolado; não acumulamos
+            candidates.push({ captured: [currentDoc], nextDocIdx: currentIdx - 1 })
+          } else {
+            capturedWorking = [currentDoc, ...capturedWorking]
+          }
         }
-        currentIdx--;
+        currentIdx--
+        if (!operator.options?.greedy && capturedWorking.length) {
+          candidates.push({ captured: [...capturedWorking], nextDocIdx: currentIdx })
+        }
       }
-      return null;
+
+      const order = operator.options?.greedy ? [...candidates.keys()].reverse() : [...candidates.keys()]
+      for (const idx of order) {
+        const cand = candidates[idx]
+        const item: MatchResultItem = { operator, captured: cand.captured }
+        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [item, ...matched], documents) : phases
+        const attempt = matchFromIndex(
+          documents,
+          pattern,
+          patternIdx - 1,
+          cand.nextDocIdx,
+          [item, ...matched],
+          newPhases
+        )
+        if (attempt) return attempt
+      }
+      return null
     }
     default:
       return null;
@@ -197,7 +207,7 @@ function resolveLastPhase(phases: PhaseMatchInfo[]): PhaseMatchInfo | undefined 
   // Recalcular resultIndex e lastCapturedDocIndex ordering stable
   // Já temos lastCapturedDocIndex potencial (pode ser null). Escolha: preferir quem tem índice e é mais à direita (menor patternIdx significa mais cedo, então usamos maior operatorPatternIndex)
   // Estratégia: ordenar cópia sem mutar original
-  const ranked = [...phases].sort((a,b) => {
+  const ranked = [...phases].sort((a, b) => {
     const aHas = a.lastCapturedDocIndex !== null
     const bHas = b.lastCapturedDocIndex !== null
     if (aHas !== bHas) return aHas ? -1 : 1 // queremos priorizar quem capturou (invertido depois)
@@ -220,3 +230,13 @@ export function match(documents: Documento[], pattern: MatchOperator[]): MatchRe
   return full.items
 }
 
+export function matchSomePatterns(documents: Documento[], padroes: MatchOperator[][]): MatchFullResult | null {
+  const matches: MatchFullResult[] = []
+  for (const padrao of padroes) {
+    const m = matchFull(documents, padrao)
+    if (m !== null && m.items.length > 0) {
+      return m
+    }
+  }
+  return null
+}
