@@ -156,33 +156,29 @@ describe('auto-json parser & schema', () => {
       properties: {
         Processo: {
           type: 'object',
-            description: 'Processo',
             additionalProperties: false,
             properties: {
               Juizo: {
                 type: 'object',
-                description: 'Juizo',
                 additionalProperties: false,
                 properties: {
-                  NmJuizo: { type: 'string', description: 'NmJuizo' },
-                  DtDistribuicao: { type: 'string', description: 'DtDistribuicao' }
+                  NmJuizo: { type: 'string' },
+                  DtDistribuicao: { type: 'string' }
                 },
                 required: ['NmJuizo','DtDistribuicao']
               },
               Partes: {
                 type: 'array',
-                description: 'Partes',
                 items: {
                   type: 'object',
                   additionalProperties: false,
                   properties: {
                     Parte: {
                       type: 'object',
-                      description: 'Parte',
                       additionalProperties: false,
                       properties: {
-                        NmParte: { type: 'string', description: 'NmParte' },
-                        TpParte: { type: 'string', description: 'TpParte' }
+                        NmParte: { type: 'string' },
+                        TpParte: { type: 'string' }
                       },
                       required: ['NmParte','TpParte']
                     }
@@ -195,17 +191,15 @@ describe('auto-json parser & schema', () => {
         },
         Movimentacoes: {
           type: 'array',
-          description: 'Movimentacoes',
           items: {
             type: 'object',
             additionalProperties: false,
             properties: {
               Mov: {
                 type: 'object',
-                description: 'Mov',
                 additionalProperties: false,
                 properties: {
-                  DtMov: { type: 'string', description: 'DtMov' }
+                  DtMov: { type: 'string' }
                 },
                 required: ['DtMov']
               }
@@ -228,13 +222,12 @@ describe('auto-json parser & schema', () => {
       properties: {
         Partes: {
           type: 'array',
-          description: 'Partes',
           items: {
             type: 'object',
             additionalProperties: false,
             properties: {
-              NmParte: { type: 'string', description: 'NmParte' },
-              TpParte: { type: 'string', description: 'TpParte' }
+              NmParte: { type: 'string' },
+              TpParte: { type: 'string' }
             },
             required: ['NmParte','TpParte']
           }

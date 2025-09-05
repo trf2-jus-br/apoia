@@ -258,7 +258,7 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
             return arrSchema
         }
         if (node.type === 'object') {
-            const obj: any = { type: 'object', properties: {}, additionalProperties: false, description: node.description }
+            const obj: any = { type: 'object', properties: {}, additionalProperties: false }
             if (node.properties) {
                 for (const child of node.properties) {
                     obj.properties[child.name] = nodeToSchema(child)
