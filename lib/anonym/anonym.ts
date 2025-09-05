@@ -2,6 +2,7 @@ import { anonymizeNames } from './name-anonymizer';
 
 const NUMERIC_PATTERN = /\b(?:\d[\.\-/()]?){9,20}\b/;
 
+// Captures only the numeric part (group 1) so we can preserve the preceding label
 const IDENTIDADE_PATTERN = /\b(?:Identidade|Id\.?|Ident\.?|RG\.?|RG)\s*(?:n[.º]?\.?\s*)?\s*(\d[\d.\-/]{4,8}\d)\b/i;
 
 const CPF_PATTERN = /\b(?!\d{8,9}-\d)\d{1,3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
@@ -10,15 +11,18 @@ const ENDERECO_PATTERN = /\b(?:Rua|R\.|Avenida|Av\.?|Travessa|Trav\.?|T\.|Praça
 
 const TELEFONE_FIXO_PATTERN = /\b\d{4}-?\d{4}\b/;
 
-const TELEFONE_MOVEL_PATTERN = /\b1?[- ]?\d{4,5}[- ]?\d{4}\b/;
+// Mobile phone: optional leading 1 (country/area indicator) with optional separator AFTER it, but never consume a preceding space
+const TELEFONE_MOVEL_PATTERN = /\b(?:1[- ]?)?\d{4,5}[- ]?\d{4}\b/;
 
 const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i;
 
-const OAB_PATTERN = /\b(?:OAB(?:\/[A-Z]{2}| [A-Z]{2})?:?\s*(?:n\.?|nº\.?)?\s*\d{2,6}(?:\.\d{3})?|OAB\s*\d{2,6}(?:\.\d{3})?\s*(?:\/?\s*[A-Z]{2})|\d{2,6}(?:\.\d{3})?\s*(?:\/[A-Z]{2}| [A-Z]{2})\s*OAB)\b/i;
+// Simpler pattern with two groups: (label)(number)
+const OAB_LABEL_NUMBER_PATTERN = /\b(OAB(?:\/[A-Z]{2}| [A-Z]{2})?:?\s*(?:n\.?|nº\.?)?\s*)(\d{2,6}(?:\.\d{3})?)\b/i;
 
 const URL_PATTERN = /\b(?:https?|www)\.?[a-zA-Z0-9._%+-]*(?:\.[a-zA-Z0-9._%+-]+)+\b/i;
 
-const CRM_PATTERN = /\b(?:CRM(?:\/RJ|RJ|ERJ)?|CREMERJ)\s*(?:\d{2,10}|\d{2,3}\.\d{3})(?:\/\?\s?[A-Z]{2})?\b/i;
+// Two groups: (label + space)(number)
+const CRM_PATTERN = /\b((?:CRM(?:\/RJ|RJ|ERJ)?|CREMERJ)\s*)(\d{2,10}|\d{2,3}\.\d{3})(?:\/\?\s?[A-Z]{2})?\b/i;
 
 
 /**
@@ -77,14 +81,39 @@ export function anonymizeText(
     }
 
     if (numeric) replaceAndCount(NUMERIC_PATTERN, '000');
-    if (identidade) replaceAndCount(IDENTIDADE_PATTERN, '000');
+    // Specialized replacements that preserve labels
+    if (identidade) {
+        const globalPattern = new RegExp(IDENTIDADE_PATTERN.source, IDENTIDADE_PATTERN.flags.includes('g') ? IDENTIDADE_PATTERN.flags : IDENTIDADE_PATTERN.flags + 'g');
+        let subs = 0;
+        currentText = currentText.replace(globalPattern, (full, num: string) => {
+            subs++;
+            return full.replace(num, '000');
+        });
+        totalSubstitutions += subs;
+    }
     if (endereco) replaceAndCount(ENDERECO_PATTERN, '---');
     if (telefoneFixo) replaceAndCount(TELEFONE_FIXO_PATTERN, '000');
     if (telefoneMovel) replaceAndCount(TELEFONE_MOVEL_PATTERN, '000');
     if (email) replaceAndCount(EMAIL_PATTERN, '---');
-    if (oab) replaceAndCount(OAB_PATTERN, '000');
+    if (oab) {
+        const globalPattern = new RegExp(OAB_LABEL_NUMBER_PATTERN.source, OAB_LABEL_NUMBER_PATTERN.flags.includes('g') ? OAB_LABEL_NUMBER_PATTERN.flags : OAB_LABEL_NUMBER_PATTERN.flags + 'g');
+        let subs = 0;
+        currentText = currentText.replace(globalPattern, (_full, label: string, num: string) => {
+            subs++;
+            return label + '000';
+        });
+        totalSubstitutions += subs;
+    }
     if (url) replaceAndCount(URL_PATTERN, '---');
-    if (crm) replaceAndCount(CRM_PATTERN, '000');
+    if (crm) {
+        const globalPattern = new RegExp(CRM_PATTERN.source, CRM_PATTERN.flags.includes('g') ? CRM_PATTERN.flags : CRM_PATTERN.flags + 'g');
+        let subs = 0;
+        currentText = currentText.replace(globalPattern, (_full, label: string, num: string) => {
+            subs++;
+            return label + '000';
+        });
+        totalSubstitutions += subs;
+    }
 
     if (names) {
         const r = anonymizeNames(currentText);

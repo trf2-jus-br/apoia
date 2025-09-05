@@ -38,7 +38,7 @@ export function preprocessTemplate(template: string): string {
     let s = template
     s = s.replace(/\{\{\{\}\}\}/g, '</outer-if>')
     s = s.replace(/\{\{\{(.*?)\}\}\}/gs, '<outer-if id="ID_PLACEHOLDER" expr="$1">')
-    s = s.replace(/\{\{\}/g, '</if>')
+    s = s.replace(/\{\{\}\}/g, '</if>')
     s = s.replace(/\{\{(.*?)\}\}/gs, '<if id="ID_PLACEHOLDER" expr="$1">')
     s = s.replace(/\{(.*?)\}/gs, '<snippet id="ID_PLACEHOLDER" expr="$1"></snippet>')
 
