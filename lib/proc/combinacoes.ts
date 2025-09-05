@@ -1,6 +1,6 @@
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
-import { ANY, Documento, EXACT, match, MatchOperator, MatchResult, OR } from "./pattern"
+import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR } from "./pattern"
 import { PecaType, StatusDeLancamento } from "./process-types"
 
 // Enum com os tipos de peças
@@ -405,7 +405,13 @@ export const PieceDescr: PieceDescrType = Object.keys(T).filter(x => x !== 'TEXT
 }, {} as PieceDescrType)
 
 
-export const selecionarPecasPorPadrao = (pecas: PecaType[], padroes: MatchOperator[][]) => {
+export interface SelecionarPecasResultado {
+    pecas: PecaType[] | null
+    faseAtual?: string
+    fases?: string[]
+}
+
+export const selecionarPecasPorPadraoComFase = (pecas: PecaType[], padroes: MatchOperator[][]): SelecionarPecasResultado => {
     let ps: Documento[] = pecas.map(p => ({ id: p.id, tipo: p.descr as T, numeroDoEvento: p.numeroDoEvento, descricaoDoEvento: p.descricaoDoEvento }))
 
     // Cria um índice de peças por id
@@ -415,27 +421,27 @@ export const selecionarPecasPorPadrao = (pecas: PecaType[], padroes: MatchOperat
     }
 
     // Cria um índice de matches possíveis
-    const matches: MatchResult[] = []
+    const matches: MatchFullResult[] = []
     for (const padrao of padroes) {
-        const m = match(ps, padrao)
-        if (m !== null && m.length > 0) {
+        const m = matchFull(ps, padrao)
+        if (m !== null && m.items.length > 0) {
             matches.push(m)
             break
         }
     }
-    if (matches.length === 0) return null
+    if (matches.length === 0) return { pecas: null }
 
     // Seleciona o match cuja última peça em uma operação de EXACT ou OR é a mais recente
-    let matchSelecionado: MatchResult | null = null
+    let matchSelecionado: MatchFullResult | null = null
     let idxUltimaPecaRelevanteDoMatchSelecionado = -1
     for (const m of matches) {
         // Encontra a última operação do tipo EXACT ou OR com peças capturadas
-        let idx = m.length - 1
-        while (idx >= 0 && !((m[idx].operator.type === 'ANY' || m[idx].operator.type === 'SOME') && m[idx].captured.length)) idx--
+    let idx = m.items.length - 1
+    while (idx >= 0 && !((m.items[idx].operator.type === 'ANY' || m.items[idx].operator.type === 'SOME') && m.items[idx].captured.length)) idx--
         if (idx < 0) continue
 
         // Encontra a última peça capturada
-        const ultimaPecaRelevante = m[idx].captured[m[idx].captured.length - 1]
+    const ultimaPecaRelevante = m.items[idx].captured[m.items[idx].captured.length - 1]
         const idxUltimaPecaRelevante = indexById[ultimaPecaRelevante.id]
         if (idxUltimaPecaRelevante > idxUltimaPecaRelevanteDoMatchSelecionado) {
             matchSelecionado = m
@@ -447,12 +453,12 @@ export const selecionarPecasPorPadrao = (pecas: PecaType[], padroes: MatchOperat
     if (matchSelecionado === null) {
         for (const m of matches) {
             // Encontra a última operação do tipo EXACT ou OR
-            let idx = m.length - 1
-            while (idx >= 0 && m[idx].captured.length === 0) idx--
+        let idx = m.items.length - 1
+        while (idx >= 0 && m.items[idx].captured.length === 0) idx--
             if (idx < 0) continue
 
             // Encontra a última peça capturada
-            const ultimaPecaRelevante = m[idx].captured[m[idx].captured.length - 1]
+        const ultimaPecaRelevante = m.items[idx].captured[m.items[idx].captured.length - 1]
             const idxUltimaPecaRelevante = indexById[ultimaPecaRelevante.id]
             if (idxUltimaPecaRelevante > idxUltimaPecaRelevanteDoMatchSelecionado) {
                 matchSelecionado = m
@@ -461,14 +467,17 @@ export const selecionarPecasPorPadrao = (pecas: PecaType[], padroes: MatchOperat
         }
     }
 
-    if (matchSelecionado === null) return null
+    if (matchSelecionado === null) return { pecas: null }
 
     // Flattern the match and map back to PecaType
-    const pecasSelecionadas = matchSelecionado.map(m => m.captured).flat().map(d => pecas[indexById[d.id]])
+    const pecasSelecionadas = matchSelecionado.items.map(m => m.captured).flat().map(d => pecas[indexById[d.id]])
 
-    if (pecasSelecionadas.length === 0) return null
+    if (pecasSelecionadas.length === 0) return { pecas: null }
 
-    return acrescentarAnexosDoPJe(pecas, pecasSelecionadas, indexById)
+    const pecasComAnexos = acrescentarAnexosDoPJe(pecas, pecasSelecionadas, indexById)
+    const faseAtual = matchSelecionado.lastPhase?.phase
+    const fases = matchSelecionado.phasesMatched.map(p => p.phase)
+    return { pecas: pecasComAnexos, faseAtual, fases }
 }
 
 const isPJeOriginId = (idOriginal: string | undefined | null): boolean => {

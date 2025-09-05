@@ -3,7 +3,7 @@ import { Dao } from '../db/mysql'
 import { inferirCategoriaDaPeca } from '../category'
 import { obterConteudoDaPeca, obterDocumentoGravado } from './piece'
 import { assertNivelDeSigilo, nivelDeSigiloPermitido, verificarNivelDeSigilo } from './sigilo'
-import { P, selecionarPecasPorPadrao, T, TipoDeSinteseEnum, TipoDeSinteseMap } from './combinacoes'
+import { P, selecionarPecasPorPadraoComFase, T, TipoDeSinteseEnum, TipoDeSinteseMap, SelecionarPecasResultado } from './combinacoes'
 import { infoDeProduto, TiposDeSinteseValido } from './info-de-produto'
 import { getInterop, Interop } from '../interop/interop'
 import { DadosDoProcessoType, PecaType, StatusDeLancamento, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
@@ -200,14 +200,16 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
             console.log('Identificação concluída')
         }
 
-        let pecasSelecionadas: PecaType[] | null = null
+    let selecao: SelecionarPecasResultado = { pecas: null }
+    let pecasSelecionadas: PecaType[] | null = null
         let tipoDeSinteseSelecionado: TipoDeSinteseEnum | null = null
 
         // Localiza um tipo de síntese válido
         const tipos = TiposDeSinteseValido.filter(t => t.status <= statusDeSintese)
         for (const tipoDeSintese of tipos) {
             const pecasAcessiveis = pecas.filter(p => nivelDeSigiloPermitido(p.sigilo))
-            pecasSelecionadas = selecionarPecasPorPadrao(pecasAcessiveis, tipoDeSintese.padroes)
+            selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, tipoDeSintese.padroes)
+            pecasSelecionadas = selecao.pecas
             if (pecasSelecionadas !== null) {
                 tipoDeSinteseSelecionado = tipoDeSintese.id
                 break
@@ -220,7 +222,8 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         if (kind) {
             tipoDeSinteseSelecionado = kind
             const pecasAcessiveis = pecas.filter(p => nivelDeSigiloPermitido(p.sigilo))
-            pecasSelecionadas = selecionarPecasPorPadrao(pecasAcessiveis, TipoDeSinteseMap[kind].padroes)
+            selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, TipoDeSinteseMap[kind].padroes)
+            pecasSelecionadas = selecao.pecas
         }
         if (!tipoDeSinteseSelecionado) tipoDeSinteseSelecionado = 'RESUMOS'
 
@@ -245,8 +248,9 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                     assertNivelDeSigilo(peca.sigilo, `${peca.descr} (${peca.id})`)
         }
 
-        // console.log('tipo de síntese', `${tipoDeSinteseSelecionado}`)
-        // console.log('peças selecionadas', pecasSelecionadas?.map(p => p.id))
+    // console.log('tipo de síntese', `${tipoDeSinteseSelecionado}`)
+    // console.log('peças selecionadas', pecasSelecionadas?.map(p => p.id))
+    // console.log('fase atual (matcher)', selecao.faseAtual)
         // console.log('produtos', TipoDeSinteseMap[`${tipoDeSinteseSelecionado}`]?.produtos)
 
         let pecasComConteudo: PecaType[] = []

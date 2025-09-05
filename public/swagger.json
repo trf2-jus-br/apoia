@@ -658,7 +658,7 @@
     },
     "/api/v1/select-pieces": {
       "post": {
-        "description": "Seleciona as peças que serão utilizadas na síntese",
+        "description": "Seleciona as peças que serão utilizadas na síntese e identifica a fase atual (quando aplicável)",
         "tags": [
           "process"
         ],
@@ -667,9 +667,15 @@
             "in": "body",
             "name": "body",
             "schema": {
+              "type": "object",
+              "required": [
+                "pieces",
+                "kind"
+              ],
               "properties": {
                 "pieces": {
                   "type": "array",
+                  "description": "Lista completa de peças do processo (cada peça deve conter ao menos id e descr)",
                   "items": {
                     "type": "object",
                     "properties": {
@@ -680,14 +686,11 @@
                         "type": "string"
                       }
                     }
-                  },
-                  "required": true,
-                  "description": "Lista completa de peças do processo"
+                  }
                 },
                 "kind": {
                   "type": "string",
-                  "required": true,
-                  "description": "Tipo de síntese a ser realizada"
+                  "description": "Identificador do tipo de síntese desejado"
                 }
               }
             }
@@ -695,7 +698,37 @@
         ],
         "responses": {
           "200": {
-            "description": "OK, peças selecionadas"
+            "description": "OK, peças selecionadas",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "OK"
+                },
+                "selectedIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "faseAtual": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Última fase identificada pelo mecanismo de matching (pode ser omitida ou null se nenhuma fase for marcada)"
+                },
+                "fases": {
+                  "type": "array",
+                  "description": "Lista completa (em ordem de detecção) das fases marcadas no padrão correspondente",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao selecionar peças"
           }
         }
       }
