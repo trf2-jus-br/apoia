@@ -267,6 +267,14 @@ export const padraoConhecimentoFechada = [
     ANY({ except: pecasQueIniciamFases })
 ]    
 
+export const padraoConhecimentoForcado = [
+    ...padraoConhecimentoAberta,
+    PHASE('Conhecimento Fechada'),
+    EXACT(T.SENTENCA),
+    PHASE('Conhecimento Fechada'),
+    ANY(),
+]    
+
 export const padroesConhecimento = [
     padraoConhecimentoFechada,
     padraoConhecimentoAberta,
@@ -308,7 +316,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.PUBLICO,
         sort: 3,
         nome: 'Minuta de Sentença',
-        padroes: padroesConhecimento,
+        padroes: [...padroesConhecimento, padraoConhecimentoForcado],
         produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.CHAT]
     },
     RESUMOS: {
