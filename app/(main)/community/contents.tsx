@@ -97,8 +97,9 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                 return
             }
             setArrayDeDadosDoProcesso(data.arrayDeDadosDoProcesso)
-            const dadosDoProc = data.arrayDeDadosDoProcesso[0]
-            setIdxProcesso(0)
+            const idx = data.arrayDeDadosDoProcesso?.length > 1 ? data.arrayDeDadosDoProcesso?.length - 1 : 0
+            setIdxProcesso(idx)
+            const dadosDoProc = data.arrayDeDadosDoProcesso[idx]
             setDadosDoProcesso(dadosDoProc)
         }
     }
@@ -211,7 +212,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
             </div >
             <Container className="mt-2 mb-3" fluid={false}>
                 {!apiKeyProvided && <p className="text-center mt-3 mb-3">Execute os prompts diretamente na Apoia, cadastrando sua <Link href="/prefs">Chave de API</Link>.</p>}
-                
+
                 <Tabs
                     activeKey={activeTab}
                     onSelect={(k) => setActiveTab(k || 'principal')}
@@ -227,7 +228,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                             </div>
                         </PromptsTable>
                     </Tab>
-                    
+
                     <Tab eventKey="comunidade" title="Prompts Não Avaliados">
                         <PromptsTable prompts={promptsComunidade} onClick={promptOnClick} onProcessNumberChange={setNumeroDoProcesso}>
                             <div className="col col-auto">
@@ -237,7 +238,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                                 </DropdownButton>
                             </div>
                         </PromptsTable>
-                        
+
                         <div className="alert alert-warning mt-3">
                             <p className="mb-0">
                                 <strong>Atenção:</strong> Os prompts da comunidade são compartilhados publicamente por outros usuários.
