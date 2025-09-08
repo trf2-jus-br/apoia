@@ -3,9 +3,9 @@
 import { IAPrompt } from "@/lib/db/mysql-types";
 import { DadosDoProcessoType, PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
 import { ReactNode, useEffect, useState } from "react";
-import { InfoDeProduto, P, PieceStrategy, selecionarPecasPorPadrao, T } from "@/lib/proc/combinacoes";
+import { InfoDeProduto, P, PieceStrategy, selecionarPecasPorPadraoComFase, T } from "@/lib/proc/combinacoes";
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "@/lib/ai/prompt-types";
-import { joinReactElementsWithAnd, joinWithAnd, slugify } from "@/lib/utils/utils";
+import { slugify } from "@/lib/utils/utils";
 import { getInternalPrompt } from "@/lib/ai/prompt";
 import { ProgressBar } from "react-bootstrap";
 import Print from "@/components/slots/print";
@@ -38,7 +38,9 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
         const pattern = PieceStrategy[pieceStrategy].pattern
         if (pattern) {
             const pecasAcessiveis = allPieces.filter(p => nivelDeSigiloPermitido(p.sigilo))
-            return selecionarPecasPorPadrao(pecasAcessiveis, pattern) || []
+            const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, pattern)
+            const pecasSelecionadas = selecao.pecas
+            return pecasSelecionadas || []
         }
         const validDescrs = pieceDescr.map(d => T[d] || d)
         return allPieces.filter(p => validDescrs.includes(p.descr))

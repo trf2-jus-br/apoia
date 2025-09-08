@@ -10,11 +10,10 @@ import fetcher from '@/lib/utils/fetcher'
 import { formatBrazilianDate, slugify } from '@/lib/utils/utils'
 import { DadosDoProcessoType, PecaType } from '@/lib/proc/process-types'
 import { DocumentMatch, matchDocuments, SimilarityType } from '@/lib/utils/documentMatcher'
-import { set } from 'zod'
 import Print from '@/components/slots/print'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRefresh } from '@fortawesome/free-solid-svg-icons'
-import { selecionarPecasPorPadrao, TipoDeSinteseMap } from '@/lib/proc/combinacoes'
+import { selecionarPecasPorPadraoComFase, TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 import DiffViewer from './diff-viewer'
 import { useRouter } from 'next/navigation'
 import Chat from '@/components/slots/chat'
@@ -138,7 +137,8 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
             const response = await fetcher.get(`/api/v1/process/${numeroDoProcesso}`)
             if (response.arrayDeDadosDoProcesso && response.arrayDeDadosDoProcesso.length > 0) {
                 for (const dadosDoProc of response.arrayDeDadosDoProcesso) {
-                    const pecasSelecionadas = selecionarPecasPorPadrao(dadosDoProc.pecas, TipoDeSinteseMap['LITIGANCIA_PREDATORIA'].padroes)
+                    const selecao = selecionarPecasPorPadraoComFase(dadosDoProc.pecas, TipoDeSinteseMap['LITIGANCIA_PREDATORIA'].padroes)
+                    const pecasSelecionadas = selecao.pecas
                     const peticaoInicialPeca = pecasSelecionadas.find(peca => slugify(peca.descr) === 'peticao-inicial')
                     if (!peticaoInicialPeca)
                         continue
@@ -396,7 +396,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                 <AiContent key={numeroDoProcesso + outrosNumerosDeProcessos}
                     definition={getInternalPrompt('litigancia-predatoria')}
                     data={{ textos }}
-                    options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined}/>
+                    options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined} />
 
                 <Chat definition={getInternalPrompt('chat')} data={{ textos }} key={calcSha256({ textos })} />
             </>}
