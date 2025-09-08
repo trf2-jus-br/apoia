@@ -45,6 +45,10 @@ export const maiusculasEMinusculas = (s) => {
   return s;
 }
 
+export const isAllCaps = (s: string): boolean => {
+  return s === s.toUpperCase();
+}
+
 export const joinWithAnd = (arr: string[]): string => {
   if (arr.length === 0) return ''
   if (arr.length === 1) return arr[0]

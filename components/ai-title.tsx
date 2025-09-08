@@ -1,8 +1,8 @@
 import { GeneratedContent } from "@/lib/ai/prompt-types";
-import { maiusculasEMinusculas } from "@/lib/utils/utils";
+import { isAllCaps, maiusculasEMinusculas } from "@/lib/utils/utils";
 
 export default function AiTitle({ request }: { request: GeneratedContent }) {
-    return <h2>{maiusculasEMinusculas(request.title)}
+    return <h2>{isAllCaps(request.title) ? maiusculasEMinusculas(request.title) : request.title}
         <span style={{ fontWeight: 'normal', fontSize: '60%' }}>
             {request.documentLocation
                 ? <><span> (e. </span>

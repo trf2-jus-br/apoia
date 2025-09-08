@@ -23,7 +23,7 @@ As regras abaixo visam reduzir ambiguidade, padronizar a saída e evitar alucina
 
 1) Escopo de Leitura de Conteúdo
    - Usar EXCLUSIVAMENTE texto contido entre as tags: <apelacao>...</apelacao>; <contrarrazoes>...</contrarrazoes>; <contrarrazoes-ao-recurso-de-apelacao>...</contrarrazoes-ao-recurso-de-apelacao>; <peticao-inicial>...</peticao-inicial>; <sentenca>...</sentenca>; <perfil-profissiografico-previdenciario>...</perfil-profissiografico-previdenciario>.
-   - Se existirem as duas variantes de contrarrazões, tratar ambas como equivalentes. Não utilizar nenhuma outra fonte ou inferência externa.
+   - Não utilizar nenhuma outra fonte ou inferência externa.
 
 2) Proibição de Inferência
    - Não preencher campos com suposições, conhecimento jurídico geral ou extrapolações. Se a informação não estiver textual e inequivocamente presente, deixar campo vazio ("") ou usar "?" conforme regra específica.

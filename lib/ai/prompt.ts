@@ -195,6 +195,7 @@ import chat_standalone from '@/prompts/chat-standalone.md'
 import relatorio_completo_criminal from '@/prompts/relatorio-completo-criminal.md'
 import minuta_de_despacho_de_acordo_9_dias from '@/prompts/minuta-de-despacho-de-acordo-9-dias.md'
 import template from '@/prompts/template.md'
+import prev_ppp from '@/prompts/prev-ppp.md'
 import prev_apesp_pontos_controvertidos_primeira_instancia from '@/prompts/prev-apesp-pontos-controvertidos-primeira-instancia.md'
 import prev_apesp_pontos_controvertidos_segunda_instancia from '@/prompts/prev-apesp-pontos-controvertidos-segunda-instancia.md'
 import prev_bi_analise_de_laudo from '@/prompts/prev-bi-analise-de-laudo.md'
@@ -231,6 +232,7 @@ export const internalPrompts = {
     relatorio_completo_criminal: promptDefinitionFromMarkdown('relatorio_completo_criminal', relatorio_completo_criminal),
     minuta_de_despacho_de_acordo_9_dias: promptDefinitionFromMarkdown('minuta_de_despacho_de_acordo_9_dias', minuta_de_despacho_de_acordo_9_dias),
     template: promptDefinitionFromMarkdown('template', template),
+    prev_ppp: promptDefinitionFromMarkdown('prev_ppp', prev_ppp),
     prev_apesp_pontos_controvertidos_primeira_instancia: promptDefinitionFromMarkdown('prev_apesp_pontos_controvertidos_primeira_instancia', prev_apesp_pontos_controvertidos_primeira_instancia),
     prev_apesp_pontos_controvertidos_segunda_instancia: promptDefinitionFromMarkdown('prev_apesp_pontos_controvertidos_segunda_instancia', prev_apesp_pontos_controvertidos_segunda_instancia),
     prev_bi_analise_de_laudo: promptDefinitionFromMarkdown('prev_bi_analise_de_laudo', prev_bi_analise_de_laudo),

@@ -56,6 +56,7 @@ export enum P {
     CHAT = 'Chat',
     RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL = 'Relatório de Processo Coletivo ou Criminal',
     MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS = 'Minuta de Despacho de Acordo 9 dias',
+    PREV_PPP = 'Perfil Profissiográfico Previdenciário - PPP',
     PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA = 'Relatório de Aposentadoria Especial - Primeira Instância',
     PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA = 'Relatório de Aposentadoria Especial - Segunda Instância',
     PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
@@ -92,6 +93,7 @@ export const ProdutosValidos = {
     [P.CHAT]: { titulo: P.CHAT, prompt: 'chat', plugins: [] },
     [P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL]: { titulo: P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL, prompt: 'relatorio-de-processo-coletivo-ou-criminal', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
     [P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS]: { titulo: P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS, prompt: 'minuta-de-despacho-de-acordo-9-dias', plugins: [] },
+    [P.PREV_PPP]: { titulo: P.PREV_PPP, prompt: 'prev-ppp', plugins: [] },
     [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, prompt: 'prev-apesp-pontos-controvertidos-primeira-instancia', plugins: [] },
     [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, prompt: 'prev-apesp-pontos-controvertidos-segunda-instancia', plugins: [] },
     [P.PREV_BI_ANALISE_DE_LAUDO]: { titulo: P.PREV_BI_ANALISE_DE_LAUDO, prompt: 'prev-bi-analise-de-laudo', plugins: [] },
@@ -389,6 +391,14 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Relatório de Acervo',
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.RESUMO]
+    },
+
+    PREV_PPP: {
+        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        sort: 1000,
+        nome: 'Perfil Profissiográfico Previdenciário - PPP',
+        padroes: [[ANY({ capture: [T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO], greedy: true })]],
+        produtos: [P.PREV_PPP, P.CHAT]
     },
 
     PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA: {
