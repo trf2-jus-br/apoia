@@ -3,18 +3,29 @@ import { Container } from 'react-bootstrap'
 
 import { assertCurrentUser } from '@/lib/user'
 import { assertModel } from '@/lib/ai/model-server'
+import { getInternalPrompt } from '@/lib/ai/prompt'
+import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 
 // export const runtime = 'edge'
 export const preferredRegion = 'home'
 
 
-export default async function Home() {
+export default async function Home(props) {
   await assertCurrentUser()
   await assertModel()
 
+  const searchParams = await props.searchParams;
+  const kind = searchParams?.kind
+  const definition = kind ? TipoDeSinteseMap[kind] : null
+
   return (<>
     <Container fluid={false}>
-      <ProcessNumberForm />
+      <div className="row justify-content-center">
+        <div className="col-12">
+          <h4 className="text-center mt-5 mb-2">{definition ? definition.nome : 'Síntese do Processo'}</h4>
+        </div>
+        <ProcessNumberForm kind={kind} />
+      </div>
 
       <div className="row justify-content-center">
         <div className="col col-12 col-md-6 mt-5">

@@ -1,6 +1,6 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
@@ -23,6 +23,13 @@ export default async function HomePage() {
             description: "Gere automaticamente resumos de peças processuais",
             href: "/process",
             color: "text-success"
+        },
+        {
+            icon: faGavel,
+            title: "Sentença",
+            description: "Gere minutas de sentenças informando fundamentação e dispositivo",
+            href: "/process?kind=PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS",
+            color: "text-dark"
         },
         {
             icon: faDatabase,
