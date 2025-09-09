@@ -126,7 +126,8 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 
 ### PPP[] - Perfis Profissiográficos Previdenciários
 - Extraia as informações dos textos dos PPPs nos autos (entre os marcadores <perfil-profissiografico-previdenciario> e </perfil-profissiografico-previdenciario>)
-- Crie uma linha para cada PPP
+- Crie uma linha para cada período de cada PPP
+- Agrupe em um mesmo período diferentes agentes nocivos somente se os níveis de exposição, técnicas utilizadas e EPC Eficaz/EPI Eficaz forem idênticos.
 - É possível que a qualidade do OCR não seja perfeita. Preencha os campos abaixo apenas se tiver certeza, se estiver na dúvida, preencha com "?".
 - Se não houver PPPs entre os documentos fornecidos, responda com um array vazio.
 
@@ -148,18 +149,19 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 
 ###### Tx_Empresa - Empresa
 - Informar a empresa ou "?" se não tiver certeza
-- Usar letras maiúsculas e minúsculas
+- Usar letras maiúsculas e minúsculas, não use apenas maiúsculas
 
 ###### Tx_Profissao - Profissão
 - Informar a profissão ou "?" se não tiver certeza
-- Usar letras maiúsculas e minúsculas
+- Usar letras maiúsculas e minúsculas, não use apenas maiúsculas
 
 ###### Tx_Agentes_E_Niveis - Agentes Nocivos e Níveis de Exposição
 - Informar os agentes nocivos e os níveis de exposição conforme consta no PPP ou "?" se não tiver certeza.
-- Usar letras maiúsculas e minúsculas
+- Usar letras maiúsculas e minúsculas, não use apenas maiúsculas
 
 ###### Tx_Tecnica_Utilizada - Técnica Utilizada
 - Informar a técnica utilizada para medir os agentes nocivos conforme consta no PPP ou "?"
+- Usar letras maiúsculas e minúsculas, não use apenas maiúsculas
 
 ###### Tx_EPC_Eficaz - EPC Eficaz
 - Informar se EPCs são eficazes conforme consta no PPP.
@@ -337,9 +339,6 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 2) Pedidos da apelação da parte autora (apenas períodos, sem detalhes):
 - Se não houver apelação da parte autora, pule diretamente para o item 5.
 - Frase modelo se houver algum Periodos_Da_Apelacao_Da_Parte_Autora com Lo_Atividade_Especial == true: "A parte autora requer o reconhecimento dos períodos [lista de períodos com Lo_Atividade_Especial == true] como trabalhados em atividade especial."
-    - Se houver informação no PPP sobre a atividade desempenhada que possa indicar se o segurado ficava exposto o tempo todo ou se era intermitente, incluir a descrição da atividade desempenhada e o constância da exposição.
-    - Se houver informação no PPP que indique se há exposição ao agente nocivo de forma habitual e permanente, incluir essa informação no resumo do período.
-    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Frase modelo se houver algum Periodos_Da_Apelacao_Da_Parte_Autora com Lo_Atividade_Especial == false: "Além disso, entende que devem ser reconhecidos, em contagem simples, os períodos de [lista de períodos com Lo_Atividade_Especial == false]. 
 - Troque o "Além disso," por "A parte autora" caso não haja nenhum período com Lo_Atividade_Especial == true.
 - Cite o documento da apelação no formato (evento [event], [label]).
@@ -350,6 +349,12 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Comece com: "Quanto ao reconhecimento dos períodos em atividade especial, verificam-se as seguintes alegações:"
 - Seguindo-se com um parágrafo por período, em ordem cronológica, nesta forma: "Período [dd/mm/aaaa] a [dd/mm/aaaa] — [Vínculo] ([profissão] | [agente(s)]): [expor a controvérsia conforme Tg_Resumo]."
 - Entre parênteses, use o(s) agente(s) nocivo(s) ou profissão, conforme a informação que consta em cada Periodos_Da_Apelacao_Da_Parte_Autora. Se ambos existirem, use "(profissão: [profissão]; agentes nocivos: [agente(s)])". Se nenhum existir, omita os parênteses.
+- Se houver informação de PPP para o período em questão, incluir essas informações no final do resumo do período.
+    - Começe com "Conforme PPP juntado aos autos, ".
+    - Se houver informação sobre a atividade desempenhada, incluir a descrição completa da atividade desempenhada conforme consta no PPP.
+    - Se puder indicar se o segurado ficava exposto o tempo todo ou se era intermitente e o constância da exposição, informe.
+    - Se houver informação que indique se há exposição ao agente nocivo de forma habitual e permanente, informe.
+    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Se houver um único período alegado como especial, emende a frase inicial e o período num único parágrafo, de forma a que se tenha fluidez redacional, ajustando-se singular e plural.
 
 4) Controvérsias dos períodos da apelação da parte autora (atividade comum):
@@ -374,9 +379,6 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 6) Pedidos da apelação do INSS (apenas períodos, sem detalhes):
 - Se não houver apelação do INSS, pule diretamente para o item 9 (sem escrever frase de ausência).
 - Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == true: "O INSS requer o reconhecimento dos períodos [lista de períodos com Lo_Atividade_Especial == true] como trabalhados em atividade especial."
-    - Se houver informação no PPP sobre a atividade desempenhada que possa indicar se o segurado ficava exposto o tempo todo ou se era intermitente, incluir a descrição da atividade desempenhada e o constância da exposição.
-    - Se houver informação no PPP que indique se há exposição ao agente nocivo de forma habitual e permanente, incluir essa informação no resumo do período.
-    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == false: "Além disso, entende que devem ser reconhecidos, em contagem simples, os períodos de [lista de períodos com Lo_Atividade_Especial == false]."
 - Troque o "Além disso," por "O INSS" caso não haja nenhum período com Lo_Atividade_Especial == true.
 - Cite o documento da apelação no formato (evento [event], [label]).
@@ -387,6 +389,12 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Comece com: "Quanto ao reconhecimento dos períodos em atividade especial, verificam-se as seguintes alegações:"
 - Seguindo-se com um parágrafo por período, em ordem cronológica, nesta forma: "Período [dd/mm/aaaa] a [dd/mm/aaaa] — [Vínculo] ([profissão] | [agente(s)]): [expor a controvérsia conforme Tg_Resumo]."
 - Entre parênteses, use o(s) agente(s) nocivo(s) ou profissão, conforme a informação que consta em cada Periodos_Da_Apelacao_Do_INSS. Se ambos existirem, use "(profissão: [profissão]; agentes nocivos: [agente(s)])". Se nenhum existir, omita os parênteses.
+- Se houver informação de PPP para o período em questão, incluir essas informações no final do resumo do período.
+    - Começe com "Conforme PPP juntado aos autos, ".
+    - Se houver informação sobre a atividade desempenhada, incluir a descrição completa da atividade desempenhada conforme consta no PPP.
+    - Se puder indicar se o segurado ficava exposto o tempo todo ou se era intermitente e o constância da exposição, informe.
+    - Se houver informação que indique se há exposição ao agente nocivo de forma habitual e permanente, informe.
+    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Se houver um único período alegado como especial, emende a frase inicial e o período num único parágrafo, de forma a que se tenha fluidez redacional, ajustando-se singular e plural.
 
 8) Controvérsias dos períodos da apelação do INSS (atividade comum):
