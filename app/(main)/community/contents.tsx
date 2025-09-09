@@ -20,6 +20,7 @@ import { tua } from "@/lib/proc/tua"
 import Link from "next/link"
 import { VisualizationEnum } from "@/lib/ui/preprocess"
 import { array } from "zod"
+import ErrorMessage from "@/components/error-message"
 
 export const copyPromptToClipboard = (prompt: IAPromptList) => {
     let s: string = prompt.content.system_prompt
@@ -255,7 +256,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                     <Toast.Header>
                         <strong className="me-auto">Atenção</strong>
                     </Toast.Header>
-                    <Toast.Body>{toast}</Toast.Body>
+                    <Toast.Body><ErrorMessage message={toast} /></Toast.Body>
                 </Toast>
             </ToastContainer>
 

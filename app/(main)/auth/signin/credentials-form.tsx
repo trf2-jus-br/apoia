@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react"
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Form } from 'react-bootstrap';
+import ErrorMessage from "@/components/error-message";
 
 const CredentialsForm = (params) => {
     const [errorMessage, setErrorMessage] = useState('')
@@ -34,7 +35,7 @@ const CredentialsForm = (params) => {
             <div className="col-lg-6 mx-auto">
                 {
                     errorMessage
-                    ? <p className="alert alert-danger mt-3 mb-4">{errorMessage}</p>
+                    ? <p className="alert alert-danger mt-3 mb-4"><ErrorMessage message={errorMessage} /></p>
                     : <></>
                 }
                 <h4>Login com credenciais do Eproc/PJ-e</h4>

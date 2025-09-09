@@ -10,6 +10,7 @@ import showdown from 'showdown'
 import { ReactElement, useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize'
 import { Modal, Button, Form } from 'react-bootstrap';
+import ErrorMessage from '../error-message';
 
 const converter = new showdown.Converter({ tables: true })
 
@@ -334,7 +335,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                         <div className={`col col-auto mb-0`}>
                             <div className={true ? 'alert alert-danger' : `text-wrap mb-3 rounded text-danger`}>
                                 <button type="button" className="btn-close float-end" data-bs-dismiss="alert" aria-label="Close" onClick={(e) => { e.preventDefault(); clearError() }}></button>
-                                <b>Erro:</b> {error.message}
+                                <b>Erro:</b> <ErrorMessage message={error.message} />
                             </div>
                         </div>
                     </div>}
@@ -342,7 +343,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                         <div className="col col-auto mb-0">
                             <div className='alert alert-warning'>
                                 <button type="button" className="btn-close float-end" aria-label="Close" onClick={(e) => { e.preventDefault(); setClientError(null) }}></button>
-                                <b>Aviso:</b> {clientError}
+                                <b>Aviso:</b> <ErrorMessage message={clientError} />
                             </div>
                         </div>
                     </div>}

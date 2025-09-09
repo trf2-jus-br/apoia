@@ -6,6 +6,7 @@ import { Container, Row, Col, Form, Button, Table, Spinner, Modal } from 'react-
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import Print from '@/components/slots/print'
 import { preprocess } from '@/lib/ui/preprocess'
+import ErrorMessage from '@/components/error-message'
 
 function formatDate(dt?: Date | null) {
     if (!dt) return ''
@@ -208,7 +209,7 @@ export default function IAUsageReportClient({ usdBrl, isModerator }: Props) {
                     </Col>
                 </Row>
             </Form>
-            {error && <div className="alert alert-danger py-2">{error}</div>}
+            {error && <div className="alert alert-danger py-2"><ErrorMessage message={error} /></div>}
             {rows?.length > 0 && <>
                 <div className="table-responsive">
                     <Table striped hover size="sm" className="align-middle">
@@ -282,7 +283,7 @@ export default function IAUsageReportClient({ usdBrl, isModerator }: Props) {
                 {showDetail && (
                     <div ref={detailRef} className="mt-4">
                         <h2 className="h5 mb-3">{buildDetailTitle()}</h2>
-                        {detailError && <div className="alert alert-danger py-2">{detailError}</div>}
+                        {detailError && <div className="alert alert-danger py-2"><ErrorMessage message={detailError} /></div>}
                         {detailLoading && <div className="text-center py-3"><Spinner animation="border" size="sm" /></div>}
                         {!detailLoading && detailRows.length === 0 && <div className="text-muted fst-italic">Sem gerações detalhadas.</div>}
                         {!detailLoading && detailRows.length > 0 && (

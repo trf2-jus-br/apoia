@@ -4,6 +4,7 @@ import Fetcher from '@/lib/utils/fetcher'
 import { Suspense } from 'react'
 import { Container } from 'react-bootstrap'
 import ProcessTitle from '@/components/slots/process-title'
+import ErrorMessage from '@/components/error-message'
 
 export const maxDuration = 60 // seconds
 
@@ -34,6 +35,6 @@ export default async function ShowProcess(props) {
             </div>)
     } catch (error) {
         const message = Fetcher.processError(error)
-        return (<div className='alert alert-danger mt-5'>Erro ao buscar dados do processo: {message}</div>)
+        return (<div className='alert alert-danger mt-5'><ErrorMessage message={`Erro ao buscar dados do processo: ${message}`} /></div>)
     }
 }
