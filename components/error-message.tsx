@@ -29,7 +29,7 @@ function ErrorMsg(msg: string) {
         return <>
             <p>Ocorreu um erro no acesso ao provedor de inteligência artificial OpenAI.</p>
             <p>Este erro acontece normalmente quando se tentar utilizar os modelos gpt-5 ou gpt-5-mini.</p>
-            <p >Isso não é um problema da Apoia, mas sim uma exigência da OpenAI. Para acessar os modelos mais novos é necessário fazer a verificação. Isso incluí o envio de foto de documento de identidade e também do reconhecimento facial. Vá para <a href="https://platform.openai.com/settings/organization/general">https://platform.openai.com/settings/organization/general</a> e clique em "Verify Organization" para inicial o processo de verificação.</p>
+            <p >Isso não é um problema da Apoia, mas sim uma exigência da OpenAI. Para acessar os modelos mais novos é necessário fazer a verificação. Isso incluí o envio de foto de documento de identidade e também do reconhecimento facial. Vá para <a href="https://platform.openai.com/settings/organization/general">https://platform.openai.com/settings/organization/general</a> e clique em &quot;Verify Organization&quot; para inicial o processo de verificação.</p>
         </>
 
     return null

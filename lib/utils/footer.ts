@@ -7,7 +7,7 @@ export const buildFooterFromPieces = (model: string, selectedPieces: PecaType[])
     const pecasComConteudo: TextoType[] = []
     for (const peca of selectedPieces) {
         const slug = slugify(peca.descr)
-        pecasComConteudo.push({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug, texto: peca.conteudo })
+        pecasComConteudo.push({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug, texto: peca.conteudo, sigilo: peca.sigilo })
     }
     return buildFooter(model, pecasComConteudo)
 }

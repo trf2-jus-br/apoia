@@ -26,7 +26,7 @@ export default function PromptTest(params: {
             "prompt": params.testset.kind,
             "plugins": []
         }
-        const textos = test.texts.map(t => ({ descr: t.name, slug: slugify(t.name), texto: t.value }))
+        const textos = test.texts.map(t => ({ descr: t.name, slug: slugify(t.name), texto: t.value, sigilo: '1' }))
         const result = test.expected
         const file = idx.toString()
         return { file, titulo, infoDeProduto, textos, result }

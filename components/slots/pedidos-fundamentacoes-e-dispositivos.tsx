@@ -42,7 +42,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, Frm, doss
         const pedidos = [...Frm.get('pedidos')].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         // console.log('pedidosAnalisados', pedidos)
         const data = { ...request.data }
-        data.textos = [...request.data.textos, { slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(pedidos) }]
+        data.textos = [...request.data.textos, { slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(pedidos), sigilo: '0' }]
         const prompt = getInternalPrompt('sentenca')
 
         return <>
