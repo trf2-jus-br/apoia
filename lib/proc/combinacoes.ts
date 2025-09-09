@@ -229,6 +229,14 @@ export const padroesApelacao = [
     padraoApelacaoAberta,
 ]
 
+export const padraoApelacaoForcado = [
+    ...padraoApelacaoAberta,
+    PHASE('Conhecimento Fechada'),
+    EXACT(T.ACORDAO),
+    ANY(),
+]    
+
+
 export const padraoTurmaRecursalAberta = [
     ANY({ capture: [...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
     EXACT(T.PETICAO_INICIAL),
@@ -421,7 +429,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Segunda Instância',
-        padroes: [padraoApelacaoAberta],
+        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, P.CHAT]
     },
 
