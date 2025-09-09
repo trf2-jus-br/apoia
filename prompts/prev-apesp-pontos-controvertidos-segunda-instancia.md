@@ -158,6 +158,9 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Informar os agentes nocivos e os níveis de exposição conforme consta no PPP ou "?" se não tiver certeza.
 - Usar letras maiúsculas e minúsculas
 
+###### Tx_Tecnica_Utilizada - Técnica Utilizada
+- Informar a técnica utilizada para medir os agentes nocivos conforme consta no PPP ou "?"
+
 ###### Tx_EPC_Eficaz - EPC Eficaz
 - Informar se EPCs são eficazes conforme consta no PPP.
 - Responda com "Sim", "Não", "N/A" quando não se aplica ("NA", "N/A" ou "N.A.") estiver explícito no PPP, ou "?" caso não tenha certeza ou não localize essa informação.
@@ -329,11 +332,14 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Substituir "parte autora" pelo nome da pessoa física constante ou manter "parte autora" apenas para evitar repetição excessiva.
 - A numeração de itens é apenas para organização do prompt, não deve constar na resposta.
 
-1) Trata-se de [apelação de <nome da parte autora> / apelação do INSS / apelações de <nome da parte autora> e do INSS] contra sentença que julgou [procedente / improcedente / parcialmente procedente] o pedido inicial. Em seguida, incluir breve resumo da sentença (se houver dados estruturados para tanto).
+1) Trata-se de [apelação de <nome da parte autora> / apelação do INSS / apelações de <nome da parte autora> e do INSS] contra sentença que julgou [procedente / improcedente / parcialmente procedente] o pedido inicial. Em seguida, incluir breve resumo da sentença, se houver, (se a sentença incluir períodos que foram considerados especiais, para os especiais, indique o agente nocivo e o grau de exposição que o juiz considerou).
 
 2) Pedidos da apelação da parte autora (apenas períodos, sem detalhes):
 - Se não houver apelação da parte autora, pule diretamente para o item 5.
 - Frase modelo se houver algum Periodos_Da_Apelacao_Da_Parte_Autora com Lo_Atividade_Especial == true: "A parte autora requer o reconhecimento dos períodos [lista de períodos com Lo_Atividade_Especial == true] como trabalhados em atividade especial."
+    - Se houver informação no PPP sobre a atividade desempenhada que possa indicar se o segurado ficava exposto o tempo todo ou se era intermitente, incluir a descrição da atividade desempenhada e o constância da exposição.
+    - Se houver informação no PPP que indique se há exposição ao agente nocivo de forma habitual e permanente, incluir essa informação no resumo do período.
+    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Frase modelo se houver algum Periodos_Da_Apelacao_Da_Parte_Autora com Lo_Atividade_Especial == false: "Além disso, entende que devem ser reconhecidos, em contagem simples, os períodos de [lista de períodos com Lo_Atividade_Especial == false]. 
 - Troque o "Além disso," por "A parte autora" caso não haja nenhum período com Lo_Atividade_Especial == true.
 - Cite o documento da apelação no formato (evento [event], [label]).
@@ -368,6 +374,9 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 6) Pedidos da apelação do INSS (apenas períodos, sem detalhes):
 - Se não houver apelação do INSS, pule diretamente para o item 9 (sem escrever frase de ausência).
 - Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == true: "O INSS requer o reconhecimento dos períodos [lista de períodos com Lo_Atividade_Especial == true] como trabalhados em atividade especial."
+    - Se houver informação no PPP sobre a atividade desempenhada que possa indicar se o segurado ficava exposto o tempo todo ou se era intermitente, incluir a descrição da atividade desempenhada e o constância da exposição.
+    - Se houver informação no PPP que indique se há exposição ao agente nocivo de forma habitual e permanente, incluir essa informação no resumo do período.
+    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == false: "Além disso, entende que devem ser reconhecidos, em contagem simples, os períodos de [lista de períodos com Lo_Atividade_Especial == false]."
 - Troque o "Além disso," por "O INSS" caso não haja nenhum período com Lo_Atividade_Especial == true.
 - Cite o documento da apelação no formato (evento [event], [label]).
@@ -467,9 +476,9 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 {% if PPP | length %}
 ## Perfis Profissiográficos Previdenciários (PPPs)
 
-| Ev. | Doc. |  Início  |  Fim  | Data | Empresa | Profissão | Agentes Nocivos e Níveis de Exposição | EPC Eficaz | EPI Eficaz |
-|-----|------|----------|-------|------|---------|-----------|---------------------------------------|------------|------------|
-{% for ppp in PPP | sortByDate %}| {= ppp.Ev_Event =} | {= ppp.Tx_Label =} | {= ppp.Dt_Inicio =} | {= ppp.Dt_Fim =} | {= ppp.Dt_PPP =} | {= ppp.Tx_Empresa =} | {= ppp.Tx_Profissao =} | {= ppp.Tx_Agentes_E_Niveis =} | {= ppp.Tx_EPC_Eficaz =} | {= ppp.Tx_EPI_Eficaz =} |
+| Ev. | Doc. |  Início  |  Fim  | Data | Empresa | Profissão | Agentes Nocivos e Níveis de Exposição | Téc. Utilizada | EPC Eficaz | EPI Eficaz |
+|-----|------|----------|-------|------|---------|-----------|---------------------------------------|----------------|------------|------------|
+{% for ppp in PPP | sortByDate %}| {= ppp.Ev_Event =} | {= ppp.Tx_Label =} | {= ppp.Dt_Inicio =} | {= ppp.Dt_Fim =} | {= ppp.Dt_PPP =} | {= ppp.Tx_Empresa =} | {= ppp.Tx_Profissao =} | {= ppp.Tx_Agentes_E_Niveis =} | {= ppp.Tx_Tecnica_Utilizada =} | {= ppp.Tx_EPC_Eficaz =} | {= ppp.Tx_EPI_Eficaz =} |
 {% endfor %}{% endif %}
 
 {#{% for ppp in PPP | sortByDate %}1. Ev. {= ppp.Ev_Event =} — {= ppp.Tx_Label =}
