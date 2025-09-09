@@ -1,11 +1,11 @@
 import { System, systems } from '@/lib/utils/env'
 import { assertCurrentUser } from '@/lib/user'
 import pLimit from 'p-limit'
-import { Interop, ObterPecaType } from './interop'
+import { fixSigiloDePecas, Interop, ObterPecaType } from './interop'
 import { aggregateProcessos } from './pdpj'
 import { DadosDoProcessoType, Instance, PecaType } from '../proc/process-types'
 import { parseYYYYMMDDHHMMSS } from '../utils/utils'
-import { assertNivelDeSigilo, verificarNivelDeSigilo } from '../proc/sigilo'
+import { assertNivelDeSigilo } from '../proc/sigilo'
 import { tua } from '../proc/tua'
 import { InteropProcessoType } from './interop-types'
 
@@ -115,7 +115,7 @@ export class InteropBalcaojus implements Interop {
         if (!value?.dadosBasicos) return []
         const dadosBasicos = value.dadosBasicos
         const sigilo = '' + (dadosBasicos.nivelSigilo ?? dadosBasicos.nivelSigilo === 0 ? dadosBasicos.nivelSigilo : '')
-        if (verificarNivelDeSigilo()) assertNivelDeSigilo(sigilo)
+        assertNivelDeSigilo(sigilo)
 
         const dataAjuizamento = dadosBasicos.dataAjuizamento
         const ajuizamento = dataAjuizamento ? parseYYYYMMDDHHMMSS(dataAjuizamento) : undefined
@@ -186,7 +186,7 @@ export class InteropBalcaojus implements Interop {
         } catch { /* ignore */ }
 
         const classe = tua[codigoDaClasse]
-        const respLista: DadosDoProcessoType[] = [{ numeroDoProcesso: numero, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, oabPoloAtivo, instancia: instancia.name }]
+        const respLista: DadosDoProcessoType[] = [{ numeroDoProcesso: numero, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, oabPoloAtivo, instancia: instancia.name, sigilo }]
 
         // Processos vinculados (recursão no mesmo sistema)
         // const vinculados = dadosBasicos?.ProcessosVinculados || dadosBasicos?.processosVinculados
@@ -224,7 +224,8 @@ export class InteropBalcaojus implements Interop {
         if (!isRecursive && respLista.length > 1) {
             try { aggregateProcessos(respLista) } catch { /* ignore */ }
         }
-        return respLista
+
+        return fixSigiloDePecas(respLista)
     }
 
     public obterPeca = async (numeroDoProcesso, idDaPeca, binary?: boolean): Promise<ObterPecaType> => {

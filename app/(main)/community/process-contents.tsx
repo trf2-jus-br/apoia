@@ -15,6 +15,7 @@ import ErrorMsg from "./error-msg";
 import { ListaDeProdutos } from "@/components/slots/lista-produtos-client";
 import { PromptParaCopiar } from "./prompt-to-copy";
 import { buildFooterFromPieces } from "@/lib/utils/footer";
+import { nivelDeSigiloPermitido } from "@/lib/proc/sigilo";
 
 export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent, setPieceContent, apiKeyProvided, model, children }: { prompt: IAPrompt, dadosDoProcesso: DadosDoProcessoType, pieceContent: any, setPieceContent: (pieceContent: any) => void, apiKeyProvided: boolean, model?: string, children?: ReactNode }) {
     const [selectedPieces, setSelectedPieces] = useState<PecaType[]>([])
@@ -26,12 +27,6 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
 
     const changeSelectedPieces = (pieces: string[]) => {
         setSelectedPieces(dadosDoProcesso.pecas.filter(p => pieces.includes(p.id)))
-    }
-
-    const nivelDeSigiloPermitido = (nivel: string, descrDaPeca?) => {
-        const nivelMax = 0
-        const n = parseInt(nivel)
-        return n <= nivelMax
     }
 
     const chooseSelectedPieces = (allPieces: PecaType[], pieceStrategy: string, pieceDescr: string[]) => {
@@ -92,7 +87,7 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
 
     const buildRequests = (contents: { [key: number]: string }): GeneratedContent[] => {
         const requestArray: GeneratedContent[] = []
-        const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: contents[peca.id] }))
+        const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: contents[peca.id], sigilo: peca.sigilo }))
         let produtos: (InfoDeProduto | P)[] = []
         if (prompt.content.summary === 'SIM') {
             for (const peca of pecasComConteudo) {

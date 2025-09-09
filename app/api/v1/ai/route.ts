@@ -127,6 +127,9 @@ async function getPromptDefinition(kind: string, promptSlug?: string, promptId?:
  */
 export async function POST(request: Request) {
     try {
+        const { searchParams } = new URL(request.url)
+        const messagesOnly = searchParams.get('messagesOnly') === 'true'
+
         const user = await getCurrentUser()
         if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
 
@@ -183,8 +186,8 @@ export async function POST(request: Request) {
         if (body.extra)
             definitionWithOptions.prompt += '\n\n' + body.extra
 
-        const executionResults: PromptExecutionResultsType = {}
-        const result = await streamContent(definitionWithOptions, data, executionResults, {dossierCode})
+        const executionResults: PromptExecutionResultsType = { messagesOnly }
+        const result = await streamContent(definitionWithOptions, data, executionResults, { dossierCode })
 
         if (typeof result === 'string') {
             return new Response(result, { status: 200 })

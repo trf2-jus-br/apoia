@@ -1,7 +1,7 @@
-import { Interop, ObterPecaType } from './interop'
+import { fixSigiloDePecas, Interop, ObterPecaType } from './interop'
 import { DadosDoProcessoType, Instance, PecaType } from '../proc/process-types'
 import { parseYYYYMMDDHHMMSS } from '../utils/utils'
-import { assertNivelDeSigilo, verificarNivelDeSigilo } from '../proc/sigilo'
+import { assertNivelDeSigilo } from '../proc/sigilo'
 import { getCurrentUser } from '../user'
 import { envString } from '../utils/env'
 import { tua } from '../proc/tua'
@@ -16,7 +16,7 @@ const mimeTypyFromTipo = (tipo: string): string => {
     }
 }
 
-const nivelDeSigiloFromNivel = (nivel: string): string => {
+export const nivelDeSigiloFromNivel = (nivel: string): string => {
     switch (nivel) {
         case 'PUBLICO': return '0'
         case 'SEGREDO_JUSTICA': return '1'
@@ -134,8 +134,7 @@ export class InteropPDPJ implements Interop {
         for (const processo of data[0].tramitacoes) {
             const idClasse = processo?.classe?.[0]?.codigo
             if (idClasseParaFiltrar && idClasse !== idClasseParaFiltrar) continue
-            if (verificarNivelDeSigilo())
-                assertNivelDeSigilo('' + processo.nivelSigilo)
+            assertNivelDeSigilo('' + processo.nivelSigilo)
 
             const ajuizamento = new Date(processo.dataHoraAjuizamento)
             const nomeOrgaoJulgador = processo.tribunal.nome
@@ -213,7 +212,7 @@ export class InteropPDPJ implements Interop {
 
         aggregateProcessos(resp)
 
-        return resp
+        return fixSigiloDePecas(resp)
     }
 
     public obterPeca = async (numeroDoProcesso, idDaPeca, binary?: boolean): Promise<ObterPecaType> => {

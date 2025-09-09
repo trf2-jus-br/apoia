@@ -2,7 +2,7 @@ import { decrypt } from '../utils/crypt'
 import { Dao } from '../db/mysql'
 import { inferirCategoriaDaPeca } from '../category'
 import { obterConteudoDaPeca, obterDocumentoGravado } from './piece'
-import { assertNivelDeSigilo, nivelDeSigiloPermitido, verificarNivelDeSigilo } from './sigilo'
+import { assertNivelDeSigilo, nivelDeSigiloPermitido } from './sigilo'
 import { P, selecionarPecasPorPadraoComFase, T, TipoDeSinteseEnum, TipoDeSinteseMap, SelecionarPecasResultado } from './combinacoes'
 import { infoDeProduto, TiposDeSinteseValido } from './info-de-produto'
 import { getInterop, Interop } from '../interop/interop'
@@ -200,8 +200,8 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
             console.log('Identificação concluída')
         }
 
-    let selecao: SelecionarPecasResultado = { pecas: null }
-    let pecasSelecionadas: PecaType[] | null = null
+        let selecao: SelecionarPecasResultado = { pecas: null }
+        let pecasSelecionadas: PecaType[] | null = null
         let tipoDeSinteseSelecionado: TipoDeSinteseEnum | null = null
 
         // Localiza um tipo de síntese válido
@@ -243,14 +243,13 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                 }
             pecasSelecionadas = pecas
         } else if (pecasSelecionadas !== null) {
-            if (verificarNivelDeSigilo())
-                for (const peca of pecasSelecionadas)
-                    assertNivelDeSigilo(peca.sigilo, `${peca.descr} (${peca.id})`)
+            for (const peca of pecasSelecionadas)
+                assertNivelDeSigilo(peca.sigilo, `${peca.descr} (${peca.id})`)
         }
 
-    // console.log('tipo de síntese', `${tipoDeSinteseSelecionado}`)
-    // console.log('peças selecionadas', pecasSelecionadas?.map(p => p.id))
-    // console.log('fase atual (matcher)', selecao.faseAtual)
+        // console.log('tipo de síntese', `${tipoDeSinteseSelecionado}`)
+        // console.log('peças selecionadas', pecasSelecionadas?.map(p => p.id))
+        // console.log('fase atual (matcher)', selecao.faseAtual)
         // console.log('produtos', TipoDeSinteseMap[`${tipoDeSinteseSelecionado}`]?.produtos)
 
         let pecasComConteudo: PecaType[] = []

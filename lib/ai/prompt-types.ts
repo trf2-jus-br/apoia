@@ -40,6 +40,7 @@ export type TextoType = {
     slug: string
     pTexto?: Promise<PecaConteudoType>
     texto?: string
+    sigilo: string
 }
 export type PromptDataType = { 
     numeroDoProcesso?: string, 
@@ -81,6 +82,7 @@ export type PromptExecutionResultsType = {
     sha256?: string
     model?: string
     generationId?: number
+    messagesOnly?: boolean
 }
 
 // Tipo que representa o resultado da execução de um prompt pelo componente AiContent

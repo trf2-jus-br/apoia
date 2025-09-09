@@ -59,7 +59,7 @@ export async function getPiecesWithContent(dadosDoProcesso: DadosDoProcessoType,
             throw new Error(`Conteúdo não encontrado no processo ${dossierNumber}, peça ${peca.id}, rótulo ${peca.rotulo}`)
         }
         const slug = await slugify(peca.descr)
-        pecasComConteudo.push({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug, pTexto: peca.pConteudo, texto: peca.conteudo })
+        pecasComConteudo.push({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug, pTexto: peca.pConteudo, texto: peca.conteudo, sigilo: peca.sigilo })
     }
     return pecasComConteudo
 }
@@ -74,7 +74,8 @@ export const promptExecuteBuilder = (definition: PromptDefinitionType, data: Pro
     if (prompt && !prompt.includes('{{') && (!definition.systemPrompt || !definition.systemPrompt.includes('{{')))
         prompt = `${prompt}\n\n{{textos}}`
 
-    prompt = fixPromptForAutoJson(prompt)
+    if (prompt)
+        prompt = fixPromptForAutoJson(prompt)
 
     if (prompt && !definition.jsonSchema) {
         definition.jsonSchema = promptJsonSchemaFromPromptMarkdown(prompt, true)

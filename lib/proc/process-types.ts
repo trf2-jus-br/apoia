@@ -31,7 +31,7 @@ export type PecaType = {
 export type DadosDoProcessoType = {
     pecas: PecaType[]
     pecasSelecionadas?: PecaType[]
-    sigilo?: number
+    sigilo?: string
     tipoDeSintese?: TipoDeSinteseEnum
     produtos?: (P | ProdutoCompleto)[]
     ajuizamento?: Date

@@ -5,10 +5,10 @@ import { envString, systems } from '@/lib/utils/env'
 import { assertCurrentUser } from '@/lib/user'
 
 import pLimit from 'p-limit'
-import { Interop, ObterPecaType } from './interop'
+import { fixSigiloDePecas, Interop, ObterPecaType } from './interop'
 import { DadosDoProcessoType, PecaType } from '../proc/process-types'
 import { parseYYYYMMDDHHMMSS } from '../utils/utils'
-import { assertNivelDeSigilo, verificarNivelDeSigilo } from '../proc/sigilo'
+import { assertNivelDeSigilo } from '../proc/sigilo'
 import { tua } from '../proc/tua'
 import { InteropProcessoType } from './interop-types'
 
@@ -166,9 +166,8 @@ export class InteropMNI implements Interop {
         if (!respQuery[0].sucesso)
             throw new Error(`${respQuery[0].mensagem}`)
         const dadosBasicos = respQuery[0].processo.dadosBasicos
-        const sigilo = dadosBasicos.attributes.nivelSigilo
-        if (verificarNivelDeSigilo())
-            assertNivelDeSigilo(sigilo)
+        const sigilo = '' + dadosBasicos.attributes.nivelSigilo
+        assertNivelDeSigilo(sigilo)
         const dataAjuizamento = dadosBasicos.attributes.dataAjuizamento
         // console.log('dadosBasicos', dadosBasicos)
         const nomeOrgaoJulgador = dadosBasicos.orgaoJulgador.attributes.nomeOrgao
@@ -187,7 +186,7 @@ export class InteropMNI implements Interop {
                 descricaoDoEvento: '',
                 descr: doc.attributes.descricao,
                 tipoDoConteudo: doc.attributes.mimetype,
-                sigilo: doc.attributes.nivelSigilo,
+                sigilo: '' + doc.attributes.nivelSigilo,
                 pConteudo: undefined,
                 conteudo: undefined,
                 pDocumento: undefined,
@@ -224,7 +223,7 @@ export class InteropMNI implements Interop {
             return a.id.localeCompare(b.id)
         })
         const classe = tua[codigoDaClasse]
-        return [{ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas }]
+        return fixSigiloDePecas([{ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas }])
     }
 
     public obterPeca = async (numeroDoProcesso, idDaPeca, binary?: boolean): Promise<ObterPecaType> =>

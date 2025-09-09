@@ -6,6 +6,7 @@
  */
 
 import { InteropMovimentoComDocumentosType, InteropParteType, InteropProcessoType } from "./interop-types";
+import { nivelDeSigiloFromNivel } from "./pdpj";
 
 // Type definitions for the input PDPJ JSON structure
 export interface PdpjInput {
@@ -31,7 +32,7 @@ interface PdpjTramitacao {
     dataHoraAjuizamento: string;
     valorAcao?: number;
     justicaGratuita?: boolean;
-    nivelSigilo: number;
+    nivelSigilo: string;
 }
 
 interface PdpjClasse {
@@ -159,7 +160,7 @@ export function mapPdpjToSimplified(processo: PdpjInput): InteropProcessoType[] 
                 dataAjuizamento: tramitacao.dataHoraAjuizamento,
                 valorAcao: tramitacao.valorAcao,
                 justicaGratuita: tramitacao.justicaGratuita,
-                nivelSigilo: tramitacao.nivelSigilo
+                nivelSigilo: nivelDeSigiloFromNivel(tramitacao.nivelSigilo)
             },
             movimentosEDocumentos: []
         };
@@ -234,7 +235,7 @@ export function mapPdpjToSimplified(processo: PdpjInput): InteropProcessoType[] 
                 movimentoItem.documentos.push({
                     id: doc.id,
                     nome: doc.nome,
-                    nivelSigilo: doc.nivelSigilo,
+                    nivelSigilo: nivelDeSigiloFromNivel(doc.nivelSigilo),
                     tipoDocumento: doc.tipo?.nome,
                     tipoArquivo: doc.arquivo?.tipo,
                     quantidadePaginas: doc.arquivo?.quantidadePaginas,

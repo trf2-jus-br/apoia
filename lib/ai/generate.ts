@@ -15,6 +15,7 @@ import { cookies } from 'next/headers';
 import { clipPieces } from './clip-pieces'
 import { assert } from 'console'
 import { pdfToText } from '../pdf/pdf'
+import { assertAnonimizacaoAutomatica } from '../proc/sigilo'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await Dao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -98,11 +99,14 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     // Anonymize text if the cookie is set
     const cookiesList = await (cookies());
     const anonymize = cookiesList.get('anonymize')?.value === 'true'
-    if (anonymize) {
-        data.textos = data.textos.map((texto: TextoType) => {
+    data.textos = data.textos.map((texto: TextoType) => {
+        if (anonymize || assertAnonimizacaoAutomatica(texto.sigilo)) {
+            console.log(`Anonymizing piece ${texto.id} (${texto.descr}) with confidentiality level ${texto.sigilo}`)
             return { ...texto, texto: anonymizeText(texto.texto).text }
-        })
-    }
+        } else {
+            return texto
+        }
+    })
 
     // Get the model so that we can clip the pieces if necessary
     const { model: modelPreSelected } = await getModel({ structuredOutputs: false, overrideModel: definition.model })
@@ -117,6 +121,10 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const sha256 = calcSha256(messages)
     if (results) results.sha256 = sha256
     const attempt = definition?.cacheControl !== true && definition?.cacheControl || null
+
+    if (results?.messagesOnly) {
+        return JSON.stringify(messages)
+    }
 
     // try to retrieve cached generations
     if (definition?.cacheControl !== false) {
@@ -199,7 +207,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
         if (apiKeyFromEnv) {
             await Dao.assertIAUserDailyUsageId(user_id, court_id)
         }
-    writeResponseToFile(kind, processedMessagesLog, 'antes de executar')
+        writeResponseToFile(kind, processedMessagesLog, 'antes de executar')
         // if (model.startsWith('aws-')) {
         //     const { text, usage } = await generateText({
         //         model: modelRef as LanguageModel,

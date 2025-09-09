@@ -26,7 +26,7 @@ export interface InteropProcessoType {
         dataAjuizamento: string;
         valorAcao?: number;
         justicaGratuita?: boolean;
-        nivelSigilo: number;
+        nivelSigilo: string;
     };
     movimentosEDocumentos: InteropMovimentoComDocumentosType[];
 }

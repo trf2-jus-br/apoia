@@ -8,7 +8,7 @@ import { Dao } from '../db/mysql'
 import { IADocument, IADocumentContentSource } from '../db/mysql-types'
 
 import pLimit from 'p-limit'
-import { assertNivelDeSigilo, verificarNivelDeSigilo } from './sigilo'
+import { assertNivelDeSigilo } from './sigilo'
 import { Interop } from '../interop/interop'
 import { envString } from '../utils/env'
 import { PecaConteudoType } from './process-types'
@@ -71,10 +71,10 @@ const ocrPdfSemLimite = async (buffer: ArrayBuffer, documentId: number) => {
             method: 'PUT',
             body: new Uint8Array(buffer),
             headers: {
-            'Content-Type': 'application/pdf',
-            'Accept': 'text/plain',
-            'X-Tika-PDFocrStrategy': 'AUTO',
-            'X-Tika-OCRLanguage': 'por'
+                'Content-Type': 'application/pdf',
+                'Accept': 'text/plain',
+                'X-Tika-PDFocrStrategy': 'AUTO',
+                'X-Tika-OCRLanguage': 'por'
             },
             signal: AbortSignal.timeout(1800000), // 30 minutes timeout
         })
@@ -148,8 +148,7 @@ export const obterDocumentoGravado = async (dossier_id: number, numeroDoProcesso
 
 export const obterConteudoDaPeca = async (dossier_id: number, numeroDoProcesso: string, idDaPeca: string, descrDaPeca: string, sigiloDaPeca: string, interop: Interop): Promise<PecaConteudoType> => {
     try {
-        if (verificarNivelDeSigilo())
-            assertNivelDeSigilo(sigiloDaPeca, `${descrDaPeca} (${idDaPeca})`)
+        assertNivelDeSigilo(sigiloDaPeca, `${descrDaPeca} (${idDaPeca})`)
 
         const document = await obterDocumentoGravado(dossier_id, numeroDoProcesso, idDaPeca, descrDaPeca)
         const document_id = document ? document.id : undefined

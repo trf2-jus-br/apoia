@@ -1,17 +1,15 @@
 'use client';
 
-import { applyTextsAndVariables } from '@/lib/ai/prompt';
 import { PromptDataType, PromptDefinitionType } from '@/lib/ai/prompt-types';
-import { faEdit, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { faFileLines, faSackDollar, faUsers, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit} from '@fortawesome/free-regular-svg-icons';
+import { faFileLines, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
 import showdown from 'showdown'
-import { ReactElement, useRef, useState } from 'react';
+import { ReactElement, useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize'
 import { Modal, Button, Form } from 'react-bootstrap';
-import { set } from 'zod/v4';
 
 const converter = new showdown.Converter({ tables: true })
 
@@ -94,6 +92,32 @@ function toolMessage(part: any): ReactElement {
     }
 }
 
+const getCookie = (name: string) => {
+    if (typeof document === 'undefined') return undefined
+    return document.cookie.split('; ').find(c => c.startsWith(name + '='))?.split('=')[1]
+}
+
+type ModelMessage = { role: string; content: any; }
+
+function convertToUIMessages(modelMsgs: ModelMessage[]): UIMessage[] {
+    if (!Array.isArray(modelMsgs)) return []
+    const ui: UIMessage[] = []
+
+    modelMsgs.forEach((m, i) => {
+        if (m.content) {
+            ui.push({
+                id: m.role === 'system' ? 'system' : `${m.role}-${i}`,
+                role: m.role as any,
+                parts: [{ type: 'text', text: m.content }]
+            })
+        }
+    })
+
+    return ui
+}
+
+
+let loadingMessages = false
 
 export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, suggestions?: SuggestionType[], footer?: ReactElement, withTools?: boolean }) {
     const [showModal, setShowModal] = useState(false);
@@ -103,12 +127,29 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const [files, setFiles] = useState<FileList | undefined>(undefined)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [clientError, setClientError] = useState<string | null>(null)
-    const initialMessages: UIMessage[] = [{ id: "system", role: 'system', parts: [{ type: 'text', text: applyTextsAndVariables(params.definition.systemPrompt, params.data) }] }]
+
     const { messages, setMessages, sendMessage, error, clearError } =
         useChat({
             transport: new DefaultChatTransport({ api: `/api/v1/chat${params.withTools ? '?withTools=true' : ''}` }),
-            messages: initialMessages,
+            // messages: fetchedMessages,
         })
+
+    useEffect(() => {
+        const load = async () => {
+            const res = await fetch('/api/v1/ai?messagesOnly=true', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ kind: 'chat', dossierCode: params?.data?.numeroDoProcesso, data: params.data, date: new Date().toISOString() }),
+            })
+            if (!res.ok)
+                throw new Error(`Failed to fetch chat messages: ${res.status} ${res.statusText}`)
+            const modelMsgs = await res.json()
+            setMessages(convertToUIMessages(modelMsgs))
+        }
+        load()
+    }, [])
 
     const handleEditMessage = (idx: number) => {
         const message = messages[idx]

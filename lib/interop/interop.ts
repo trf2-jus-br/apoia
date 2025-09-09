@@ -29,3 +29,17 @@ export const getInterop = (system: string, username: string, password: string): 
             return new InteropPDPJ()
     }
 }
+
+export const fixSigiloDePecas = (dadosDoProcesso: DadosDoProcessoType[]): DadosDoProcessoType[] => {
+    if (!dadosDoProcesso) return dadosDoProcesso
+    // Ajusta o sigilo das peças para que todas as peças do processo tenham o sigilo igual ou maior ao sigilo do processo
+    for (const processo of dadosDoProcesso) {
+        const nivelDoProcesso = parseInt(processo.sigilo || '0')
+        for (const peca of processo.pecas) {
+            const nivelDaPeca = parseInt(peca.sigilo || '0')
+            if (nivelDaPeca < nivelDoProcesso)
+                peca.sigilo = nivelDoProcesso.toString()
+        }
+    }
+    return dadosDoProcesso
+}

@@ -11,7 +11,23 @@ import { getPrecedentTool } from "./tools-juris"
 import { cookies } from "next/headers"
 import { anonymizeText } from "../anonym/anonym"
 import { isAllowedUser } from "../utils/env"
+import { assertAnonimizacaoAutomatica } from "../proc/sigilo"
 
+const anonymizeRecursively = (data: any): any => {
+    if (Array.isArray(data)) {
+        return data.map(item => anonymizeRecursively(item));
+    }
+    if (data !== null && typeof data === 'object') {
+        return Object.entries(data).reduce((acc, [key, value]) => {
+            acc[key] = anonymizeRecursively(value);
+            return acc;
+        }, {} as { [key: string]: any });
+    }
+    if (typeof data === 'string') {
+        return anonymizeText(data, { endereco: true, email: true, names: true }).text;
+    }
+    return data;
+};
 
 export const getProcessMetadata = async (processNumber: string, interop: Interop): Promise<InteropProcessoType[]> => {
     const processMetadata = await interop.consultarMetadadosDoProcesso(processNumber)
@@ -37,23 +53,9 @@ export const getProcessMetadataTool = (pUser: Promise<UserType>) => tool({
             // Anonymize metadata if the cookie is set
             const cookiesList = await (cookies());
             const anonymize = cookiesList.get('anonymize')?.value === 'true'
-            if (anonymize) {
-                const anonymizeRecursively = (data: any): any => {
-                    if (Array.isArray(data)) {
-                        return data.map(item => anonymizeRecursively(item));
-                    }
-                    if (data !== null && typeof data === 'object') {
-                        return Object.entries(data).reduce((acc, [key, value]) => {
-                            acc[key] = anonymizeRecursively(value);
-                            return acc;
-                        }, {} as { [key: string]: any });
-                    }
-                    if (typeof data === 'string') {
-                        return anonymizeText(data, { endereco: true, email: true, names: true }).text;
-                    }
-                    return data;
-                };
-                for (const processo of metadata) {
+            for (const processo of metadata) {
+                const sigilo = processo.informacoesGerais.nivelSigilo
+                if (anonymize || assertAnonimizacaoAutomatica(sigilo)) {
                     processo.partes = anonymizeRecursively(processo.partes);
                     for (const parte of processo.partes?.poloAtivo || []) {
                         if (parte.representantes) {
@@ -131,11 +133,13 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
                 const descr = documentInfo?.doc?.tipoDocumento
                 const label = documentInfo?.movimento?.descricao
                 const event = documentInfo?.movimento?.sequencia
+                const sigilo = documentInfo?.doc?.nivelDeSigilo
 
                 // Anonymize text if the cookie is set
                 const cookiesList = await (cookies());
                 const anonymize = cookiesList.get('anonymize')?.value === 'true'
-                if (anonymize) {
+
+                if (anonymize || assertAnonimizacaoAutomatica(sigilo)) {
                     texto = anonymizeText(texto).text
                 }
 
@@ -146,7 +150,8 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
                     label,
                     descr,
                     slug: slugify(descr),
-                    texto
+                    texto,
+                    sigilo
                 }
             }))
             const result = pecasComConteudo.map(p => formatText(p)).join('\n\n')
