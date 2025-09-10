@@ -66,8 +66,11 @@ export async function getPiecesWithContent(dadosDoProcesso: DadosDoProcessoType,
 
 export const promptExecuteBuilder = (definition: PromptDefinitionType, data: PromptDataType): PromptExecuteType => {
     const message: ModelMessage[] = []
-    if (definition.systemPrompt)
-        message.push({ role: 'system', content: applyTextsAndVariables(definition.systemPrompt, data, definition.jsonSchema, definition.template) })
+    if (definition.systemPrompt) {
+        definition.systemPrompt.split('\n---\n').forEach(part => {
+            message.push({ role: 'system', content: applyTextsAndVariables(part, data, definition.jsonSchema, definition.template) })
+        })
+    }
 
     // add {{textos}} to the prompt if it doesn't have it
     let prompt = definition.prompt
