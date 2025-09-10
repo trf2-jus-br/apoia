@@ -13,7 +13,20 @@ export const formatText = (txt: TextoType, limit?: number) => {
 
 export const applyTextsAndVariables = (text: string, data: PromptDataType, jsonSchema?: string, template?: string): string => {
     if (!text) return ''
+
     const allTexts = `${data.textos.reduce((acc, txt) => acc + formatText(txt), '')}`
+
+    // Replace internal prompts and increment markdown heading levels by one
+    text = text.replace(/{{prompt:([a-z_]+)}}/g, (match, promptName) => {
+        const internalPrompt = internalPrompts[promptName]
+        if (!internalPrompt) throw new Error(`Prompt '${promptName}' não encontrado`)
+        if (!internalPrompt.prompt) throw new Error(`Prompt '${promptName}' não tem conteúdo`)
+        let promptText = internalPrompt.prompt.split('\n---\n')[0] // get only the first part of the prompt, before ---
+        promptText = promptText.replace(/^(#{1,6})(\s*)/gm, (match: string, hashes: string, spaces: string) => {
+            return hashes.length >= 6 ? match : `${hashes}#${spaces}`
+        })
+        return promptText
+    })
 
     text = text.replace('{{jsonSchema}}', jsonSchema || 'JSON Schema não definido')
 
@@ -85,7 +98,9 @@ export const promptExecuteBuilder = (definition: PromptDefinitionType, data: Pro
     }
 
     const promptContent: string = applyTextsAndVariables(prompt, data, definition.jsonSchema, definition.template)
-    message.push({ role: 'user', content: promptContent })
+    if (prompt) {
+        message.push({ role: 'user', content: promptContent })
+    }
 
     const params: PromptExecuteParamsType = {}
     if (definition.jsonSchema)
