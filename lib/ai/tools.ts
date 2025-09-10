@@ -128,12 +128,15 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
                     if (documentInfo) break
                 }
 
+                if (!documentInfo)
+                    throw new Error(`Não foi possível encontrar metadados para a peça ${pieceId} do processo ${processNumber}.`)
+
                 // Extract text from the buffer
                 let texto = decoder.decode(p.buffer)
                 const descr = documentInfo?.doc?.tipoDocumento
-                const label = documentInfo?.movimento?.descricao
+                const label = documentInfo?.doc?.descricao
                 const event = documentInfo?.movimento?.sequencia
-                const sigilo = documentInfo?.doc?.nivelDeSigilo
+                const sigilo = documentInfo?.doc?.nivelSigilo
 
                 // Anonymize text if the cookie is set
                 const cookiesList = await (cookies());

@@ -142,7 +142,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ kind: 'chat', dossierCode: params?.data?.numeroDoProcesso, data: params.data, date: new Date().toISOString() }),
+                body: JSON.stringify({ kind: params.definition.kind, dossierCode: params?.data?.numeroDoProcesso, data: params.data, date: new Date().toISOString() }),
             })
             if (!res.ok)
                 throw new Error(`Failed to fetch chat messages: ${res.status} ${res.statusText}`)

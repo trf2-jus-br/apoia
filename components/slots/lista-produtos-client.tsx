@@ -65,7 +65,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
         </div>
     } else if (request.produto === P.CHAT) {
         if (Frm.get('pending') > 0) return null
-        return <Chat definition={request.internalPrompt} data={request.data} key={dataHash + (document.cookie.includes('anonymize=true') ? 'true' : 'false')} />
+        return <Chat definition={request.internalPrompt} data={request.data} key={dataHash} />
     }
 
     return <div key={idx}>
