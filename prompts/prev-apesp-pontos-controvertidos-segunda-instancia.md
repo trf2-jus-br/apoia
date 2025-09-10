@@ -351,7 +351,7 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Entre parênteses, use o(s) agente(s) nocivo(s) ou profissão, conforme a informação que consta em cada Periodos_Da_Apelacao_Da_Parte_Autora. Se ambos existirem, use "(profissão: [profissão]; agentes nocivos: [agente(s)])". Se nenhum existir, omita os parênteses.
 - Se houver informação de PPP para o período em questão, incluir essas informações no final do resumo do período.
     - Começe com "Conforme PPP juntado aos autos, ".
-    - Se houver informação sobre a atividade desempenhada, incluir a descrição completa da atividade desempenhada conforme consta no PPP.
+    - Se houver informação sobre a atividade desempenhada, incluir.
     - Se puder indicar se o segurado ficava exposto o tempo todo ou se era intermitente e o constância da exposição, informe.
     - Se houver informação que indique se há exposição ao agente nocivo de forma habitual e permanente, informe.
     - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
@@ -378,8 +378,8 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 
 6) Pedidos da apelação do INSS (apenas períodos, sem detalhes):
 - Se não houver apelação do INSS, pule diretamente para o item 9 (sem escrever frase de ausência).
-- Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == true: "O INSS requer o reconhecimento dos períodos [lista de períodos com Lo_Atividade_Especial == true] como trabalhados em atividade especial."
-- Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == false: "Além disso, entende que devem ser reconhecidos, em contagem simples, os períodos de [lista de períodos com Lo_Atividade_Especial == false]."
+- Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == true: " O INSS requer a descaracterização dos períodos [lista de períodos com Lo_Atividade_Especial == true] como trabalhados em atividade especial."
+- Frase modelo se houver algum Periodos_Da_Apelacao_Do_INSS com Lo_Atividade_Especial == false: "Além disso, entende que não devem ser reconhecidos, em contagem simples, os períodos de [lista de períodos com Lo_Atividade_Especial == false]."
 - Troque o "Além disso," por "O INSS" caso não haja nenhum período com Lo_Atividade_Especial == true.
 - Cite o documento da apelação no formato (evento [event], [label]).
 
@@ -391,7 +391,7 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Entre parênteses, use o(s) agente(s) nocivo(s) ou profissão, conforme a informação que consta em cada Periodos_Da_Apelacao_Do_INSS. Se ambos existirem, use "(profissão: [profissão]; agentes nocivos: [agente(s)])". Se nenhum existir, omita os parênteses.
 - Se houver informação de PPP para o período em questão, incluir essas informações no final do resumo do período.
     - Começe com "Conforme PPP juntado aos autos, ".
-    - Se houver informação sobre a atividade desempenhada, incluir a descrição completa da atividade desempenhada conforme consta no PPP.
+    - Se houver informação sobre a atividade desempenhada, incluir.
     - Se puder indicar se o segurado ficava exposto o tempo todo ou se era intermitente e o constância da exposição, informe.
     - Se houver informação que indique se há exposição ao agente nocivo de forma habitual e permanente, informe.
     - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
@@ -405,7 +405,7 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Por fim, agrupe os períodos sem controvérsia específica: "Além disso, o INSS também requer o reconhecimento dos seguintes períodos: [lista dos períodos remanescentes, separados por ponto e vírgula e em ordem cronológica]."
 - Ajuste singular ou plural, se for o caso.
 
-9) Teses gerais das contrarrazões da parte autora:
+9) Teses gerais das contrarrazões da parte autora: 
 - Se Lo_Apelacao_Do_INSS == false, omitir integralmente esse item (sem escrever frase de ausência).
 - Se Lo_Apelacao_Do_INSS == true e Lo_Contrarrazoes_Da_Parte_Autora == false, indicar que "A parte autora, intimada, não apresentou contrarrazões."
 - Se Lo_Apelacao_Do_INSS == true e Lo_Contrarrazoes_Da_Parte_Autora == true e Outros_Argumentos_De_Contrarrazoes_Da_Parte_Autora for array vazio, indicar que "A parte autora, não apresentou outros argumentos."
@@ -436,9 +436,9 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 {% if Periodos_Da_Apelacao_Da_Parte_Autora | length %}
 ## Períodos da Apelação da Parte Autora
 
-| Início      | Fim         | Vínculo              | Atividade Especial | Profissão      | Código         | Agentes Nocivos      | Resumo   |
-|-------------|-------------|----------------------|--------------------|----------------|----------------|----------------------|----------|
-{% for periodo in Periodos_Da_Apelacao_Da_Parte_Autora | sortByDate %}| {= periodo.Dt_Inicio =} | {= periodo.Dt_Fim =} | {= periodo.Tx_Vinculo =} | {= "Sim" if periodo.Lo_Atividade_Especial else "Não" =} | {= periodo.Tx_Profissao or "" =} | {= periodo.Tx_Codigo or "" =} | {= periodo.Tx_Agentes_Nocivos or "" =} | {= periodo.Tg_Resumo =} |
+| Início      | Fim         | Vínculo              | Profissão      | Código         | Agentes Nocivos      | Resumo   |
+|-------------|-------------|----------------------|----------------|----------------|----------------------|----------|
+{% for periodo in Periodos_Da_Apelacao_Da_Parte_Autora | sortByDate %}| {= periodo.Dt_Inicio =} | {= periodo.Dt_Fim =} | {= periodo.Tx_Vinculo =} | {= periodo.Tx_Profissao or "" =} | {= periodo.Tx_Codigo or "" =} | {= periodo.Tx_Agentes_Nocivos or "" =} | {= periodo.Tg_Resumo =} |
 {% endfor %}{% endif %}
 
 {% if Outros_Argumentos_Da_Apelacao_Da_Parte_Autora | length %}
@@ -460,9 +460,9 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 {% if Periodos_Da_Apelacao_Do_INSS | length %}
 ## Períodos da Apelação do INSS
 
-| Início      | Fim         | Vínculo              | Atividade Especial | Profissão      | Código         | Agentes Nocivos      | Resumo   |
-|-------------|-------------|----------------------|--------------------|----------------|----------------|----------------------|----------|
-{% for periodo in Periodos_Da_Apelacao_Do_INSS | sortByDate %}| {= periodo.Dt_Inicio =} | {= periodo.Dt_Fim =} | {= periodo.Tx_Vinculo =} | {= "Sim" if periodo.Lo_Atividade_Especial else "Não" =} | {= periodo.Tx_Profissao or "" =} | {= periodo.Tx_Codigo or "" =} | {= periodo.Tx_Agentes_Nocivos or "" =} | {= periodo.Tg_Resumo =} |
+| Início      | Fim         | Vínculo              | Profissão      | Código         | Agentes Nocivos      | Resumo   |
+|-------------|-------------|----------------------|----------------|----------------|----------------------|----------|
+{% for periodo in Periodos_Da_Apelacao_Do_INSS | sortByDate %}| {= periodo.Dt_Inicio =} | {= periodo.Dt_Fim =} | {= periodo.Tx_Vinculo =} | {= periodo.Tx_Profissao or "" =} | {= periodo.Tx_Codigo or "" =} | {= periodo.Tx_Agentes_Nocivos or "" =} | {= periodo.Tg_Resumo =} |
 {% endfor %}{% endif %}
 
 {% if Outros_Argumentos_Da_Apelacao_Do_INSS | length %}
