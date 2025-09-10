@@ -17,6 +17,8 @@ const mimeTypyFromTipo = (tipo: string): string => {
 }
 
 export const nivelDeSigiloFromNivel = (nivel: string): string => {
+    const n = Number(nivel as any)
+    if (!Number.isNaN(n)) return String(Math.trunc(n))
     switch (nivel) {
         case 'PUBLICO': return '0'
         case 'SEGREDO_JUSTICA': return '1'

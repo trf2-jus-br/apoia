@@ -1,9 +1,11 @@
 'use client'
 
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 
 export default function UserMenuAnonymize() {
+    const router = useRouter()
     const [isAnonymized, setIsAnonymized] = useState(false)
 
     useEffect(() => {
@@ -16,8 +18,9 @@ export default function UserMenuAnonymize() {
         if (checked) {
             document.cookie = "anonymize=true;path=/;max-age=31536000"
         } else {
-            document.cookie = "anonymize=;path=/;max-age=0"
+            document.cookie = "anonymize=false;path=/;max-age=0"
         }
+        router.refresh()
     }
 
     return (
