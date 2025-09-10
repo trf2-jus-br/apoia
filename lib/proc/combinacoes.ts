@@ -59,6 +59,7 @@ export enum P {
     PREV_PPP = 'Perfil Profissiográfico Previdenciário - PPP',
     PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA = 'Relatório de Aposentadoria Especial - Primeira Instância',
     PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA = 'Relatório de Aposentadoria Especial - Segunda Instância',
+    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP = 'Relatório de Aposentadoria Especial - Segunda Instância (com PPP)',
     PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
@@ -96,6 +97,7 @@ export const ProdutosValidos = {
     [P.PREV_PPP]: { titulo: P.PREV_PPP, prompt: 'prev-ppp', plugins: [] },
     [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, prompt: 'prev-apesp-pontos-controvertidos-primeira-instancia', plugins: [] },
     [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, prompt: 'prev-apesp-pontos-controvertidos-segunda-instancia', plugins: [] },
+    [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP, prompt: 'prev-apesp-pontos-controvertidos-segunda-instancia-com-ppp', plugins: [] },
     [P.PREV_BI_ANALISE_DE_LAUDO]: { titulo: P.PREV_BI_ANALISE_DE_LAUDO, prompt: 'prev-bi-analise-de-laudo', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
@@ -431,6 +433,14 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Relatório de Aposentadoria Especial - Segunda Instância',
         padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, P.CHAT]
+    },
+
+    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP: {
+        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        sort: 1000,
+        nome: 'Relatório de Aposentadoria Especial - Segunda Instância (com PPP)',
+        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
+        produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP, P.CHAT]
     },
 
     PREV_BI_ANALISE_DE_LAUDO: {

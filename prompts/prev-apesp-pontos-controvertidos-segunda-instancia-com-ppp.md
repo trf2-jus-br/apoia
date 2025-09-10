@@ -349,6 +349,12 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Comece com: "Quanto ao reconhecimento dos períodos em atividade especial, verificam-se as seguintes alegações:"
 - Seguindo-se com um parágrafo por período, em ordem cronológica, nesta forma: "Período [dd/mm/aaaa] a [dd/mm/aaaa] — [Vínculo] ([profissão] | [agente(s)]): [expor a controvérsia conforme Tg_Resumo]."
 - Entre parênteses, use o(s) agente(s) nocivo(s) ou profissão, conforme a informação que consta em cada Periodos_Da_Apelacao_Da_Parte_Autora. Se ambos existirem, use "(profissão: [profissão]; agentes nocivos: [agente(s)])". Se nenhum existir, omita os parênteses.
+- Se houver informação de PPP para o período em questão, incluir essas informações no final do resumo do período.
+    - Começe com "Conforme PPP juntado aos autos, ".
+    - Se houver informação sobre a atividade desempenhada, incluir.
+    - Se puder indicar se o segurado ficava exposto o tempo todo ou se era intermitente e o constância da exposição, informe.
+    - Se houver informação que indique se há exposição ao agente nocivo de forma habitual e permanente, informe.
+    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Se houver um único período alegado como especial, emende a frase inicial e o período num único parágrafo, de forma a que se tenha fluidez redacional, ajustando-se singular e plural.
 
 4) Controvérsias dos períodos da apelação da parte autora (atividade comum):
@@ -383,6 +389,12 @@ Cumpridas as regras acima, prosseguir com as seções específicas.
 - Comece com: "Quanto ao reconhecimento dos períodos em atividade especial, verificam-se as seguintes alegações:"
 - Seguindo-se com um parágrafo por período, em ordem cronológica, nesta forma: "Período [dd/mm/aaaa] a [dd/mm/aaaa] — [Vínculo] ([profissão] | [agente(s)]): [expor a controvérsia conforme Tg_Resumo]."
 - Entre parênteses, use o(s) agente(s) nocivo(s) ou profissão, conforme a informação que consta em cada Periodos_Da_Apelacao_Do_INSS. Se ambos existirem, use "(profissão: [profissão]; agentes nocivos: [agente(s)])". Se nenhum existir, omita os parênteses.
+- Se houver informação de PPP para o período em questão, incluir essas informações no final do resumo do período.
+    - Começe com "Conforme PPP juntado aos autos, ".
+    - Se houver informação sobre a atividade desempenhada, incluir.
+    - Se puder indicar se o segurado ficava exposto o tempo todo ou se era intermitente e o constância da exposição, informe.
+    - Se houver informação que indique se há exposição ao agente nocivo de forma habitual e permanente, informe.
+    - Se for incluída informação obtida no PPP, cite o documento do PPP no formato (evento [event], [label]).
 - Se houver um único período alegado como especial, emende a frase inicial e o período num único parágrafo, de forma a que se tenha fluidez redacional, ajustando-se singular e plural.
 
 8) Controvérsias dos períodos da apelação do INSS (atividade comum):
