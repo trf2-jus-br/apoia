@@ -7,6 +7,20 @@ describe('anonymizeText', () => {
 		expect(r.substitutions).toBe(0)
 	})
 
+	test('número de benefício should not be anonymized by default', () => {
+		const r = anonymizeText('O segurado pediu o NB 000.000.000-1, mas...', )
+		expect(r.text).toBe('O segurado pediu o NB 000.000.000-1, mas...')
+		expect(r.substitutions).toBe(0)
+	})
+
+	test('número de benefício should be anonymized if required', () => {
+		const r = anonymizeText('O segurado pediu o NB 000.000.000-1, mas...', {
+			numeroDeBeneficio: true
+		})
+		expect(r.text).toBe('O segurado pediu o NB 000, mas...')
+		expect(r.substitutions).toBe(1)
+	})
+
 	test('numeric pattern anonymizes long digit sequences', () => {
 		const r = anonymizeText('Processo 50045886920234025107', {
 			numeric: true,
@@ -23,6 +37,7 @@ describe('anonymizeText', () => {
 		expect(r.text).toBe('Processo 50045886920234025107')
 		expect(r.substitutions).toBe(0)
 	})
+
 	test('cpf pattern only when numeric disabled', () => {
 		const r = anonymizeText('CPF n. 000.000.001-91 apresentado.', {
 			numeric: false,
