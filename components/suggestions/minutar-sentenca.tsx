@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { faGavel } from '@fortawesome/free-solid-svg-icons'
 
 export const id = 'draft-sentence'
-export const label = 'Minutar sentença'
+export const label = 'Sentença'
 
 export class MinutarSentencaSuggestion extends Suggestion {
   constructor() { super(id, label, faGavel) }
@@ -20,7 +20,7 @@ export class MinutarSentencaSuggestion extends Suggestion {
         const numero = values?.processNumber?.trim()
         if (!numero) return
         if (numero !== context.processNumber) context.setProcessNumber(numero)
-        const prompt = `Minute uma sentença para o processo ${numero}. Decisão: ${values?.decision}. Fundamentação: ${values?.fundamentacao}`
+        const prompt = `Minute uma sentença para o processo ${numero}. Decisão: ${values?.decision}. ${values?.fundamentacao ? `Fundamentação: ${values?.fundamentacao}` : ''}`
         context.sendPrompt(prompt)
       }
     }
@@ -32,7 +32,7 @@ export const suggestion = new MinutarSentencaSuggestion()
 export default function DraftSentenceModal(props: ModalProps<{ processNumber?: string, decision?: 'procedente' | 'improcedente', fundamentacao?: string }>) {
   const { show, initial, draft, onSubmit, onClose, context } = props
   const [processNumber, setProcessNumber] = useState<string>(initial?.processNumber || context.processNumber || draft?.processNumber || '')
-  const [decision, setDecision] = useState<'procedente' | 'improcedente'>(draft?.decision || 'procedente')
+  const [decision, setDecision] = useState<'' | 'procedente' | 'improcedente'>(draft?.decision || '')
   const [fundamentacao, setFundamentacao] = useState<string>(draft?.fundamentacao || '')
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function DraftSentenceModal(props: ModalProps<{ processNumber?: s
     }
   }, [show])
 
-  const canSubmit = processNumber.trim().length > 0 && decision && fundamentacao.trim().length > 0
+  const canSubmit = processNumber.trim().length > 0 && decision
 
   return (
     <Modal show={show} onHide={onClose} backdrop="static">
@@ -49,13 +49,14 @@ export default function DraftSentenceModal(props: ModalProps<{ processNumber?: s
         <Modal.Title>Minutar Sentença</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form.Group className="mb-3">
+        <Form.Group className={`mb-3 ${context.processNumber ? 'd-none' : ''}`}>
           <Form.Label>Número do processo</Form.Label>
-          <Form.Control value={processNumber} onChange={(e) => setProcessNumber(e.target.value)} />
+          <Form.Control name="numeroDoProcesso" value={processNumber} onChange={(e) => setProcessNumber(e.target.value)} />
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>Decisão</Form.Label>
           <Form.Select value={decision} onChange={(e) => setDecision(e.target.value as any)}>
+            <option value="">[Selecione]</option>
             <option value="procedente">Procedente</option>
             <option value="improcedente">Improcedente</option>
           </Form.Select>

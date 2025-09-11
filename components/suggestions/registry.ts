@@ -24,7 +24,7 @@ const suggestions: Suggestion[] = [
   valorDaCausa,
   pontosControvertidos,
   argumentosDasPartes,
-  // minutarSentenca,
+  minutarSentenca,
 ]
 
 export function getAllSuggestions(): Suggestion[] { return suggestions }
