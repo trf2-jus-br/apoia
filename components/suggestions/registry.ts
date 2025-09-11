@@ -1,30 +1,22 @@
 import AskProcessNumberModal from './modals/AskProcessNumberModal'
-import DraftSentenceModal from './minutar-sentenca'
 import { Suggestion } from './base'
 import { suggestion as valorDaCausa } from './valor-da-causa'
 import { suggestion as minutarSentenca } from './minutar-sentenca'
+import { suggestion as minutarVoto } from './minutar-voto'
 import { suggestion as resumirProcesso } from './resumir-processo'
 import { suggestion as listarPartes } from './listar-partes'
 import { suggestion as pontosControvertidos } from './pontos-controvertidos'
 import { suggestion as argumentosDasPartes } from './argumentos-das-partes'
 import { SuggestionContext, SuggestionActionResult } from './context'
 
-const registry: Record<string, React.ComponentType<any>> = {
-  'ask-process-number': AskProcessNumberModal,
-  'draft-sentence': DraftSentenceModal,
-}
-
-export function getModalComponent(key: string): React.ComponentType<any> | undefined {
-  return registry[key]
-}
-
 const suggestions: Suggestion[] = [
   resumirProcesso,
-  listarPartes,
-  valorDaCausa,
+  // listarPartes,
+  // valorDaCausa,
   pontosControvertidos,
   argumentosDasPartes,
   minutarSentenca,
+  minutarVoto,
 ]
 
 export function getAllSuggestions(): Suggestion[] { return suggestions }

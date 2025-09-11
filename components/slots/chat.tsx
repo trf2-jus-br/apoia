@@ -1,7 +1,7 @@
 'use client';
 
 import { PromptDataType, PromptDefinitionType } from '@/lib/ai/prompt-types';
-import { faEdit} from '@fortawesome/free-regular-svg-icons';
+import { faEdit } from '@fortawesome/free-regular-svg-icons';
 import { faFileLines, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
@@ -14,8 +14,9 @@ import ErrorMessage from '../error-message';
 
 const converter = new showdown.Converter({ tables: true })
 
-import { getModalComponent, getAllSuggestions, resolveSuggestion } from '@/components/suggestions/registry'
+import { getAllSuggestions, resolveSuggestion } from '@/components/suggestions/registry'
 import type { SuggestionContext } from '@/components/suggestions/context'
+import { Suggestion } from '../suggestions/base';
 
 function preprocessar(mensagem: UIMessage, role: string) {
     const texto = mensagem.parts.reduce((acc, part) => {
@@ -124,6 +125,13 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [clientError, setClientError] = useState<string | null>(null)
 
+    const [currentSuggestion, setCurrentSuggestion] = useState<Suggestion | null>(null)
+    const [activeModalKey, setActiveModalKey] = useState<string | null>(null)
+    const [activeModalInitial, setActiveModalInitial] = useState<any>(null)
+    const [activeModalSubmitHandler, setActiveModalSubmitHandler] = useState<((values: any, ctx: SuggestionContext) => void) | null>(null)
+    const [modalDrafts, setModalDrafts] = useState<Record<string, any>>({})
+
+
     const { messages, setMessages, sendMessage, error, clearError } =
         useChat({
             transport: new DefaultChatTransport({ api: `/api/v1/chat${params.withTools ? '?withTools=true' : ''}` }),
@@ -228,12 +236,6 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
     const alreadyLoadedProcessMetadata = messages.some(m => m.role === 'assistant' && m.parts?.some(part => part.type === 'tool-getProcessMetadata'))
 
-    // Modal Host state for new architecture
-    const [activeModalKey, setActiveModalKey] = useState<string | null>(null)
-    const [activeModalInitial, setActiveModalInitial] = useState<any>(null)
-    const [activeModalSubmitHandler, setActiveModalSubmitHandler] = useState<((values: any, ctx: SuggestionContext) => void) | null>(null)
-    const [modalDrafts, setModalDrafts] = useState<Record<string, any>>({})
-
     // Clear drafts when process number changes (robustness rule)
     useEffect(() => {
         // Reset drafts that are process-sensitive. For simplicity, clear all.
@@ -254,6 +256,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         sendPrompt,
     }), [processNumber, alreadyLoadedProcessMetadata, messages])
     const runSuggestion = (id: string) => {
+        setCurrentSuggestion(getAllSuggestions().find(s => s.id === id) || null)
         const result = resolveSuggestion(id, suggestionCtx)
         if (!result) return
         if (result.type === 'immediate') {
@@ -404,7 +407,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
             {/* New Modal Host */}
             {activeModalKey && (() => {
-                const Comp = getModalComponent(activeModalKey)
+                const Comp = currentSuggestion?.modalComponent
                 if (!Comp) return null
                 const draft = modalDrafts[activeModalKey]
                 const onClose = () => { setActiveModalKey(null); setActiveModalInitial(null); setActiveModalSubmitHandler(null) }

@@ -1,5 +1,4 @@
 "use client"
-import dynamic from 'next/dynamic'
 import { ModalProps, SuggestionContext } from './context'
 import { Suggestion } from './base'
 import { Modal, Button, Form } from 'react-bootstrap'
@@ -10,7 +9,7 @@ export const id = 'draft-sentence'
 export const label = 'Sentença'
 
 export class MinutarSentencaSuggestion extends Suggestion {
-  constructor() { super(id, label, faGavel) }
+  constructor() { super(id, label, faGavel, DraftSentenceModal) }
   resolve(ctx: SuggestionContext) {
     return {
       type: 'modal' as const,
