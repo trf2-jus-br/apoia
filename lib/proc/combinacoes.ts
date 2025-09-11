@@ -420,7 +420,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     },
 
     PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        status: StatusDeLancamento.PUBLICO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Primeira Instância',
         padroes: padroesConhecimento,
@@ -428,7 +428,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     },
 
     PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        status: StatusDeLancamento.PUBLICO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Segunda Instância',
         padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
@@ -436,7 +436,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     },
 
     PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        status: StatusDeLancamento.PUBLICO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Segunda Instância (com PPP)',
         padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
