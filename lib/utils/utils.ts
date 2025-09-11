@@ -233,3 +233,22 @@ export function simpleHashCode(str: string): number {
   }
   return h;
 }
+
+export const isValidCPF = (d: string): boolean => {
+  if (d.length !== 11) return false;
+  // reject sequences like 00000000000, 11111111111, etc.
+  if (/^(\d)\1{10}$/.test(d)) return false;
+
+  const nums = d.split('').map(ch => parseInt(ch, 10));
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += nums[i] * (10 - i);
+  let rev = sum % 11;
+  const dig1 = rev < 2 ? 0 : 11 - rev;
+  if (dig1 !== nums[9]) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += nums[i] * (11 - i);
+  rev = sum % 11;
+  const dig2 = rev < 2 ? 0 : 11 - rev;
+  return dig2 === nums[10];
+}

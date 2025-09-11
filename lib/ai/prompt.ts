@@ -217,6 +217,7 @@ import template from '@/prompts/template.md'
 import prev_ppp from '@/prompts/prev-ppp.md'
 import prev_apesp_pontos_controvertidos_primeira_instancia from '@/prompts/prev-apesp-pontos-controvertidos-primeira-instancia.md'
 import prev_apesp_pontos_controvertidos_segunda_instancia from '@/prompts/prev-apesp-pontos-controvertidos-segunda-instancia.md'
+import prev_apesp_pontos_controvertidos_segunda_instancia_com_ppp from '@/prompts/prev-apesp-pontos-controvertidos-segunda-instancia-com-ppp.md'
 import prev_bi_analise_de_laudo from '@/prompts/prev-bi-analise-de-laudo.md'
 import prev_bi_sentenca_laudo_favoravel from '@/prompts/prev-bi-sentenca-laudo-favoravel.md'
 import prev_bi_sentenca_laudo_desfavoravel from '@/prompts/prev-bi-sentenca-laudo-desfavoravel.md'
@@ -254,6 +255,7 @@ export const internalPrompts = {
     prev_ppp: promptDefinitionFromMarkdown('prev_ppp', prev_ppp),
     prev_apesp_pontos_controvertidos_primeira_instancia: promptDefinitionFromMarkdown('prev_apesp_pontos_controvertidos_primeira_instancia', prev_apesp_pontos_controvertidos_primeira_instancia),
     prev_apesp_pontos_controvertidos_segunda_instancia: promptDefinitionFromMarkdown('prev_apesp_pontos_controvertidos_segunda_instancia', prev_apesp_pontos_controvertidos_segunda_instancia),
+    prev_apesp_pontos_controvertidos_segunda_instancia_com_ppp: promptDefinitionFromMarkdown('prev_apesp_pontos_controvertidos_segunda_instancia_com_ppp', prev_apesp_pontos_controvertidos_segunda_instancia_com_ppp),
     prev_bi_analise_de_laudo: promptDefinitionFromMarkdown('prev_bi_analise_de_laudo', prev_bi_analise_de_laudo),
     prev_bi_sentenca_laudo_favoravel: promptDefinitionFromMarkdown('prev_bi_sentenca_laudo_favoravel', prev_bi_sentenca_laudo_favoravel),
     prev_bi_sentenca_laudo_desfavoravel: promptDefinitionFromMarkdown('prev_bi_sentenca_laudo_desfavoravel', prev_bi_sentenca_laudo_desfavoravel),

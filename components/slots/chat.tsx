@@ -7,18 +7,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
 import showdown from 'showdown'
-import { ReactElement, useEffect, useRef, useState } from 'react';
+import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize'
 import { Modal, Button, Form } from 'react-bootstrap';
 import ErrorMessage from '../error-message';
 
 const converter = new showdown.Converter({ tables: true })
 
-export type SuggestionType = {
-    suggestion: string;
-    icon: any;
-    label: string;
-}
+import { getModalComponent, getAllSuggestions, resolveSuggestion } from '@/components/suggestions/registry'
+import type { SuggestionContext } from '@/components/suggestions/context'
 
 function preprocessar(mensagem: UIMessage, role: string) {
     const texto = mensagem.parts.reduce((acc, part) => {
@@ -120,10 +117,8 @@ function convertToUIMessages(modelMsgs: ModelMessage[]): UIMessage[] {
 
 let loadingMessages = false
 
-export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, suggestions?: SuggestionType[], footer?: ReactElement, withTools?: boolean }) {
-    const [showModal, setShowModal] = useState(false);
-    const [processNumber, setProcessNumber] = useState('');
-    const [currentSuggestion, setCurrentSuggestion] = useState('');
+export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, footer?: ReactElement, withTools?: boolean }) {
+    const [processNumber, setProcessNumber] = useState(params?.data?.numeroDoProcesso || '');
     const [input, setInput] = useState('')
     const [files, setFiles] = useState<FileList | undefined>(undefined)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -233,60 +228,47 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
     const alreadyLoadedProcessMetadata = messages.some(m => m.role === 'assistant' && m.parts?.some(part => part.type === 'tool-getProcessMetadata'))
 
-    const handleModalSubmit = () => {
-        if (processNumber) {
-            const fullSuggestion = `Sobre o processo ${processNumber}, ${currentSuggestion.toLowerCase()}`
-            setInput(fullSuggestion)
-            // Create a synthetic event for handleSubmit
-            setShowModal(false)
-            setProcessNumber('')
-            setFocusToChatInput()
-        }
-    };
+    // Modal Host state for new architecture
+    const [activeModalKey, setActiveModalKey] = useState<string | null>(null)
+    const [activeModalInitial, setActiveModalInitial] = useState<any>(null)
+    const [activeModalSubmitHandler, setActiveModalSubmitHandler] = useState<((values: any, ctx: SuggestionContext) => void) | null>(null)
+    const [modalDrafts, setModalDrafts] = useState<Record<string, any>>({})
 
-    const handleSuggestion = (suggestion: string) => {
-        if (!alreadyLoadedProcessMetadata) {
-            setCurrentSuggestion(suggestion);
-            setShowModal(true);
-        } else {
-            setInput(suggestion);
-            const syntheticEvent = new Event('submit') as any;
-            syntheticEvent.preventDefault = () => { };
-            const msg: UIMessage = { id: undefined, role: 'user', parts: [{ type: 'text', text: syntheticEvent }] }
-            sendMessage(msg)
-            setFocusToChatInput()
+    // Clear drafts when process number changes (robustness rule)
+    useEffect(() => {
+        // Reset drafts that are process-sensitive. For simplicity, clear all.
+        setModalDrafts({})
+    }, [processNumber])
+
+    const sendPrompt = (text: string) => {
+        const msg: UIMessage = { id: undefined, role: 'user', parts: [{ type: 'text', text }] }
+        sendMessage(msg)
+        setFocusToChatInput()
+    }
+
+    const suggestionCtx: SuggestionContext = useMemo(() => ({
+        processNumber,
+        setProcessNumber: (n?: string) => setProcessNumber(n || ''),
+        alreadyLoadedProcessMetadata,
+        messages,
+        sendPrompt,
+    }), [processNumber, alreadyLoadedProcessMetadata, messages])
+    const runSuggestion = (id: string) => {
+        const result = resolveSuggestion(id, suggestionCtx)
+        if (!result) return
+        if (result.type === 'immediate') {
+            sendPrompt(result.prompt)
+            return
         }
+        setActiveModalKey(result.key)
+        setActiveModalInitial(result.initial)
+        setActiveModalSubmitHandler(() => result.onSubmit || null)
     }
 
     console.log('Chat messages:', messages)
 
     return (
         <div className={messages.find(m => m.role === 'assistant') ? '' : 'd-print-none h-print'}>
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Informar número do processo</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form.Group>
-                        <Form.Label>Por favor, informe o número do processo:</Form.Label>
-                        <Form.Control
-                            type="text"
-                            value={processNumber}
-                            onChange={(e) => setProcessNumber(e.target.value)}
-                            name="numeroDoProcesso"
-                            autoFocus
-                        />
-                    </Form.Group>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>
-                        Cancelar
-                    </Button>
-                    <Button variant="primary" onClick={handleModalSubmit}>
-                        Confirmar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
 
             <h2>Chat</h2>
 
@@ -408,17 +390,45 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                         </div>
                     </div>
 
-                    {params.suggestions && <div className="mt-1 text-center">
-                        {params.suggestions.map((s, index) => (
-                            <button className="btn btn-sm btn-outline-secondary mt-2 ms-1 me-1" onClick={() => handleSuggestion(s.suggestion)} key={index}>
-                                <FontAwesomeIcon icon={s.icon} className="me-2" />
+                    <div className="mt-1 text-center">
+                        {getAllSuggestions().map(s => (
+                            <button className="btn btn-sm btn-outline-secondary mt-2 ms-1 me-1" onClick={() => runSuggestion(s.id)} key={s.id}>
+                                {s.icon && <FontAwesomeIcon icon={s.icon} className="me-2" />}
                                 {s.label}
                             </button>
                         ))}
-                    </div>}
+                    </div>
                 </div>
             </div>
             {params.footer}
+
+            {/* New Modal Host */}
+            {activeModalKey && (() => {
+                const Comp = getModalComponent(activeModalKey)
+                if (!Comp) return null
+                const draft = modalDrafts[activeModalKey]
+                const onClose = () => { setActiveModalKey(null); setActiveModalInitial(null); setActiveModalSubmitHandler(null) }
+                const onSubmit = (values: any) => {
+                    // Save draft
+                    setModalDrafts(prev => ({ ...prev, [activeModalKey]: values }))
+                    // Delegate to suggestion-provided handler or fallback generic behavior for legacy simple modal
+                    if (activeModalSubmitHandler) {
+                        try { activeModalSubmitHandler(values, suggestionCtx) } catch (e) { console.error(e) }
+                    } else if (activeModalKey === 'ask-process-number') {
+                        // Legacy fallback: send current suggestion with number
+                        const numero = values?.processNumber?.trim()
+                        if (numero) {
+                            setProcessNumber(numero)
+                            // legacy currentSuggestion logic removed after refactor
+                        }
+                    }
+                    onClose()
+                }
+                const CompAny: any = Comp
+                return (
+                    <CompAny show={true} context={suggestionCtx} initial={activeModalInitial} draft={draft} onSubmit={onSubmit} onClose={onClose} />
+                )
+            })()}
         </div>
     );
 }

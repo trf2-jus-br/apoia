@@ -8,7 +8,7 @@ describe('anonymizeText', () => {
 	})
 
 	test('numeric pattern anonymizes long digit sequences', () => {
-		const r = anonymizeText('Processo 1234567890123', {
+		const r = anonymizeText('Processo 50045886920234025107', {
 			numeric: true,
 			identidade: false,
 			endereco: false,
@@ -20,11 +20,30 @@ describe('anonymizeText', () => {
 			crm: false,
 			names: false,
 		})
-		expect(r.text).toBe('Processo 000')
+		expect(r.text).toBe('Processo 50045886920234025107')
+		expect(r.substitutions).toBe(0)
+	})
+	test('cpf pattern only when numeric disabled', () => {
+		const r = anonymizeText('CPF n. 000.000.001-91 apresentado.', {
+			numeric: false,
+			cpf: true,
+			identidade: true,
+			endereco: false,
+			telefoneFixo: false,
+			telefoneMovel: false,
+			email: false,
+			oab: false,
+			url: false,
+			crm: false,
+			names: false,
+		})
+		// Only the numeric part is replaced; label kept
+		expect(r.text).toBe('CPF n. 000 apresentado.')
 		expect(r.substitutions).toBe(1)
 	})
 
-		test('identidade pattern only when numeric disabled', () => {
+
+	test('identidade pattern only when numeric disabled', () => {
 		const r = anonymizeText('Identidade n. 12.345.678 apresentada.', {
 			numeric: false,
 			identidade: true,
@@ -59,6 +78,23 @@ describe('anonymizeText', () => {
 		expect(r.substitutions).toBe(1)
 	})
 
+	test('endereco pattern', () => {
+		const r = anonymizeText('RUA das Flores, n. 45.', {
+			numeric: false,
+			identidade: false,
+			endereco: true,
+			telefoneFixo: false,
+			telefoneMovel: false,
+			email: false,
+			oab: false,
+			url: false,
+			crm: false,
+			names: false,
+		})
+		expect(r.text).toBe('---.')
+		expect(r.substitutions).toBe(1)
+	})
+
 	test('telefone fixo pattern', () => {
 		const r = anonymizeText('Ligue 1234-5678 agora.', {
 			numeric: false,
@@ -76,7 +112,7 @@ describe('anonymizeText', () => {
 		expect(r.substitutions).toBe(1)
 	})
 
-		test('telefone móvel pattern', () => {
+	test('telefone móvel pattern', () => {
 		const r = anonymizeText('Ligue 91234-5678 agora.', {
 			numeric: false,
 			identidade: false,
@@ -127,7 +163,7 @@ describe('anonymizeText', () => {
 		expect(r.substitutions).toBe(1)
 	})
 
-		test('URL pattern (protocol preserved, host replaced)', () => {
+	test('URL pattern (protocol preserved, host replaced)', () => {
 		const r = anonymizeText('Site: https://www.example.com.', {
 			numeric: false,
 			identidade: false,
@@ -182,6 +218,7 @@ describe('anonymizeText', () => {
 		const r = anonymizeText('João informou telefone 1234-5678 e email teste@example.com.', {
 			// use defaults except disable numeric to avoid accidental capture
 			numeric: false,
+			cpf: false,
 			identidade: false,
 			endereco: false,
 			telefoneFixo: true,
@@ -201,6 +238,7 @@ describe('anonymizeText', () => {
 		const original = 'Texto com 1234567890, João, email teste@example.com.'
 		const r = anonymizeText(original, {
 			numeric: false,
+			cpf: false,
 			identidade: false,
 			endereco: false,
 			telefoneFixo: false,

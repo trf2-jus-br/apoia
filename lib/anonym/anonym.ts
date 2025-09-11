@@ -1,3 +1,4 @@
+import { isValidCPF } from '../utils/utils';
 import { anonymizeNames } from './name-anonymizer';
 
 const NUMERIC_PATTERN = /\b(?:\d[\.\-/()]?){9,20}\b/;
@@ -34,6 +35,7 @@ export function anonymizeText(
     text: string,
     options: {
         numeric?: boolean;
+        cpf?: boolean;
         identidade?: boolean;
         endereco?: boolean;
         telefoneFixo?: boolean;
@@ -53,7 +55,8 @@ export function anonymizeText(
     }
 
     const {
-        numeric = true,
+        numeric = false,
+        cpf = true,
         identidade = true,
         endereco = true,
         telefoneFixo = true,
@@ -80,7 +83,28 @@ export function anonymizeText(
         totalSubstitutions += subs;
     }
 
-    if (numeric) replaceAndCount(NUMERIC_PATTERN, '000');
+    // if (numeric) replaceAndCount(NUMERIC_PATTERN, '000');
+
+    if (cpf) {
+        const globalPattern = new RegExp(CPF_PATTERN.source, CPF_PATTERN.flags.includes('g') ? CPF_PATTERN.flags : CPF_PATTERN.flags + 'g');
+        let subs = 0;
+
+        currentText = currentText.replace(globalPattern, (full: string) => {
+            const digits = full.replace(/\D/g, '');
+            if (!isValidCPF(digits)) {
+                console.warn(`Invalid CPF detected: ${full}`);
+                // don't replace if checksum doesn't match
+                return full;
+            }
+            subs++;
+            // preserve original punctuation/format but zero out digits
+            return '000'
+        });
+
+        totalSubstitutions += subs;
+    }
+
+
     // Specialized replacements that preserve labels
     if (identidade) {
         const globalPattern = new RegExp(IDENTIDADE_PATTERN.source, IDENTIDADE_PATTERN.flags.includes('g') ? IDENTIDADE_PATTERN.flags : IDENTIDADE_PATTERN.flags + 'g');
