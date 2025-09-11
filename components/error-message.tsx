@@ -1,6 +1,16 @@
 "use client"
 
 function ErrorMsg(msg: string) {
+
+    if (msg.match(/Usuário.*não possui acesso ao processo/))
+         return <>
+            <p>A Apoia utiliza o Datalake para obter informações sobre os processos e também o conteúdo das peças processuais.</p>
+            <p>A Apoia solicitou os metadados de um processo e o Datalake responde com um erro.</p>
+            <p>Este erro significa que o processo é <a href="/apoia/faq#nao-e-possivel-acessar-processos-e-pecas-sigilosos">sigiloso</a>.</p>
+            <p>Realmente, o Datalake não permite o acesso a processos sigilosos.</p>
+            <p>Isso é um erro bem comum, mas não é um erro da Apoia.</p>
+        </>
+
     if (msg.match(/Nível de sigilo.*maior que o máximo permitido/))
         return <p>A Apoia não aceita informações com nível de sigilo maior que o máximo permitido.</p>
 
