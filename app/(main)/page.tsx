@@ -1,6 +1,6 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
@@ -59,6 +59,13 @@ export default async function HomePage() {
             href: "/headnote",
             color: "text-secondary"
         },
+        // {
+        //     icon: faUserSecret,
+        //     title: "Anonimização",
+        //     description: "Anonimize textos removendo dados sensíveis",
+        //     href: "/anonym",
+        //     color: "text-dark"
+        // },
         {
             icon: faDollar,
             title: "Relatório de Uso de IA",

@@ -138,6 +138,49 @@
         }
       }
     },
+    "/api/v1/anonym": {
+      "post": {
+        "description": "Anonimiza um texto conforme opções selecionadas.",
+        "tags": [
+          "utils"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Texto anonimizado."
+          },
+          "401": {
+            "description": "Não autorizado."
+          }
+        }
+      }
+    },
     "/api/v1/batch/{name}/{number}": {
       "post": {
         "description": "Seleciona a combinação de peças e produtos para um processo e gera os resumos e o conteúdo de cada produto",
