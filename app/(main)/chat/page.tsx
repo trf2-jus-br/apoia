@@ -8,9 +8,15 @@ import { getInternalPrompt } from '@/lib/ai/prompt'
 import { PromptDataType } from '@/lib/ai/prompt-types'
 import { faFileLines, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faSackDollar, faUsers, faGavel } from '@fortawesome/free-solid-svg-icons'
+import { assertCurrentUser, isUserCorporativo } from '@/lib/user'
 
 export default async function Home() {
     noStore()
+
+    const user = await assertCurrentUser()
+    if (!(await isUserCorporativo(user)))
+        return <Container><div className="alert alert-danger mt-5">Usuário não é corporativo</div></Container>
+
 
     const definition = getInternalPrompt('chat-standalone')
     const data: PromptDataType = {
