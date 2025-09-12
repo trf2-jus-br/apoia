@@ -454,14 +454,6 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, P.CHAT]
     },
 
-    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 1000,
-        nome: 'Relatório de Aposentadoria Especial - Segunda Instância (com PPP)',
-        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
-        produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA_COM_PPP, P.CHAT]
-    },
-
     PREV_BI_ANALISE_DE_LAUDO: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 1000,
