@@ -30,7 +30,7 @@ const onReady = (Frm: FormHelper, requests: GeneratedContent[], idx: number, con
 
     // Frm.set(`flow.ready[${idx}]`, content)
     if (requests[idx].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS && content.json) {
-        Frm.set('pedidos', content.json.pedidos)
+        Frm.set('pedidos', content.json)
     }
     if (content.json && isInformationExtractionPrompt(requests[idx].internalPrompt?.prompt)) {
         const informationExtractionVariableName = `_information_extraction_${idx}`

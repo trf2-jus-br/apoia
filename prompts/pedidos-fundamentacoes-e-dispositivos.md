@@ -10,11 +10,17 @@ Escreva de modo CONCISO, mas completo e abrangente, sem redundância
 
 # PROMPT
 
-Você receberá os textos de algumas peças processuais e deverá identificar todos os pedidos que forem realizados pelo autor e que ainda não foram decididos pelo magistrado.
+Você receberá os textos de algumas peças processuais e deverá identificar todos os pedidos que forem realizados pelo autor e que ainda não foram decididos pelo magistrado. Ou, caso se trate de uma apelação ou agravo, os pedidos que foram realizados pelo apelante ou agravante e que ainda não foram decididos pelo magistrado.
+
+Em se tratando de primeira instância, preencha o proximoPrompt com "SENTENCA". Em se tratando de segunda instância, preencha o proximoPrompt com "VOTO".
 
 ## Formato da Resposta
 
 Sua resposta será no formato JSON e deve observar alguns campos padronizados conforme listagens abaixo:
+
+Opções para "proximoPrompt":
+- SENTENCA
+- VOTO
 
 Opções para "tipoDePedido": 
 - CONDENAR_A_PAGAR
@@ -43,6 +49,7 @@ Sua resposta deve sempre ser formatada em JSON, conforme o padrão abaixo:
 
 ```json
 {
+  "proximoPrompt": "SENTENCA ou VOTO",
   "pedidos": [{
     "texto": "Informe o texto que descreve o pedido, se houver verba associada a esse pedido, cite",
     "tipoDePedido": "Utilize uma das opções tabeladas",

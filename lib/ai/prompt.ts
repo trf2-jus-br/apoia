@@ -203,6 +203,7 @@ import resumo from "@/prompts/resumo.md"
 import revisao from "@/prompts/revisao.md"
 import refinamento from "@/prompts/refinamento.md"
 import sentenca from "@/prompts/sentenca.md"
+import voto from '@/prompts/voto.md'
 import int_identificar_categoria_de_peca from '@/prompts/int-identificar-categoria-de-peca.md'
 import litigancia_predatoria from '@/prompts/litigancia-predatoria.md'
 import pedidos_de_peticao_inicial from '@/prompts/pedidos-de-peticao-inicial.md'
@@ -241,6 +242,7 @@ export const internalPrompts = {
     revisao: promptDefinitionFromMarkdown('revisao', revisao),
     refinamento: promptDefinitionFromMarkdown('refinamento', refinamento),
     sentenca: promptDefinitionFromMarkdown('sentenca', sentenca),
+    voto: promptDefinitionFromMarkdown('voto', voto),
     int_identificar_categoria_de_peca: promptDefinitionFromMarkdown('int_identificar_categoria_de_peca', int_identificar_categoria_de_peca),
     litigancia_predatoria: promptDefinitionFromMarkdown('litigancia_predatoria', litigancia_predatoria),
     pedidos_de_peticao_inicial: promptDefinitionFromMarkdown('pedidos_de_peticao_inicial', pedidos_de_peticao_inicial),
