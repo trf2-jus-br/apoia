@@ -66,13 +66,13 @@ export default async function HomePage() {
             href: "/headnote",
             color: "text-secondary"
         },
-        // {
-        //     icon: faUserSecret,
-        //     title: "Anonimização",
-        //     description: "Anonimize textos removendo dados sensíveis",
-        //     href: "/anonym",
-        //     color: "text-dark"
-        // },
+        {
+            icon: faUserSecret,
+            title: "Anonimização",
+            description: "Anonimize textos removendo dados sensíveis",
+            href: "/anonym",
+            color: "text-dark"
+        },
         {
             icon: faDollar,
             title: "Relatório de Uso de IA",
