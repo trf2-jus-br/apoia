@@ -56,7 +56,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
     if (request.produto === P.PEDIDOS && pedidos) {
         return <Pedidos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
     } else if (request.produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS && pedidos) {
-        return <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={request} Frm={Frm} key={idx} dossierCode={dossierCode} />
+        return <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={request} nextRequest={requests[idx + 1]} Frm={Frm} key={idx} dossierCode={dossierCode} />
     } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction) {
         // console.log('requestSlot: information_extraction', request.internalPrompt?.prompt, information_extraction)
         return <div key={idx}>
@@ -89,6 +89,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests }: { dadosDoProcesso
     Frm.update(data, setData, EMPTY_FORM_STATE)
 
     return <>{requests.map((request, idx) => {
+        if (idx > 0 && requests[idx - 1].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) return null      
         return requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso)
     })}
 

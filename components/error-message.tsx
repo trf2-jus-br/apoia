@@ -2,8 +2,15 @@
 
 function ErrorMsg(msg: string) {
 
+    if (msg.match(/Input is too long for requested model/))
+        return <>
+            <p>Cada modelo de inteligência artificial tem um limite da quantidade de texto que consegue processar.</p>
+            <p>Esse erro significa que o texto que você está tentando processar é muito grande para o modelo que você escolheu.</p>
+            <p>Por favor, tente reduzir o tamanho do texto ou escolher um modelo que aceite textos maiores.</p>
+        </>
+
     if (msg.match(/Usuário.*não possui acesso ao processo/))
-         return <>
+        return <>
             <p>A Apoia utiliza o Datalake para obter informações sobre os processos e também o conteúdo das peças processuais.</p>
             <p>A Apoia solicitou os metadados de um processo e o Datalake responde com um erro.</p>
             <p>Este erro significa que o processo é <a href="/apoia/faq#nao-e-possivel-acessar-processos-e-pecas-sigilosos">sigiloso</a>.</p>
@@ -15,7 +22,7 @@ function ErrorMsg(msg: string) {
         return <p>A Apoia não aceita informações com nível de sigilo maior que o máximo permitido.</p>
 
     if (msg.match(/O tempo de resposta do serviço Codex excedeu o limite/))
-        return <p>A Apoia busca informações sobre os processos e peças processuais no sistema Datalake da PDPJ. Por algum motivo, o Datalake está demorando muito para responder. Por favor, tente novamente mais tarde.</p> 
+        return <p>A Apoia busca informações sobre os processos e peças processuais no sistema Datalake da PDPJ. Por algum motivo, o Datalake está demorando muito para responder. Por favor, tente novamente mais tarde.</p>
 
     if (msg.match(/br\.jus\.cnj\.datalake.exception\.RegistroNaoEncontradoException/))
         return <>

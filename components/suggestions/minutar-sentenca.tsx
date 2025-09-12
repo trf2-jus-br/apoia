@@ -45,7 +45,7 @@ export default function DraftSentenceModal(props: ModalProps<{ processNumber?: s
   return (
     <Modal show={show} onHide={onClose} backdrop="static">
       <Modal.Header closeButton>
-        <Modal.Title>Minutar Sentença</Modal.Title>
+        <Modal.Title>Minutar</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form.Group className={`mb-3 ${context.processNumber ? 'd-none' : ''}`}>

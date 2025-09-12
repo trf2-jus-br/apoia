@@ -75,6 +75,10 @@ Identifique os pedidos que ainda não foram decididos pelo magistrado nas peças
 {
     "type": "object",
     "properties": {
+        "proximoPrompt": {
+            "type": "string",
+            "enum": ["SENTENCA", "VOTO"]
+        },
         "pedidos": {
             "type": "array",
             "items": {

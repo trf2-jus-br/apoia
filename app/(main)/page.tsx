@@ -27,9 +27,16 @@ export default async function HomePage() {
         {
             icon: faGavel,
             title: "Sentença",
-            description: "Gere minutas de sentenças informando fundamentação e dispositivo",
-            href: "/process?kind=PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS",
-            color: "text-dark"
+            description: "Minute sentenças informando fundamentação e dispositivo",
+            href: "/process?kind=MINUTA_DE_SENTENCA",
+            color: "text-brown"
+        },
+        {
+            icon: faGavel,
+            title: "Voto",
+            description: "Minute votos informando fundamentação e dispositivo",
+            href: "/process?kind=MINUTA_DE_VOTO",
+            color: "text-brown"
         },
         {
             icon: faDatabase,

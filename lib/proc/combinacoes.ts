@@ -51,6 +51,8 @@ export enum P {
     REFINAMENTO = 'Refinamento',
     PEDIDOS = 'Pedidos',
     PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS = 'Pedidos, Fundamentações e Dispositivos',
+    SENTENCA = 'Sentença',
+    VOTO = 'Voto',
     INDICE = 'Índice',
     LITIGANCIA_PREDATORIA = 'Litigância Predatória',
     CHAT = 'Chat',
@@ -89,6 +91,8 @@ export const ProdutosValidos = {
     [P.REFINAMENTO]: { titulo: P.REFINAMENTO, prompt: 'refinamento', plugins: [] },
     [P.PEDIDOS]: { titulo: P.PEDIDOS, prompt: 'pedidos-de-peticao-inicial', plugins: [] },
     [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS]: { titulo: P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, prompt: 'pedidos-fundamentacoes-e-dispositivos', plugins: [] },
+    [P.SENTENCA]: { titulo: P.SENTENCA, prompt: 'sentenca', plugins: [] },
+    [P.VOTO]: { titulo: P.VOTO, prompt: 'voto', plugins: [] },
     [P.INDICE]: { titulo: P.INDICE, prompt: 'indice', plugins: [] },
     [P.LITIGANCIA_PREDATORIA]: { titulo: P.LITIGANCIA_PREDATORIA, prompt: 'litigancia-predatoria', plugins: [] },
     [P.CHAT]: { titulo: P.CHAT, prompt: 'chat', plugins: [] },
@@ -305,6 +309,14 @@ const padroesBasicos = [
     ...padroesConhecimento
 ]
 
+const padroesBasicosEForcados = [
+    ...padroesBasicosSegundaInstancia,
+    ...padroesTurmaRecursal,
+    ...padroesConhecimento,
+    padraoApelacaoForcado,
+    padraoConhecimentoForcado,
+]
+
 // "inicial contestação sentença, embargos de declaração, sentença, apelação, contrarrazoes de apelação"
 // "agravo, contrarrazoes de agravo"
 export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
@@ -322,12 +334,19 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.ANALISE, P.CHAT]
     },
-    PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS: {
+    MINUTA_DE_SENTENCA: {
         status: StatusDeLancamento.PUBLICO,
         sort: 3,
         nome: 'Minuta de Sentença',
         padroes: [...padroesConhecimento, padraoConhecimentoForcado],
-        produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.CHAT]
+        produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.SENTENCA, P.CHAT]
+    },
+    MINUTA_DE_VOTO: {
+        status: StatusDeLancamento.PUBLICO,
+        sort: 3,
+        nome: 'Minuta de Voto',
+        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
+        produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT]
     },
     RESUMOS: {
         status: StatusDeLancamento.PUBLICO,

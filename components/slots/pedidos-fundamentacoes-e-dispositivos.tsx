@@ -3,12 +3,13 @@
 import AiContent from "@/components/ai-content"
 import { getInternalPrompt } from "@/lib/ai/prompt"
 import { GeneratedContent } from "@/lib/ai/prompt-types"
+import { P } from "@/lib/proc/combinacoes"
 import { FormHelper } from "@/lib/ui/form-support"
 import { calcSha256 } from "@/lib/utils/hash"
 import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
 import { Button } from "react-bootstrap"
 
-export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, Frm, dossierCode }: { pedidos: any[], request: GeneratedContent, Frm: FormHelper, dossierCode: string }) => {
+export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextRequest, Frm, dossierCode }: { pedidos: { proximoPrompt: string, pedidos: any[] }, request: GeneratedContent, nextRequest: GeneratedContent, Frm: FormHelper, dossierCode: string }) => {
     const tiposDeLiminar = [
         { id: 'NAO', name: 'Não' },
         { id: 'SIM', name: 'Sim' },
@@ -30,29 +31,29 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, Frm, doss
     ]
     const tiposDeDispositivo = [
         { id: '', name: '' },
-        { id: 'PROCEDENTE', name: 'Procedente' },
-        { id: 'PARCIALMENTE_PROCEDENTE', name: 'Parcialmente Procedente' },
-        { id: 'IMPROCEDENTE', name: 'Improcedente' },
+        { id: 'DEFERIR', name: 'Deferir' },
+        { id: 'DEFERIR_PARCIALMENTE', name: 'Deferir Parcialmente' },
+        { id: 'INDEFERIR', name: 'Indeferir' },
         { id: 'DESCONSIDERAR', name: 'Desconsiderar' },
     ]
 
     const pedidosAnalisados = Frm.get('pedidosAnalisados')
     if (pedidosAnalisados) {
         // const pedidos = [...Frm.get('pedidos')].filter(p => p.dispositivo).map(p => ({ ...p, fundamentacoes: [...p.fundamentacoes.filter(f => f.selecionada).map(f => f.texto)] }))
-        const proximoPrompt = Frm.get('pedidos').proximoPrompt || 'SENTENCA'
-        const pedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
+        // const proximoPrompt = Frm.get('pedidos').proximoPrompt || 'SENTENCA'
+        const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         // console.log('pedidosAnalisados', pedidos)
         const data = { ...request.data }
-        data.textos = [...request.data.textos, { slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(pedidos), sigilo: '0' }]
+        data.textos = [...request.data.textos, { slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0' }]
 
-        const prompt = getInternalPrompt(proximoPrompt === 'VOTO' ? 'voto' : 'sentenca')
+        const prompt = getInternalPrompt(nextRequest.produto === P.VOTO ? 'voto' : 'sentenca')
 
         return <>
             <h2>{maiusculasEMinusculas(request.title)}</h2>
             <div className="mb-4">
                 <div className="alert alert-success pt-4 pb-2">
                     <ol>
-                        {pedidos.map((pedido, i) =>
+                        {aPedidos.map((pedido, i) =>
                             <li className={`mb-1 ${!pedido.dispositivo ? 'opacity-25' : ''}`} key={i}>
                                 <span>{pedido.liminar === 'SIM' ? <span><b><u>Liminar</u></b> - </span> : ''}</span>
                                 <span>{tiposDePedido.find(o => o.id === pedido.tipoDePedido)?.name} - </span>
@@ -75,45 +76,45 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, Frm, doss
                     </Button>
                 </div>
             </div>
-            <h2>Sentença</h2>
+            <h2>{nextRequest.produto === P.VOTO ? 'Voto' : 'Sentença'}</h2>
             <AiContent definition={prompt} data={data} key={`prompt: 'sentenca', data: ${calcSha256(data)}`} dossierCode={dossierCode} />
         </>
     }
 
     return <>
         <h2>{maiusculasEMinusculas(request.title)}</h2>
-        {pedidos.map((pedido, i) =>
-            <div className="mb-4" key={i}>
-                <div className="alert alert-warning pt-2 pb-3">
+        <div className="alert alert-warning pt-2 pb-3">
+            {pedidos.pedidos.map((pedido, i) =>
+                <div className="mb-4" key={i}>
                     {false && <div className="row">
-                        <Frm.Select label="Liminar" name={`pedidos[${i}].liminar`} options={tiposDeLiminar} width={2} />
-                        <Frm.Select label="Tipo de Pedido" name={`pedidos[${i}].tipoDePedido`} options={tiposDePedido} width={2} />
-                        <Frm.Select label="Tipo de Verba" name={`pedidos[${i}].verba`} options={tiposDeVerba} width={2} />
-                        {Frm.get(`pedidos[${i}].verba`) !== 'NENHUMA' && <Frm.Input label="Valor" name={`pedidos[${i}].valor`} width={2} />}
+                        <Frm.Select label="Liminar" name={`pedidos.pedidos[${i}].liminar`} options={tiposDeLiminar} width={2} />
+                        <Frm.Select label="Tipo de Pedido" name={`pedidos.pedidos[${i}].tipoDePedido`} options={tiposDePedido} width={2} />
+                        <Frm.Select label="Tipo de Verba" name={`pedidos.pedidos[${i}].verba`} options={tiposDeVerba} width={2} />
+                        {Frm.get(`pedidos.pedidos[${i}].verba`) !== 'NENHUMA' && <Frm.Input label="Valor" name={`pedidos.pedidos[${i}].valor`} width={2} />}
                     </div>}
                     <div className="row mt-1">
-                        <Frm.TextArea label={`Pedido ${i + 1}`} name={`pedidos[${i}].texto`} width={''} />
+                        <Frm.TextArea label={`${i + 1}) Pedido`} name={`pedidos.pedidos[${i}].texto`} width={''} />
                     </div>
-                    {pedidos[i]?.fundamentacoes?.length > 0 && <div className="row mt-1">
+                    {pedidos.pedidos[i]?.fundamentacoes?.length > 0 && <div className="row mt-1">
                         <div className="col-6">
-                            <Frm.CheckBoxes label="Sugestões de fundamentações pró autor" labelsAndNames={pedidos[i].fundamentacoes.map((p, idx) => (p.tipo === 'PROCEDENTE' ? { label: p.texto, name: `pedidos[${i}].fundamentacoes[${idx}].selecionada` } : null))} onClick={(label, name, checked) => { if (checked) Frm.set(`pedidos[${i}].dispositivo`, 'PROCEDENTE') }} width={12} />
+                            <Frm.CheckBoxes label="Sugestões de fundamentações pró autor" labelsAndNames={pedidos.pedidos[i].fundamentacoes.map((p, idx) => (p.tipo === 'PROCEDENTE' ? { label: p.texto, name: `pedidos.pedidos[${i}].fundamentacoes[${idx}].selecionada` } : null))} onClick={(label, name, checked) => { if (checked) Frm.set(`pedidos.pedidos[${i}].dispositivo`, 'PROCEDENTE') }} width={12} />
                         </div>
                         <div className="col-6">
-                            <Frm.CheckBoxes label="Sugestões de fundamentações pró réu" labelsAndNames={pedidos[i].fundamentacoes.map((p, idx) => (p.tipo === 'IMPROCEDENTE' ? { label: p.texto, name: `pedidos[${i}].fundamentacoes[${idx}].selecionada` } : null))} onClick={(label, name, checked) => { if (checked) Frm.set(`pedidos[${i}].dispositivo`, 'IMPROCEDENTE') }} width={12} />
+                            <Frm.CheckBoxes label="Sugestões de fundamentações pró réu" labelsAndNames={pedidos.pedidos[i].fundamentacoes.map((p, idx) => (p.tipo === 'IMPROCEDENTE' ? { label: p.texto, name: `pedidos.pedidos[${i}].fundamentacoes[${idx}].selecionada` } : null))} onClick={(label, name, checked) => { if (checked) Frm.set(`pedidos.pedidos[${i}].dispositivo`, 'IMPROCEDENTE') }} width={12} />
                         </div>
                     </div>}
                     <div className="row mt-1">
-                        <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos[${i}].fundamentacao`} width={''} />
-                        <Frm.Select label="Dispositivo" name={`pedidos[${i}].dispositivo`} options={tiposDeDispositivo} width={2} />
+                        <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={''} />
+                        <Frm.Select label="Dispositivo" name={`pedidos.pedidos[${i}].dispositivo`} options={tiposDeDispositivo} width={2} />
                     </div>
                 </div>
-            </div>
-        )}
-        {Frm.get('pedidos').length > 0 &&
+            )}
+        </div>
+        {Frm.get('pedidos')?.pedidos.length > 0 &&
             <div className="row h-print">
                 <div className="col">
-                    <Button className="float-end" variant="primary" onClick={() => Frm.set('pedidosAnalisados', true)} disabled={!Frm.get('pedidos').some(p => p.dispositivo)}>
-                        Gerar Sentença
+                    <Button className="float-end" variant="primary" onClick={() => Frm.set('pedidosAnalisados', true)} disabled={Frm.get('pedidos')?.pedidos?.some(p => !p.dispositivo)}>
+                        Gerar {nextRequest.produto === P.VOTO ? 'Voto' : 'Sentença'}
                     </Button>
                 </div>
             </div>
