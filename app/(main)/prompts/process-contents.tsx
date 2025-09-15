@@ -19,12 +19,11 @@ import { buildFooterFromPieces } from "@/lib/utils/footer";
 import { nivelDeSigiloPermitido } from "@/lib/proc/sigilo";
 
 export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent, setPieceContent, apiKeyProvided, model, children }: { prompt: IAPrompt, dadosDoProcesso: DadosDoProcessoType, pieceContent: any, setPieceContent: (pieceContent: any) => void, apiKeyProvided: boolean, model?: string, children?: ReactNode }) {
-    const [selectedPieces, setSelectedPieces] = useState<PecaType[]>([])
+    const [selectedPieces, setSelectedPieces] = useState<PecaType[] | null>(null)
     const [loadingPiecesProgress, setLoadingPiecesProgress] = useState(-1)
     const [requests, setRequests] = useState<GeneratedContent[]>([])
     const [readyToStartAI, setReadyToStartAI] = useState(false)
-    const [choosingPieces, setChoosingPieces] = useState(false)
-    const [minimumTimeElapsed, setMinimumTimeElapsed] = useState(false);
+    const [choosingPieces, setChoosingPieces] = useState(true)
 
     const changeSelectedPieces = (pieces: string[]) => {
         setSelectedPieces(dadosDoProcesso.pecas.filter(p => pieces.includes(p.id)))
@@ -79,14 +78,6 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
         }
         setPieceContent(contents)
         setLoadingPiecesProgress(-1)
-
-        const minimumTime = 1500
-        const elapsedTime = new Date().getTime() - startTime.getTime()
-        if (!minimumTimeElapsed && elapsedTime < minimumTime) {
-            await new Promise(resolve => setTimeout(resolve, minimumTime - elapsedTime))
-        }
-        if (!minimumTimeElapsed)
-            setMinimumTimeElapsed(true)
         setRequests(buildRequests(contents))
     }
 
@@ -179,34 +170,29 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
     }, [selectedPieces])
 
     useEffect(() => {
-        if (requests && requests.length && !choosingPieces && minimumTimeElapsed) {
+        if (requests && requests.length && !choosingPieces) {
             setReadyToStartAI(true)
         }
-    }, [choosingPieces, requests, minimumTimeElapsed])
-
-    const errorLoadingContent = (id: string): string => {
-        if (pieceContent[id] && pieceContent[id].startsWith(TEXTO_PECA_COM_ERRO))
-            return pieceContent[id]
-    }
+    }, [choosingPieces, requests])
 
     return <div>
         <Subtitulo dadosDoProcesso={dadosDoProcesso} />
         {children}
-        <ChoosePieces allPieces={dadosDoProcesso.pecas} selectedPieces={selectedPieces} onSave={(pieces) => { setRequests([]); changeSelectedPieces(pieces) }} onStartEditing={() => { setChoosingPieces(true) }} onEndEditing={() => setChoosingPieces(false)} dossierNumber={dadosDoProcesso.numeroDoProcesso} />
-        <LoadingPieces />
-        <ErrorMsg dadosDoProcesso={dadosDoProcesso} />
-        <div className="mb-4"></div>
-        {readyToStartAI && requests?.length > 0 && (
-            apiKeyProvided
-                ? <>
-                    <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} />
-                    <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />
-                </>
-                : <PromptParaCopiar dadosDoProcesso={dadosDoProcesso} requests={requests} />
-        )
-        }
+        {selectedPieces && <>
+            <ChoosePieces allPieces={dadosDoProcesso.pecas} selectedPieces={selectedPieces} onSave={(pieces) => { setRequests([]); changeSelectedPieces(pieces) }} onStartEditing={() => { setChoosingPieces(true) }} onEndEditing={() => setChoosingPieces(false)} dossierNumber={dadosDoProcesso.numeroDoProcesso} readyToStartAI={readyToStartAI} />
+            <LoadingPieces />
+            <ErrorMsg dadosDoProcesso={dadosDoProcesso} />
+            <div className="mb-4"></div>
+            {readyToStartAI && requests?.length > 0 && (
+                apiKeyProvided
+                    ? <>
+                        <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} />
+                        <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />
+                    </>
+                    : <PromptParaCopiar dadosDoProcesso={dadosDoProcesso} requests={requests} />
+            )}</>}
         <hr className="mt-5" />
         <p style={{ textAlign: 'center' }}>Este documento foi gerado pela Apoia, ferramenta de inteligência artificial desenvolvida exclusivamente para facilitar a triagem de acervo, e não substitui a elaboração de relatório específico em cada processo, a partir da consulta manual aos eventos dos autos. Textos gerados por inteligência artificial podem conter informações imprecisas ou incorretas.</p>
-        <p style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}) ${buildFooterFromPieces(model, selectedPieces.map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
+        <p style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}) ${buildFooterFromPieces(model, (selectedPieces || []).map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
     </div >
 }

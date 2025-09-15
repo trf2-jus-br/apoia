@@ -1,7 +1,7 @@
 'use client'
 
 import { maiusculasEMinusculas } from "@/lib/utils/utils";
-import { faClose, faEdit, faRotateRight, faSave } from "@fortawesome/free-solid-svg-icons";
+import { faClose, faEdit, faPlay, faRotateRight, faSave } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react"
@@ -17,7 +17,7 @@ const Frm = new FormHelper()
 
 const canonicalPieces = (pieces: string[]) => pieces.sort((a, b) => a.localeCompare(b)).join(',')
 
-function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierNumber }: { allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onClose: () => void, dossierNumber: string }) {
+function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierNumber, readyToStartAI }: { allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onClose: () => void, dossierNumber: string, readyToStartAI }) {
     const originalPieces: string[] = selectedPieces.map(p => p.id)
     const [selectedIds, setSelectedIds] = useState(originalPieces)
     const [canonicalOriginalPieces, setCanonicalOriginalPieces] = useState(canonicalPieces(originalPieces))
@@ -57,11 +57,13 @@ function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierN
         <div className="alert alert-warning pt-0">
             <div className="row">
                 <div className="col-12">
-                    <TableRecords records={[...allPieces].reverse()} spec="ChoosePieces" options={{dossierNumber}} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged}>
+                    <TableRecords records={[...allPieces].reverse()} spec="ChoosePieces" options={{ dossierNumber }} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged}>
                         <div className="col col-auto mb-0">
                             {alteredPieces
-                                ? <Button onClick={() => onSave(alteredPieces ? selectedIds : [])} variant="primary"><FontAwesomeIcon icon={faRotateRight} className="me-2" />Salvar Alterações e Refazer</Button>
-                                : <Button onClick={() => onClose()} variant="secondary"><FontAwesomeIcon icon={faClose} className="me-1" />Fechar</Button>
+                                ? <Button onClick={() => onSave(alteredPieces ? selectedIds : [])} variant="primary" disabled={selectedIds.length === 0}><FontAwesomeIcon icon={faRotateRight} className="me-2" />Salvar Alterações e Refazer</Button>
+                                : readyToStartAI
+                                    ? <Button onClick={() => onClose()} variant="secondary"><FontAwesomeIcon icon={faClose} className="me-1" />Fechar</Button>
+                                    : <Button onClick={() => onClose()} variant="primary" disabled={selectedIds.length === 0}><FontAwesomeIcon icon={faPlay} className="me-1" />Prosseguir</Button>
                             }
                         </div></TableRecords>
                 </div>
@@ -79,12 +81,13 @@ export const ChoosePiecesLoading = () => {
 }
 
 
-export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStartEditing, onEndEditing, dossierNumber }: { allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onStartEditing: () => void, onEndEditing: () => void, dossierNumber: string
- }) {       
+export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStartEditing, onEndEditing, dossierNumber, readyToStartAI }: {
+    allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onStartEditing: () => void, onEndEditing: () => void, dossierNumber: string, readyToStartAI: boolean
+}) {
     const pathname = usePathname(); // let's get the pathname to make the component reusable - could be used anywhere in the project
     const router = useRouter();
     const currentSearchParams = useSearchParams()
-    const [editing, setEditing] = useState(false)
+    const [editing, setEditing] = useState(true)
     const [reloading, setReloading] = useState(false)
     const ref = useRef(null)
 
@@ -119,5 +122,5 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
         }
         return <p className="text-body-tertiary text-center h-print">{s} - <span onClick={() => { setEditing(true); onStartEditing() }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></p>
     }
-    return <ChoosePiecesForm onSave={onSaveLocal} onClose={onClose} allPieces={allPieces} selectedPieces={selectedPieces} dossierNumber={dossierNumber} />
+    return <ChoosePiecesForm onSave={onSaveLocal} onClose={onClose} allPieces={allPieces} selectedPieces={selectedPieces} dossierNumber={dossierNumber} readyToStartAI={readyToStartAI} />
 }
