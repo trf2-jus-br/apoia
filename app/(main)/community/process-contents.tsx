@@ -3,7 +3,8 @@
 import { IAPrompt } from "@/lib/db/mysql-types";
 import { DadosDoProcessoType, PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
 import { ReactNode, useEffect, useState } from "react";
-import { InfoDeProduto, P, PieceStrategy, selecionarPecasPorPadraoComFase, T } from "@/lib/proc/combinacoes";
+import { InfoDeProduto, P, PieceStrategy, selecionarPecasPorPadraoComFase, T, TipoDeSinteseMap } from "@/lib/proc/combinacoes";
+import { infoDeProduto } from "@/lib/proc/info-de-produto";
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "@/lib/ai/prompt-types";
 import { slugify } from "@/lib/utils/utils";
 import { getInternalPrompt } from "@/lib/ai/prompt";
@@ -30,6 +31,16 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
     }
 
     const chooseSelectedPieces = (allPieces: PecaType[], pieceStrategy: string, pieceDescr: string[]) => {
+        // If it's an internal seeded prompt, prefer map padroes
+        if (prompt.kind?.startsWith('^')) {
+            const key = prompt.kind.substring(1)
+            const def = TipoDeSinteseMap[key]
+            if (def) {
+                const pecasAcessiveis = allPieces.filter(p => nivelDeSigiloPermitido(p.sigilo))
+                const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, def.padroes)
+                return selecao.pecas || []
+            }
+        }
         const pattern = PieceStrategy[pieceStrategy].pattern
         if (pattern) {
             const pecasAcessiveis = allPieces.filter(p => nivelDeSigiloPermitido(p.sigilo))
@@ -88,19 +99,41 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
     const buildRequests = (contents: { [key: number]: string }): GeneratedContent[] => {
         const requestArray: GeneratedContent[] = []
         const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: contents[peca.id], sigilo: peca.sigilo }))
-        let produtos: (InfoDeProduto | P)[] = []
-        if (prompt.content.summary === 'SIM') {
-            for (const peca of pecasComConteudo) {
-                const definition = getInternalPrompt(`resumo-${peca.slug}`)
-                const data: PromptDataType = {
-                    numeroDoProcesso: dadosDoProcesso.numeroDoProcesso,
-                    textos: [peca]
-                }
-                requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: P.RESUMO_PECA, promptSlug: definition.kind, internalPrompt: definition })
+        let produtos: InfoDeProduto[] = []
+        // Internal seeded prompt: use map products
+        if (prompt.kind?.startsWith('^')) {
+            const key = prompt.kind.substring(1)
+            const def = TipoDeSinteseMap[key]
+            if (def) {
+                produtos = def.produtos.map(p => infoDeProduto(p))
             }
-        }
-
-        {
+            // If products list is defined via TipoDeSinteseMap, append them (avoids double-adding chat if not desired later)
+            for (const ip of produtos) {
+                if (ip.produto === P.RESUMOS) {
+                    // Add resume for each piece
+                    for (const peca of pecasComConteudo) {
+                        const definition = getInternalPrompt(`resumo-${peca.slug}`)
+                        const data: PromptDataType = { textos: [peca] }
+                        requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: ip.produto, promptSlug: definition.kind, internalPrompt: definition })
+                    }
+                    continue
+                }
+                const def = getInternalPrompt(ip.prompt)
+                if (!def) continue
+                const data: PromptDataType = { numeroDoProcesso: dadosDoProcesso.numeroDoProcesso, textos: pecasComConteudo }
+                requestArray.push({ documentCode: null, documentDescr: null, data, title: ip.titulo, produto: ip.produto, promptSlug: def.kind, internalPrompt: def })
+            }
+        } else {
+            if (prompt.content.summary === 'SIM') {
+                for (const peca of pecasComConteudo) {
+                    const definition = getInternalPrompt(`resumo-${peca.slug}`)
+                    const data: PromptDataType = {
+                        numeroDoProcesso: dadosDoProcesso.numeroDoProcesso,
+                        textos: [peca]
+                    }
+                    requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: P.RESUMO_PECA, promptSlug: definition.kind, internalPrompt: definition })
+                }
+            }
             const definition: PromptDefinitionType = {
                 kind: `prompt-${prompt.id}`,
                 prompt: prompt.content.prompt,
@@ -124,12 +157,11 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
                 plugins: []
             }
             requestArray.push(req)
-        }
 
-        {
-            const definition = getInternalPrompt(`chat`)
+            // Basic chat as last item
+            const definition2 = getInternalPrompt(`chat`)
             const data: PromptDataType = { textos: pecasComConteudo }
-            requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: P.CHAT, promptSlug: definition.kind, internalPrompt: definition })
+            requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: P.CHAT, promptSlug: definition2.kind, internalPrompt: definition2 })
         }
 
         return requestArray

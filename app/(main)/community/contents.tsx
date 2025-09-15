@@ -67,12 +67,12 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
     const promptOnClick = (kind: string, row: any) => {
         switch (kind) {
             case 'executar':
-                if (row.content.target === 'PROCESSO' && !numeroDoProcesso) {
-                    toastMessage('Antes de executar esse prompt é necessário informar o número do processo', 'warning')
-                    // Focus on the process number input field
-                    document.querySelector<HTMLInputElement>('input[name="numeroDoProcesso"]')?.focus()
-                    return
-                }
+                // if (row.content.target === 'PROCESSO' && !numeroDoProcesso) {
+                //     toastMessage('Antes de executar esse prompt é necessário informar o número do processo', 'warning')
+                //     // Focus on the process number input field
+                //     document.querySelector<HTMLInputElement>('input[name="numeroDoProcesso"]')?.focus()
+                //     return
+                // }
                 setPrompt(row)
                 break;
             case 'copiar':
@@ -266,7 +266,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                 {(prompt.content.target !== 'PROCESSO' || !numeroDoProcesso) && <PromptTitle prompt={prompt} />}
                 {prompt.content.target === 'PROCESSO'
                     ? !numeroDoProcesso
-                        ? <ProcessNumberForm id={`${prompt.base_id}`} onChange={setNumeroDoProcesso} />
+                        ? <ProcessNumberForm id={`${prompt.base_id}`} onChange={setNumber} />
                         : <>
                             <div id="printDiv">
                                 {dadosDoProcesso

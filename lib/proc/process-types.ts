@@ -75,7 +75,7 @@ const InstanceArray = [
     { id: 2, name: 'SEGUNDO_GRAU', descr: 'Segunda', acronym: '2º' },
     { id: 3, name: 'TERCEIRO_GRAU', descr: 'Terceira', acronym: '3º' },
 ]
-export type InstanceValueType = EnumOfObjectsValueType & { descr: string, acronym: string }
+export type InstanceValueType = EnumOfObjectsValueType & { name: string, descr: string, acronym: string }
 export type InstanceType = { [key: string]: InstanceValueType }
 export const Instance: InstanceType = InstanceArray.reduce((acc, cur, idx) => {
     acc[slugify(cur.name).replaceAll('-', '_').toUpperCase()] = { ...cur, sort: idx + 1 }
@@ -120,12 +120,12 @@ const ShareArray = [
     { id: 4, name: 'NAO_LISTADO', descr: 'Não Listado' },
     { id: 5, name: 'PRIVADO', descr: 'Privado' },
 ]
-export type ShareValueType = EnumOfObjectsValueType & { descr: string }
+export type ShareValueType = EnumOfObjectsValueType & { name: string, descr: string }
 
-const shareKeys = TargetArray.map(i => i.name)
+const shareKeys = ShareArray.map(i => i.name)
 type ShareKeys = typeof shareKeys[number]
 export type ShareType = { [key: ShareKeys]: ShareValueType }
-export const Share: TargetType = ShareArray.reduce((acc, cur, idx) => {
+export const Share: ShareType = ShareArray.reduce((acc, cur, idx) => {
     acc[slugify(cur.name).replaceAll('-', '_').toUpperCase()] = { ...cur, sort: idx + 1 }
     return acc
 }, {} as ShareType)
