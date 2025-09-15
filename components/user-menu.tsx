@@ -39,9 +39,6 @@ export default async function UserMenu({ }: {}) {
                     <NavigationLink href="/chat" text="Chat" />
                 </NavItem>
                 <NavItem>
-                    <NavigationLink href="/process" text="Síntese" />
-                </NavItem>
-                <NavItem>
                     <NavigationLink href="/prompts/reset" text="Prompts" />
                 </NavItem>
                 <NavItem>
