@@ -3,8 +3,8 @@
 import { IAPromptList } from "@/lib/db/mysql-types"
 import { UserType } from "@/lib/user"
 import PromptsTable from "./prompts-table"
-import { useSearchParams } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import React, { useEffect, useRef, useState } from "react"
 import ProcessNumberForm from "./process-number-form"
 import TargetText from "./target-text"
 import { DadosDoProcessoType, Instance, Matter, Scope } from "@/lib/proc/process-types"
@@ -20,6 +20,7 @@ import { tua } from "@/lib/proc/tua"
 import Link from "next/link"
 import { VisualizationEnum } from "@/lib/ui/preprocess"
 import { array } from "zod"
+import { slugify } from '@/lib/utils/utils'
 import ErrorMessage from "@/components/error-message"
 
 export const copyPromptToClipboard = (prompt: IAPromptList) => {
@@ -31,17 +32,21 @@ export const copyPromptToClipboard = (prompt: IAPromptList) => {
 
 export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string }) {
     const currentSearchParams = useSearchParams()
+    const router = useRouter()
+    const pathname = usePathname()
+    // Ref para evitar atualizações redundantes de URL
+    const lastQueryRef = useRef<string>('')
     const [prompt, setPrompt] = useState<IAPromptList>(null)
     const [numeroDoProcesso, setNumeroDoProcesso] = useState<string>(null)
     const [arrayDeDadosDoProcesso, setArrayDeDadosDoProcesso] = useState<DadosDoProcessoType[]>(null)
     const [idxProcesso, setIdxProcesso] = useState(0)
     const [dadosDoProcesso, setDadosDoProcesso] = useState<DadosDoProcessoType>(null)
-    const [promptParam, setPromptParam] = useState<string>(currentSearchParams.get('prompt'))
-    const processParam = currentSearchParams.get('process')
     const [number, setNumber] = useState<string>('')
     const [scope, setScope] = useState<string>()
     const [instance, setInstance] = useState<string>()
     const [matter, setMatter] = useState<string>()
+    const [tramFromUrl, setTramFromUrl] = useState<number | null>(null)
+    const [promptInitialized, setPromptInitialized] = useState(false)
     const [pieceContent, setPieceContent] = useState({})
     const [toast, setToast] = useState<string>()
     const [toastVariant, setToastVariant] = useState<string>()
@@ -74,6 +79,14 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                 //     return
                 // }
                 setPrompt(row)
+                // Se o prompt selecionado não requer PROCESSO, limpar contexto de processo
+                if (row.content.target !== 'PROCESSO') {
+                    setNumeroDoProcesso(null)
+                    setNumber('')
+                    setArrayDeDadosDoProcesso(null)
+                    setDadosDoProcesso(null)
+                    setIdxProcesso(0)
+                }
                 break;
             case 'copiar':
                 copyPromptToClipboard(row)
@@ -105,42 +118,111 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
         }
     }
 
-    if (promptParam && (!prompt || prompt.base_id !== parseInt(promptParam))) {
-        setPrompt(prompts.find(p => p.base_id === parseInt(promptParam)))
-    }
+    // Inicialização a partir da query string (efeito único)
+    useEffect(() => {
+        // Só inicializa uma vez
+        if (promptInitialized) return
+        const p = currentSearchParams.get('prompt')
+        const proc = currentSearchParams.get('process')
+        const sc = currentSearchParams.get('scope')
+        const inst = currentSearchParams.get('instance')
+        const mat = currentSearchParams.get('matter')
+        const tram = currentSearchParams.get('tram')
+        const tab = currentSearchParams.get('tab')
 
-    if (processParam && (!numeroDoProcesso || numeroDoProcesso !== processParam)) {
-        setNumeroDoProcesso(processParam)
-    }
+        // Prompt: pode ser slug (interno) ou número (base_id)
+        if (p) {
+            let found: IAPromptList = null
+            if (/^\d+$/.test(p)) {
+                const n = parseInt(p)
+                found = prompts.find(pr => pr.base_id === n)
+            } else {
+                // comparar slug gerado de kind sem '^'
+                found = prompts.find(pr => pr.kind?.startsWith('^') && slugify(pr.kind.substring(1)) === p)
+            }
+            if (found) setPrompt(found)
+        }
+        if (proc && proc.length === 20) {
+            setNumeroDoProcesso(proc)
+            setNumber(proc)
+        }
+        if (sc) setScope(sc)
+        if (inst) setInstance(inst)
+        if (mat) setMatter(mat)
+        if (tram && /^\d+$/.test(tram)) setTramFromUrl(parseInt(tram))
+        if (tab === 'comunidade') setActiveTab('comunidade')
+        setPromptInitialized(true)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     useEffect(() => {
         if (numeroDoProcesso) {
             loadProcess(numeroDoProcesso)
         } else {
             setDadosDoProcesso(null)
+            setArrayDeDadosDoProcesso(null)
+            setIdxProcesso(0)
         }
-        // loadProcess is stable; suppress exhaustive-deps for number change only
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [numeroDoProcesso])
 
+    // Caso o usuário abra diretamente um prompt que não exige processo (via URL), limpar processo carregado anterior
+    useEffect(() => {
+        if (prompt && prompt.content?.target && prompt.content.target !== 'PROCESSO') {
+            if (numeroDoProcesso) setNumeroDoProcesso(null)
+            if (number) setNumber('')
+            if (arrayDeDadosDoProcesso) setArrayDeDadosDoProcesso(null)
+            if (dadosDoProcesso) setDadosDoProcesso(null)
+            if (idxProcesso !== 0) setIdxProcesso(0)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [prompt])
+
     useEffect(() => {
         if (!dadosDoProcesso) {
-            setScope(undefined)
-            setInstance(undefined)
-            setMatter(undefined)
             return
         }
-        if (dadosDoProcesso.segmento && Scope[dadosDoProcesso.segmento]) setScope(dadosDoProcesso.segmento)
-        else setScope(undefined)
-        if (dadosDoProcesso.instancia && Instance[dadosDoProcesso.instancia]) setInstance(dadosDoProcesso.instancia)
-        else setInstance(undefined)
-        if (dadosDoProcesso.materia && Matter[dadosDoProcesso.materia]) setMatter(dadosDoProcesso.materia)
-        else setMatter(undefined)
-    }, [dadosDoProcesso])
+        // Aplicar tramitação do URL se válido
+        if (tramFromUrl !== null && arrayDeDadosDoProcesso?.length > 1) {
+            if (tramFromUrl >= 0 && tramFromUrl < arrayDeDadosDoProcesso.length) {
+                setIdxProcesso(tramFromUrl)
+                setDadosDoProcesso(arrayDeDadosDoProcesso[tramFromUrl])
+            }
+            setTramFromUrl(null) // consumir
+        }
+    }, [arrayDeDadosDoProcesso, dadosDoProcesso, tramFromUrl])
+
+    // Sincronizar URL com estado
+    useEffect(() => {
+        if (!promptInitialized) return
+        const params = new URLSearchParams()
+        // Prompt
+        if (prompt) {
+            if (prompt.kind?.startsWith('^')) {
+                params.set('prompt', slugify(prompt.kind.substring(1)))
+            } else if (prompt.base_id != null) {
+                params.set('prompt', String(prompt.base_id))
+            }
+        }
+        // Processo
+        if (numeroDoProcesso?.length === 20) params.set('process', numeroDoProcesso)
+        // Tramitação
+        if (arrayDeDadosDoProcesso?.length > 1) params.set('tram', String(idxProcesso))
+        // Filtros
+        if (scope) params.set('scope', scope)
+        if (instance) params.set('instance', instance)
+        if (matter) params.set('matter', matter)
+        if (activeTab === 'comunidade') params.set('tab', 'comunidade')
+
+        const qs = params.toString()
+        if (qs === lastQueryRef.current) return
+        lastQueryRef.current = qs
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    }, [prompt, numeroDoProcesso, idxProcesso, scope, instance, matter, activeTab, arrayDeDadosDoProcesso, promptInitialized, pathname, router])
 
 
 
-    const PromptTitle = ({ prompt }: { prompt: IAPromptList }) => <div className="text-body-tertiary text-center h-print">Prompt: {prompt.name} - <span onClick={() => { setPromptParam(undefined); setPrompt(null) }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></div>
+    const PromptTitle = ({ prompt }: { prompt: IAPromptList }) => <div className="text-body-tertiary text-center h-print">Prompt: {prompt.name} - <span onClick={() => { setPrompt(null) /* Mantém processo carregado */ }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></div>
 
     const filteredPromptsBase = prompts.filter((p) => {
         if (scope && !p.content.scope?.includes(scope)) return false

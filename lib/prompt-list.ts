@@ -70,12 +70,12 @@ export async function fixPromptList(basePrompts: IAPromptList[]) {
     prompts.sort((a, b) => {
         if (!!a.is_favorite > !!b.is_favorite) return -1
         if (!!a.is_favorite < !!b.is_favorite) return 1
-        if (a.is_internal && !b.is_internal) return -1
-        if (!a.is_internal && b.is_internal) return 1
-        if (a.is_mine > b.is_mine) return -1
-        if (a.is_mine < b.is_mine) return 1
         if (parseIntSafe(a.favorite_count) > parseIntSafe(b.favorite_count)) return -1
         if (parseIntSafe(a.favorite_count) < parseIntSafe(b.favorite_count)) return 1
+        if (a.is_mine > b.is_mine) return -1
+        if (a.is_mine < b.is_mine) return 1
+        if (a.is_internal && !b.is_internal) return -1
+        if (!a.is_internal && b.is_internal) return 1
         if (a.created_at > b.created_at) return -1
         if (a.created_at < b.created_at) return 1
         return 0
