@@ -124,9 +124,9 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
         if (promptInitialized) return
         const p = currentSearchParams.get('prompt')
         const proc = currentSearchParams.get('process')
-        const sc = currentSearchParams.get('scope')
-        const inst = currentSearchParams.get('instance')
-        const mat = currentSearchParams.get('matter')
+    const sc = currentSearchParams.get('scope')
+    const inst = currentSearchParams.get('instance')
+    const mat = currentSearchParams.get('matter')
         const tram = currentSearchParams.get('tram')
         const tab = currentSearchParams.get('tab')
 
@@ -146,9 +146,23 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
             setNumeroDoProcesso(proc)
             setNumber(proc)
         }
-        if (sc) setScope(sc)
-        if (inst) setInstance(inst)
-        if (mat) setMatter(mat)
+        // Decodificar filtros (aceita slug ou nome antigo, por compatibilidade)
+        const decodeEnumParam = (param: string | null, enumObj: any): string | undefined => {
+            if (!param) return undefined
+            const list = enumSorted(enumObj)
+            // Tenta nome direto (links antigos)
+            const direct = list.find((s: any) => s.value?.name === param)?.value?.name
+            if (direct) return direct
+            // Tenta comparação por slug do name
+            const bySlug = list.find((s: any) => slugify(s.value?.name) === param)?.value?.name
+            return bySlug
+        }
+        const scName = decodeEnumParam(sc, Scope)
+        const instName = decodeEnumParam(inst, Instance)
+        const matName = decodeEnumParam(mat, Matter)
+        if (scName) setScope(scName)
+        if (instName) setInstance(instName)
+        if (matName) setMatter(matName)
         if (tram && /^\d+$/.test(tram)) setTramFromUrl(parseInt(tram))
         if (tab === 'comunidade') setActiveTab('comunidade')
         setPromptInitialized(true)
@@ -206,12 +220,15 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
         }
         // Processo
         if (numeroDoProcesso?.length === 20) params.set('process', numeroDoProcesso)
-        // Tramitação
-        if (arrayDeDadosDoProcesso?.length > 1) params.set('tram', String(idxProcesso))
-        // Filtros
-        if (scope) params.set('scope', scope)
-        if (instance) params.set('instance', instance)
-        if (matter) params.set('matter', matter)
+        // Tramitação: só quando diferente do índice padrão (último)
+        if (arrayDeDadosDoProcesso?.length > 1) {
+            const defaultIdx = arrayDeDadosDoProcesso.length - 1
+            if (idxProcesso !== defaultIdx) params.set('tram', String(idxProcesso))
+        }
+        // Filtros: gravar como slug
+        if (scope) params.set('scope', slugify(scope))
+        if (instance) params.set('instance', slugify(instance))
+        if (matter) params.set('matter', slugify(matter))
         if (activeTab === 'comunidade') params.set('tab', 'comunidade')
 
         const qs = params.toString()
