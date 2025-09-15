@@ -42,7 +42,7 @@ export default async function UserMenu({ }: {}) {
                     <NavigationLink href="/process" text="Síntese" />
                 </NavItem>
                 <NavItem>
-                    <NavigationLink href="/community/reset" text="Prompts" />
+                    <NavigationLink href="/prompts/reset" text="Prompts" />
                 </NavItem>
                 <NavItem>
                     <NavigationLink href="/revision" text="Revisão de Texto" />

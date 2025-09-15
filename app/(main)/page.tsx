@@ -42,7 +42,7 @@ export default async function HomePage() {
             icon: faDatabase,
             title: "Prompts",
             description: "Banco de Prompts para Inteligência Artificial por categoria jurídica",
-            href: "/community",
+            href: "/prompts",
             color: "text-info"
         },
         {

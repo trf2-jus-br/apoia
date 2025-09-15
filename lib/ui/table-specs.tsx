@@ -48,8 +48,8 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
             columns: [
                 {
                     header: ' ', accessorKey: '', style: { textAlign: "center", width: "1%" }, enableSorting: false, cell: data => data.row.original.is_favorite
-                        ? <a href={`/community/prompt/${data.row.original.base_id}/reset-favorite`} className="text-primary"><FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUserSolid : faStarSolid} /></a>
-                        : <a href={`/community/prompt/${data.row.original.base_id}/set-favorite`} className="text-secondary opacity-50"><FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUser : faStar} /></a>
+                        ? <a href={`/prompts/prompt/${data.row.original.base_id}/reset-favorite`} className="text-primary"><FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUserSolid : faStarSolid} /></a>
+                        : <a href={`/prompts/prompt/${data.row.original.base_id}/set-favorite`} className="text-secondary opacity-50"><FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUser : faStar} /></a>
                 },
                 {
                     header: 'Prompt', accessorKey: 'name', enableSorting: true, cell: data => <>
@@ -60,12 +60,12 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                                 <Dropdown.Item onClick={() => onClick('executar', data.row.original)}>Executar</Dropdown.Item>
                                 {!data.row.original.kind?.startsWith('^') && <Dropdown.Item onClick={() => onClick('copiar', data.row.original)}>Copiar prompt</Dropdown.Item>}
                                 <Dropdown.Item onClick={() => onClick('copiar link para favoritar', data.row.original)}>Copiar link para adicionar aos favoritos</Dropdown.Item>
-                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/community/prompt/${data.row.original.id}/edit`} disabled={!data.row.original.is_mine}>Editar</Dropdown.Item>}
-                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/community/prompt/new?copyFrom=${data.row.original.id}`}>Fazer uma cópia</Dropdown.Item>}
-                                <Dropdown.Item href={`/community/prompt/${data.row.original.base_id}`}>Informações sobre o prompt</Dropdown.Item>
-                                <Dropdown.Item href={`/community/prompt/${data.row.original.base_id}/set-favorite`}>Adicionar aos favoritos</Dropdown.Item>
-                                <Dropdown.Item href={`/community/prompt/${data.row.original.base_id}/reset-favorite`}>Remover dos favoritos</Dropdown.Item>
-                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/community/prompt/${data.row.original.base_id}/remove`} disabled={!data.row.original.is_mine}>Remover</Dropdown.Item>}
+                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/prompts/prompt/${data.row.original.id}/edit`} disabled={!data.row.original.is_mine}>Editar</Dropdown.Item>}
+                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/prompts/prompt/new?copyFrom=${data.row.original.id}`}>Fazer uma cópia</Dropdown.Item>}
+                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}`}>Informações sobre o prompt</Dropdown.Item>
+                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/set-favorite`}>Adicionar aos favoritos</Dropdown.Item>
+                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/reset-favorite`}>Remover dos favoritos</Dropdown.Item>
+                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/remove`} disabled={!data.row.original.is_mine}>Remover</Dropdown.Item>}
                             </Dropdown.Menu>
                         </Dropdown>
                     </>

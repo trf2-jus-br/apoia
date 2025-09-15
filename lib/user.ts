@@ -4,7 +4,6 @@ import authOptions from '../app/api/auth/[...nextauth]/options'
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { headers } from "next/headers"
-import { verify } from 'crypto'
 import { verifyJweToken, verifyJwkSignedToken } from './utils/jwt'
 import { envString } from './utils/env'
 

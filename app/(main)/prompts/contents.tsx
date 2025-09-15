@@ -93,7 +93,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                 toastMessage('Prompt copiado para a área de transferência', 'success')
                 break
             case 'copiar link para favoritar':
-                navigator.clipboard.writeText(`Clique no link abaixo para adicionar o prompt ${row.name} aos favoritos:\n\n${window.location.origin}/community/prompt/${row.base_id}/set-favorite`)
+                navigator.clipboard.writeText(`Clique no link abaixo para adicionar o prompt ${row.name} aos favoritos:\n\n${window.location.origin}/prompts/prompt/${row.base_id}/set-favorite`)
                 toastMessage('Link copiado para a área de transferência', 'success')
                 break
         }
@@ -322,8 +322,8 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                         <PromptsTable prompts={promptsPrincipais} onClick={promptOnClick} onProcessNumberChange={setNumeroDoProcesso}>
                             <div className="col col-auto">
                                 <DropdownButton id="criar-novo-dropdown" title="Criar Novo" variant="primary">
-                                    <Dropdown.Item href="/community/prompt/new">Prompt</Dropdown.Item>
-                                    <Dropdown.Item href="/community/prompt/new?template=true">Prompt a partir de um modelo</Dropdown.Item>
+                                    <Dropdown.Item href="/prompts/prompt/new">Prompt</Dropdown.Item>
+                                    <Dropdown.Item href="/prompts/prompt/new?template=true">Prompt a partir de um modelo</Dropdown.Item>
                                 </DropdownButton>
                             </div>
                         </PromptsTable>
@@ -333,8 +333,8 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                         <PromptsTable prompts={promptsComunidade} onClick={promptOnClick} onProcessNumberChange={setNumeroDoProcesso}>
                             <div className="col col-auto">
                                 <DropdownButton id="criar-novo-dropdown" title="Criar Novo" variant="primary">
-                                    <Dropdown.Item href="/community/prompt/new">Prompt</Dropdown.Item>
-                                    <Dropdown.Item href="/community/prompt/new?template=true">Prompt a partir de um modelo</Dropdown.Item>
+                                    <Dropdown.Item href="/prompts/prompt/new">Prompt</Dropdown.Item>
+                                    <Dropdown.Item href="/prompts/prompt/new?template=true">Prompt a partir de um modelo</Dropdown.Item>
                                 </DropdownButton>
                             </div>
                         </PromptsTable>

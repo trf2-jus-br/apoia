@@ -14,6 +14,6 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
 
     await Dao.setFavorite(parseInt(params.id), user_id)
 
-    redirect('/community')
+    redirect('/prompts')
     return null
 }

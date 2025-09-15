@@ -8,7 +8,8 @@ import { removeOfficial, save, setOfficial } from './prompt-actions'
 import { EMPTY_FORM_STATE, FormHelper, FormError } from '@/lib/ui/form-support'
 import yamlps from 'js-yaml'
 import { useState } from 'react'
-import _ from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import isEqual from 'lodash/isEqual'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAdd, faRemove } from '@fortawesome/free-solid-svg-icons'
 import { enumSorted } from '@/lib/ai/model-types'
@@ -25,14 +26,14 @@ export default function PromptForm(props) {
     const initialState = props.record || { content: {} }
     // if (!initialState.model_id || (props.models && props.models[0] && !props.models.map(i => i.id).includes(initialState.model_id))) initialState.model_id = props.models && props.models[0] ? props.models[0].id : null
     // if (!initialState.testset_id || (props.testsets && props.testsets[0] && !props.testsets.map(i => i.id).includes(initialState.testset_id))) initialState.testset_id = props.testsets && props.testsets[0] ? props.testsets[0].id : null
-    const [data, setData] = useState(_.cloneDeep(initialState))
+    const [data, setData] = useState(cloneDeep(initialState))
     const [yaml, setYaml] = useState(yamlps.dump(initialState.content))
     const [formState, setFormState] = useState(EMPTY_FORM_STATE)
     const [tab, setTab] = useState('fields')
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(initialState?.content?.system_prompt || initialState?.content?.json_schema || initialState?.content?.format ? true : false)
     const [isTemplate, setIsTemplate] = useState(initialState?.content?.template || props.template ? true : false)
     Frm.update(data, (d) => { setData(d); updateYaml(d) }, formState)
-    const pristine = _.isEqual(data, { ...initialState })
+    const pristine = isEqual(data, { ...initialState })
 
     const updateYaml = (newData) => {
         setYaml(yamlps.dump(newData.content))
@@ -52,9 +53,9 @@ export default function PromptForm(props) {
 
     function handleBack() {
         if (data.name && data.id)
-            router.push(`/community`)
+            router.push(`/prompts`)
         else
-            router.push(`/community`)
+            router.push(`/prompts`)
     }
 
     async function handleSave() {

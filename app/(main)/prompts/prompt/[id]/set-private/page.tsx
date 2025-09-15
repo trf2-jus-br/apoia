@@ -2,7 +2,7 @@
 
 import { unstable_noStore as noStore } from 'next/cache'
 import { Dao } from '@/lib/db/mysql'
-import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation';
 import { assertCurrentUser, isUserModerator } from '@/lib/user'
 
 export default async function Home(props: { params: Promise<{ id: string }> }) {
@@ -10,7 +10,7 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
     noStore()
     const user = await assertCurrentUser()
     if (await isUserModerator(user))
-        await Dao.setPublic(parseInt(params.id))
-    redirect('/community')
+        await Dao.setPrivate(parseInt(params.id))
+    redirect('/prompts')
     return null
 }

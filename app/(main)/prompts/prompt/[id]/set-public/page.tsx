@@ -10,7 +10,7 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
     noStore()
     const user = await assertCurrentUser()
     if (await isUserModerator(user))
-        await Dao.setStandard(parseInt(params.id))
-    redirect('/community')
+        await Dao.setPublic(parseInt(params.id))
+    redirect('/prompts')
     return null
 }
