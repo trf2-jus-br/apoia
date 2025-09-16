@@ -6,6 +6,7 @@ import { PromptDataType } from "../ai/prompt-types"
 import { Instance, Matter, Scope } from "../proc/process-types"
 import { envNumber, envString } from "../utils/env"
 import { dailyLimits } from "../utils/limits"
+import { IS_APPLE } from "@mdxeditor/editor"
 
 function getId(returning: number | { id: number }): number {
     return typeof returning === 'number' ? returning : returning.id
@@ -17,6 +18,37 @@ async function getCurrentUserId() {
 }
 
 export class Dao {
+    static async addInternalPrompt(kind: string): Promise<mysqlTypes.IAPrompt> {
+        if (!knex) return {} as mysqlTypes.IAPrompt
+        const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({
+            kind,
+            name: kind,
+            slug: slugify(kind),
+            content: JSON.stringify({ prompt: null }),
+            is_latest: 1, share: 'PADRAO'
+        }).returning('id')
+        const id = getId(result)
+        await knex('ia_prompt').update({ base_id: id }).where({ id })
+        const record = await knex('ia_prompt').select<mysqlTypes.IAPrompt>('*').where({ id }).first()
+        return record
+    }
+
+    static async removeInternalPrompt(kind: string): Promise<boolean> {
+        if (!knex) return false
+        const result = await knex('ia_prompt').update({ is_latest: 0 }).where({ kind })
+        return result > 0
+    }
+
+    // Retrieve all latest seeded prompts (kind starting with '^%') for overlaying map info
+    static async retrieveLatestSeededPrompts(): Promise<mysqlTypes.IAPrompt[]> {
+        if (!knex) return [] as any
+        const result = await knex('ia_prompt')
+            .select<mysqlTypes.IAPrompt[]>('*')
+            .where('is_latest', 1)
+            .andWhere('kind', 'like', '^%')
+        for (const record of result) this.hydratatePromptContent(record.content)
+        return result
+    }
     static async insertIATestset(data: mysqlTypes.IATestsetToInsert): Promise<mysqlTypes.IATestset | undefined> {
         const { base_testset_id, kind, name, model_id, content } = data
         const slug = slugify(name)

@@ -203,6 +203,7 @@ export type IAPromptList = {
     is_mine: boolean
     is_favorite: number
     favorite_count: number
+    is_internal?: boolean
 }
 
 

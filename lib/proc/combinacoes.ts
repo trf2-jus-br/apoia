@@ -1,7 +1,7 @@
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
 import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
-import { PecaType, StatusDeLancamento } from "./process-types"
+import { Instance, PecaType, StatusDeLancamento } from "./process-types"
 
 // Enum com os tipos de peças
 export enum T {
@@ -118,11 +118,16 @@ export const PC = (p: P, d?: T | T[]): ProdutoCompleto => {
 
 export type TipoDeSinteseType = {
     nome: string,
+    author?: string,
     // tipos: T[][],
     padroes: MatchOperator[][],
     produtos: (P | ProdutoCompleto)[],
     sort: number,
     status: StatusDeLancamento,
+    // Optional UI filter hints; if omitted, defaults to all
+    scope?: string[],
+    instance?: string[],
+    matter?: string[],
 }
 
 const pecasQueRepresentamContestacao = [
@@ -348,7 +353,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 3,
         nome: 'Minuta de Voto',
         padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
-        produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT]
+        produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT],
+        instance: [Instance.SEGUNDO_GRAU.name]
     },
     RESUMOS: {
         status: StatusDeLancamento.PUBLICO,
@@ -404,7 +410,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         produtos: [P.INDICE, P.CHAT]
     },
 
-    RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL: {
+    REL_PROC_COLETIVO_OU_CRIMINAL: {
         status: StatusDeLancamento.PUBLICO,
         sort: 9,
         nome: 'Relatório de Processo Coletivo ou Criminal',
@@ -414,15 +420,15 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         produtos: [P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL, P.CHAT]
     },
 
-    MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 10,
-        nome: 'Minuta de Despacho de Acordo 9 dias',
-        padroes: [
-            [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [T.FORMULARIO] })],
-        ],
-        produtos: [P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS, P.CHAT]
-    },
+    // MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS: {
+    //     status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+    //     sort: 10,
+    //     nome: 'Minuta de Despacho de Acordo 9 dias',
+    //     padroes: [
+    //         [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [T.FORMULARIO] })],
+    //     ],
+    //     produtos: [P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS, P.CHAT]
+    // },
 
     RELATORIO_DE_ACERVO: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
@@ -440,7 +446,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         produtos: [P.PREV_PPP, P.CHAT]
     },
 
-    PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA: {
+    PREV_APESP_PRIMEIRA_INSTANCIA: {
         status: StatusDeLancamento.PUBLICO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Primeira Instância',
@@ -448,7 +454,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, P.CHAT]
     },
 
-    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA: {
+    PREV_APESP_SEGUNDA_INSTANCIA: {
         status: StatusDeLancamento.PUBLICO,
         sort: 1000,
         nome: 'Relatório de Aposentadoria Especial - Segunda Instância',

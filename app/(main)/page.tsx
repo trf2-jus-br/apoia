@@ -18,32 +18,32 @@ export default async function HomePage() {
             color: "text-primary"
         },
         {
+            icon: faDatabase,
+            title: "Prompts",
+            description: "Banco de Prompts para Inteligência Artificial por categoria jurídica",
+            href: "/prompts",
+            color: "text-info"
+        },
+        {
             icon: faList,
             title: "Síntese",
             description: "Gere automaticamente resumos de peças processuais",
-            href: "/process",
+            href: "/prompts?prompt=resumos-triagem",
             color: "text-success"
         },
         {
             icon: faGavel,
             title: "Sentença",
             description: "Minute sentenças informando fundamentação e dispositivo",
-            href: "/process?kind=MINUTA_DE_SENTENCA",
+            href: "/prompts?prompt=minuta-de-sentenca",
             color: "text-brown"
         },
         {
             icon: faGavel,
             title: "Voto",
             description: "Minute votos informando fundamentação e dispositivo",
-            href: "/process?kind=MINUTA_DE_VOTO",
+            href: "/prompts?prompt=minuta-de-voto",
             color: "text-brown"
-        },
-        {
-            icon: faDatabase,
-            title: "Prompts",
-            description: "Banco de Prompts para Inteligência Artificial por categoria jurídica",
-            href: "/community",
-            color: "text-info"
         },
         {
             icon: faFileText,

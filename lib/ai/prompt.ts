@@ -4,6 +4,7 @@ import { PromptDataType, PromptExecuteType, PromptExecuteParamsType, PromptDefin
 import { buildFormatter } from "@/lib/ai/format"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { fixPromptForAutoJson, promptJsonSchemaFromPromptMarkdown } from "./auto-json"
+import { formatDateDDMMYYYY } from "../utils/date"
 
 export const formatText = (txt: TextoType, limit?: number) => {
     let s: string = txt.descr
@@ -33,6 +34,8 @@ export const applyTextsAndVariables = (text: string, data: PromptDataType, jsonS
     text = text.replace('{{textos}}', allTexts)
 
     text = text.replace('{{numeroDoProcesso}}', data.numeroDoProcesso || 'Número do processo não definido')
+
+    text = text.replace('{{dataAtual}}', formatDateDDMMYYYY(new Date()))
 
     text = text.replace('{{template}}', template ? `<template>\n${template}\n</template>` : '')
 
