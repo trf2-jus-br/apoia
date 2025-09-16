@@ -34,6 +34,8 @@ export const applyTextsAndVariables = (text: string, data: PromptDataType, jsonS
 
     text = text.replace('{{numeroDoProcesso}}', data.numeroDoProcesso || 'Número do processo não definido')
 
+    text = text.replace('{{dataAtual}}', formatDateDDMMYYYY(new Date()))
+
     text = text.replace('{{template}}', template ? `<template>\n${template}\n</template>` : '')
 
     text = text.replace(/{{textos\.limit\((\d+)\)}}/g, (match, limit) => {
@@ -223,6 +225,7 @@ import prev_bi_analise_de_laudo from '@/prompts/prev-bi-analise-de-laudo.md'
 import prev_bi_sentenca_laudo_favoravel from '@/prompts/prev-bi-sentenca-laudo-favoravel.md'
 import prev_bi_sentenca_laudo_desfavoravel from '@/prompts/prev-bi-sentenca-laudo-desfavoravel.md'
 import linguagem_simples from '@/prompts/linguagem-simples.md'
+import { formatDateDDMMYYYY } from "../utils/date"
 
 // Enum for the different types of prompts
 export const internalPrompts = {

@@ -37,3 +37,7 @@
 ## CASO O USUÁRIO PEÇA PARA GERAR UM VOTO
 
 {{prompt:voto}}
+
+---
+
+Data atual: {{dataAtual}}
