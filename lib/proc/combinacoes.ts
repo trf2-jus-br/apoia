@@ -65,6 +65,7 @@ export enum P {
     PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
+    RELATORIO_DE_APELACAO_E_TRIAGEM = 'Relatório de Apelação e Triagem',
 }
 
 export enum Plugin {
@@ -105,6 +106,7 @@ export const ProdutosValidos = {
     [P.PREV_BI_ANALISE_DE_LAUDO]: { titulo: P.PREV_BI_ANALISE_DE_LAUDO, prompt: 'prev-bi-analise-de-laudo', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
+    [P.RELATORIO_DE_APELACAO_E_TRIAGEM]: { titulo: P.RELATORIO_DE_APELACAO_E_TRIAGEM, prompt: 'relatorio-de-apelacao-e-triagem', plugins: [] },
 }
 
 export interface ProdutoCompleto { produto: P, dados: T[] }
@@ -479,6 +481,14 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Sentença BI - Laudo Desfavorável',
         padroes: padroesConhecimento,
         produtos: [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, P.CHAT]
+    },
+
+    RELATORIO_DE_APELACAO_E_TRIAGEM: {
+        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        sort: 1000,
+        nome: 'Relatório de Apelação e Triagem',
+        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
+        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT]
     },
 
 
