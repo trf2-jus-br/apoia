@@ -1,55 +1,26 @@
 'use client'
 
 import { maiusculasEMinusculas } from "@/lib/utils/utils";
-import { faClose, faEdit, faPlay, faRotateRight, faSave } from "@fortawesome/free-solid-svg-icons";
+import { faClose, faEdit, faPlay, faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { use, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import TableRecords from '@/components/table-records'
-import { DadosDoProcessoType, PecaType, StatusDeLancamento } from "@/lib/proc/process-types";
+import { PecaType } from "@/lib/proc/process-types";
 import { Button } from "react-bootstrap";
-import { TipoDeSinteseEnum, TipoDeSinteseMap } from "@/lib/proc/combinacoes";
-import { EMPTY_FORM_STATE, FormHelper } from "@/lib/ui/form-support";
-import { TiposDeSinteseValido } from "@/lib/proc/info-de-produto";
-import { on } from "events";
-
-const Frm = new FormHelper()
+// Removed unused imports and helpers
 
 const canonicalPieces = (pieces: string[]) => pieces.sort((a, b) => a.localeCompare(b)).join(',')
 
-function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierNumber, readyToStartAI }: { allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onClose: () => void, dossierNumber: string, readyToStartAI }) {
+function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierNumber, readyToStartAI }: { allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onClose: () => void, dossierNumber: string, readyToStartAI: boolean }) {
     const originalPieces: string[] = selectedPieces.map(p => p.id)
     const [selectedIds, setSelectedIds] = useState(originalPieces)
     const [canonicalOriginalPieces, setCanonicalOriginalPieces] = useState(canonicalPieces(originalPieces))
-    const tipos = TiposDeSinteseValido.map(tipo => ({ id: tipo.id, name: tipo.nome }))
 
     const onSelectedIdsChanged = (ids: string[]) => {
         if (canonicalPieces(ids) !== canonicalPieces(selectedIds))
             setSelectedIds(ids)
     }
-
-    Frm.update({ selectedIds }, (d) => { setSelectedIds(d.selectedIds) }, EMPTY_FORM_STATE)
-
-    const updateSelectedPieces = async () => {
-        const res = await fetch('/api/v1/select-pieces', {
-            method: 'post',
-            body: JSON.stringify({
-                pieces: allPieces.map(p => ({ id: p.id, descr: p.descr, numeroDoEvento: p.numeroDoEvento, descricaoDoEvento: p.descricaoDoEvento, sigilo: p.sigilo }))
-            }),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            cache: 'no-store'
-        })
-        const data = await res.json()
-        setSelectedIds(data.selectedIds)
-        setCanonicalOriginalPieces(canonicalPieces(data.selectedIds))
-    }
-
-    // useEffect(() => {
-    //     updateSelectedPieces()
-    // }, [])
 
     const alteredPieces = canonicalPieces(selectedIds) !== canonicalOriginalPieces
 
@@ -88,12 +59,7 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
     const router = useRouter();
     const currentSearchParams = useSearchParams()
     const [editing, setEditing] = useState(true)
-    const [reloading, setReloading] = useState(false)
-    const ref = useRef(null)
-    // Track if current selection deviates from automatic default
-    const [hasCustomSelection, setHasCustomSelection] = useState(false)
-    // Avoid re-applying the same query-string to selection repeatedly
-    const appliedPiecesParamRef = useRef<string>("")
+    // Removed unused reloading/ref/flags
 
     const PIECES_PARAM = 'pieces' // stores hyphen-separated 1-based indices (1..N) in original allPieces order
 
@@ -105,15 +71,6 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
         const uniq = Array.from(new Set(nums))
         uniq.sort((a, b) => a - b)
         return uniq
-    }
-
-    const numbersToIds = (numbers: number[]): string[] => {
-        const ids: string[] = []
-        for (const n of numbers) {
-            const idx = n - 1
-            if (idx >= 0 && idx < allPieces.length) ids.push(allPieces[idx].id)
-        }
-        return ids
     }
 
     const canonicalNumbers = (numbers: number[]) => Array.from(new Set(numbers.filter(n => Number.isInteger(n) && n >= 1)) ).sort((a,b)=>a-b).join('-')
@@ -140,12 +97,10 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
         onSave(pieces)
         // If pieces is empty, it signals "no change" (keep default selection)
         if (!pieces || pieces.length === 0) {
-            setHasCustomSelection(false)
             replacePiecesParam(null)
         } else {
             // User explicitly changed selection -> set query-string with piece numbers
             const nums = idsToNumbers(pieces)
-            setHasCustomSelection(true)
             replacePiecesParam(nums)
         }
         onEndEditing()
@@ -170,10 +125,6 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
     }
 
     // Initial selection from URL moved to ProcessContents to avoid race conditions
-
-    if (reloading) {
-        return ChoosePiecesLoading()
-    }
 
     if (!editing) {
         const l = selectedPieces?.map(p => maiusculasEMinusculas(p.descr)) || []

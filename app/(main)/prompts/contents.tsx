@@ -209,8 +209,8 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
     // Sincronizar URL com estado
     useEffect(() => {
         if (!promptInitialized) return
-        // Preserve existing unknown params (e.g., 'pecas' from ChoosePieces) and manage known keys explicitly
-        const params = new URLSearchParams(currentSearchParams)
+    // Preserve existing unknown params (e.g., 'pieces' from ChoosePieces) and manage known keys explicitly
+    const params = new URLSearchParams(currentSearchParams.toString())
         // Prompt
         if (prompt) {
             if (prompt.kind?.startsWith('^')) {

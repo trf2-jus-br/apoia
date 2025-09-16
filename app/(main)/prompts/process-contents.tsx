@@ -55,8 +55,7 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
     }
 
     const getSelectedPiecesContents = async () => {
-        const startTime = new Date()
-        if (selectedPieces.length === 0) return
+        if (!selectedPieces || selectedPieces.length === 0) return
         const cache = pieceContent
         const loading = {}
         const contents = {}
@@ -85,9 +84,8 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
     }
 
     const LoadingPieces = () => {
-        if (loadingPiecesProgress === -1 || selectedPieces.length === 0) return null
+        if (loadingPiecesProgress === -1 || !selectedPieces || selectedPieces.length === 0) return null
         return <>Carregando Peças...<ProgressBar variant="primary" striped={true} now={loadingPiecesProgress / selectedPieces.length * 100} label={`${loadingPiecesProgress}/${selectedPieces.length}`} /></>
-        return <div className="alert alert-info mt-4">{`Carregando peça ${loadingPiecesProgress} de ${selectedPieces.length}`}</div>
     }
 
     const buildRequests = (contents: { [key: number]: string }): GeneratedContent[] => {
