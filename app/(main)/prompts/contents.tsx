@@ -124,9 +124,9 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
         if (promptInitialized) return
         const p = currentSearchParams.get('prompt')
         const proc = currentSearchParams.get('process')
-    const sc = currentSearchParams.get('scope')
-    const inst = currentSearchParams.get('instance')
-    const mat = currentSearchParams.get('matter')
+        const sc = currentSearchParams.get('scope')
+        const inst = currentSearchParams.get('instance')
+        const mat = currentSearchParams.get('matter')
         const tram = currentSearchParams.get('tram')
         const tab = currentSearchParams.get('tab')
 
@@ -209,8 +209,8 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
     // Sincronizar URL com estado
     useEffect(() => {
         if (!promptInitialized) return
-    // Preserve existing unknown params (e.g., 'pieces' from ChoosePieces) and manage known keys explicitly
-    const params = new URLSearchParams(currentSearchParams.toString())
+        // Preserve existing unknown params (e.g., 'pieces' from ChoosePieces) and manage known keys explicitly
+        const params = new URLSearchParams(currentSearchParams.toString())
         // Prompt
         if (prompt) {
             if (prompt.kind?.startsWith('^')) {
@@ -251,6 +251,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
 
 
     const PromptTitle = ({ prompt }: { prompt: IAPromptList }) => <div className="text-body-tertiary text-center h-print">Prompt: {prompt.name} - <span onClick={() => { setPrompt(null) /* Mantém processo carregado */ }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></div>
+    const PromptTitleHeader = ({ prompt }: { prompt: IAPromptList }) => <div className="text-center"><span className="h3">{prompt.name}</span> - <span onClick={() => { setPrompt(null) /* Mantém processo carregado */ }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></div>
 
     const filteredPromptsBase = prompts.filter((p) => {
         if (scope && !p.content.scope?.includes(scope)) return false
@@ -373,7 +374,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
         </>
         : <>
             <Container className="mt-4" fluid={false}>
-                {(prompt.content.target !== 'PROCESSO' || !numeroDoProcesso) && <PromptTitle prompt={prompt} />}
+                {(prompt.content.target !== 'PROCESSO' || !numeroDoProcesso) && <PromptTitleHeader prompt={prompt} />}
                 {prompt.content.target === 'PROCESSO'
                     ? !numeroDoProcesso
                         ? <ProcessNumberForm id={`${prompt.base_id}`} onChange={setNumber} />
