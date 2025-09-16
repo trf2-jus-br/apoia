@@ -209,7 +209,8 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
     // Sincronizar URL com estado
     useEffect(() => {
         if (!promptInitialized) return
-        const params = new URLSearchParams()
+        // Preserve existing unknown params (e.g., 'pecas' from ChoosePieces) and manage known keys explicitly
+        const params = new URLSearchParams(currentSearchParams)
         // Prompt
         if (prompt) {
             if (prompt.kind?.startsWith('^')) {
@@ -217,25 +218,35 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
             } else if (prompt.base_id != null) {
                 params.set('prompt', String(prompt.base_id))
             }
+        } else {
+            params.delete('prompt')
         }
         // Processo
         if (numeroDoProcesso?.length === 20) params.set('process', numeroDoProcesso)
+        else params.delete('process')
         // Tramitação: só quando diferente do índice padrão (último)
         if (arrayDeDadosDoProcesso?.length > 1) {
             const defaultIdx = arrayDeDadosDoProcesso.length - 1
             if (idxProcesso !== defaultIdx) params.set('tram', String(idxProcesso))
+            else params.delete('tram')
+        } else {
+            params.delete('tram')
         }
         // Filtros: gravar como slug
         if (scope) params.set('scope', slugify(scope))
+        else params.delete('scope')
         if (instance) params.set('instance', slugify(instance))
+        else params.delete('instance')
         if (matter) params.set('matter', slugify(matter))
+        else params.delete('matter')
         if (activeTab === 'comunidade') params.set('tab', 'comunidade')
+        else params.delete('tab')
 
         const qs = params.toString()
         if (qs === lastQueryRef.current) return
         lastQueryRef.current = qs
         router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-    }, [prompt, numeroDoProcesso, idxProcesso, scope, instance, matter, activeTab, arrayDeDadosDoProcesso, promptInitialized, pathname, router])
+    }, [prompt, numeroDoProcesso, idxProcesso, scope, instance, matter, activeTab, arrayDeDadosDoProcesso, promptInitialized, pathname, router, currentSearchParams])
 
 
 

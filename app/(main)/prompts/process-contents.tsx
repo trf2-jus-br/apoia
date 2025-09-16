@@ -3,6 +3,7 @@
 import { IAPrompt } from "@/lib/db/mysql-types";
 import { DadosDoProcessoType, PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
 import { ReactNode, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { InfoDeProduto, P, PieceStrategy, selecionarPecasPorPadraoComFase, T, TipoDeSinteseMap } from "@/lib/proc/combinacoes";
 import { infoDeProduto } from "@/lib/proc/info-de-produto";
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "@/lib/ai/prompt-types";
@@ -20,10 +21,12 @@ import { nivelDeSigiloPermitido } from "@/lib/proc/sigilo";
 
 export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent, setPieceContent, apiKeyProvided, model, children }: { prompt: IAPrompt, dadosDoProcesso: DadosDoProcessoType, pieceContent: any, setPieceContent: (pieceContent: any) => void, apiKeyProvided: boolean, model?: string, children?: ReactNode }) {
     const [selectedPieces, setSelectedPieces] = useState<PecaType[] | null>(null)
+    const [defaultPieceIds, setDefaultPieceIds] = useState<string[] | null>(null)
     const [loadingPiecesProgress, setLoadingPiecesProgress] = useState(-1)
     const [requests, setRequests] = useState<GeneratedContent[]>([])
     const [readyToStartAI, setReadyToStartAI] = useState(false)
     const [choosingPieces, setChoosingPieces] = useState(true)
+    const searchParams = useSearchParams()
 
     const changeSelectedPieces = (pieces: string[]) => {
         setSelectedPieces(dadosDoProcesso.pecas.filter(p => pieces.includes(p.id)))
@@ -159,12 +162,39 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
     }
 
     useEffect(() => {
-        setSelectedPieces(chooseSelectedPieces(dadosDoProcesso.pecas, prompt.content.piece_strategy, prompt.content.piece_descr))
+        if (!dadosDoProcesso?.pecas || dadosDoProcesso.pecas.length === 0) return
+        // Compute automatic default selection for baseline
+        const autoDefault = chooseSelectedPieces(dadosDoProcesso.pecas, prompt.content.piece_strategy, prompt.content.piece_descr)
+        setDefaultPieceIds(autoDefault.map(p => p.id))
+        // If URL has explicit 'pieces' numbers (1-based), prefer them over automatic selection
+        // Backward compatibility: fall back to 'pecas' and accept comma or hyphen separators
+        const piecesParam = searchParams.get('pieces') || searchParams.get('pecas')
+        if (piecesParam) {
+            const nums = piecesParam.split(/[,-]/).map(s => parseInt(s.trim(), 10)).filter(n => Number.isInteger(n) && n >= 1)
+            if (nums.length) {
+                const ids: string[] = nums
+                    .map(n => {
+                        const idx = n - 1
+                        return (idx >= 0 && idx < dadosDoProcesso.pecas.length) ? dadosDoProcesso.pecas[idx].id : null
+                    })
+                    .filter((v): v is string => !!v)
+                const uniqueIds = Array.from(new Set(ids))
+                const sel = dadosDoProcesso.pecas.filter(p => uniqueIds.includes(p.id))
+                setSelectedPieces(sel)
+                return
+            }
+        }
+        // Fallback to automatic selection only if we don't have a selection yet
+        if (!selectedPieces || selectedPieces.length === 0) {
+            setSelectedPieces(autoDefault)
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [prompt, dadosDoProcesso.pecas])
+    }, [prompt, dadosDoProcesso.pecas, searchParams])
 
     useEffect(() => {
         setLoadingPiecesProgress(0)
+        // Clear previous requests to avoid proceeding with stale results
+        setRequests([])
         getSelectedPiecesContents()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedPieces])
@@ -179,7 +209,7 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
         <Subtitulo dadosDoProcesso={dadosDoProcesso} />
         {children}
         {selectedPieces && <>
-            <ChoosePieces allPieces={dadosDoProcesso.pecas} selectedPieces={selectedPieces} onSave={(pieces) => { setRequests([]); changeSelectedPieces(pieces) }} onStartEditing={() => { setChoosingPieces(true) }} onEndEditing={() => setChoosingPieces(false)} dossierNumber={dadosDoProcesso.numeroDoProcesso} readyToStartAI={readyToStartAI} />
+            <ChoosePieces allPieces={dadosDoProcesso.pecas} selectedPieces={selectedPieces} onSave={(pieces) => { setRequests([]); changeSelectedPieces(pieces) }} onStartEditing={() => { setChoosingPieces(true) }} onEndEditing={() => setChoosingPieces(false)} dossierNumber={dadosDoProcesso.numeroDoProcesso} readyToStartAI={readyToStartAI} baselineDefaultIds={defaultPieceIds || []} />
             <LoadingPieces />
             <ErrorMsg dadosDoProcesso={dadosDoProcesso} />
             <div className="mb-4"></div>

@@ -81,8 +81,8 @@ export const ChoosePiecesLoading = () => {
 }
 
 
-export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStartEditing, onEndEditing, dossierNumber, readyToStartAI }: {
-    allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onStartEditing: () => void, onEndEditing: () => void, dossierNumber: string, readyToStartAI: boolean
+export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStartEditing, onEndEditing, dossierNumber, readyToStartAI, baselineDefaultIds }: {
+    allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onStartEditing: () => void, onEndEditing: () => void, dossierNumber: string, readyToStartAI: boolean, baselineDefaultIds: string[]
 }) {
     const pathname = usePathname(); // let's get the pathname to make the component reusable - could be used anywhere in the project
     const router = useRouter();
@@ -90,18 +90,86 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
     const [editing, setEditing] = useState(true)
     const [reloading, setReloading] = useState(false)
     const ref = useRef(null)
+    // Track if current selection deviates from automatic default
+    const [hasCustomSelection, setHasCustomSelection] = useState(false)
+    // Avoid re-applying the same query-string to selection repeatedly
+    const appliedPiecesParamRef = useRef<string>("")
+
+    const PIECES_PARAM = 'pieces' // stores hyphen-separated 1-based indices (1..N) in original allPieces order
+
+    // Helpers to convert between IDs and 1-based numbers (index in allPieces)
+    const idsToNumbers = (ids: string[]): number[] => {
+        const indexById = new Map(allPieces.map((p, idx) => [p.id, idx + 1]))
+        const nums = ids.map(id => indexById.get(id)).filter((n): n is number => typeof n === 'number')
+        // sort and unique
+        const uniq = Array.from(new Set(nums))
+        uniq.sort((a, b) => a - b)
+        return uniq
+    }
+
+    const numbersToIds = (numbers: number[]): string[] => {
+        const ids: string[] = []
+        for (const n of numbers) {
+            const idx = n - 1
+            if (idx >= 0 && idx < allPieces.length) ids.push(allPieces[idx].id)
+        }
+        return ids
+    }
+
+    const canonicalNumbers = (numbers: number[]) => Array.from(new Set(numbers.filter(n => Number.isInteger(n) && n >= 1)) ).sort((a,b)=>a-b).join('-')
+
+    const replacePiecesParam = (numbersOrNull: number[] | null) => {
+        // Build new query string preserving other params
+        const params = new URLSearchParams(currentSearchParams.toString())
+        if (numbersOrNull && numbersOrNull.length > 0) {
+            const value = canonicalNumbers(numbersOrNull)
+            if (params.get(PIECES_PARAM) !== value) {
+                params.set(PIECES_PARAM, value)
+            }
+        } else {
+            if (params.has(PIECES_PARAM)) params.delete(PIECES_PARAM)
+        }
+        const qs = params.toString()
+        const url = qs ? `${pathname}?${qs}` : pathname
+        router.replace(url, { scroll: false })
+    }
 
     const onSaveLocal = (pieces: string[]) => {
         setEditing(false)
         // setReloading(true)
         onSave(pieces)
+        // If pieces is empty, it signals "no change" (keep default selection)
+        if (!pieces || pieces.length === 0) {
+            setHasCustomSelection(false)
+            replacePiecesParam(null)
+        } else {
+            // User explicitly changed selection -> set query-string with piece numbers
+            const nums = idsToNumbers(pieces)
+            setHasCustomSelection(true)
+            replacePiecesParam(nums)
+        }
         onEndEditing()
     }
 
+    // Baseline of automatically selected pieces (default) comes from parent
+    const baselineDefaultIdsRef = useRef<string[] | null>(baselineDefaultIds || null)
+    useEffect(() => { baselineDefaultIdsRef.current = baselineDefaultIds || null }, [baselineDefaultIds, dossierNumber])
+
     const onClose = () => {
         setEditing(false)
+        // Clear param only if the current selection equals the automatic baseline; otherwise, preserve existing 'pecas'
+        try {
+            const baselineIds = baselineDefaultIdsRef.current || []
+            const currentIds = (selectedPieces || []).map(p => p.id)
+            const isDefaultNow = canonicalPieces(currentIds) === canonicalPieces(baselineIds)
+            if (isDefaultNow) replacePiecesParam(null)
+        } catch (_) {
+            // In case of any inconsistency, avoid clearing to preserve user's selection
+        }
         onEndEditing()
     }
+
+    // Initial selection from URL moved to ProcessContents to avoid race conditions
 
     if (reloading) {
         return ChoosePiecesLoading()
