@@ -20,12 +20,28 @@ const fetcherUtil = {
         let headers = {
             'Access-Control-Allow-Origin': '*',
         }
+        // Build absolute URL on server for relative paths
+        let fullUrl = url
+        if (typeof window === 'undefined' && url?.startsWith('/')) {
+            const base = envString('NEXTAUTH_URL_INTERNAL') || envString('NEXTAUTH_URL') || (process.env.APP_PORT ? `http://localhost:${process.env.APP_PORT}` : 'http://localhost:3000')
+            fullUrl = `${base}${url}`
+        }
         if (params && params.headers)
             headers = { ...headers, ...params.headers }
         if (url.includes(envString('XRP_API_URL')))
             headers = { ...await this.authorization(), ...headers }
+        // Forward cookies from the current request when on the server
+        if (typeof window === 'undefined') {
+            try {
+                const mod = await import('next/headers')
+                const cookieStore = await mod.cookies()
+                const all = await cookieStore.getAll()
+                const cookieHeader = all.map(c => `${c.name}=${c.value}`).join('; ')
+                if (cookieHeader) headers = { ...headers, cookie: cookieHeader }
+            } catch {}
+        }
         try {
-            const res = await fetch(`${url}`, {
+            const res = await fetch(`${fullUrl}` , {
                 method: 'get',
                 headers,
                 cache: 'no-store'
@@ -66,12 +82,28 @@ const fetcherUtil = {
             'Access-Control-Allow-Origin': '*',
             'Content-Type': 'application/json',
         }
+        // Build absolute URL on server for relative paths
+        let fullUrl = url
+        if (typeof window === 'undefined' && url?.startsWith('/')) {
+            const base = envString('NEXTAUTH_URL_INTERNAL') || envString('NEXTAUTH_URL') || (process.env.APP_PORT ? `http://localhost:${process.env.APP_PORT}` : 'http://localhost:3000')
+            fullUrl = `${base}${url}`
+        }
         if (params && params.headers)
             headers = { ...headers, ...params.headers }
         if (url.includes(envString('XRP_API_URL')))
             headers = { ...await this.authorization(), ...headers }
+        // Forward cookies from the current request when on the server
+        if (typeof window === 'undefined') {
+            try {
+                const mod = await import('next/headers')
+                const cookieStore = await mod.cookies()
+                const all = await cookieStore.getAll()
+                const cookieHeader = all.map(c => `${c.name}=${c.value}`).join('; ')
+                if (cookieHeader) headers = { ...headers, cookie: cookieHeader }
+            } catch {}
+        }
         try {
-            const res = await fetch(`${url}`, {
+            const res = await fetch(`${fullUrl}`, {
                 method: 'post',
                 body: JSON.stringify(body),
                 headers,

@@ -1,17 +1,56 @@
-import { unstable_noStore as noStore } from 'next/cache'
 import { Container } from 'react-bootstrap'
-import BatchForm from './batch-form'
+import Fetcher from '@/lib/utils/fetcher'
+import Link from 'next/link'
 
-export const maxDuration = 60 // seconds
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
-export default async function ShowProcess({ params }) {
-    noStore()
+async function getData() {
+  const res = await Fetcher.get('/api/v1/batches')
+  return res?.rows || []
+}
 
-    return (
-        <Container fluid={false}>
-            <h1 className="text-center mt-3">Processamento em Lote</h1>
-            <BatchForm />
-        </Container>
-    )
+export default async function BatchesPage() {
+  const rows = await getData()
+  return (
+    <Container className="mt-3">
+      <div className="d-flex align-items-center mb-3">
+        <h1 className="me-auto">Relatórios</h1>
+        <Link className="btn btn-primary" href="/batch/new">Novo relatório</Link>
+      </div>
+      <table className="table table-striped table-sm">
+        <thead className="table-dark">
+          <tr>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Completo</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Pronto</th>
+            <th>Erro</th>
+            <th>Custo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r: any) => (
+            <tr key={r.id}>
+              <td>{r.name}</td>
+              <td>{r.tipo_de_sintese}</td>
+              <td>{r.complete ? 'S' : 'N'}</td>
+              <td>{r.paused ? 'Pausado' : 'Em execução'}</td>
+              <td>{r.totals.total}</td>
+              <td>{r.totals.ready}</td>
+              <td>{r.totals.error}</td>
+              <td>R$ {r.spentCost?.toFixed(2)}</td>
+              <td className="text-end">
+                <Link className="btn btn-sm btn-outline-primary" href={`/batch/${r.id}`}>Abrir painel</Link>
+                <a className="btn btn-sm btn-outline-success ms-2" href={`/api/v1/batches/${r.id}/errors/csv`} target="_blank">Erros CSV</a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Container>
+  )
 }
