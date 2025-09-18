@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Container, Nav, ProgressBar } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlay, faPause, faPlus, faTrash, faRotateRight, faFileArrowDown, faClock, faSpinner, faCheck, faTriangleExclamation, faEye } from '@fortawesome/free-solid-svg-icons'
+import { faPlay, faPause, faPlus, faTrash, faFileArrowDown, faClock, faSpinner, faCheck, faTriangleExclamation, faEye, faList } from '@fortawesome/free-solid-svg-icons'
 import Fetcher from '@/lib/utils/fetcher'
 import CsvNumbersModal from '@/components/modals/CsvNumbersModal'
-import { formatDateTime, formatDuration } from '@/lib/utils/date'
 import TableRecords from '@/components/table-records'
 import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 
@@ -297,8 +296,8 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
       <TableRecords records={mappedJobs} onClick={onClick} spec="Batch" options={{ batchId: id }} pageSize={10} >
         <div className="col col-auto mb-0">
-          <Button variant="primary" onClick={() => fixIndex()} className="me-2">Otimizar Índice</Button>
-          <Button variant="outline-primary" className="me-2" onClick={() => setShowAdd(true)}><FontAwesomeIcon icon={faPlus} className="me-2" />Adicionar</Button>
+          <Button variant="outline-primary" onClick={() => fixIndex()} className="me-2"><FontAwesomeIcon icon={faList} className="me-2" />Otimizar Índice</Button>
+          <Button variant="outline-info" className="me-2" onClick={() => setShowAdd(true)}><FontAwesomeIcon icon={faPlus} className="me-2" />Adicionar</Button>
           <Button variant="outline-danger" onClick={() => setShowDelete(true)}><FontAwesomeIcon icon={faTrash} className="me-2" />Excluir</Button>
         </div></TableRecords>
 
