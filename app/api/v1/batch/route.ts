@@ -4,7 +4,7 @@ import { Dao } from '@/lib/db/mysql'
 export const maxDuration = 60
 
 /**
- * POST /api/v1/batches
+ * POST /api/v1/batch
  * Body: { name, tipo_de_sintese, complete, numbers: string[] }
  */
 export async function POST(req: Request) {
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 }
 
 /**
- * GET /api/v1/batches
+ * GET /api/v1/batch
  * Lista batches do usuário atual
  */
 export async function GET() {

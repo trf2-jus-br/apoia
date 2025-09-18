@@ -4,12 +4,12 @@ import BatchPanelClient from '@/app/(main)/batch/[id]/BatchPanelClient'
 export const maxDuration = 60
 
 async function getSummary(id: string) {
-  const res = await Fetcher.get(`/api/v1/batches/${id}`)
+  const res = await Fetcher.get(`/api/v1/batch/${id}`)
   return res?.summary
 }
 
 async function getJobs(id: string) {
-  const res = await Fetcher.get(`/api/v1/batches/${id}/jobs?status=all`)
+  const res = await Fetcher.get(`/api/v1/batch/${id}/jobs?status=all`)
   return res?.jobs || []
 }
 

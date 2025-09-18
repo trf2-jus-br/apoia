@@ -27,6 +27,29 @@ export function formatDateDDMMYYYY(date: Date): string {
     return `${day}/${month}/${year}`
 }
 
+export const formatDateTime = (iso?: string) => {
+    if (!iso) return ''
+    const d = new Date(iso)
+    const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
+    const dd = pad(d.getDate())
+    const mm = pad(d.getMonth() + 1)
+    const yy = ('' + d.getFullYear()).slice(-2)
+    const hh = pad(d.getHours())
+    const mi = pad(d.getMinutes())
+    const ss = pad(d.getSeconds())
+    return `${dd}/${mm}/${yy} ${hh}:${mi}:${ss}`
+}
+
+export const formatDuration = (ms?: number | null) => {
+    if (!ms || ms <= 0) return ''
+    const totalSec = Math.floor(ms / 1000)
+    const h = Math.floor(totalSec / 3600)
+    const m = Math.floor((totalSec % 3600) / 60)
+    const s = totalSec % 60
+    const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
+    return `${pad(h)}:${pad(m)}:${pad(s)}`
+}
+
 export function dateAddMonths(date: string | Date, months: number): Date | null {
     let initialDate: Date | null
 

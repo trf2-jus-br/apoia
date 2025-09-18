@@ -23,7 +23,7 @@ export default function NewBatchPage() {
     setErr('')
     try {
       const arr = numbers.split('\n').map(s => s.trim()).filter(Boolean)
-      const res = await Fetcher.post('/api/v1/batches', { name, tipo_de_sintese: tipo, complete, numbers: arr })
+      const res = await Fetcher.post('/api/v1/batch', { name, tipo_de_sintese: tipo, complete, numbers: arr })
       if (res?.batch?.id) router.push(`/batch/${res.batch.id}`)
       else setErr(res?.errormsg || 'Erro ao criar')
     } catch (e: any) {

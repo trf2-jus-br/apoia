@@ -4,7 +4,7 @@ import { analyze } from '@/lib/ai/analysis'
 
 export const maxDuration = 60
 
-// POST /api/v1/batches/{id}/step
+// POST /api/v1/batch/{id}/step
 export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
   if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })

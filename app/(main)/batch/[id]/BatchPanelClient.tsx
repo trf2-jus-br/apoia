@@ -6,10 +6,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay, faPause, faPlus, faTrash, faRotateRight, faFileArrowDown, faClock, faSpinner, faCheck, faTriangleExclamation, faEye } from '@fortawesome/free-solid-svg-icons'
 import Fetcher from '@/lib/utils/fetcher'
 import CsvNumbersModal from '@/components/modals/CsvNumbersModal'
+import { formatDateTime, formatDuration } from '@/lib/utils/date'
+import TableRecords from '@/components/table-records'
 
 type Totals = { total: number, pending: number, running: number, ready: number, error: number }
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
-type Job = { id: number, dossier_code: string, status: 'PENDING'|'RUNNING'|'READY'|'ERROR', attempts: number, started_at?: string, finished_at?: string, duration_ms?: number|null, cost_sum?: number|null }
+type Job = { id: number, dossier_code: string, status: 'PENDING' | 'RUNNING' | 'READY' | 'ERROR', attempts: number, started_at?: string, finished_at?: string, duration_ms?: number | null, cost_sum?: number | null }
 
 export default function BatchPanelClient({ id, initialSummary, initialJobs, usdBrl }: { id: string, initialSummary: Summary, initialJobs: Job[], usdBrl?: number | null }) {
   const [summary, setSummary] = useState<Summary>(initialSummary)
@@ -18,7 +20,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
   const [info, setInfo] = useState<string>('')
   const [showAdd, setShowAdd] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<'all'|'PENDING'|'RUNNING'|'READY'|'ERROR'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'RUNNING' | 'READY' | 'ERROR'>('all')
   const steppingRef = useRef(false)
   const playLoopRef = useRef(false)
   // Stop any background loops on unmount
@@ -28,18 +30,18 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
   const refreshSummary = useCallback(async () => {
     try {
-      const res = await Fetcher.get(`/api/v1/batches/${id}`)
+      const res = await Fetcher.get(`/api/v1/batch/${id}`)
       if (res?.summary) setSummary(res.summary)
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
   }, [id])
 
-  const refreshJobs = useCallback(async (status?: 'all'|'PENDING'|'RUNNING'|'READY'|'ERROR') => {
+  const refreshJobs = useCallback(async (status?: 'all' | 'PENDING' | 'RUNNING' | 'READY' | 'ERROR') => {
     try {
       const effective = status ?? statusFilter
       const qs = effective ? `?status=${encodeURIComponent(effective)}` : ''
-      const res = await Fetcher.get(`/api/v1/batches/${id}/jobs${qs}`)
+      const res = await Fetcher.get(`/api/v1/batch/${id}/jobs${qs}`)
       if (Array.isArray(res?.jobs)) setJobs(res.jobs)
     } catch (e: any) {
       setErr(e?.message || String(e))
@@ -48,11 +50,11 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
   const canContinue = useMemo(() => !summary?.paused && (summary?.totals?.pending || 0) > 0, [summary])
 
-  const doStep = useCallback(async () => {
+  const doStep = useCallback(async (job_id?: number) => {
     if (steppingRef.current) return
     steppingRef.current = true
     try {
-      const res = await Fetcher.post(`/api/v1/batches/${id}/step`, {})
+      const res = await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id })
       if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha no step')
       await Promise.all([refreshSummary(), refreshJobs()])
       return !!res?.processedJobId
@@ -66,16 +68,16 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
   const startPlay = useCallback(async () => {
     setErr('')
     try {
-      await Fetcher.post(`/api/v1/batches/${id}/play`, {})
+      await Fetcher.post(`/api/v1/batch/${id}/play`, {})
       await refreshSummary()
       playLoopRef.current = true
-      // Start a lightweight polling loop to keep summary fresh during long-running steps
-      ;(async () => {
-        while (playLoopRef.current) {
-          try { await refreshSummary() } catch {}
-          await new Promise(r => setTimeout(r, 1000))
-        }
-      })()
+        // Start a lightweight polling loop to keep summary fresh during long-running steps
+        ; (async () => {
+          while (playLoopRef.current) {
+            try { await refreshSummary() } catch { }
+            await new Promise(r => setTimeout(r, 1000))
+          }
+        })()
       // Start processing loop immediately (ref changes don't re-render)
       while (playLoopRef.current) {
         const processed = await doStep()
@@ -94,7 +96,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     setErr('')
     try {
       playLoopRef.current = false
-      await Fetcher.post(`/api/v1/batches/${id}/pause`, {})
+      await Fetcher.post(`/api/v1/batch/${id}/pause`, {})
       await refreshSummary()
     } catch (e: any) {
       setErr(e?.message || String(e))
@@ -111,9 +113,9 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
   const onRetry = useCallback(async (jobId: number, dossier_code?: string) => {
     setErr('')
     try {
-      await Fetcher.post(`/api/v1/batches/${id}/jobs`, { action: 'retry', jobId })
+      await Fetcher.post(`/api/v1/batch/${id}/jobs`, { action: 'retry', jobId })
       // after retry, trigger a targeted step for immediate processing
-      await Fetcher.post(`/api/v1/batches/${id}/step`, { job_id: jobId })
+      await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id: jobId })
       await Promise.all([refreshSummary(), refreshJobs()])
     } catch (e: any) {
       setErr(e?.message || String(e))
@@ -124,7 +126,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     setErr('')
     setInfo('')
     try {
-      const res = await Fetcher.post(`/api/v1/batches/${id}/jobs`, { action: 'add', numbers })
+      const res = await Fetcher.post(`/api/v1/batch/${id}/jobs`, { action: 'add', numbers })
       const added = Number(res?.added || 0)
       await Promise.all([refreshSummary(), refreshJobs('all')])
       if (added > 0) {
@@ -142,7 +144,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     setErr('')
     setInfo('')
     try {
-      const res = await Fetcher.post(`/api/v1/batches/${id}/jobs`, { action: 'delete', numbers })
+      const res = await Fetcher.post(`/api/v1/batch/${id}/jobs`, { action: 'delete', numbers })
       const deleted = Number(res?.deleted || 0)
       await Promise.all([refreshSummary(), refreshJobs('all')])
       if (deleted > 0) {
@@ -174,35 +176,29 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
   const currentCostDisplay = toDisplayCurrency(summary?.spentCost)
   const estimatedCostDisplay = toDisplayCurrency(summary?.estimatedTotalCost)
 
-  const formatDateTime = (iso?: string) => {
-    if (!iso) return ''
-    const d = new Date(iso)
-    const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
-    const dd = pad(d.getDate())
-    const mm = pad(d.getMonth() + 1)
-    const yy = ('' + d.getFullYear()).slice(-2)
-    const hh = pad(d.getHours())
-    const mi = pad(d.getMinutes())
-    const ss = pad(d.getSeconds())
-    return `${dd}/${mm}/${yy} ${hh}:${mi}:${ss}`
-  }
-
-  const formatDuration = (ms?: number | null) => {
-    if (!ms || ms <= 0) return ''
-    const totalSec = Math.floor(ms / 1000)
-    const h = Math.floor(totalSec / 3600)
-    const m = Math.floor((totalSec % 3600) / 60)
-    const s = totalSec % 60
-    const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
-    return `${pad(h)}:${pad(m)}:${pad(s)}`
-  }
-
   const statusIcon = (s: Job['status']) => {
     if (s === 'READY') return <span className="text-success"><FontAwesomeIcon icon={faCheck} title="Pronto" /></span>
     if (s === 'ERROR') return <span className="text-danger"><FontAwesomeIcon icon={faTriangleExclamation} title="Erro" /></span>
     if (s === 'RUNNING') return <span className="text-info"><FontAwesomeIcon icon={faSpinner} spin title="Em Progresso" /></span>
     return <span className="text-secondary"><FontAwesomeIcon icon={faClock} title="Aguardando" /></span>
   }
+
+  const onClick = useCallback((kind: string, row: Job) => {
+    switch (kind) {
+      case 'play':
+        if (row.status === 'PENDING')
+          doStep(row.id)
+        break
+      case 'retry':
+        if (row.status === 'READY' || row.status === 'ERROR')
+          onRetry(row.id, row.dossier_code)
+        break
+      default:
+        console.log('Unknown click action', kind, row)
+    }
+  }, [])
+
+  const mappedJobs = jobs.map(j => ({ ...j, status_icon: statusIcon(j.status), cost: j.cost_sum != null ? formatMoney(toDisplayCurrency(j.cost_sum as any)) : '' }))
 
   return (
     <Container className="mt-3">
@@ -223,17 +219,17 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
           )
         )}
         {summary?.name && ready > 0 && (
-          <a className="btn btn-outline-secondary ms-2" href={`/api/v1/batch/${encodeURIComponent(summary.name)}/html`} target="_blank" rel="noopener noreferrer">
+          <a className="btn btn-outline-secondary ms-2" href={`/api/v1/batch/${id}/html`} target="_blank" rel="noopener noreferrer">
             <FontAwesomeIcon icon={faEye} className="me-2" />Visualizar Relatório
           </a>
         )}
         {error > 0 && (
-          <a className="btn btn-outline-success ms-2" href={`/api/v1/batches/${id}/errors/csv`} target="_blank"><FontAwesomeIcon icon={faFileArrowDown} className="me-2" />Erros CSV</a>
+          <a className="btn btn-outline-success ms-2" href={`/api/v1/batch/${id}/errors/csv`} target="_blank"><FontAwesomeIcon icon={faFileArrowDown} className="me-2" />Erros CSV</a>
         )}
       </div>
 
-  {err && <Alert variant="danger" onClose={() => setErr('')} dismissible>{err}</Alert>}
-  {info && <Alert variant="success" onClose={() => setInfo('')} dismissible>{info}</Alert>}
+      {err && <Alert variant="danger" onClose={() => setErr('')} dismissible>{err}</Alert>}
+      {info && <Alert variant="success" onClose={() => setInfo('')} dismissible>{info}</Alert>}
 
       <div className="mb-3">
         <div className="my-2">
@@ -275,12 +271,19 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
             <Nav.Link eventKey="ERROR">Erros ({error})</Nav.Link>
           </Nav.Item>
         </Nav>
-        <div className="ms-2">
-          <Button size="sm" variant="outline-primary" className="me-2" onClick={() => setShowAdd(true)}><FontAwesomeIcon icon={faPlus} className="me-2" />Adicionar</Button>
-          <Button size="sm" variant="outline-danger" onClick={() => setShowDelete(true)}><FontAwesomeIcon icon={faTrash} className="me-2" />Excluir</Button>
-        </div>
       </div>
-      <table className="table table-striped table-sm">
+
+      <TableRecords records={mappedJobs} onClick={onClick} spec="Batch" options={{ batchId: id }} pageSize={10} >
+        <div className="col col-auto mb-0">
+          <Button variant="outline-primary" className="me-2" onClick={() => setShowAdd(true)}><FontAwesomeIcon icon={faPlus} className="me-2" />Adicionar</Button>
+          <Button variant="outline-danger" onClick={() => setShowDelete(true)}><FontAwesomeIcon icon={faTrash} className="me-2" />Excluir</Button>
+        </div></TableRecords>
+
+      <CsvNumbersModal show={showAdd} title="Adicionar processos" onClose={() => setShowAdd(false)} onConfirm={onAddNumbers} />
+      <CsvNumbersModal show={showDelete} title="Excluir processos" onClose={() => setShowDelete(false)} onConfirm={onDeleteNumbers} />
+
+
+      {/* <table className="table table-striped table-sm">
         <thead className="table-dark">
           <tr>
             <th>Número</th>
@@ -305,7 +308,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
               <td className="small text-wrap" style={{ maxWidth: '24rem' }}>{(j as any).error_msg || ''}</td>
               <td className="text-end">
                 {j.status === 'PENDING' && (
-                  <a href="#" onClick={async (e) => { e.preventDefault(); await Fetcher.post(`/api/v1/batches/${id}/step`, { job_id: j.id }); await Promise.all([refreshSummary(), refreshJobs()]) }}>
+                  <a href="#" onClick={async (e) => { e.preventDefault(); await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id: j.id }); await Promise.all([refreshSummary(), refreshJobs()]) }}>
                     <FontAwesomeIcon icon={faPlay} className="me-2" />Fazer
                   </a>
                 )}
@@ -318,10 +321,8 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
             </tr>
           ))}
         </tbody>
-      </table>
-
-      <CsvNumbersModal show={showAdd} title="Adicionar processos" onClose={() => setShowAdd(false)} onConfirm={onAddNumbers} />
-      <CsvNumbersModal show={showDelete} title="Excluir processos" onClose={() => setShowDelete(false)} onConfirm={onDeleteNumbers} />
+      </table> */}
     </Container>
+
   )
 }
