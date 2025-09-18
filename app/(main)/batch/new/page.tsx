@@ -6,6 +6,7 @@ import Fetcher from '@/lib/utils/fetcher'
 import { TiposDeSinteseValido } from '@/lib/proc/info-de-produto'
 import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { useRouter } from 'next/navigation'
+import ProcessTextarea from '@/components/ProcessTextarea'
 
 export default function NewBatchPage() {
   const [name, setName] = useState('')
@@ -22,7 +23,7 @@ export default function NewBatchPage() {
   const create = async () => {
     setErr('')
     try {
-      const arr = numbers.split('\n').map(s => s.trim()).filter(Boolean)
+      const arr = numbers.split(',').map(s => s.trim()).filter(Boolean)
       const res = await Fetcher.post('/api/v1/batch', { name, tipo_de_sintese: tipo, complete, numbers: arr })
       if (res?.batch?.id) router.push(`/batch/${res.batch.id}`)
       else setErr(res?.errormsg || 'Erro ao criar')
@@ -52,7 +53,7 @@ export default function NewBatchPage() {
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>Processos</Form.Label>
-          <Form.Control as="textarea" rows={8} value={numbers} onChange={e => setNumbers(preprocess(e.target.value))} />
+          <ProcessTextarea value={numbers} onChange={e => setNumbers(e)} />
         </Form.Group>
         <Button onClick={create} disabled={!name || !numbers.trim()}>Criar</Button>
       </Form>

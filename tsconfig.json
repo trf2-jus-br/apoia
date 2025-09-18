@@ -34,7 +34,11 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx", "instrumentation.js", "instrumentation.js" ],
+    "**/*.tsx",
+    "**/.*.ts",
+    "**/.*.tsx",
+    "instrumentation.js"
+  ],
   "exclude": [
     "node_modules",
     "migrations/*.ts"

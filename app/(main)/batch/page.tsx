@@ -1,6 +1,7 @@
 import { Container } from 'react-bootstrap'
 import Fetcher from '@/lib/utils/fetcher'
 import Link from 'next/link'
+import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -37,7 +38,7 @@ export default async function BatchesPage() {
           {rows.map((r: any) => (
             <tr key={r.id}>
               <td>{r.name}</td>
-              <td>{r.tipo_de_sintese}</td>
+              <td>{TipoDeSinteseMap[r.tipo_de_sintese]?.nome || r.tipo_de_sintese}</td>
               <td>{r.complete ? 'S' : 'N'}</td>
               <td>{r.paused ? 'Pausado' : 'Em execução'}</td>
               <td>{r.totals.error}</td>
@@ -46,7 +47,7 @@ export default async function BatchesPage() {
               <td>{r.totals.total}</td>
               {/* <td>R$ {r.spentCost?.toFixed(2)}</td> */}
               <td className="text-end">
-                <Link className="" href={`/batch/${r.id}`}>Abrir painel</Link>
+                <Link className="" href={`/batch/${r.id}`}>Painel</Link>
                 {/* <a className="ms-2" href={`/api/v1/batch/${r.id}/errors/csv`} target="_blank">Erros CSV</a> */}
               </td>
             </tr>

@@ -877,6 +877,11 @@ export class Dao {
         return result
     }
 
+    static async updateIAEnumItemDescrMain(enum_item_id: number, enum_item_descr_main: string | null): Promise<void> {
+        if (!knex) return
+        await knex('ia_enum_item').update({ enum_item_descr_main }).where({ id: enum_item_id })
+    }
+
 
     static async assertIAUserId(username: string, userFields?: mysqlTypes.IAUserUpdateFields): Promise<number> {
         if (!knex) return

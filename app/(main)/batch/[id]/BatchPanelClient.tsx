@@ -8,6 +8,7 @@ import Fetcher from '@/lib/utils/fetcher'
 import CsvNumbersModal from '@/components/modals/CsvNumbersModal'
 import { formatDateTime, formatDuration } from '@/lib/utils/date'
 import TableRecords from '@/components/table-records'
+import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 
 type Totals = { total: number, pending: number, running: number, ready: number, error: number }
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
@@ -21,12 +22,28 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
   const [showAdd, setShowAdd] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'RUNNING' | 'READY' | 'ERROR'>('all')
+  const [buildingJobId, setBuildingJobId] = useState<number | null>(null) // job currently being built (optimistic UI)
   const steppingRef = useRef(false)
   const playLoopRef = useRef(false)
+
   // Stop any background loops on unmount
   useEffect(() => {
     return () => { playLoopRef.current = false; steppingRef.current = false }
   }, [])
+
+  const fixIndex = async () => {
+    setErr('')
+    setInfo('')
+    try {
+      setInfo('Melhorando índice, aguarde...')
+      const res = await Fetcher.post(`/api/v1/batch/${id}/fix-index`, {})
+      if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha ao melhorar índice')
+      setInfo('Índice melhorado com sucesso')
+    } catch (e: any) {
+      setErr(e?.message || String(e))
+      setInfo('')
+    }
+  }
 
   const refreshSummary = useCallback(async () => {
     try {
@@ -54,6 +71,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     if (steppingRef.current) return
     steppingRef.current = true
     try {
+      if (job_id) setBuildingJobId(job_id)
       const res = await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id })
       if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha no step')
       await Promise.all([refreshSummary(), refreshJobs()])
@@ -61,6 +79,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     } catch (e: any) {
       setErr(e?.message || String(e))
     } finally {
+      if (job_id) setBuildingJobId(null)
       steppingRef.current = false
     }
   }, [id, refreshSummary, refreshJobs])
@@ -206,11 +225,14 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
         <div className="me-auto">
           <h1 className="mb-1">{summary?.name || 'Relatório'}</h1>
           <div className="text-muted small">
-            {summary?.tipo_de_sintese ? `Tipo: ${summary.tipo_de_sintese}` : ''}
+            {summary?.tipo_de_sintese ? `Tipo: ${TipoDeSinteseMap[summary.tipo_de_sintese]?.nome || summary.tipo_de_sintese}` : ''}
             {summary?.tipo_de_sintese ? ' • ' : ''}
             {`Completo: ${summary?.complete ? 'Sim' : 'Não'}`}
           </div>
         </div>
+        {playLoopRef.current && (
+          <Button variant="link" className="me-2" disabled><FontAwesomeIcon icon={faSpinner} spin className="me-2" /></Button>
+        )}
         {pending > 0 && (
           summary?.paused ? (
             <Button onClick={startPlay}><FontAwesomeIcon icon={faPlay} className="me-2" />Play</Button>
@@ -275,6 +297,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
       <TableRecords records={mappedJobs} onClick={onClick} spec="Batch" options={{ batchId: id }} pageSize={10} >
         <div className="col col-auto mb-0">
+          <Button variant="primary" onClick={() => fixIndex()} className="me-2">Melhorar Índice</Button>
           <Button variant="outline-primary" className="me-2" onClick={() => setShowAdd(true)}><FontAwesomeIcon icon={faPlus} className="me-2" />Adicionar</Button>
           <Button variant="outline-danger" onClick={() => setShowDelete(true)}><FontAwesomeIcon icon={faTrash} className="me-2" />Excluir</Button>
         </div></TableRecords>

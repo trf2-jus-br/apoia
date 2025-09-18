@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Modal, Button, Form } from 'react-bootstrap'
+import ProcessTextarea from '../ProcessTextarea'
 
 export default function CsvNumbersModal({ show, title, onClose, onConfirm }: { show: boolean, title: string, onClose: () => void, onConfirm: (numbers: string[]) => void }) {
   const [text, setText] = useState('')
@@ -33,7 +34,11 @@ export default function CsvNumbersModal({ show, title, onClose, onConfirm }: { s
       <Modal.Body>
         <Form.Group>
           <Form.Label>Números de processos (CSV ou linhas)</Form.Label>
-          <Form.Control as="textarea" rows={8} value={text} onChange={e => setText(preprocess(e.target.value))} />
+          <ProcessTextarea
+            className="form-control"
+            value={text}
+            onChange={e => setText(e)}
+          />
         </Form.Group>
       </Modal.Body>
       <Modal.Footer>

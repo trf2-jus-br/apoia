@@ -138,8 +138,9 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 { header: 'Erro', accessorKey: 'error_msg', enableSorting: true, style: { textAlign: "left", maxWidth: "24em" } },
                 {
                     header: 'Ação', accessorKey: 'none', enableSorting: true, style: { textAlign: "right" }, cell: data => (<>
-                        {data.row.original.status === 'PENDING' && <a href="#" onClick={() => onClick('play', data.row.original)}><FontAwesomeIcon icon={faPlay} className="me-2" />Fazer</a>}
-                        {(data.row.original.status === 'READY' || data.row.original.status === 'ERROR') && <a href="#" onClick={() => onClick('retry', data.row.original)}><FontAwesomeIcon icon={faRotateRight} className="me-2" />Refazer</a>}
+                        {data.row.original.status === 'PENDING' && <span className="text-primary" onClick={() => onClick('play', data.row.original)}><FontAwesomeIcon icon={faPlay} className="me-2" /></span>}
+                        {(data.row.original.status === 'READY' || data.row.original.status === 'ERROR') && <span className="text-primary" onClick={() => onClick('retry', data.row.original)}><FontAwesomeIcon icon={faRotateRight} className="me-2" /></span>}
+                        {data.row.original.status === 'RUNNING' && <span className="text-primary"><FontAwesomeIcon icon={faSpinner} spin className="me-2" /></span>}
                     </>)
                 }
             ],
