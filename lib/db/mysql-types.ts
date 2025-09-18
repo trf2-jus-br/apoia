@@ -400,6 +400,15 @@ export type IABatchJob = {
     cost_sum: number | null
 }
 
+// New: Batch fix-index mapping
+export type IABatchIndexMap = {
+    id: number
+    batch_id: number
+    descr_from: string
+    descr_to: string
+    created_at: Date | null
+}
+
 export type IABatchSummary = {
     id: number
     name: string

@@ -19,6 +19,23 @@ async function getCurrentUserId() {
 }
 
 export class Dao {
+    // Rewrite all mappings for a batch: delete existing and insert the new set
+    static async rewriteBatchFixIndexMap(batch_id: number, pairs: { descr_from: string, descr_to: string }[]): Promise<number> {
+        if (!knex) return 0
+        return await knex.transaction(async (trx) => {
+            await trx('ia_batch_index_map').where({ batch_id }).delete()
+            if (!pairs.length) return 0
+            const rows = pairs.map(p => ({ batch_id, descr_from: p.descr_from, descr_to: p.descr_to }))
+            const inserted = await trx('ia_batch_index_map').insert(rows).returning('id')
+            return Array.isArray(inserted) ? inserted.length : (inserted ? 1 : 0)
+        })
+    }
+
+    static async listBatchFixIndexMap(batch_id: number): Promise<{ descr_from: string, descr_to: string }[]> {
+        if (!knex) return []
+        const rows = await knex('ia_batch_index_map').select('descr_from', 'descr_to').where({ batch_id }).orderBy('descr_from').orderBy('descr_to')
+        return rows as any
+    }
     static async addInternalPrompt(kind: string): Promise<mysqlTypes.IAPrompt> {
         if (!knex) return {} as mysqlTypes.IAPrompt
         const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({

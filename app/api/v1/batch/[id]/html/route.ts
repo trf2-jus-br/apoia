@@ -81,6 +81,26 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
     for (const item of items)
         item.enum_item_descr = item.enum_item_descr_main || item.enum_item_descr
 
+    // Apply batch index mappings (descr_from -> descr_to) before grouping
+    try {
+        const mappings = await Dao.listBatchFixIndexMap(batch_id)
+        if (mappings && mappings.length) {
+            const mapFromTo = mappings.reduce((acc, m) => {
+                // If multiple entries exist for the same descr_from, keep the first
+                if (acc[m.descr_from] === undefined) acc[m.descr_from] = m.descr_to
+                return acc
+            }, {} as Record<string, string>)
+            for (const item of items) {
+                const mapped = mapFromTo[item.enum_item_descr]
+                if (mapped && mapped !== item.enum_item_descr) {
+                    item.enum_item_descr = mapped
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load/apply index mappings for batch', batch_id, e)
+    }
+
     const enumDescrs = items.reduce((acc, i) => {
         if (!acc.includes(i.enum_item_descr))
             acc.push(i.enum_item_descr)

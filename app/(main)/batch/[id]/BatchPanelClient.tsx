@@ -35,10 +35,10 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     setErr('')
     setInfo('')
     try {
-      setInfo('Melhorando índice, aguarde...')
+      setInfo('Otimizando índice, aguarde...')
       const res = await Fetcher.post(`/api/v1/batch/${id}/fix-index`, {})
-      if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha ao melhorar índice')
-      setInfo('Índice melhorado com sucesso')
+      if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha ao otimizar índice')
+      setInfo('Índice otimizado com sucesso')
     } catch (e: any) {
       setErr(e?.message || String(e))
       setInfo('')
@@ -297,7 +297,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
       <TableRecords records={mappedJobs} onClick={onClick} spec="Batch" options={{ batchId: id }} pageSize={10} >
         <div className="col col-auto mb-0">
-          <Button variant="primary" onClick={() => fixIndex()} className="me-2">Melhorar Índice</Button>
+          <Button variant="primary" onClick={() => fixIndex()} className="me-2">Otimizar Índice</Button>
           <Button variant="outline-primary" className="me-2" onClick={() => setShowAdd(true)}><FontAwesomeIcon icon={faPlus} className="me-2" />Adicionar</Button>
           <Button variant="outline-danger" onClick={() => setShowDelete(true)}><FontAwesomeIcon icon={faTrash} className="me-2" />Excluir</Button>
         </div></TableRecords>

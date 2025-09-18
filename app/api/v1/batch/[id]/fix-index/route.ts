@@ -30,7 +30,10 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
       return acc
     }, [] as { id: number, title: string, count: number }[])
 
-    console.log('enumDescrs', current)
+    const currentMap = current.reduce((acc, c) => {
+      acc[c.id] = c.title
+      return acc
+    }, {} as Record<number, string>)
 
     const data: PromptDataType = {
       textos: [{
@@ -42,8 +45,6 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
       }]
     }
 
-    console.log('data', data)
-
     const resp = await generateContent(getInternalPrompt('int-fix-index'), data)
 
     const suggestion = JSON.parse(resp.generation)
@@ -51,31 +52,45 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     const suggestedGroups = suggestion.Agrupamentos as { Tx_Titulo: string, Tx_Agrupados: string }[]
     const groups = suggestedGroups.map(g => ({ title: g.Tx_Titulo, codes: g.Tx_Agrupados.split(',').map(s => parseInt(s.trim())).filter(Boolean) }))
 
-    console.log('groups', groups)
-
     // test if all codes were mapped
     const allCodes = current.map(c => c.id)
-    console.log('allCodes', allCodes)
     const mappedCodes = groups.reduce((acc, g) => {
       g.codes.forEach((c: number) => {
         if (!acc.includes(c)) acc.push(c)
       })
       return acc
     }, [] as number[])
-    console.log('mappedCodes', mappedCodes)
     const missingCodes = allCodes.filter(c => !mappedCodes.includes(c))
-    console.log('missingCodes', missingCodes)
     if (missingCodes.length > 0) {
       throw new Error(`Códigos não mapeados: ${missingCodes.join(', ')}`)
     }
 
+    // Build mapping pairs from current title (descr_from) to suggested group.title (descr_to)
+    const pairs: { descr_from: string, descr_to: string }[] = []
     for (const group of groups) {
       for (const code of group.codes) {
-        await Dao.updateIAEnumItemDescrMain(code, group.title)
+        const from = currentMap[code]
+        const to = group.title
+        if (from && to && from !== to) {
+          pairs.push({ descr_from: from, descr_to: to })
+        }
       }
     }
 
-    return Response.json({ status: 'OK', summary: {} })
+    // Deduplicate pairs
+    const uniqKey = (p: { descr_from: string, descr_to: string }) => `${p.descr_from} -> ${p.descr_to}`
+    const seen = new Set<string>()
+    const deduped = pairs.filter(p => {
+      const k = uniqKey(p)
+      if (seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+
+    // Persist: rewrite mappings for this batch id
+    const saved = await Dao.rewriteBatchFixIndexMap(id, deduped)
+
+    return Response.json({ status: 'OK', saved, summary: { groups: groups.length, pairs: deduped.length } })
   } catch (e: any) {
     return Response.json({ errormsg: e?.message || String(e) }, { status: 500 })
   }
