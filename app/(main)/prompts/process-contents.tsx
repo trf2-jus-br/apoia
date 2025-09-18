@@ -18,6 +18,7 @@ import { ListaDeProdutos } from "@/components/slots/lista-produtos-client";
 import { PromptParaCopiar } from "./prompt-to-copy";
 import { buildFooterFromPieces } from "@/lib/utils/footer";
 import { nivelDeSigiloPermitido } from "@/lib/proc/sigilo";
+import { formatDateTime } from "@/lib/utils/date";
 
 export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent, setPieceContent, apiKeyProvided, model, children }: { prompt: IAPrompt, dadosDoProcesso: DadosDoProcessoType, pieceContent: any, setPieceContent: (pieceContent: any) => void, apiKeyProvided: boolean, model?: string, children?: ReactNode }) {
     const [selectedPieces, setSelectedPieces] = useState<PecaType[] | null>(null)
@@ -221,6 +222,6 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
             )}</>}
         <hr className="mt-5" />
         <p style={{ textAlign: 'center' }}>Este documento foi gerado pela Apoia, ferramenta de inteligência artificial desenvolvida exclusivamente para facilitar a triagem de acervo, e não substitui a elaboração de relatório específico em cada processo, a partir da consulta manual aos eventos dos autos. Textos gerados por inteligência artificial podem conter informações imprecisas ou incorretas.</p>
-        <p style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}) ${buildFooterFromPieces(model, (selectedPieces || []).map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
+        <p style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}), em ${formatDateTime(new Date().toISOString())}, ${buildFooterFromPieces(model, (selectedPieces || []).map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
     </div >
 }
