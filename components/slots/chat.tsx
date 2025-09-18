@@ -118,7 +118,7 @@ function convertToUIMessages(modelMsgs: ModelMessage[]): UIMessage[] {
 
 let loadingMessages = false
 
-export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, footer?: ReactElement, withTools?: boolean }) {
+export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, footer?: ReactElement, withTools?: boolean, setProcessNumber?: (number: string) => void }) {
     const [processNumber, setProcessNumber] = useState(params?.data?.numeroDoProcesso || '');
     const [input, setInput] = useState('')
     const [files, setFiles] = useState<FileList | undefined>(undefined)
@@ -131,6 +131,10 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const [activeModalSubmitHandler, setActiveModalSubmitHandler] = useState<((values: any, ctx: SuggestionContext) => void) | null>(null)
     const [modalDrafts, setModalDrafts] = useState<Record<string, any>>({})
 
+    const handleProcessNumberChange = (number: string) => {
+        setProcessNumber(number)
+        if (params.setProcessNumber) params.setProcessNumber(number)
+    }
 
     const { messages, setMessages, sendMessage, error, clearError } =
         useChat({
@@ -333,7 +337,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                         </div>
                     </div>}
 
-                    <div className="rowx">
+                    <div className="rowx h-print">
                         <div className="xcol xcol-12">
                             <form onSubmit={handleSubmitAndSetFocus} className="mt-auto">
                                 <div className="input-group">
@@ -421,7 +425,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                         // Legacy fallback: send current suggestion with number
                         const numero = values?.processNumber?.trim()
                         if (numero) {
-                            setProcessNumber(numero)
+                            handleProcessNumberChange(numero)
                             // legacy currentSuggestion logic removed after refactor
                         }
                     }

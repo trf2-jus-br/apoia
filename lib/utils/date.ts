@@ -40,6 +40,18 @@ export const formatDateTime = (iso?: string) => {
     return `${dd}/${mm}/${yy} ${hh}:${mi}:${ss}`
 }
 
+export const formatYYYYMMDDHHMMSS = (date: Date) => {
+    const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
+    const yyyy = date.getFullYear()
+    const mm = pad(date.getMonth() + 1)
+    const dd = pad(date.getDate())
+    const hh = pad(date.getHours())
+    const mi = pad(date.getMinutes())
+    const ss = pad(date.getSeconds())
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`
+}
+
+
 export const formatDuration = (ms?: number | null) => {
     if (!ms || ms <= 0) return ''
     const totalSec = Math.floor(ms / 1000)
