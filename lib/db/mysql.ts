@@ -1384,14 +1384,32 @@ export class Dao {
         await knex('ia_batch_job').update({ status: 'PENDING', error_msg: null, started_at: null, finished_at: null, duration_ms: null }).where({ id: job_id, batch_id })
     }
 
+    static async stopJob(batch_id: number, job_id: number): Promise<void> {
+        await knex('ia_batch_job').update({ status: 'PENDING', error_msg: null, started_at: null, finished_at: null, duration_ms: null }).where({ id: job_id, batch_id })
+    }
+
     static async addJobs(batch_id: number, numbers: string[]): Promise<number> {
-        const rows = numbers
+        // Normalize numbers to only digits with length 20 and deduplicate
+        const cleaned = numbers
             .map(n => (n || '').replace(/\D/g, ''))
             .filter(n => n && n.length === 20)
+        const unique = Array.from(new Set(cleaned))
+        if (!unique.length) return 0
+
+        // Exclude numbers that are already present for this batch
+        const existingRows = await knex('ia_batch_job')
+            .select('dossier_code')
+            .where({ batch_id })
+            .whereIn('dossier_code', unique)
+        const existing = new Set(existingRows.map((r: any) => r.dossier_code))
+
+        const rows = unique
+            .filter(n => !existing.has(n))
             .map(n => ({ batch_id, dossier_code: n }))
+
         if (!rows.length) return 0
         const inserted = await knex('ia_batch_job').insert(rows).returning('id')
-        return Array.isArray(inserted) ? inserted.length : 0
+        return Array.isArray(inserted) ? inserted.length : (inserted ? 1 : 0)
     }
 
     static async deleteJobs(batch_id: number, numbers: string[]): Promise<number> {

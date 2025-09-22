@@ -1,6 +1,6 @@
 import { formatBrazilianDateTime, formatDate } from "@/lib/utils/utils"
 import { faStar, faUser } from "@fortawesome/free-regular-svg-icons"
-import { faClock, faRotateRight, faSpinner, faStar as faStarSolid, faTriangleExclamation, faUser as faUserSolid } from "@fortawesome/free-solid-svg-icons"
+import { faClock, faRotateRight, faSpinner, faStar as faStarSolid, faStop, faTriangleExclamation, faUser as faUserSolid } from "@fortawesome/free-solid-svg-icons"
 import { faCheck, faPlay } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from 'next/link'
@@ -140,7 +140,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                     header: 'Ação', accessorKey: 'none', enableSorting: true, style: { textAlign: "right" }, cell: data => (<>
                         {data.row.original.status === 'PENDING' && <span className="text-primary" onClick={() => onClick('play', data.row.original)}><FontAwesomeIcon icon={faPlay} className="me-2" /></span>}
                         {(data.row.original.status === 'READY' || data.row.original.status === 'ERROR') && <span className="text-primary" onClick={() => onClick('retry', data.row.original)}><FontAwesomeIcon icon={faRotateRight} className="me-2" /></span>}
-                        {data.row.original.status === 'RUNNING' && <span className="text-primary"><FontAwesomeIcon icon={faSpinner} spin className="me-2" /></span>}
+                        {data.row.original.status === 'RUNNING' && <span className="text-primary" onClick={() => onClick('stop', data.row.original)}><FontAwesomeIcon icon={faStop} className="me-2" /></span>}
                     </>)
                 }
             ],

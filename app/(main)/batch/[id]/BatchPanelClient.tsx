@@ -44,33 +44,33 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     }
   }
 
-  const refreshSummary = useCallback(async () => {
+  const refreshSummary = async () => {
     try {
       const res = await Fetcher.get(`/api/v1/batch/${id}`)
       if (res?.summary) setSummary(res.summary)
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
-  }, [id])
+  }
 
-  const refreshJobs = useCallback(async (status?: 'all' | 'PENDING' | 'RUNNING' | 'READY' | 'ERROR') => {
+  const refreshJobs = async () => {
     try {
-      const effective = status ?? statusFilter
-      const qs = effective ? `?status=${encodeURIComponent(effective)}` : ''
-      const res = await Fetcher.get(`/api/v1/batch/${id}/jobs${qs}`)
+      const res = await Fetcher.get(`/api/v1/batch/${id}/jobs?status=all`)
       if (Array.isArray(res?.jobs)) setJobs(res.jobs)
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
-  }, [id, statusFilter])
+  }
 
   const canContinue = useMemo(() => !summary?.paused && (summary?.totals?.pending || 0) > 0, [summary])
 
-  const doStep = useCallback(async (job_id?: number) => {
+  const doStep = async (job_id?: number) => {
     if (steppingRef.current) return
     steppingRef.current = true
     try {
       if (job_id) setBuildingJobId(job_id)
+      // replace status to RUNNING optimistically
+      if (job_id) setJobs(js => js.map(j => j.id === job_id ? { ...j, status: 'RUNNING' } : j))
       const res = await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id })
       if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha no step')
       await Promise.all([refreshSummary(), refreshJobs()])
@@ -81,7 +81,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
       if (job_id) setBuildingJobId(null)
       steppingRef.current = false
     }
-  }, [id, refreshSummary, refreshJobs])
+  }
 
   const startPlay = useCallback(async () => {
     setErr('')
@@ -89,13 +89,13 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
       await Fetcher.post(`/api/v1/batch/${id}/play`, {})
       await refreshSummary()
       playLoopRef.current = true
-        // Start a lightweight polling loop to keep summary fresh during long-running steps
-        ; (async () => {
-          while (playLoopRef.current) {
-            try { await refreshSummary() } catch { }
-            await new Promise(r => setTimeout(r, 10000))
-          }
-        })()
+      // Start a lightweight polling loop to keep summary fresh during long-running steps
+      // ; (async () => {
+      //   while (playLoopRef.current) {
+      //     try { await refreshSummary() } catch { }
+      //     await new Promise(r => setTimeout(r, 10000))
+      //   }
+      // })()
       // Start processing loop immediately (ref changes don't re-render)
       while (playLoopRef.current) {
         const processed = await doStep()
@@ -110,7 +110,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     }
   }, [id, refreshSummary, doStep])
 
-  const pause = useCallback(async () => {
+  const pause = async () => {
     setErr('')
     try {
       playLoopRef.current = false
@@ -119,52 +119,54 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
-  }, [id, refreshSummary])
+  }
 
   // No effect-based loop; explicit loop runs inside startPlay
 
-  // Refresh jobs when filter changes
-  useEffect(() => {
-    refreshJobs(statusFilter)
-  }, [statusFilter, refreshJobs])
-
-  const onRetry = useCallback(async (jobId: number, dossier_code?: string) => {
+  const onRetry = async (jobId: number, dossier_code?: string) => {
     setErr('')
     try {
       await Fetcher.post(`/api/v1/batch/${id}/jobs`, { action: 'retry', jobId })
-      // after retry, trigger a targeted step for immediate processing
-      await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id: jobId })
+      await doStep(jobId)
+    } catch (e: any) {
+      setErr(e?.message || String(e))
+    }
+  }
+
+  const onStop = async (jobId: number, dossier_code?: string) => {
+    setErr('')
+    try {
+      await Fetcher.post(`/api/v1/batch/${id}/jobs`, { action: 'stop', jobId })
       await Promise.all([refreshSummary(), refreshJobs()])
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
-  }, [id, refreshJobs, refreshSummary])
+  }
 
-  const onAddNumbers = useCallback(async (numbers: string[]) => {
+  const onAddNumbers = async (numbers: string[]) => {
     setErr('')
     setInfo('')
     try {
       const res = await Fetcher.post(`/api/v1/batch/${id}/jobs`, { action: 'add', numbers })
       const added = Number(res?.added || 0)
-      await Promise.all([refreshSummary(), refreshJobs('all')])
+      await Promise.all([refreshSummary(), refreshJobs()])
       if (added > 0) {
         setInfo(`${added} processo(s) adicionado(s).`)
-        setStatusFilter('PENDING')
       } else {
         setInfo('Nenhum número válido para adicionar.')
       }
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
-  }, [id, refreshJobs, refreshSummary])
+  }
 
-  const onDeleteNumbers = useCallback(async (numbers: string[]) => {
+  const onDeleteNumbers = async (numbers: string[]) => {
     setErr('')
     setInfo('')
     try {
       const res = await Fetcher.post(`/api/v1/batch/${id}/jobs`, { action: 'delete', numbers })
       const deleted = Number(res?.deleted || 0)
-      await Promise.all([refreshSummary(), refreshJobs('all')])
+      await Promise.all([refreshSummary(), refreshJobs()])
       if (deleted > 0) {
         setInfo(`${deleted} processo(s) excluído(s) (apenas itens que não estão em execução podem ser excluídos).`)
         setStatusFilter('all')
@@ -174,7 +176,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
-  }, [id, refreshJobs, refreshSummary])
+  }
 
   const total = summary?.totals?.total || 0
   const ready = summary?.totals?.ready || 0
@@ -211,12 +213,16 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
         if (row.status === 'READY' || row.status === 'ERROR')
           onRetry(row.id, row.dossier_code)
         break
+      case 'stop':
+        if (row.status === 'RUNNING')
+          onStop(row.id, row.dossier_code)
+        break
       default:
         console.log('Unknown click action', kind, row)
     }
   }, [])
 
-  const mappedJobs = jobs.map(j => ({ ...j, status_icon: statusIcon(j.status), cost: j.cost_sum != null ? formatMoney(toDisplayCurrency(j.cost_sum as any)) : '' }))
+  const mappedJobs = jobs.filter(j => statusFilter === 'all' || j.status === statusFilter).map(j => ({ ...j, status_icon: statusIcon(j.status), cost: j.cost_sum != null ? formatMoney(toDisplayCurrency(j.cost_sum as any)) : '' }))
 
   return (
     <Container className="mt-3">

@@ -41,6 +41,41 @@ Produza um relatório sobre o caso jurídico fornecido.
 Formate sua resposta conforme exemplo a seguir, demarcado por <modelo>.
 O modelo foi criado pensando em Apelação, mas deve ser adaptado para Agravo, se for o caso.
 
+Para o campo de triagem, escreva um título que será utilizado para agrupar processos semelhantes. O título deve ir direto ao ponto e ser bem compacto, seguem alguns exemplos:
+
+Em processos previdenciários:
+- Benefício por incapacidade
+- Benefício de prestação continuada - LOAS
+- Seguro desemprego
+- Salário maternidade
+- Aposentadoria por idade
+- Aposentadoria por idade rural
+- Aposentadoria por tempo de contribuição
+- Tempo especial
+- Auxílio reclusão
+- Pensão por morte
+- Revisão da vida toda
+- Revisão teto EC 20/98 e EC 41/03.
+
+Em processos tributários:
+- IRPJ
+- CSLL
+- IRPF
+- PIS/COFINS (várias teses)
+- ITR
+- FGTS
+- CND
+- Prescrição Intercorrente
+- Redirecionamento da Execução
+- PERSE
+- Impenhorabilidade
+- Honorários
+- Grupo Econômico
+- Mora Administrativa
+- Contribuições Previdenciárias
+- Fust
+- TCFA
+
 <modelo>
 # Relatório
 
