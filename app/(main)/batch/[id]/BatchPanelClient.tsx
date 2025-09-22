@@ -73,13 +73,17 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
       if (job_id) setJobs(js => js.map(j => j.id === job_id ? { ...j, status: 'RUNNING' } : j))
       const res = await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id })
       if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha no step')
-      await Promise.all([refreshSummary(), refreshJobs()])
       return !!res?.processedJobId
     } catch (e: any) {
       setErr(e?.message || String(e))
     } finally {
       if (job_id) setBuildingJobId(null)
       steppingRef.current = false
+      try {
+        await Promise.all([refreshSummary(), refreshJobs()])
+      } catch (e: any) {
+        setErr(e?.message || String(e))
+      }
     }
   }
 

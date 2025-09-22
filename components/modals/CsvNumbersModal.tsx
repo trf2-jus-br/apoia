@@ -34,7 +34,7 @@ export default function CsvNumbersModal({ show, title, onClose, onConfirm }: { s
       <Modal.Body>
         <Form.Group>
           <Form.Label>Números de processos (CSV ou linhas)</Form.Label>
-          <ProcessTextarea
+          <ProcessTextarea autoFocus={true}
             className="form-control"
             value={text}
             onChange={e => setText(e)}

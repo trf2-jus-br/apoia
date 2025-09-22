@@ -11,6 +11,7 @@ type Props = {
     id?: string;
     name?: string;
     rows?: number;
+    autoFocus?: boolean;
 };
 
 const preprocessInput = (value: string) => {
@@ -21,7 +22,7 @@ const preprocessInput = (value: string) => {
 
 // A textarea that, on paste, extracts CNJ process numbers from the clipboard text
 // and inserts the cleaned, comma-separated list at the cursor position.
-const ProcessTextarea: React.FC<Props> = ({ value, onChange, placeholder, className, id, name, rows }) => {
+const ProcessTextarea: React.FC<Props> = ({ value, onChange, placeholder, className, id, name, rows, autoFocus = false }) => {
     const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
         console.log('Pasting text...');
         event.preventDefault();
@@ -43,7 +44,7 @@ const ProcessTextarea: React.FC<Props> = ({ value, onChange, placeholder, classN
     console.log('Rendering ProcessTextarea with value:', value);
 
     return (
-        <textarea
+        <textarea autoFocus={autoFocus}
             className={className || 'form-control'}
             value={value}
             onChange={handleChange}
