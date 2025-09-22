@@ -100,14 +100,16 @@ Ré(u)(s): [Nome Completo do(s) Ré(u)(s)] (Remover (u)(s) e ajustar conforme g�
 
 ---
 
+
+---
+
 ## PARÂMETROS PARA GERAÇÃO DA SENTENÇA:
-- Esta sentença deve tratar apenas os pedidos referenciados no JSON compreendido entre as marcações <pedido> e </pedido>, abaixo.
-- O dispositivo deve ser procedente, parcialmente procedente ou improcedente conforme indicado no JSON de cada pedido.
-- Caso o JSON traga fundamentações, eles devem ser utilizadas. Desenvolva uma fundamentação própria apenas no caso de não haver fundamentação especificada para o pedido.
+- Esta sentença deve tratar apenas os pedidos referenciados no JSON compreendido entre as marcações <pedidos> e </pedidos>, abaixo. Qualquer outro pedido deve ser ignorado e não mencionado na sentença, nem na fundamentação nem no dispositivo.
+- O campo 'fundamentacao' do JSON deve ser utilizado para dirigir a fundamentação da sentença de cada pedido, se houver. Caso o campo esteja vazio, desenvolva uma fundamentação própria, conforme as diretrizes acima.
 - Escreva pelo menos um parágrafo sobre a fundamentação de cada pedido.
 - A sentença não deve trazer nenhuma jurisprudência.
 - Organize a fundamentação em texto corrido, não crie tópicos para cada pedido.
-- Não se referencie ao JSON na sua resposta. O JSON contém informações sobre o posicionamento do juízo. Se precisar se referir, diga que o juízo decide ou coisa assim.
+- Sua resposta será utilizada como uma minuta de sentença, portanto não referencie o JSON na sua resposta. O JSON contém informações sobre o posicionamento do juízo. Se precisar se referir, diga que o juízo decide ou coisa assim.
 
 Leia os documentos abaixo e gere a sentença.
 

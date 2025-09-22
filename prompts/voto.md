@@ -90,7 +90,7 @@ Apelado(s)/Agravado(a)(s): [Nome Completo do(s) Apelado(s) ou Agravado(s)] (Remo
 - Publique-se. Registre-se. Intimem-se.
 - Após o trânsito em julgado, não havendo requerimentos, arquivem-se os autos com as devidas baixas.
 
-## INSTRUÇÕES ADICIONAIS PARA A IA AO GERAR A SENTENÇA:
+## INSTRUÇÕES ADICIONAIS PARA A IA AO GERAR O VOTO:
 - Preencha os placeholders [entre colchetes] com as informações específicas do caso que serão fornecidas posteriormente.
 - Adapte o conteúdo da Fundamentação e do Dispositivo à subespecialidade do Direito Civil do caso concreto (Família, Contratos, etc.), selecionando os artigos de lei e princípios mais pertinentes.
 - Mantenha a coesão e a coerência textual, assegurando que a Fundamentação justifique logicamente o Dispositivo.
@@ -100,15 +100,14 @@ Apelado(s)/Agravado(a)(s): [Nome Completo do(s) Apelado(s) ou Agravado(s)] (Remo
 
 ---
 
-## PARÂMETROS PARA GERAÇÃO DA SENTENÇA:
-- Esta sentença deve tratar apenas os pedidos referenciados no JSON compreendido entre as marcações <pedido> e </pedido>, abaixo.
-- O dispositivo deve ser procedente, parcialmente procedente ou improcedente conforme indicado no JSON de cada pedido.
-- Caso o JSON traga fundamentações, eles devem ser utilizadas. Desenvolva uma fundamentação própria apenas no caso de não haver fundamentação especificada para o pedido.
+## PARÂMETROS PARA GERAÇÃO DO VOTO:
+- Este voto deve tratar apenas os pedidos referenciados no JSON compreendido entre as marcações <pedidos> e </pedidos>, abaixo. Qualquer outro pedido deve ser ignorado e não mencionado no voto, nem na fundamentação nem no dispositivo.
+- O campo 'fundamentacao' do JSON deve ser utilizado para dirigir a fundamentação do voto de cada pedido, se houver. Caso o campo esteja vazio, desenvolva uma fundamentação própria, conforme as diretrizes acima.
 - Escreva pelo menos um parágrafo sobre a fundamentação de cada pedido.
-- A sentença não deve trazer nenhuma jurisprudência.
+- O voto não deve trazer nenhuma jurisprudência.
 - Organize a fundamentação em texto corrido, não crie tópicos para cada pedido.
-- Não se referencie ao JSON na sua resposta. O JSON contém informações sobre o posicionamento do juízo. Se precisar se referir, diga que o juízo decide ou coisa assim.
+- Sua resposta será utilizada como uma minuta de voto, portanto não referencie o JSON na sua resposta. O JSON contém informações sobre o posicionamento do juízo. Se precisar se referir, diga que o juízo decide ou coisa assim.
 
-Leia os documentos abaixo e gere a sentença.
+Leia os documentos abaixo e gere o voto.
 
 {{textos}}
