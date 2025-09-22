@@ -39,7 +39,7 @@ Produza um relatório sobre o caso jurídico fornecido.
 ## EXEMPLO E MODELO E ESTRUTURA
 
 Formate sua resposta conforme exemplo a seguir, demarcado por <modelo>.
-Formate sua resposta de acordo com um dos modelos abaixo. Selecione o modelo de acordo com o tipo de processo. 
+O modelo foi criado pensando em Apelação, mas deve ser adaptado para Agravo, se for o caso.
 
 <modelo>
 # Relatório

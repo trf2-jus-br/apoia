@@ -93,7 +93,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
         ; (async () => {
           while (playLoopRef.current) {
             try { await refreshSummary() } catch { }
-            await new Promise(r => setTimeout(r, 1000))
+            await new Promise(r => setTimeout(r, 10000))
           }
         })()
       // Start processing loop immediately (ref changes don't re-render)

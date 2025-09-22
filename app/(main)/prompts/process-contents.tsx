@@ -64,7 +64,7 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
             if (cache[peca.id])
                 contents[peca.id] = cache[peca.id]
             else
-                loading[peca.id] = fetch(`/api/v1/process/${dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/content`)
+                loading[peca.id] = fetch(`/api/v1/process/${peca.numeroDoProcesso || dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/content`)
         }
         for (const id in loading) {
             setLoadingPiecesProgress(Object.keys(contents).length)
@@ -91,7 +91,7 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
 
     const buildRequests = (contents: { [key: number]: string }): GeneratedContent[] => {
         const requestArray: GeneratedContent[] = []
-        const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: contents[peca.id], sigilo: peca.sigilo }))
+        const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: contents[peca.id], sigilo: peca.sigilo }))
         let produtos: InfoDeProduto[] = []
         // Internal seeded prompt: use map products
         if (prompt.kind?.startsWith('^')) {

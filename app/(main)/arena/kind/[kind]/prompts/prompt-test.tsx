@@ -1,15 +1,12 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Suspense, useState, useEffect, cache } from 'react'
+import { useState, useEffect } from 'react'
 import AiContent from '@/components/ai-content'
 import { InfoDeProduto, P } from '@/lib/proc/combinacoes'
-import { Button, Container, Form } from 'react-bootstrap'
-import { get } from 'http'
-import { PromptDefinitionType, PromptOptionsType, TextoType } from '@/lib/ai/prompt-types'
+import { Button, Form } from 'react-bootstrap'
 import { IATestset } from '@/lib/db/mysql-types'
 import { slugify } from '@/lib/utils/utils'
-import { getInternalPrompt } from '@/lib/ai/prompt'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
@@ -26,7 +23,7 @@ export default function PromptTest(params: {
             "prompt": params.testset.kind,
             "plugins": []
         }
-        const textos = test.texts.map(t => ({ descr: t.name, slug: slugify(t.name), texto: t.value, sigilo: '1' }))
+        const textos = test.texts.map(t => ({ numeroDoProcesso: '', descr: t.name, slug: slugify(t.name), texto: t.value, sigilo: '1' }))
         const result = test.expected
         const file = idx.toString()
         return { file, titulo, infoDeProduto, textos, result }

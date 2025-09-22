@@ -33,6 +33,7 @@ export type PromptDefinitionType = {
 //
 export type TextoType = {
     id?: string // identificador da peça no DataLake
+    numeroDoProcesso: string
     idOrigem?: string // identificador da peça no sistema de origem
     event?: string
     label?: string
