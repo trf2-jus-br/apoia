@@ -18,6 +18,93 @@ async function getCurrentUserId() {
 }
 
 export class Dao {
+    // --- Library DAO ---
+    static async listLibrary(): Promise<mysqlTypes.IALibrary[]> {
+        const userId = await getCurrentUserId()
+        const rows = await knex('ia_library').select('*').where({ user_id: userId }).orderBy('created_at', 'desc')
+        return rows
+    }
+
+    static async getLibraryById(id: number): Promise<mysqlTypes.IALibrary | undefined> {
+        const userId = await getCurrentUserId()
+        const row = await knex('ia_library').select('*').where({ id, user_id: userId }).first()
+        return row
+    }
+
+    static async insertLibrary(data: mysqlTypes.IALibraryToInsert): Promise<number> {
+        const userId = await getCurrentUserId()
+        const [ret] = await knex('ia_library').insert({
+            user_id: userId,
+            type: data.type,
+            title: data.title,
+            content_type: data.content_type ?? null,
+            content_markdown: data.content_markdown ?? null,
+            content_binary: data.content_binary ?? null,
+            model_subtype: data.model_subtype ?? null,
+            created_by: userId,
+        }).returning('id')
+        return getId(ret)
+    }
+
+    static async updateLibrary(id: number, patch: Partial<mysqlTypes.IALibraryToInsert>): Promise<boolean> {
+        const userId = await getCurrentUserId()
+        const upd = await knex('ia_library').update({
+            ...(patch.type ? { type: patch.type } : {}),
+            ...(patch.title !== undefined ? { title: patch.title } : {}),
+            ...(patch.content_type !== undefined ? { content_type: patch.content_type } : {}),
+            ...(patch.content_markdown !== undefined ? { content_markdown: patch.content_markdown } : {}),
+            ...(patch.content_binary !== undefined ? { content_binary: patch.content_binary } : {}),
+            ...(patch.model_subtype !== undefined ? { model_subtype: patch.model_subtype } : {}),
+        }).where({ id, user_id: userId })
+        return upd > 0
+    }
+
+    static async deleteLibrary(id: number): Promise<boolean> {
+        const userId = await getCurrentUserId()
+        const del = await knex('ia_library').delete().where({ id, user_id: userId })
+        return del > 0
+    }
+
+    static async listLibraryExamples(library_id: number): Promise<mysqlTypes.IALibraryExample[]> {
+        const userId = await getCurrentUserId()
+        // validate ownership
+        const lib = await knex('ia_library').select('id').where({ id: library_id, user_id: userId }).first()
+        if (!lib) return []
+        const rows = await knex('ia_library_example').select('*').where({ library_id }).orderBy('created_at', 'desc')
+        return rows
+    }
+
+    static async upsertLibraryExample(library_id: number, example: Omit<mysqlTypes.IALibraryExample, 'id' | 'created_at' | 'created_by' | 'library_id'>): Promise<void> {
+        const userId = await getCurrentUserId()
+        const insertData: any = {
+            library_id,
+            process_number: example.process_number,
+            event_number: ('event_number' in (example as any)) ? (example as any).event_number ?? null : null,
+            piece_type: example.piece_type,
+            piece_id: example.piece_id,
+            piece_title: example.piece_title,
+            piece_date: example.piece_date,
+            content_markdown: example.content_markdown,
+            created_by: userId,
+        }
+        const mergeData: any = {
+            piece_type: example.piece_type,
+            piece_id: example.piece_id,
+            piece_title: example.piece_title,
+            piece_date: example.piece_date,
+            content_markdown: example.content_markdown,
+        }
+        if ('event_number' in (example as any)) mergeData.event_number = (example as any).event_number ?? null
+        await knex('ia_library_example').insert(insertData).onConflict(['library_id', 'process_number']).merge(mergeData)
+    }
+
+    static async deleteLibraryExample(library_id: number, process_number: string): Promise<boolean> {
+        const userId = await getCurrentUserId()
+        const lib = await knex('ia_library').select('id').where({ id: library_id, user_id: userId }).first()
+        if (!lib) return false
+        const del = await knex('ia_library_example').delete().where({ library_id, process_number })
+        return del > 0
+    }
     static async addInternalPrompt(kind: string): Promise<mysqlTypes.IAPrompt> {
         if (!knex) return {} as mysqlTypes.IAPrompt
         const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({

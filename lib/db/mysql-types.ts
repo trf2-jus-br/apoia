@@ -371,3 +371,43 @@ export type IAUsageDetailRow = {
     model?: string | null
     prompt?: string | null
 }
+
+// --- Library ---
+export type IALibraryType = 'ARQUIVO' | 'MODELO' | 'MARKDOWN'
+export type IAModelSubtype = 'PRIMEIRO_DESPACHO' | 'SENTENCA' | 'VOTO'
+
+export type IALibrary = {
+    id: number
+    user_id: number
+    type: IALibraryType
+    model_subtype: IAModelSubtype | null
+    title: string
+    content_type: string | null
+    content_markdown: string | null
+    content_binary: Buffer | null
+    created_at: Date | null
+    created_by: number | null
+}
+
+export type IALibraryToInsert = {
+    type: IALibraryType
+    title: string
+    content_type?: string | null
+    content_markdown?: string | null
+    content_binary?: Buffer | null
+    model_subtype?: IAModelSubtype | null
+}
+
+export type IALibraryExample = {
+    id: number
+    library_id: number
+    process_number: string
+    event_number?: string | null
+    piece_type: 'DESPACHO_DECISAO' | 'SENTENCA' | 'VOTO' | null
+    piece_id: string | null
+    piece_title: string | null
+    piece_date: Date | null
+    content_markdown: string | null
+    created_at: Date | null
+    created_by: number | null
+}

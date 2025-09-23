@@ -135,6 +135,14 @@ const limparDiff = (d: string) => {
 
     // remove spaces inside <ins> to be compatible with Siga-Doc html2pdf webservice
     d = d.replace(/(<ins[^>]*>)(\s*)(.*?)(\s*)<\/ins>/gs, '$2$1$3</ins>$4')
+
+    // remove <li></li> that became empty due to deletions
+    d = d.replace(/<li>\s*<\/li>/g, '')
+
+    // remove <ol> or <ul> that became empty due to deletions
+    d = d.replace(/<ol>\s*<\/ol>/g, '')
+    d = d.replace(/<ul>\s*<\/ul>/g, '')
+    
     return d
 }
 
