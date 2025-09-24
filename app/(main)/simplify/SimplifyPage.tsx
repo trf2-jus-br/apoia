@@ -45,7 +45,7 @@ export default function Simplification() {
                     infoDeProduto={{ produto: P.REVISAO, dados: [], titulo: 'Revisão', prompt: 'revisao', plugins: [] }}
                     textos={[{ descr: 'Texto', slug: 'texto', texto: markdown }]} /> */}
                 <h2 className="mt-3">Liguagem Simples</h2>
-                <AiContent definition={getInternalPrompt('linguagem-simples')} data={{ textos: [{ descr: 'Texto', slug: 'texto', texto: markdown, sigilo: '0' }] }} config={promptConfig} visualization={VisualizationEnum.TEXT_EDITED} dossierCode={undefined} />
+                <AiContent definition={getInternalPrompt('linguagem-simples')} data={{ textos: [{ numeroDoProcesso: '', descr: 'Texto', slug: 'texto', texto: markdown, sigilo: '0' }] }} config={promptConfig} visualization={VisualizationEnum.TEXT_EDITED} dossierCode={undefined} />
             </>}
         </>
     )

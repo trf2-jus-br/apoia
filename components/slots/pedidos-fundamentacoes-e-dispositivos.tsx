@@ -43,8 +43,8 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
         // const proximoPrompt = Frm.get('pedidos').proximoPrompt || 'SENTENCA'
         const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         // console.log('pedidosAnalisados', pedidos)
-        const data = { ...request.data }
-        data.textos = [...request.data.textos, { slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0' }]
+    const data = { ...request.data }
+    data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0' }]
 
         const prompt = getInternalPrompt(nextRequest.produto === P.VOTO ? 'voto' : 'sentenca')
 

@@ -297,7 +297,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         if (error?.message === 'NEXT_REDIRECT') throw error
         console.error(`Erro ao obter dados do processo ${numeroDoProcesso}: ${error.stack}`)
         errorMsg = `${error.message}`
-        return { pecas, errorMsg }
+    return { pecas, poloAtivo: '', poloPassivo: '', errorMsg }
     }
 }
 

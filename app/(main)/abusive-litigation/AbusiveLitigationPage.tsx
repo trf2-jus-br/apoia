@@ -135,14 +135,14 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                 setProcessosMap({ ...procsMap })
             }
             if (response.errorMsg) {
-                dadosDoProcesso = { numeroDoProcesso, pecas: [], pecasSelecionadas: [], missingDadosDoProcesso: true, missingPeticaoInicial: true, errorMsg: response.errorMsg }
+                dadosDoProcesso = { numeroDoProcesso, pecas: [], pecasSelecionadas: [], poloAtivo: '', poloPassivo: '', missingDadosDoProcesso: true, missingPeticaoInicial: true, errorMsg: response.errorMsg }
                 procsMap[numeroDoProcesso] = dadosDoProcesso
                 setProcessosMap({ ...procsMap })
             }
         }
 
         if (!dadosDoProcesso) {
-            procsMap[numeroDoProcesso] = { numeroDoProcesso, pecas: [], pecasSelecionadas: [], missingDadosDoProcesso: true, missingPeticaoInicial: true }
+            procsMap[numeroDoProcesso] = { numeroDoProcesso, pecas: [], pecasSelecionadas: [], poloAtivo: '', poloPassivo: '', missingDadosDoProcesso: true, missingPeticaoInicial: true }
             setProcessosMap({ ...procsMap })
             return procsMap[numeroDoProcesso]
         }

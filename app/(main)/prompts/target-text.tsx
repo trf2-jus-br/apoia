@@ -37,7 +37,7 @@ export default function TargetText({ prompt, visualization, apiKeyProvided }: { 
     const PromptParaCopiar = () => {
         if (!prompt || !markdown) return ''
 
-        const exec = promptExecuteBuilder(definition, { textos: [{ descr: prompt.content?.editor_label || 'Texto', slug: slugify(prompt.content?.editor_label || 'texto'), texto: markdown, sigilo: '0' }] })
+    const exec = promptExecuteBuilder(definition, { textos: [{ numeroDoProcesso: '', descr: prompt.content?.editor_label || 'Texto', slug: slugify(prompt.content?.editor_label || 'texto'), texto: markdown, sigilo: '0' }] })
 
         const s: string = exec.message.map(m => m.role === 'system' ? `# PROMPT DE SISTEMA\n\n${m.content}\n\n# PROMPT` : m.content).join('\n\n')
 
@@ -74,7 +74,7 @@ export default function TargetText({ prompt, visualization, apiKeyProvided }: { 
                         <h2 className="mt-3">{prompt.name}</h2>
                         <AiContent
                             definition={definition}
-                            data={{ textos: [{ descr: textoDescr, slug: slugify(textoDescr), texto: markdown, sigilo: '0' }] }}
+                            data={{ textos: [{ numeroDoProcesso: '', descr: textoDescr, slug: slugify(textoDescr), texto: markdown, sigilo: '0' }] }}
                             options={{ cacheControl: true }} config={promptConfig} visualization={visualization} dossierCode={undefined} />
                         <Print numeroDoProcesso={slugify(prompt.name)} />
                     </>

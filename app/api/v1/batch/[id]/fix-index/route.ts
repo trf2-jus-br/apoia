@@ -37,6 +37,7 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
 
     const data: PromptDataType = {
       textos: [{
+        numeroDoProcesso: '',
         descr: 'Índice atual',
         label: 'indice-atual',
         slug: 'indice-atual',

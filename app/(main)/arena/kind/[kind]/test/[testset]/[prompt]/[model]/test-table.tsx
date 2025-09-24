@@ -34,7 +34,7 @@ export function TestTable({ testset, test, promptFormat }: { testset: IATestset,
                                             __html: preprocess(
                                                 test.content.tests[idxTest].attempts[idx].result,
                                                 { kind: '', prompt: '', format: promptFormat } as PromptDefinitionType,
-                                                { textos: testset.content.tests[idxTest].texts?.map(t => ({ descr: t.name, slug: t.name, texto: t.value, sigilo: '0' })) },
+                                                { textos: testset.content.tests[idxTest].texts?.map(t => ({ numeroDoProcesso: '', descr: t.name, slug: t.name, texto: t.value, sigilo: '0' })) },
                                                 true, VisualizationEnum.DIFF).text
                                         }} />
                                     </Popover>
