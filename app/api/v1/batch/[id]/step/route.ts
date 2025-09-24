@@ -33,9 +33,9 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
 
   const processed = await Dao.stepBatch(batch_id, async (job) => {
     try {
-      const tipo_de_sintese = summary.tipo_de_sintese || 'RELATORIO_DE_ACERVO'
-      const complete = !!summary.complete
-      await analyze(summary.name, job.dossier_code, tipo_de_sintese, complete)
+  const kind = (summary as any).prompt_base_id ? (summary as any).prompt_base_id : (summary.tipo_de_sintese || 'RELATORIO_DE_ACERVO')
+  const complete = !!summary.complete
+  await analyze(summary.name, job.dossier_code, kind, complete)
       return { status: 'READY' as const }
     } catch (e: any) {
       return { status: 'ERROR' as const, error_msg: e?.message || String(e) }

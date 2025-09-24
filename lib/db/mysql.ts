@@ -196,6 +196,27 @@ export class Dao {
         return result
     }
 
+    // Lista prompts favoritos (qualquer share) do usuário corrente trazendo somente a versão mais recente
+    static async retrieveFavoriteLatestPromptsForCurrentUser(): Promise<{ base_id: number, name: string, target: string }[]> {
+        const userId = await getCurrentUserId()
+        // Use DB-dialect specific JSON extraction (Postgres vs MySQL).
+        const jsonTargetExpr = knex.client.config.client === 'pg'
+            ? "(p.content::json ->> 'target') as target"
+            : "JSON_UNQUOTE(JSON_EXTRACT(p.content, '$.target')) as target"
+
+        const rows = await knex('ia_prompt as p')
+            .innerJoin('ia_favorite as f', 'f.prompt_id', 'p.base_id')
+            .select(
+                'p.base_id as base_id',
+                'p.name as name',
+                knex.raw(jsonTargetExpr)
+            )
+            .where('f.user_id', userId)
+            .andWhere('p.is_latest', 1)
+            .orderBy('p.name', 'asc')
+        return (rows || []).map(r => ({ base_id: Number((r as any).base_id), name: (r as any).name, target: (r as any).target }))
+    }
+
     static async retrieveCountersByPromptKinds(): Promise<{ kind: string, prompts: number, testsets: number }[]> {
         if (!knex) return
         const sql = knex('ia_prompt as p')
@@ -1188,10 +1209,21 @@ export class Dao {
         }))
     }
 
-    static async createBatchWithJobs(params: { name: string, tipo_de_sintese: string, complete: boolean, numbers: string[] }): Promise<mysqlTypes.IABatch> {
+    static async createBatchWithJobs(params: { name: string, tipo_de_sintese?: string | null, prompt_base_id?: number | null, complete: boolean, numbers: string[] }): Promise<mysqlTypes.IABatch> {
         const userId = await getCurrentUserId()
-        const { name, tipo_de_sintese, complete, numbers } = params
-        const [batchIdRet] = await knex('ia_batch').insert({ name, created_by: userId, tipo_de_sintese, complete, paused: true }).returning('id')
+        const { name } = params
+        let { tipo_de_sintese, prompt_base_id, complete, numbers } = params
+        // Validação de exclusividade
+        if ((tipo_de_sintese && prompt_base_id) || (!tipo_de_sintese && !prompt_base_id)) {
+            throw new Error('Informe exatamente um entre tipo_de_sintese ou prompt_base_id')
+        }
+        if (prompt_base_id) {
+            tipo_de_sintese = null
+        } else {
+            prompt_base_id = null
+        }
+        const insertData: any = { name, created_by: userId, tipo_de_sintese, prompt_base_id, complete, paused: true }
+        const [batchIdRet] = await knex('ia_batch').insert(insertData).returning('id')
         const batch_id = getId(batchIdRet)
         const rows = numbers
             .map(n => (n || '').replace(/\D/g, ''))
@@ -1206,7 +1238,7 @@ export class Dao {
         const userId = await getCurrentUserId()
         // Aggregate counts and cost in a single query per batch
         const batches: any[] = await knex('ia_batch as b')
-            .select('b.id', 'b.name', 'b.tipo_de_sintese', 'b.complete', 'b.paused')
+            .select('b.id', 'b.name', 'b.tipo_de_sintese', 'b.prompt_base_id', 'b.complete', 'b.paused')
             .where('b.created_by', userId)
             .orderBy('b.created_at', 'desc')
         if (!batches.length) return []
@@ -1230,7 +1262,7 @@ export class Dao {
             .groupBy('batch_id')
         const byId: Record<number, mysqlTypes.IABatchSummary> = {}
         for (const b of batches) {
-            byId[b.id] = { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, complete: !!b.complete, paused: !!b.paused, totals: { total: 0, pending: 0, running: 0, ready: 0, error: 0 }, spentCost: 0, estimatedTotalCost: 0, avgDurationMs: null, etaMs: null }
+            byId[b.id] = { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, prompt_base_id: b.prompt_base_id, complete: !!b.complete, paused: !!b.paused, totals: { total: 0, pending: 0, running: 0, ready: 0, error: 0 }, spentCost: 0, estimatedTotalCost: 0, avgDurationMs: null, etaMs: null }
         }
         for (const jAny of jobs as any[]) {
             const s = jAny.status as mysqlTypes.IABatchJob['status']
@@ -1302,7 +1334,7 @@ export class Dao {
     const estimatedTotalCost = Number.isFinite(avgCost) ? avgCost * totals.total : spentCost
         const remaining = totals.total - totals.ready - totals.error
         const etaMs = avgDurationMs ? Math.round(avgDurationMs * Math.max(remaining, 0)) : null
-        return { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, complete: !!b.complete, paused: !!b.paused, totals, spentCost, estimatedTotalCost, avgDurationMs, etaMs }
+        return { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, prompt_base_id: (b as any).prompt_base_id, complete: !!b.complete, paused: !!b.paused, totals, spentCost, estimatedTotalCost, avgDurationMs, etaMs }
     }
 
     static async listBatchJobs(batch_id: number, status?: mysqlTypes.IABatchJob['status'] | 'all', page?: number, pageSize: number = 50): Promise<mysqlTypes.IABatchJob[]> {

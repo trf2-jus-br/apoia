@@ -67,7 +67,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
     const owns = await Dao.assertBatchOwnership(batch_id)
     if (!owns) return Response.json({ errormsg: 'Forbidden' }, { status: 403 })
 
-    const batch = await Dao.getBatchSummary(batch_id) 
+    const batch = await Dao.getBatchSummary(batch_id)
 
     const enum_id = await Dao.assertIAEnumId(Plugin.TRIAGEM)
 
@@ -133,13 +133,10 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
     html += `
         <div style="width: 100%; text-align: center;">
         <canvas id="keyword_canvas" width="1000" height="500"></canva>
-        </div>
-        <div style="width: 100%; text-align: center; margin-bottom: 3em;"><hr style="width: 50%"/>Nuvem de Palavras-Chave</div>
-
-        <div style="width: 100%; text-align: center;">
-        <canvas id="law_canvas" width="1000" height="500"></canva>
-        </div>
-        <div style="width: 100%; text-align: center;"><hr style="width: 50%"/>Nuvem de Normas</div>
+        </div>`
+        
+    if (palavrasChave.length > 0)
+        html += `<div style="width: 100%; text-align: center; margin-bottom: 3em;"><hr style="width: 50%"/>Nuvem de Palavras-Chave</div>
         <script>
             WordCloud(document.getElementById('keyword_canvas'), { list: ${palavrasChaveJson},
                 // gridSize: Math.round(16 * document.getElementById('keyword_canvas').offsetWidth / 1024),
@@ -151,6 +148,14 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
                 rotateRatio: 0,
                 rotationSteps: 1,
             });
+        </script>`
+
+    if (normas.length > 0)
+        html += `<div style="width: 100%; text-align: center;">
+        <canvas id="law_canvas" width="1000" height="500"></canvas>
+        </div>
+        <div style="width: 100%; text-align: center;"><hr style="width: 50%"/>Nuvem de Normas</div>
+        <script>
             WordCloud(document.getElementById('law_canvas'), { list: ${normasJson},
                 // gridSize: Math.round(16 * document.getElementById('keyword_canvas').offsetWidth / 1024),
                 // weightFactor: function (size) {

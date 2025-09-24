@@ -378,6 +378,7 @@ export type IABatch = {
     name: string
     created_by: number | null
     tipo_de_sintese: string | null
+    prompt_base_id?: number | null
     complete: boolean
     paused: boolean
     concurrency: number
@@ -413,6 +414,7 @@ export type IABatchSummary = {
     id: number
     name: string
     tipo_de_sintese: string | null
+    prompt_base_id?: number | null
     complete: boolean
     paused: boolean
     totals: { total: number, pending: number, running: number, ready: number, error: number }

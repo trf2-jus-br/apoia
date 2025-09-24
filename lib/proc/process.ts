@@ -248,16 +248,16 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
             pecasSelecionadas = pecas.filter(p => pieces.includes(p.id))
         }
 
-
-        // if (completo) {
+        // Se a peça for sigilosa, remove o conteúdo
         for (const peca of pecas)
-            // Se a peça for sigilosa, remove o conteúdo
             if (!nivelDeSigiloPermitido(peca.sigilo)) {
                 console.log('removendo conteúdo de peca com sigilo', peca.id, peca.sigilo)
                 peca.pConteudo = undefined
                 peca.conteudo = TEXTO_PECA_SIGILOSA
             }
-        pecasSelecionadas = pecas
+
+        if (completo) pecasSelecionadas = pecas
+
         // } else if (pecasSelecionadas !== null) {
         //     for (const peca of pecasSelecionadas)
         //         assertNivelDeSigilo(peca.sigilo, `${peca.descr} (${peca.id})`)
@@ -297,7 +297,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         if (error?.message === 'NEXT_REDIRECT') throw error
         console.error(`Erro ao obter dados do processo ${numeroDoProcesso}: ${error.stack}`)
         errorMsg = `${error.message}`
-    return { pecas, poloAtivo: '', poloPassivo: '', errorMsg }
+        return { pecas, poloAtivo: '', poloPassivo: '', errorMsg }
     }
 }
 

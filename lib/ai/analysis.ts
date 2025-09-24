@@ -135,9 +135,6 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
                     }
                 }
 
-                // Se nada foi selecionado pela estratégia, mantém comportamento padrão (todas as peças acessíveis)
-                if (!selectedIds.length) selectedIds = allPieces.map(p => p.id)
-
                 // Carrega novamente os dados do processo APENAS com as peças selecionadas e com conteúdo síncrono
                 const dadosComPecasSelecionados = await obterDadosDoProcesso({ numeroDoProcesso: dossierNumber, pUser, pieces: selectedIds, conteudoDasPecasSelecionadas: CargaDeConteudoEnum.SINCRONO })
                 if (dadosComPecasSelecionados.errorMsg) throw new Error(dadosComPecasSelecionados.errorMsg)
@@ -154,7 +151,21 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
         let requests: GeneratedContent[]
         if (isNumericKind) {
-            requests = buildRequests(promptFromDB, dossierNumber, dadosDoProcesso.pecasSelecionadas, undefined)
+            requests = buildRequests(promptFromDB, dossierNumber, dadosDoProcesso.pecasSelecionadas, undefined).filter(r => r && r.promptSlug !== 'chat')
+            
+            // Acrescenta o Plugins conforme o conteúdo do prompt
+            for (const req of requests) {
+                if (!req.plugins) req.plugins = []
+                if (req.internalPrompt?.prompt?.includes('# Triagem')) {
+                    if (!req.plugins.includes(Plugin.TRIAGEM)) req.plugins.push(Plugin.TRIAGEM)
+                }
+                if (req.internalPrompt?.prompt?.includes('# Normas/Jurisprudência Invocadas')) {
+                    if (!req.plugins.includes(Plugin.NORMAS)) req.plugins.push(Plugin.NORMAS)
+                }
+                if (req.internalPrompt?.prompt?.includes('# Palavras-Chave')) {
+                    if (!req.plugins.includes(Plugin.PALAVRAS_CHAVE)) req.plugins.push(Plugin.PALAVRAS_CHAVE)
+                }
+            }
         } else {
             requests = buildRequestsForAnalysis(dossierNumber, produtos.filter(p => p !== P.CHAT).map(p => infoDeProduto(p)), pecasComConteudo)
         }
