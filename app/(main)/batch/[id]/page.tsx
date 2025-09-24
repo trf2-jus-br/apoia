@@ -1,5 +1,6 @@
 import Fetcher from '@/lib/utils/fetcher'
 import BatchPanelClient from '@/app/(main)/batch/[id]/BatchPanelClient'
+import { Dao } from '@/lib/db/mysql'
 
 export const maxDuration = 60
 
@@ -31,5 +32,7 @@ export default async function BatchPanel(props: { params: Promise<{ id: string }
   const summary = await getSummary(id)
   const jobs = await getJobs(id)
   const usdBrl = await fetchDollar()
-  return <BatchPanelClient id={id} initialSummary={summary} initialJobs={jobs} usdBrl={usdBrl} />
+  const promptName = summary?.prompt_base_id && (await Dao.retrieveLatestPromptByBaseId(summary.prompt_base_id))?.name
+  console.log('BatchPanel', { id, promptName, summary, jobs, usdBrl })
+  return <BatchPanelClient id={id} initialSummary={summary} initialJobs={jobs} usdBrl={usdBrl} promptName={promptName} />
 }

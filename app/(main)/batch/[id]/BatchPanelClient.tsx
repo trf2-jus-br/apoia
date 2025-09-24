@@ -13,7 +13,7 @@ type Totals = { total: number, pending: number, running: number, ready: number, 
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
 type Job = { id: number, dossier_code: string, status: 'PENDING' | 'RUNNING' | 'READY' | 'ERROR', attempts: number, started_at?: string, finished_at?: string, duration_ms?: number | null, cost_sum?: number | null }
 
-export default function BatchPanelClient({ id, initialSummary, initialJobs, usdBrl }: { id: string, initialSummary: Summary, initialJobs: Job[], usdBrl?: number | null }) {
+export default function BatchPanelClient({ id, initialSummary, initialJobs, usdBrl, promptName }: { id: string, initialSummary: Summary, initialJobs: Job[], usdBrl?: number | null, promptName?: string | null }) {
   const [summary, setSummary] = useState<Summary>(initialSummary)
   const [jobs, setJobs] = useState<Job[]>(initialJobs)
   const [err, setErr] = useState<string>('')
@@ -235,7 +235,8 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
           <h1 className="mb-1">{summary?.name || 'Relatório'}</h1>
           <div className="text-muted small">
             {summary?.tipo_de_sintese ? `Tipo: ${TipoDeSinteseMap[summary.tipo_de_sintese]?.nome || summary.tipo_de_sintese}` : ''}
-            {summary?.tipo_de_sintese ? ' • ' : ''}
+            {promptName ? `Prompt: ${promptName}` : ''}
+            {summary?.tipo_de_sintese || promptName ? ' • ' : ''}
             {`Completo: ${summary?.complete ? 'Sim' : 'Não'}`}
           </div>
         </div>
