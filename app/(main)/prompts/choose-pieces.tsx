@@ -28,7 +28,7 @@ function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierN
         <div className="alert alert-warning pt-0">
             <div className="row">
                 <div className="col-12">
-                    <TableRecords records={[...allPieces].reverse()} spec="ChoosePieces" options={{ dossierNumber }} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged}>
+                    <TableRecords records={[...allPieces].reverse()} spec="ChoosePieces" options={{ dossierNumber, apenasSelecionadas: true }} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged}>
                         <div className="col col-auto mb-0">
                             {alteredPieces
                                 ? <Button onClick={() => onSave(alteredPieces ? selectedIds : [])} variant="primary" disabled={selectedIds.length === 0}><FontAwesomeIcon icon={faRotateRight} className="me-2" />Salvar Alterações e Refazer</Button>

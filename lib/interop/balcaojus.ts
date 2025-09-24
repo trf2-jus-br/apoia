@@ -139,6 +139,7 @@ export class InteropBalcaojus implements Interop {
             const mov = movimentoMap.get('' + doc.movimento)
             pecas.push({
                 id: buildPecaId(sistemaConsulta || '', doc.idDocumento),
+                numeroDoProcesso,
                 numeroDoEvento: '' + (doc.movimento ?? ''),
                 descricaoDoEvento: mov?.movimentoLocal?.descricao || '',
                 descr: (doc.descricao || doc.tipoDocumentoLocal || '').toUpperCase(),
@@ -186,7 +187,7 @@ export class InteropBalcaojus implements Interop {
             if (primeiraOab) oabPoloAtivo = primeiraOab
         } catch { /* ignore */ }
 
-        const respLista: DadosDoProcessoType[] = [{ numeroDoProcesso: numero, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, oabPoloAtivo, instancia: instancia.name, sigilo }]
+        const respLista: DadosDoProcessoType[] = [{ numeroDoProcesso: numero, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, oabPoloAtivo, instancia: instancia.name, sigilo, poloAtivo: '', poloPassivo: '' }]
 
         // Processos vinculados (recursão no mesmo sistema)
         // const vinculados = dadosBasicos?.ProcessosVinculados || dadosBasicos?.processosVinculados

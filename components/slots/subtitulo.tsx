@@ -1,7 +1,7 @@
 import { tua } from '@/lib/proc/tua'
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { ReactNode } from 'react'
-import { formatBrazilianDate } from '@/lib/utils/utils'
+import { formatBrazilianDate, maiusculasEMinusculas } from '@/lib/utils/utils'
 
 export const SubtituloAsync = async ({ pDadosDoProcesso }) => {
     const dadosDoProcesso = await pDadosDoProcesso
@@ -12,6 +12,8 @@ export const SubtituloAsync = async ({ pDadosDoProcesso }) => {
 export const Subtitulo = ({ dadosDoProcesso }: { dadosDoProcesso: DadosDoProcessoType }) => {
     const ajuizamento = dadosDoProcesso?.ajuizamento
     const nomeDaClasse = tua[dadosDoProcesso?.codigoDaClasse]
+    const poloAtivo = dadosDoProcesso?.poloAtivo
+    const poloPassivo = dadosDoProcesso?.poloPassivo
 
     if (!ajuizamento || !nomeDaClasse) return <></>
 
@@ -20,6 +22,9 @@ export const Subtitulo = ({ dadosDoProcesso }: { dadosDoProcesso: DadosDoProcess
     return (<>
         {nomeDaClasse
             ? <div className="text-center">{nomeDaClasse}</div>
+            : ''}
+        {poloAtivo && poloPassivo
+            ? <div className="text-center">{`${maiusculasEMinusculas(poloAtivo)}  x  ${maiusculasEMinusculas(poloPassivo)}`}</div>
             : ''}
         {ajuizamento
             ? <div className="text-center">{`Ajuizado em ${formatBrazilianDate(ajuizamento)}`}</div>

@@ -182,6 +182,7 @@ export class InteropMNI implements Interop {
             // if (!Object.values(T).includes(doc.attributes.descricao)) continue
             pecas.unshift({
                 id: doc.attributes.idDocumento,
+                numeroDoProcesso,
                 numeroDoEvento: doc.attributes.movimento,
                 descricaoDoEvento: '',
                 descr: doc.attributes.descricao,
@@ -223,7 +224,7 @@ export class InteropMNI implements Interop {
             return a.id.localeCompare(b.id)
         })
         const classe = tua[codigoDaClasse]
-        return fixSigiloDePecas([{ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas }])
+        return fixSigiloDePecas([{ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, poloAtivo: '', poloPassivo: '' }])
     }
 
     public obterPeca = async (numeroDoProcesso, idDaPeca, binary?: boolean): Promise<ObterPecaType> =>

@@ -43,6 +43,8 @@ export type DadosDoProcessoType = {
     segmento?: string
     instancia?: string
     materia?: string
+    poloAtivo: string
+    poloPassivo: string
     oabPoloAtivo?: string
     errorMsg?: string
 }

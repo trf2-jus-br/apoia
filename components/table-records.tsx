@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import {
     flexRender,
@@ -19,16 +19,21 @@ import tableSpecs from '@/lib/ui/table-specs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAdd } from '@fortawesome/free-solid-svg-icons'
 import Link from 'next/link'
-import { link } from 'fs'
+import { glob, link } from 'fs'
 import { usePathname } from "next/navigation"
 
-const customFilterFn = (rows, columnId, filterValue, addMeta: (meta: FilterMeta) => void): boolean => {
-    if (filterValue === 'selecionada') {
-        return rows.getIsSelected()
-    }
-    return filterFns.includesString(rows, columnId, filterValue, addMeta)
-}
+// customFilterFn moved inside the component to access state
 
+
+
+const customFilterFn = (row: any, columnId: string, filterValue: any, addMeta: (meta: FilterMeta) => void): boolean => {
+    const selecionadas = filterValue?.endsWith(' (selecionadas)')
+    const value = filterValue?.replace(' (selecionadas)', '').trim() || ''
+    // Apply text filter using the default includesString
+    const matchesText = filterFns.includesString(row, columnId, value, addMeta)
+    // If "apenasSelecionadas" is enabled, keep only selected rows that also match the text filter
+    return selecionadas ? row.getIsSelected() && matchesText : matchesText
+}
 
 
 export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, selectedIds, onSelectdIdsChanged, onClick, options, children }: {
@@ -38,9 +43,11 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
     const [currentPageSize, setCurrentPageSize] = useState(pageSize || 5)
     const [sorting, setSorting] = useState([])
     const [globalFilter, setGlobalFilter] = useState('')
+    const [filter, setFilter] = useState('')
     const pathname = usePathname()
     const { columns, thead, tr, tableClassName, theadClassName, pageSizes } = typeof (spec) === 'string' ? tableSpecs(pathname, onClick, options)[spec] : spec
     const [rowSelection, setRowSelection] = useState<RowSelectionState>(selectedIds ? selectedIds.reduce((acc, value) => ({ ...acc, [value]: true }), {}) : {})
+    const [apenasSelecionadas, setApenasSelecionadas] = useState(options?.apenasSelecionadas || false)
 
     const table = useReactTable({
         data: records,
@@ -79,6 +86,10 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rowSelection])
+
+    useEffect(() => {
+        table.setGlobalFilter(`${filter}${apenasSelecionadas ? ' (selecionadas)' : ''}`)
+    }, [filter, apenasSelecionadas])
 
     return (
         <div>
@@ -128,11 +139,31 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                         <Link href={`${pathname}/${linkToAdd}`} className="btn btn-light bt float-end d-print-none"><FontAwesomeIcon icon={faAdd} /></Link>
                     }
                 </div>
+                {options?.apenasSelecionadas &&
+                    <div className="col col-auto mb-0">
+                        <div className="row g-0 pt-2">
+                            <div className="col pe-2">
+                                <div className="form-check form-switch d-print-none">
+                                    <label title="" htmlFor="custom-switch" className="form-check-label">Todas</label>
+                                </div>
+                            </div>
+                            <div className="col">
+                                <Form.Check
+                                    type="switch"
+                                    id="custom-switch"
+                                    label="Selecionadas"
+                                    checked={apenasSelecionadas}
+                                    onChange={e => { setApenasSelecionadas(e.target.checked) }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                }
                 <div className="col col-auto mb-0">
                     <input
                         list="filter-options"
-                        value={globalFilter}
-                        onChange={e => { setGlobalFilter(String(e.target.value)); table.setGlobalFilter(String(e.target.value)) }}
+                        value={filter}
+                        onChange={e => { setFilter(String(e.target.value)) }}
                         placeholder="Filtrar..."
                         className="form-control" style={{ width: '8em' }}
                     />

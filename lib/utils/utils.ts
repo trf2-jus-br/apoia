@@ -15,6 +15,12 @@ export const primeiroEUltimoNome = (nome: string): string => {
 
 export const maiusculasEMinusculas = (s) => {
   if (!s) return s
+
+  const splited = s.split(' - ', 2)
+  if (splited.length > 1) {
+    return maiusculasEMinusculas(splited[0]) + ' - ' + splited[1]
+  }
+
   let sb = "";
   let f = true;
 

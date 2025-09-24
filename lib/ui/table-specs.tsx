@@ -54,8 +54,8 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 },
                 {
                     header: 'Prompt', accessorKey: 'name', enableSorting: true, cell: data => <>
-                        <span className="text-primary" onClick={() => onClick('executar', data.row.original)}><u>{data.row.original.name}</u></span>
-                        <Dropdown style={{ display: "inline" }}>
+                        <span className="text-primary" style={{ cursor: 'pointer' }} onClick={() => onClick('executar', data.row.original)}><u>{data.row.original.name}</u></span>
+                        <Dropdown style={{ display: "inline", cursor: 'pointer' }}>
                             <Dropdown.Toggle as="a" className="m-1" id={data.row.original.name} />
                             <Dropdown.Menu>
                                 <Dropdown.Item onClick={() => onClick('executar', data.row.original)}>Executar</Dropdown.Item>
