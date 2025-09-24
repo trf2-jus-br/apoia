@@ -7,6 +7,8 @@
         "build": "cross-env DOTENV_CONFIG_QUIET=true npx next-swagger-doc-cli next-swagger-doc.json && cross-env DOTENV_CONFIG_QUIET=true next build",
         "start": "cross-env DOTENV_CONFIG_QUIET=true next start -p 8081",
         "lint": "next lint",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
+        "check": "npm run lint && npm run typecheck",
         "knex": "ts-node -P tsconfig.knex.json node_modules/knex/bin/cli.js",
         "test": "jest",
         "test:watch": "jest --watch",

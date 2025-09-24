@@ -18,21 +18,10 @@ import DiffViewer from './diff-viewer'
 import { useRouter } from 'next/navigation'
 import Chat from '@/components/slots/chat'
 import { calcSha256 } from '@/lib/utils/hash'
+import ProcessTextarea from '@/components/ProcessTextarea'
 
 type DadosDoProcessoAndControlType =
     DadosDoProcessoType & { missingDadosDoProcesso: boolean, missingPeticaoInicial: boolean }
-
-const preprocessInput = (value: string) => {
-    value = value.replaceAll(/(:.*?)$/gm, '')
-    value = value.replaceAll('\n\n', '\n').replaceAll('\n', ',').replaceAll(/[^\d,]/g, '').replaceAll(',', ', ')
-    return value
-}
-
-const extractProcessNumbers = (text: string): string => {
-    const regex = /\d{7}\s*-\s*\d{2}\s*\.\s*\d{4}\s*\.\s*\d{1}\s*\.\s*\d{2}\s*\.\s*\d{4}|\d{20}/g;
-    const matches = text.match(regex);
-    return matches ? matches.map(match => match.replace(/\D/g, '')).join(', ') : '';
-}
 
 const formatSimilarity = (value: number) => {
     if (isNaN(value)) return ''
@@ -101,31 +90,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
         setHidden(true)
     }
 
-    const handlePaste = (event) => {
-        // Prevent the default paste behavior
-        event.preventDefault();
-
-        // console.log('event', event)
-
-        // Get the pasted text
-        const pastedText = event.clipboardData.getData("text");
-        // const pastedText = "renato"
-
-
-        // Preprocess the pasted text (example: trim and convert to uppercase)
-        const processedText = extractProcessNumbers(pastedText);
-        // console.log(processedText)
-
-        // Insert the processed text at the current cursor position
-        const { selectionStart, selectionEnd } = event.target;
-        const newValue =
-            outrosNumerosDeProcessos.substring(0, selectionStart) +
-            processedText +
-            outrosNumerosDeProcessos.substring(selectionEnd);
-
-        // Update the input value
-        setOutrosNumerosDeProcessos(newValue);
-    };
+    // paste handling is now encapsulated by ProcessTextarea
 
     const localizarAPeticaoInicial = (dadosDoProcesso: DadosDoProcessoType): PecaType => {
         return dadosDoProcesso.pecasSelecionadas?.find(p => slugify(p.descr) === 'peticao-inicial')
@@ -341,8 +306,11 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                 </div>
                 <div className="form-group"><label>Outros Números de Processos Suspeitos</label></div>
                 <div className="alert alert-secondary mb-1 p-0">
-                    <textarea className="form-control" value={outrosNumerosDeProcessos} onChange={(e) => outrosNumerosDeProcessosChanged(preprocessInput(e.target.value))}
-                        onPaste={handlePaste} />
+                    <ProcessTextarea
+                        className="form-control"
+                        value={outrosNumerosDeProcessos}
+                        onChange={(val) => outrosNumerosDeProcessosChanged(val)}
+                    />
                 </div>
                 {hidden && <>
                     <div className="text-body-tertiary">Informe o número do processo suspeito, a lista de outros processos a serem analisados e clique em &quot;Analisar&quot;.</div>

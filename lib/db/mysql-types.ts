@@ -371,3 +371,53 @@ export type IAUsageDetailRow = {
     model?: string | null
     prompt?: string | null
 }
+
+// New: Batch and Job types
+export type IABatch = {
+    id: number
+    name: string
+    created_by: number | null
+    tipo_de_sintese: string | null
+    complete: boolean
+    paused: boolean
+    concurrency: number
+    created_at: Date | null
+    last_activity_at: Date | null
+}
+
+export type IABatchJob = {
+    id: number
+    batch_id: number
+    dossier_code: string
+    dossier_id: number | null
+    status: 'PENDING' | 'RUNNING' | 'READY' | 'ERROR'
+    error_msg: string | null
+    attempts: number
+    created_at: Date | null
+    started_at: Date | null
+    finished_at: Date | null
+    duration_ms: number | null
+    cost_sum: number | null
+}
+
+// New: Batch fix-index mapping
+export type IABatchIndexMap = {
+    id: number
+    batch_id: number
+    descr_from: string
+    descr_to: string
+    created_at: Date | null
+}
+
+export type IABatchSummary = {
+    id: number
+    name: string
+    tipo_de_sintese: string | null
+    complete: boolean
+    paused: boolean
+    totals: { total: number, pending: number, running: number, ready: number, error: number }
+    spentCost: number
+    estimatedTotalCost: number
+    avgDurationMs: number | null
+    etaMs: number | null
+}

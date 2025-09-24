@@ -1,9 +1,7 @@
 import showdown from 'showdown'
 import { P } from '../proc/combinacoes'
-import { PromptDataType, PromptDefinitionType, TextoType } from '../ai/prompt-types'
-import { diff as mddiff, diffAndCollapse as diffAndCompact } from './mddiff'
+import { PromptDataType, PromptDefinitionType } from '../ai/prompt-types'
 import { format as libFormat } from '../ai/format'
-
 import diff from 'diff-htmls';
 
 const divExtension = () => [{

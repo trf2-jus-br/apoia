@@ -1,11 +1,12 @@
-import { formatDate } from "@/lib/utils/utils"
+import { formatBrazilianDateTime, formatDate } from "@/lib/utils/utils"
 import { faStar, faUser } from "@fortawesome/free-regular-svg-icons"
-import { faStar as faStarSolid, faUser as faUserSolid } from "@fortawesome/free-solid-svg-icons"
+import { faClock, faRotateRight, faSpinner, faStar as faStarSolid, faStop, faTriangleExclamation, faUser as faUserSolid } from "@fortawesome/free-solid-svg-icons"
 import { faCheck, faPlay } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from 'next/link'
 import { Button, ButtonGroup, Dropdown, DropdownButton, Form } from "react-bootstrap"
 import { Instance, Matter, Scope, Share } from "../proc/process-types"
+import { formatDateTime, formatDuration } from "../utils/date"
 
 const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void, options?: any) => {
     return {
@@ -30,7 +31,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 },
                 { header: 'Evento', accessorKey: 'numeroDoEvento', enableSorting: true },
                 { header: 'Descrição', accessorKey: 'descricaoDoEvento', enableSorting: true, style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <span title={data.row.original.descricaoDoEvento}>{data.row.original.descricaoDoEvento.toLowerCase()}</span> },
-                { header: 'Rótulo', accessorKey: 'rotulo', enableSorting: true, style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <a href={`/api/v1/process/${options?.dossierNumber}/piece/${data.row.original.id}/binary`} target="_blank" title={data.row.original.rotulo}>{data.row.original.rotulo.toLowerCase()}</a> },
+                { header: 'Rótulo', accessorKey: 'rotulo', enableSorting: true, style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <a href={`/api/v1/process/${data.row.original.numeroDoProcesso || options?.dossierNumber}/piece/${data.row.original.id}/binary`} target="_blank" title={data.row.original.rotulo}>{data.row.original.rotulo.toLowerCase()}</a> },
                 { header: 'Tipo', accessorKey: 'descr', enableSorting: true, style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <span title={data.row.original.descr}>{data.row.original.descr.toLowerCase()}</span> },
                 { header: 'Sigilo', accessorKey: 'sigilo', enableSorting: true, cell: data => <span>{data.row.original.sigilo}</span> },
             ],
@@ -124,6 +125,26 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 { header: 'Modelo', accessorKey: 'model_name', enableSorting: true },
                 { header: 'Nota %', accessorKey: 'score', enableSorting: true, style: { textAlign: "right" }, cell: data => <a href={`${pathname}/../test/${data.row.original.testset_id}/${data.row.original.prompt_id}/${data.row.original.model_id}`}>{(data.row.original.score).toFixed(1)}</a> },
             ]
+        },
+
+        Batch: {
+            columns: [
+                { header: 'Número', accessorKey: 'dossier_code', enableSorting: true },
+                { header: 'Status', accessorKey: 'status_icon', enableSorting: true, style: { textAlign: "center" }, cell: data => data.row.original.status_icon },
+                { header: 'Tentativas', accessorKey: 'attempts', enableSorting: true, style: { textAlign: "center" } },
+                { header: 'Início', accessorKey: 'started_at', enableSorting: true, style: { textAlign: "center" }, cell: data => formatDateTime(data.row.original.started_at) },
+                { header: 'Duração', accessorKey: 'duration_ms', enableSorting: true, style: { textAlign: "center" }, cell: data => formatDuration(data.row.original.duration_ms) },
+                { header: 'Custo', accessorKey: 'cost', enableSorting: true, style: { textAlign: "right" } },
+                { header: 'Erro', accessorKey: 'error_msg', enableSorting: true, style: { textAlign: "left", maxWidth: "24em" } },
+                {
+                    header: 'Ação', accessorKey: 'none', enableSorting: true, style: { textAlign: "right" }, cell: data => (<>
+                        {data.row.original.status === 'PENDING' && <span className="text-primary" onClick={() => onClick('play', data.row.original)}><FontAwesomeIcon icon={faPlay} className="me-2" /></span>}
+                        {(data.row.original.status === 'READY' || data.row.original.status === 'ERROR') && <span className="text-primary" onClick={() => onClick('retry', data.row.original)}><FontAwesomeIcon icon={faRotateRight} className="me-2" /></span>}
+                        {data.row.original.status === 'RUNNING' && <span className="text-primary" onClick={() => onClick('stop', data.row.original)}><FontAwesomeIcon icon={faStop} className="me-2" /></span>}
+                    </>)
+                }
+            ],
+            tableClassName: 'table table-sm table-striped table-border-sides'
         },
     }
 }

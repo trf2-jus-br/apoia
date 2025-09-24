@@ -1,12 +1,13 @@
 import { fixSigiloDePecas, Interop, ObterPecaType } from './interop'
 import { DadosDoProcessoType, Instance, PecaType } from '../proc/process-types'
-import { parseYYYYMMDDHHMMSS } from '../utils/utils'
+import { parseYYYYMMDDHHMMSS, slugify } from '../utils/utils'
 import { assertNivelDeSigilo } from '../proc/sigilo'
 import { getCurrentUser } from '../user'
 import { envString } from '../utils/env'
 import { tua } from '../proc/tua'
 import { InteropProcessoType } from './interop-types'
 import { mapPdpjToSimplified, PdpjInput } from './pdpj-mapping'
+import { P, T } from '../proc/combinacoes'
 
 const mimeTypyFromTipo = (tipo: string): string => {
     switch (tipo) {
@@ -129,13 +130,12 @@ export class InteropPDPJ implements Interop {
         return processos
     }
 
-    public consultarProcesso = async (numeroDoProcesso: string, idClasseParaFiltrar?: number): Promise<DadosDoProcessoType[]> => {
+    public consultarProcesso = async (numeroDoProcesso: string, recursivo?: boolean): Promise<DadosDoProcessoType[]> => {
         let data: any = await this.consultarProcessoPdpj(numeroDoProcesso)
 
         const resp: DadosDoProcessoType[] = []
         for (const processo of data[0].tramitacoes) {
             const idClasse = processo?.classe?.[0]?.codigo
-            if (idClasseParaFiltrar && idClasse !== idClasseParaFiltrar) continue
             assertNivelDeSigilo('' + processo.nivelSigilo)
 
             const ajuizamento = new Date(processo.dataHoraAjuizamento)
@@ -176,6 +176,7 @@ export class InteropPDPJ implements Interop {
                 pecas.push({
                     id: doc.id,
                     idOrigem: doc.idOrigem,
+                    numeroDoProcesso,
                     numeroDoEvento: mov.sequencia,
                     descricaoDoEvento: mov.descricao,
                     descr: doc.tipo.nome.toUpperCase(),
@@ -191,19 +192,37 @@ export class InteropPDPJ implements Interop {
                 })
             }
             const classe = tua[codigoDaClasse]
+
+            // Se a classe for de agravo, renomeia a descrição da primeira "PETIÇÃO INICIAL" para "AGRAVO"
+            if (classe) {
+                if (slugify(classe).includes('agravo-de-instrumento')) {
+                    const idx = pecas.findIndex((p: PecaType) => slugify(p.descr || '').includes('peticao-inicial'))
+                    if (idx >= 0) pecas[idx].descr = T.AGRAVO_DE_INSTRUMENTO
+                } else if (slugify(classe).includes('agravo')) {
+                    const idx = pecas.findIndex((p: PecaType) => slugify(p.descr || '').includes('peticao-inicial'))
+                    if (idx >= 0) pecas[idx].descr = T.AGRAVO
+                }
+            }
+
             resp.push({ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, segmento, instancia, materia, oabPoloAtivo })
 
             // Se o processo tem processos relacionados, vamos pegar o originario    
-            if (processo.processosRelacionados?.length && !idClasseParaFiltrar) {
+            if (processo.processosRelacionados?.length && !recursivo) {
                 const processoOriginario = processo.processosRelacionados.find((p: any) => p.tipoRelacao === 'ORIGINARIO' && p.numeroProcesso !== numeroDoProcesso)
                 if (processoOriginario) {
                     const numeroDoProcessoOriginario = processoOriginario.numeroProcesso
                     const idClasseOriginario = processoOriginario.classe?.id
                     try {
-                        const originario = await this.consultarProcesso(numeroDoProcessoOriginario, idClasseOriginario)
-                        if (originario?.length) {
-                            const originarioProcesso = originario[0]
-                            resp.push({ ...originarioProcesso, classe: originarioProcesso.classe + ' (Originário)' })
+                        const originario = await this.consultarProcesso(numeroDoProcessoOriginario, true)
+                        // Tenta selecionar um processo originário da classe informada em processoOriginario.classe.id
+                        let originarioSelecionado: DadosDoProcessoType
+                        if (idClasseOriginario) {
+                            originarioSelecionado = originario.find(p => p.codigoDaClasse === idClasseOriginario)
+                        }
+                        if (!originarioSelecionado && originario.length) originarioSelecionado = originario[0]
+                        if (originarioSelecionado) {
+                            originarioSelecionado.classe = originarioSelecionado.classe ? `${originarioSelecionado.classe} (Originário)` : '(Originário)'
+                            resp.push(originarioSelecionado)
                         }
                     } catch (e) {
                         console.error(`Erro ao consultar processo originário ${numeroDoProcessoOriginario}, do processo principal ${numeroDoProcesso}: ${e.message}`)

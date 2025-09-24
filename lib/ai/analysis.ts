@@ -13,6 +13,7 @@ import { envString } from '../utils/env'
 import { DadosDoProcessoType } from '../proc/process-types'
 import { buildFooter } from '../utils/footer'
 import { clipPieces } from './clip-pieces'
+import { th } from 'zod/v4/locales'
 
 export async function summarize(dossierNumber: string, pieceNumber: string): Promise<{ dossierData: any, generatedContent: GeneratedContent }> {
     const pUser = assertCurrentUser()
@@ -28,7 +29,7 @@ export async function summarize(dossierNumber: string, pieceNumber: string): Pro
 
     const definition: PromptDefinitionType = getInternalPrompt(`resumo-${peca.slug}`)
 
-    const data: PromptDataType = { textos: [{ descr: peca.descr, slug: peca.slug, pTexto: peca.pTexto, sigilo: peca.sigilo }] }
+    const data: PromptDataType = { textos: [{ numeroDoProcesso: peca.numeroDoProcesso, descr: peca.descr, slug: peca.slug, pTexto: peca.pTexto, sigilo: peca.sigilo }] }
     const infoDeProduto: InfoDeProduto = { produto: P.RESUMO_PECA, titulo: peca.descr, dados: [peca.descr as T], prompt: definition.kind, plugins: [] }
     const req: GeneratedContent = {
         documentCode: peca.id || null, documentDescr: peca.descr, data, title: peca.descr, produto: infoDeProduto.produto, promptSlug: definition.kind, internalPrompt: definition
@@ -104,6 +105,8 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
                 pecasComConteudo = pecasComConteudo.slice(0, parseInt(envString('COMPLETE_ANALYSIS_LIMIT') as string))
         }
 
+        if (pecasComConteudo.length === 0) throw new Error(`${dossierNumber}: Nenhuma peça com conteúdo`)
+
         // console.log('pecasComConteudo', pecasComConteudo)
 
         const requests: GeneratedContent[] = buildRequests(dossierNumber, produtos.filter(p => p !== P.CHAT).map(p => infoDeProduto(p)), pecasComConteudo)
@@ -161,6 +164,7 @@ async function storeBatchItem(systemId: number, batchName: string, dossierNumber
             switch (plugin) {
                 case Plugin.TRIAGEM: {
                     const triage = getTriagem(req.generated)
+                    if (!triage) throw new Error('Triagem não encontrada')
                     const enum_id = await Dao.assertIAEnumId(Plugin.TRIAGEM)
                     const enum_item_id = await Dao.assertIAEnumItemId(triage, enum_id)
                     await Dao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
@@ -174,6 +178,8 @@ async function storeBatchItem(systemId: number, batchName: string, dossierNumber
                             const enum_item_id = await Dao.assertIAEnumItemId(triage, enum_id)
                             await Dao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
                             break
+                        } else {
+                            throw new Error('Triagem não encontrada')
                         }
                     }
                 }

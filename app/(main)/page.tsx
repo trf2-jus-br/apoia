@@ -1,6 +1,6 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret, faBoxArchive } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
@@ -73,6 +73,13 @@ export default async function HomePage() {
             href: "/anonym",
             color: "text-dark"
         },
+        // {
+        //     icon: faBoxArchive,
+        //     title: "Relatório de Acervo",
+        //     description: "Gere relatórios detalhados do acervo processual",
+        //     href: "/batch",
+        //     color: "text-success"
+        // },
         {
             icon: faDollar,
             title: "Relatório de Uso de IA",

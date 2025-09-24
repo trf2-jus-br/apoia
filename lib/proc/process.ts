@@ -49,11 +49,14 @@ export const selecionarUltimasPecas = (pecas: PecaType[], descricoes: string[]) 
 
 
 
-const iniciarObtencaoDeConteudo = async (dossier_id: number, numeroDoProcesso: string, pecas: PecaType[], interop: Interop, synchronous?: boolean) => {
+const iniciarObtencaoDeConteudo = async (dossier_ids: { [key: string]: number }, numeroDoProcesso: string, pecas: PecaType[], interop: Interop, synchronous?: boolean) => {
     for (const peca of pecas) {
+        // const current_dossier_id = numeroDoProcesso === peca.numeroDoProcesso ? dossier_id : await Dao.assertIADossierId(peca.numeroDoProcesso || numeroDoProcesso)
         if (peca.conteudo) continue
         // console.log('obtendo conteúdo de peça', peca.numeroDoEvento, peca.id, peca.descr)
-        peca.pConteudo = obterConteudoDaPeca(dossier_id, numeroDoProcesso, peca.id, peca.descr, peca.sigilo, interop)
+        const np = peca.numeroDoProcesso || numeroDoProcesso
+        if (!dossier_ids[np]) throw new Error(`Dossier_id não encontrado para o processo ${np}`)
+        peca.pConteudo = obterConteudoDaPeca(dossier_ids[np], np, peca.id, peca.descr, peca.sigilo, interop)
         if (synchronous)
             await peca.pConteudo
     }
@@ -133,6 +136,18 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
 
         // grava os dados do processo no banco
         const { system_id, dossier_id } = await getSystemIdAndDossierId(user, numeroDoProcesso)
+        const outrosNumerosDeProcesso = new Set<string>()
+        for (const peca of pecas) {
+            const np = peca.numeroDoProcesso || numeroDoProcesso
+            if (np !== numeroDoProcesso)
+                outrosNumerosDeProcesso.add(np)
+        }
+        const dossier_ids: { [key: string]: number } = {}
+        dossier_ids[numeroDoProcesso] = dossier_id
+        for (const np of outrosNumerosDeProcesso) {
+            const d_id = await Dao.assertIADossierId(np, system_id, undefined, undefined)
+            dossier_ids[np] = d_id
+        }
 
         // Se for especificado o id da peça, filtra as peças
         if (apenasPecasEspecificas.length > 0) {
@@ -143,7 +158,8 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                 throw new Error(`Peça(s) com id ${idsNaoEncontrados.join(', ')} não encontrada(s) no processo ${numeroDoProcesso}`)
             }
             pecas = pecasFiltradas
-            const pecasComConteudo = conteudoDasPecasSelecionadas === CargaDeConteudoEnum.NAO ? pecas : await iniciarObtencaoDeConteudo(dossier_id, numeroDoProcesso, pecas, interop)
+
+            const pecasComConteudo = conteudoDasPecasSelecionadas === CargaDeConteudoEnum.NAO ? pecas : await iniciarObtencaoDeConteudo(dossier_ids, numeroDoProcesso, pecas, interop)
             return { ...dadosDoProcesso, pecas: pecasComConteudo, pecasSelecionadas: pecasComConteudo }
         }
 
@@ -170,7 +186,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
             const pecasOutros2 = pecas.filter(p => p.descr === 'OUTROS')
             if (pecasOutros2.length > 0) {
                 console.log(`Identificando tipos documentais de ${pecasOutros2.length} peças marcadas com "OUTROS"`)
-                const pecasComConteudo = await iniciarObtencaoDeConteudo(dossier_id, numeroDoProcesso, pecasOutros2, interop, true)
+                const pecasComConteudo = await iniciarObtencaoDeConteudo(dossier_ids, numeroDoProcesso, pecasOutros2, interop, true)
                 for (const peca of pecasComConteudo) {
                     if (peca.pConteudo) {
                         const c = await peca.pConteudo
@@ -233,19 +249,19 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         }
 
 
-        if (completo) {
-            for (const peca of pecas)
-                // Se a peça for sigilosa, remove o conteúdo
-                if (!nivelDeSigiloPermitido(peca.sigilo)) {
-                    console.log('removendo conteúdo de peca com sigilo', peca.id, peca.sigilo)
-                    peca.pConteudo = undefined
-                    peca.conteudo = TEXTO_PECA_SIGILOSA
-                }
-            pecasSelecionadas = pecas
-        } else if (pecasSelecionadas !== null) {
-            for (const peca of pecasSelecionadas)
-                assertNivelDeSigilo(peca.sigilo, `${peca.descr} (${peca.id})`)
-        }
+        // if (completo) {
+        for (const peca of pecas)
+            // Se a peça for sigilosa, remove o conteúdo
+            if (!nivelDeSigiloPermitido(peca.sigilo)) {
+                console.log('removendo conteúdo de peca com sigilo', peca.id, peca.sigilo)
+                peca.pConteudo = undefined
+                peca.conteudo = TEXTO_PECA_SIGILOSA
+            }
+        pecasSelecionadas = pecas
+        // } else if (pecasSelecionadas !== null) {
+        //     for (const peca of pecasSelecionadas)
+        //         assertNivelDeSigilo(peca.sigilo, `${peca.descr} (${peca.id})`)
+        // }
 
         // console.log('tipo de síntese', `${tipoDeSinteseSelecionado}`)
         // console.log('peças selecionadas', pecasSelecionadas?.map(p => p.id))
@@ -254,7 +270,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
 
         let pecasComConteudo: PecaType[] = []
         if (pecasSelecionadas)
-            pecasComConteudo = conteudoDasPecasSelecionadas === CargaDeConteudoEnum.NAO ? pecasSelecionadas : await iniciarObtencaoDeConteudo(dossier_id, numeroDoProcesso, pecasSelecionadas, interop)
+            pecasComConteudo = conteudoDasPecasSelecionadas === CargaDeConteudoEnum.NAO ? pecasSelecionadas : await iniciarObtencaoDeConteudo(dossier_ids, numeroDoProcesso, pecasSelecionadas, interop)
         if (pecasComConteudo?.length > 0 && conteudoDasPecasSelecionadas === CargaDeConteudoEnum.SINCRONO) {
             console.log(`\n\nProcessando ${pecasComConteudo.length} peças selecionadas para o processo ${numeroDoProcesso}`)
             let i = 0
@@ -264,11 +280,11 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                 if (!peca.conteudo && peca.pConteudo) {
                     const c = await peca.pConteudo
                     if (c?.errorMsg) {
-                        if (completo) {
-                            peca.conteudo = `${TEXTO_PECA_COM_ERRO} - ${c.errorMsg}`
-                        } else {
-                            throw new Error(c.errorMsg)
-                        }
+                        // if (completo) {
+                        peca.conteudo = `${TEXTO_PECA_COM_ERRO} - ${c.errorMsg}`
+                        // } else {
+                        //     throw new Error(c.errorMsg)
+                        // }
                     }
                     peca.conteudo = c?.conteudo
                 }

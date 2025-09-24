@@ -75,7 +75,7 @@ export async function getPiecesWithContent(dadosDoProcesso: DadosDoProcessoType,
             throw new Error(`Conteúdo não encontrado no processo ${dossierNumber}, peça ${peca.id}, rótulo ${peca.rotulo}`)
         }
         const slug = await slugify(peca.descr)
-        pecasComConteudo.push({ id: peca.id, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug, pTexto: peca.pConteudo, texto: peca.conteudo, sigilo: peca.sigilo })
+        pecasComConteudo.push({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug, pTexto: peca.pConteudo, texto: peca.conteudo, sigilo: peca.sigilo })
     }
     return pecasComConteudo
 }
@@ -208,6 +208,7 @@ import refinamento from "@/prompts/refinamento.md"
 import sentenca from "@/prompts/sentenca.md"
 import voto from '@/prompts/voto.md'
 import int_identificar_categoria_de_peca from '@/prompts/int-identificar-categoria-de-peca.md'
+import int_fix_index from '@/prompts/int-fix-index.md'
 import litigancia_predatoria from '@/prompts/litigancia-predatoria.md'
 import pedidos_de_peticao_inicial from '@/prompts/pedidos-de-peticao-inicial.md'
 import pedidos_fundamentacoes_e_dispositivos from '@/prompts/pedidos-fundamentacoes-e-dispositivos.md'
@@ -248,6 +249,7 @@ export const internalPrompts = {
     sentenca: promptDefinitionFromMarkdown('sentenca', sentenca),
     voto: promptDefinitionFromMarkdown('voto', voto),
     int_identificar_categoria_de_peca: promptDefinitionFromMarkdown('int_identificar_categoria_de_peca', int_identificar_categoria_de_peca),
+    int_fix_index: promptDefinitionFromMarkdown('int_fix_index', int_fix_index),
     litigancia_predatoria: promptDefinitionFromMarkdown('litigancia_predatoria', litigancia_predatoria),
     pedidos_de_peticao_inicial: promptDefinitionFromMarkdown('pedidos_de_peticao_inicial', pedidos_de_peticao_inicial),
     pedidos_fundamentacoes_e_dispositivos: promptDefinitionFromMarkdown('pedidos_fundamentacoes_e_dispositivos', pedidos_fundamentacoes_e_dispositivos),

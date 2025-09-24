@@ -52,7 +52,7 @@ const preprocessAgrupamento = (text: string) => {
  *       200:
  *         description: Relatório em HTML
  */
-export async function GET(req: Request, props: { params: Promise<{ name: string }> }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     const user = await getCurrentUser()
     if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
@@ -63,7 +63,12 @@ export async function GET(req: Request, props: { params: Promise<{ name: string 
     const filterParam = searchParams.get('filter')
     const filterIndexRaw = filterParam ? parseInt(filterParam, 10) : undefined
 
-    const batch_id = await Dao.assertIABatchId(params.name)
+    const batch_id = Number(params.id)
+    const owns = await Dao.assertBatchOwnership(batch_id)
+    if (!owns) return Response.json({ errormsg: 'Forbidden' }, { status: 403 })
+
+    const batch = await Dao.getBatchSummary(batch_id) 
+
     const enum_id = await Dao.assertIAEnumId(Plugin.TRIAGEM)
 
     let html = ''
@@ -75,6 +80,26 @@ export async function GET(req: Request, props: { params: Promise<{ name: string 
     // use main item if available
     for (const item of items)
         item.enum_item_descr = item.enum_item_descr_main || item.enum_item_descr
+
+    // Apply batch index mappings (descr_from -> descr_to) before grouping
+    try {
+        const mappings = await Dao.listBatchFixIndexMap(batch_id)
+        if (mappings && mappings.length) {
+            const mapFromTo = mappings.reduce((acc, m) => {
+                // If multiple entries exist for the same descr_from, keep the first
+                if (acc[m.descr_from] === undefined) acc[m.descr_from] = m.descr_to
+                return acc
+            }, {} as Record<string, string>)
+            for (const item of items) {
+                const mapped = mapFromTo[item.enum_item_descr]
+                if (mapped && mapped !== item.enum_item_descr) {
+                    item.enum_item_descr = mapped
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load/apply index mappings for batch', batch_id, e)
+    }
 
     const enumDescrs = items.reduce((acc, i) => {
         if (!acc.includes(i.enum_item_descr))
@@ -95,7 +120,7 @@ export async function GET(req: Request, props: { params: Promise<{ name: string 
 
     let triageItems = enumDescrs.map(d => ({ descr: d, items: map[d] }))
 
-    html += `<h1>${params.name}</h1>`
+    html += `<h1>${batch.name}</h1>`
 
     const palavrasChave = await Dao.retrieveCountByBatchIdAndEnumId(batch_id, await Dao.assertIAEnumId(Plugin.PALAVRAS_CHAVE))
     const palavrasChaveJson = computeScaledKeywords(palavrasChave, 100)
@@ -187,11 +212,11 @@ export async function GET(req: Request, props: { params: Promise<{ name: string 
 
     // Build dynamic title for printing (browser uses document.title as suggested filename)
     const printTitle = (() => {
-        if (!triageItems.length) return params.name
-        if (suppressIndex) return `${params.name} - ${preprocessAgrupamento(triageItems[0].descr)}`
-        return params.name
+        if (!triageItems.length) return batch.name
+        if (suppressIndex) return `${batch.name} - ${preprocessAgrupamento(triageItems[0].descr)}`
+        return batch.name
     })()
-    const slugPrintTitle = slugify(printTitle) || slugify(params.name)
+    const slugPrintTitle = slugify(printTitle) || slugify(batch.name)
 
     if (!suppressIndex) {
         html += `<div class="page"><h2>Índice</h2>`

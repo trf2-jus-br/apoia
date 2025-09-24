@@ -24,6 +24,7 @@ export enum T {
     APELACAO = 'APELAÇÃO',
     CONTRARRAZOES_AO_RECURSO_DE_APELACAO = 'CONTRARRAZÕES AO RECURSO DE APELAÇÃO',
     AGRAVO = 'AGRAVO',
+    AGRAVO_DE_INSTRUMENTO = 'AGRAVO DE INSTRUMENTO',
     AGRAVO_INTERNO = 'AGRAVO INTERNO',
     RECURSO = 'RECURSO',
     RECURSO_INOMINADO = 'RECURSO INOMINADO',
@@ -106,7 +107,7 @@ export const ProdutosValidos = {
     [P.PREV_BI_ANALISE_DE_LAUDO]: { titulo: P.PREV_BI_ANALISE_DE_LAUDO, prompt: 'prev-bi-analise-de-laudo', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
-    [P.RELATORIO_DE_APELACAO_E_TRIAGEM]: { titulo: P.RELATORIO_DE_APELACAO_E_TRIAGEM, prompt: 'relatorio-de-apelacao-e-triagem', plugins: [] },
+    [P.RELATORIO_DE_APELACAO_E_TRIAGEM]: { titulo: P.RELATORIO_DE_APELACAO_E_TRIAGEM, prompt: 'relatorio-de-apelacao-e-triagem', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
 }
 
 export interface ProdutoCompleto { produto: P, dados: T[] }
@@ -165,6 +166,7 @@ const pecasQueIniciamFaseDeRecursoDe2aInstancia = [
     T.APELACAO,
     T.RECURSO,
     T.AGRAVO,
+    T.AGRAVO_DE_INSTRUMENTO,
 ];
 
 const pecasQueIniciamFases = [
@@ -191,10 +193,14 @@ const pecasQueFinalizamFases = [
     ...pecasQueFinalizamFaseDeRecursoDe2aInstancia
 ]
 
+const pecasQueRepresentamAgravoPara2aInstancia = [
+    T.AGRAVO,
+    T.AGRAVO_DE_INSTRUMENTO,
+]
+
 const pecasQueRepresentamRecursoPara2aInstancia = [
     T.APELACAO,
     T.RECURSO,
-    T.AGRAVO,
     T.AGRAVO_INTERNO,
     T.EMBARGOS_DE_DECLARACAO,
 ]
@@ -205,6 +211,7 @@ const pecasRelevantes2aInstanciaContrarrazoes = [
 ]
 
 const pecasRelevantes2aInstanciaRecursos = [
+    ...pecasQueRepresentamAgravoPara2aInstancia,
     ...pecasQueRepresentamRecursoPara2aInstancia,
     ...pecasRelevantes2aInstanciaContrarrazoes,
     T.PARECER,
@@ -218,6 +225,37 @@ const pecasRelevantes2aInstancia = [
     ...pecasRelevantes2aInstanciaRecursos,
     ...pecasRelevantes2aInstanciaContrarrazoes
 ]
+
+export const padraoAgravoAberta = [
+    ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
+    EXACT(T.DESPACHO_DECISAO),
+    ANY(),
+    PHASE('Agravo Aberto'),
+    OR(...pecasQueRepresentamAgravoPara2aInstancia),
+    ANY({
+        capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFases
+    })
+]
+
+export const padraoAgravoFechada = [
+    ...padraoAgravoAberta,
+    PHASE('Agravo Fechado'),
+    EXACT(T.ACORDAO),
+    ANY({ except: pecasQueIniciamFases })
+]
+
+export const padroesAgravo = [
+    padraoAgravoFechada,
+    padraoAgravoAberta,
+]
+
+export const padraoAgravoForcado = [
+    ...padraoAgravoAberta,
+    PHASE('Conhecimento Fechada'),
+    EXACT(T.ACORDAO),
+    ANY(),
+]    
+
 
 export const padraoApelacaoAberta = [
     ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
@@ -303,6 +341,7 @@ export const padroesConhecimento = [
 
 const padroesBasicosSegundaInstancia = [
     ...padroesApelacao,
+    ...padroesAgravo,
 ]
 
 const padroesMinimosSegundaInstancia = [
@@ -320,6 +359,7 @@ const padroesBasicosEForcados = [
     ...padroesBasicosSegundaInstancia,
     ...padroesTurmaRecursal,
     ...padroesConhecimento,
+    padraoAgravoForcado,
     padraoApelacaoForcado,
     padraoConhecimentoForcado,
 ]
@@ -490,10 +530,10 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     },
 
     RELATORIO_DE_APELACAO_E_TRIAGEM: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        status: StatusDeLancamento.PUBLICO,
         sort: 1000,
         nome: 'Relatório de Apelação e Triagem',
-        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
+        padroes: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado],
         produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT]
     },
 

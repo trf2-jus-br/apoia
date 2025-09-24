@@ -1,5 +1,5 @@
 import { match, matchFull, ANY, SOME, EXACT, OR, ANY_GREEDY, SOME_GREEDY, MatchFullResult, matchSomePatterns } from '../lib/proc/pattern';
-import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T } from '../lib/proc/combinacoes';
+import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T, padroesAgravo } from '../lib/proc/combinacoes';
 
 type DocumentoType = {
   id: string | null
@@ -112,4 +112,14 @@ describe('seleção automática do primeiro padrão que captura documentos', () 
       T.EXTRATO_DE_ATA
     ), padroesApelacao)).toEqual([1, 2, 5, 6, 7, 8])
   });
+
+    test('identificar agravo aberto', () => {
+    expect(capturedFromPatterns(docs(
+      T.PETICAO_INICIAL,
+      T.DESPACHO_DECISAO,
+      T.AGRAVO, 
+      T.CONTRARRAZOES
+    ), padroesAgravo)).toEqual([1, 2, 3, 4])
+  });
+
 });

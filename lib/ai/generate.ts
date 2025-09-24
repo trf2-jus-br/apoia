@@ -32,7 +32,11 @@ async function saveToCache(data: IAGeneration): Promise<number | undefined> {
 async function saveLog(user: UserType, additionalInformation: PromptAdditionalInformationType, model: string, usage, sha256: string, kind: string, text: string, attempt: number, messages: ModelMessage[]) {
     const system_id = await Dao.assertSystemId(await assertSystemCode(user))
     const dossier_id = additionalInformation?.dossierCode ? (await Dao.assertIADossierId(additionalInformation.dossierCode, system_id, undefined, undefined)) : null
-    const calculedUsage = modelCalcUsage(model, usage.inputTokens || 0 + usage.cachedInputTokens || 0, usage.reasoningTokens || 0 + usage.outputTokens || 0)
+    const calculedUsage = modelCalcUsage(
+        model,
+        (usage.inputTokens || 0) + (usage.cachedInputTokens || 0),
+        (usage.reasoningTokens || 0) + (usage.outputTokens || 0)
+    )
     const generationId = await saveToCache({
         sha256, model, prompt: kind, generation: text, attempt: attempt || null,
         prompt_payload: JSON.stringify(messages), dossier_id, document_id: null,
@@ -85,7 +89,11 @@ export async function generateContent(definition: PromptDefinitionType, data: Pr
 
 export async function writeUsage(usage, model: string, user_id: number | undefined, court_id: number | undefined) {
     const { cachedInputTokens, inputTokens, outputTokens, reasoningTokens } = usage
-    const calculedUsage = modelCalcUsage(model, inputTokens || 0 + cachedInputTokens || 0, reasoningTokens || 0 + outputTokens || 0)
+    const calculedUsage = modelCalcUsage(
+        model,
+        (inputTokens || 0) + (cachedInputTokens || 0),
+        (reasoningTokens || 0) + (outputTokens || 0)
+    )
     if (user_id && court_id)
         await Dao.addToIAUserDailyUsage(user_id, court_id, calculedUsage.input_tokens, calculedUsage.output_tokens, calculedUsage.approximate_cost)
 }
@@ -130,7 +138,11 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     if (definition?.cacheControl !== false) {
         const cached = await retrieveFromCache(sha256, model, definition.kind, attempt)
         if (cached) {
-            if (results) results.generationId = cached.id
+            // Ensure downstream code receives the persisted generation id
+            if (results) {
+                results.generationId = cached.id
+                results.model = cached.model || model
+            }
             return cached.generation
         }
     }

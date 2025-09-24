@@ -121,6 +121,7 @@ export class InteropBalcaojus implements Interop {
         const ajuizamento = dataAjuizamento ? parseYYYYMMDDHHMMSS(dataAjuizamento) : undefined
         const nomeOrgaoJulgador = dadosBasicos.orgaoJulgador?.nomeOrgao
         const codigoDaClasse = parseInt(dadosBasicos.classeProcessual, 10)
+        const classe = tua[codigoDaClasse]
         const numero = dadosBasicos.numero || numeroDoProcesso
         const instancia = sistemaConsulta === 'br.jus.trf2.eproc' ? Instance.SEGUNDO_GRAU : Instance.PRIMEIRO_GRAU
 
@@ -185,7 +186,6 @@ export class InteropBalcaojus implements Interop {
             if (primeiraOab) oabPoloAtivo = primeiraOab
         } catch { /* ignore */ }
 
-        const classe = tua[codigoDaClasse]
         const respLista: DadosDoProcessoType[] = [{ numeroDoProcesso: numero, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, oabPoloAtivo, instancia: instancia.name, sigilo }]
 
         // Processos vinculados (recursão no mesmo sistema)
@@ -210,9 +210,15 @@ export class InteropBalcaojus implements Interop {
             } else if (sistemaConsulta === 'br.jus.jfrj.eproc' || sistemaConsulta === 'br.jus.jfes.eproc') {
                 crossTargets.push('br.jus.trf2.eproc')
             }
+            let processoAIncluir = numeroDoProcesso
+            if (value?.dadosBasicos?.processoVinculado && classe?.toLowerCase().includes('agravo')) {
+                const vinculados = value?.dadosBasicos?.processoVinculado ? value.dadosBasicos.processoVinculado : []
+                if (vinculados.length)
+                    processoAIncluir = vinculados[0]?.numeroProcesso
+            }
             for (const target of crossTargets) {
                 try {
-                    const otherResp = await this.consultarProcesso(numeroDoProcesso, target)
+                    const otherResp = await this.consultarProcesso(processoAIncluir, target)
                     if (otherResp.length) {
                         respLista.push(...otherResp)
                         break
