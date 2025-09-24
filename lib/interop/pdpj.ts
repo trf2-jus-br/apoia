@@ -218,48 +218,54 @@ export class InteropPDPJ implements Interop {
     }
 
     public obterPeca = async (numeroDoProcesso, idDaPeca, binary?: boolean): Promise<ObterPecaType> => {
-        const response = await fetch(
-            envString('DATALAKE_API_URL') + `/processos/${numeroDoProcesso}/documentos/${idDaPeca}/${binary ? 'binario' : 'texto'}`,
-            {
-                method: 'GET',
-                headers: {
-                    'Accept': '*',
-                    'Authorization': `Bearer ${this.accessToken}`,
-                    'User-Agent': 'curl'
-                },
-                next: { revalidate: 3600 } // Revalida a cada hora
-            }
-        );
-        const b = await response.arrayBuffer()
-        if (response.status !== 200) {
-            try {
-                const decoder = new TextDecoder('utf-8')
-                const texto = decoder.decode(b)
-                if (response.headers.get('Content-Type') === 'application/json') {
-                    const data = JSON.parse(texto)
-                    throw new Error(data.message)
+        try {
+            const response = await fetch(
+                envString('DATALAKE_API_URL') + `/processos/${numeroDoProcesso}/documentos/${idDaPeca}/${binary ? 'binario' : 'texto'}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Accept': '*',
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'User-Agent': 'curl'
+                    },
+                    next: { revalidate: 3600 } // Revalida a cada hora
                 }
-            } catch (e) {
-                throw new Error(`Não foi possível obter o texto da peça no DataLake/Codex da PDPJ. (${e} - ${numeroDoProcesso}/${idDaPeca})`)
+            );
+            const b = await response.arrayBuffer()
+            if (response.status !== 200) {
+                try {
+                    const decoder = new TextDecoder('utf-8')
+                    const texto = decoder.decode(b)
+                    if (response.headers.get('Content-Type') === 'application/json') {
+                        const data = JSON.parse(texto)
+                        throw new Error(data.message)
+                    }
+                } catch (e) {
+                    throw new Error(`Não foi possível obter o texto da peça no DataLake/Codex da PDPJ. (${e} - ${numeroDoProcesso}/${idDaPeca})`)
+                }
             }
-        }
-        const contentType = response.headers.get('Content-Type')
-        if (contentType === 'text/html') {
-            const decoder = new TextDecoder('utf-8')
-            let texto = decoder.decode(b)
-            if (texto) {
-                texto = texto.replace(/encoding="ISO-8859-1"/g, 'encoding="UTF-8"')
-                texto = texto.replace(/<meta charset="ISO-8859-1"\/>/g, '')
+            const contentType = response.headers.get('Content-Type')
+            if (contentType === 'text/html') {
+                const decoder = new TextDecoder('utf-8')
+                let texto = decoder.decode(b)
+                if (texto) {
+                    texto = texto.replace(/encoding="ISO-8859-1"/g, 'encoding="UTF-8"')
+                    texto = texto.replace(/<meta charset="ISO-8859-1"\/>/g, '')
+                }
+
+                const encoder = new TextEncoder();
+                const buffer = encoder.encode(texto).buffer;
+                return { contentType, buffer: buffer as ArrayBuffer };
+
             }
-
-            const encoder = new TextEncoder();
-            const buffer = encoder.encode(texto).buffer;
-            return { contentType, buffer: buffer as ArrayBuffer };
-
+            const ab = b.slice(0, b.byteLength)
+            const resultado = { buffer: ab, contentType }
+            return resultado;
+        } catch (e) {
+            if (!binary)
+                return this.obterPeca(numeroDoProcesso, idDaPeca, true)
+            throw e
         }
-        const ab = b.slice(0, b.byteLength)
-        const resultado = { buffer: ab, contentType }
-        return resultado;
     }
 }
 
