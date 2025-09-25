@@ -18,7 +18,7 @@ interface FetchParams {
     headers?: Record<string, string>
     setErrorMessage?: (msg: string) => void
     // Allow any other ad-hoc properties without type errors
-    [key: string]: unknown
+    [key: string]: any
 }
 
 interface RequestOptions {
