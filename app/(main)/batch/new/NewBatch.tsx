@@ -24,7 +24,8 @@ export default function NewBatchPage(props: { favorites: any[] }) {
       .map(t => ({ value: t.id, label: t.nome }))
     const favs = props.favorites.map((f: any) => ({ value: String(f.base_id), label: `[Favorito] ${f.name}` }))
     setTipos([...base, ...favs])
-  }, [])
+    // props.favorites added to deps so favorites list updates if prop changes
+  }, [props.favorites])
 
   const preprocess = (value: string) => value.replaceAll(/(:.*?)$/gm, '').replaceAll('\n', ',').replaceAll(/[^\d,]/g, '').replaceAll(',', '\n').replaceAll('\n\n', '\n').trim()
 

@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
 import showdown from 'showdown'
-import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize'
 import { Modal, Button, Form } from 'react-bootstrap';
 import ErrorMessage from '../error-message';
@@ -156,8 +156,9 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
             const modelMsgs = await res.json()
             setMessages(convertToUIMessages(modelMsgs))
         }
+        // Only load when definition.kind or data changes; setMessages is stable from hook
         load()
-    }, [])
+    }, [params.definition.kind, params.data, params?.data?.numeroDoProcesso, setMessages])
 
     const handleEditMessage = (idx: number) => {
         const message = messages[idx]
@@ -168,7 +169,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         setFocusToChatInput()
     }
 
-    const setFocusToChatInput = () => {
+    const setFocusToChatInput = useCallback(() => {
         setTimeout(() => {
             const inputElement = document.getElementById('chat-input') as (HTMLInputElement | HTMLTextAreaElement);
             if (inputElement) {
@@ -177,7 +178,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                 inputElement.setSelectionRange(length, length);
             }
         }, 200);
-    }
+    }, [])
 
     const handleSubmitAndSetFocus = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -246,11 +247,11 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         setModalDrafts({})
     }, [processNumber])
 
-    const sendPrompt = (text: string) => {
+    const sendPrompt = useCallback((text: string) => {
         const msg: UIMessage = { id: undefined, role: 'user', parts: [{ type: 'text', text }] }
         sendMessage(msg)
         setFocusToChatInput()
-    }
+    }, [sendMessage, setFocusToChatInput])
 
     const suggestionCtx: SuggestionContext = useMemo(() => ({
         processNumber,
@@ -258,7 +259,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         alreadyLoadedProcessMetadata,
         messages,
         sendPrompt,
-    }), [processNumber, alreadyLoadedProcessMetadata, messages])
+    }), [processNumber, alreadyLoadedProcessMetadata, messages, sendPrompt])
     const runSuggestion = (id: string) => {
         setCurrentSuggestion(getAllSuggestions().find(s => s.id === id) || null)
         const result = resolveSuggestion(id, suggestionCtx)

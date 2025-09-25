@@ -9,7 +9,8 @@ export default function AskProcessNumberModal(props: ModalProps<{ processNumber?
 
   useEffect(() => {
     setProcessNumber(initial?.processNumber || context.processNumber || draft?.processNumber || '')
-  }, [show])
+    // include context.processNumber, draft?.processNumber, initial?.processNumber as dependencies
+  }, [show, context.processNumber, draft?.processNumber, initial?.processNumber])
 
   return (
     <Modal show={show} onHide={onClose} backdrop="static">

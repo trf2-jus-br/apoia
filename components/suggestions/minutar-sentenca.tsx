@@ -38,7 +38,8 @@ export default function DraftSentenceModal(props: ModalProps<{ processNumber?: s
     if (show) {
       setProcessNumber(initial?.processNumber || context.processNumber || draft?.processNumber || '')
     }
-  }, [show])
+    // include context.processNumber, draft?.processNumber, initial?.processNumber as dependencies
+  }, [show, context.processNumber, draft?.processNumber, initial?.processNumber])
 
   const canSubmit = processNumber.trim().length > 0 && decision
 
