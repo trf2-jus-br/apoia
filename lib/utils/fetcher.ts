@@ -18,8 +18,7 @@ interface FetchParams {
     headers?: Record<string, string>
     setErrorMessage?: (msg: string) => void
     // Allow any other ad-hoc properties without type errors
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any
+    [key: string]: unknown
 }
 
 interface RequestOptions {
@@ -167,8 +166,7 @@ const fetcherUtil = {
             }
         }
         // Unreachable but needed for TS control flow
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return undefined as any
+        return undefined as unknown as TRes
     },
 
     processError(error: unknown, setErrorMessage?: (msg: string) => void) {

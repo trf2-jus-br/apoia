@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Container, Nav, ProgressBar } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay, faPause, faPlus, faTrash, faFileArrowDown, faClock, faSpinner, faCheck, faTriangleExclamation, faEye, faList } from '@fortawesome/free-solid-svg-icons'
@@ -62,8 +62,6 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     }
   }
 
-  const canContinue = useMemo(() => !summary?.paused && (summary?.totals?.pending || 0) > 0, [summary])
-
   const doStep = async (job_id?: number) => {
     if (steppingRef.current) return
     steppingRef.current = true
@@ -87,7 +85,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     }
   }
 
-  const startPlay = useCallback(async () => {
+  const startPlay = async () => {
     setErr('')
     try {
       await Fetcher.post(`/api/v1/batch/${id}/play`, {})
@@ -112,7 +110,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     } catch (e: any) {
       setErr(e?.message || String(e))
     }
-  }, [id, refreshSummary, doStep])
+  }
 
   const pause = async () => {
     setErr('')
@@ -207,7 +205,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     return <span className="text-secondary"><FontAwesomeIcon icon={faClock} title="Aguardando" /></span>
   }
 
-  const onClick = useCallback((kind: string, row: Job) => {
+  const onClick = (kind: string, row: Job) => {
     switch (kind) {
       case 'play':
         if (row.status === 'PENDING')
@@ -224,7 +222,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
       default:
         console.log('Unknown click action', kind, row)
     }
-  }, [])
+  }
 
   const mappedJobs = jobs.filter(j => statusFilter === 'all' || j.status === statusFilter).map(j => ({ ...j, status_icon: statusIcon(j.status), cost: j.cost_sum != null ? formatMoney(toDisplayCurrency(j.cost_sum as any)) : '' }))
 

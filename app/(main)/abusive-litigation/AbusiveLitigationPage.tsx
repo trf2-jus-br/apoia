@@ -96,12 +96,15 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
         return dadosDoProcesso.pecasSelecionadas?.find(p => slugify(p.descr) === 'peticao-inicial')
     }
 
+    interface ProcessoResponseType { arrayDeDadosDoProcesso?: DadosDoProcessoType[]; errorMsg?: string }
+
     const obterDadosDoProcessoEConteudoDaPeticaoInicial = async (numeroDoProcesso: string, procs: DadosDoProcessoAndControlType[], procsMap: { [key: string]: DadosDoProcessoAndControlType }): Promise<DadosDoProcessoAndControlType> => {
         let dadosDoProcesso: DadosDoProcessoAndControlType = procsMap[numeroDoProcesso]
         if (!dadosDoProcesso) {
-            const response = await fetcher.get(`/api/v1/process/${numeroDoProcesso}`)
-            if (response.arrayDeDadosDoProcesso && response.arrayDeDadosDoProcesso.length > 0) {
-                for (const dadosDoProc of response.arrayDeDadosDoProcesso) {
+            const response = await fetcher.get<ProcessoResponseType>(`/api/v1/process/${numeroDoProcesso}`)
+            const procJson = (response && typeof response === 'object' && 'arrayDeDadosDoProcesso' in response) ? response as ProcessoResponseType : undefined
+            if (procJson?.arrayDeDadosDoProcesso && procJson.arrayDeDadosDoProcesso.length > 0) {
+                for (const dadosDoProc of procJson.arrayDeDadosDoProcesso) {
                     const selecao = selecionarPecasPorPadraoComFase(dadosDoProc.pecas, TipoDeSinteseMap['LITIGANCIA_PREDATORIA'].padroes)
                     const pecasSelecionadas = selecao.pecas
                     const peticaoInicialPeca = pecasSelecionadas.find(peca => slugify(peca.descr) === 'peticao-inicial')
@@ -121,12 +124,16 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                 for (const peca of dadosDoProcesso.pecasSelecionadas) {
                     if (peca.conteudo) continue
                     try {
-                        const resp = await fetcher.get(`/api/v1/process/${numeroDoProcesso}/piece/${peca.id}/content`)
-                        if (resp.errormsg) {
-                            peca.errorMsg = resp.errormsg
-                            peca.conteudo = ''
-                        } else
-                            peca.conteudo = resp.content
+                        interface PecaContentResponse { errormsg?: string; content?: string }
+                        const resp = await fetcher.get<PecaContentResponse>(`/api/v1/process/${numeroDoProcesso}/piece/${peca.id}/content`)
+                        if (resp && typeof resp === 'object') {
+                            if ('errormsg' in resp && resp.errormsg) {
+                                peca.errorMsg = resp.errormsg
+                                peca.conteudo = ''
+                            } else if ('content' in resp && resp.content) {
+                                peca.conteudo = resp.content
+                            }
+                        }
                     } catch (error) {
                         peca.errorMsg = `Erro ao carregar conteúdo da peça ${peca.id} - ${error}`
                     }
@@ -134,8 +141,8 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                 procsMap[numeroDoProcesso] = dadosDoProcesso
                 setProcessosMap({ ...procsMap })
             }
-            if (response.errorMsg) {
-                dadosDoProcesso = { numeroDoProcesso, pecas: [], pecasSelecionadas: [], poloAtivo: '', poloPassivo: '', missingDadosDoProcesso: true, missingPeticaoInicial: true, errorMsg: response.errorMsg }
+            if (procJson?.errorMsg) {
+                dadosDoProcesso = { numeroDoProcesso, pecas: [], pecasSelecionadas: [], poloAtivo: '', poloPassivo: '', missingDadosDoProcesso: true, missingPeticaoInicial: true, errorMsg: procJson.errorMsg }
                 procsMap[numeroDoProcesso] = dadosDoProcesso
                 setProcessosMap({ ...procsMap })
             }
