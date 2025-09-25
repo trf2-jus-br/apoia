@@ -12,6 +12,7 @@ import { assertCurrentUser, isUserCorporativo } from '@/lib/user'
 import Print from '@/components/slots/print'
 import { formatDateTime, formatYYYYMMDDHHMMSS } from '@/lib/utils/date'
 import { slugify } from '@/lib/utils/utils'
+import { getSelectedModelName } from '@/lib/ai/model-server'
 
 export default async function Home() {
     noStore()
@@ -20,7 +21,7 @@ export default async function Home() {
     const user = await assertCurrentUser()
     if (!(await isUserCorporativo(user)))
         return <Container><div className="alert alert-danger mt-5">Usuário não é corporativo</div></Container>
-
+    const model = await getSelectedModelName()
 
     const definition = getInternalPrompt('chat-standalone')
     const data: PromptDataType = {
@@ -34,7 +35,7 @@ export default async function Home() {
             </Container>
         }>
             <Container id="printDiv" className="mt-3" fluid={false}>
-                <Chat definition={definition} data={data} withTools={true} key={1}
+                <Chat definition={definition} data={data} model={model} withTools={true} key={1}
                     footer={<div className="text-body-tertiary h-print">O Agente de IA busca informações e peças de qualquer processo. Para contextualizar, inclua o número do processo na sua primeira pergunta.</div>}
                 />
                 <Print numeroDoProcesso={`chat-${slugify(formatYYYYMMDDHHMMSS(new Date()))}`} />

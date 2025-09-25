@@ -145,7 +145,7 @@ export default function ProcessContents({ prompt, dadosDoProcesso, pieceContent,
             {readyToStartAI && requests?.length > 0 && (
                 apiKeyProvided
                     ? <>
-                        <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} />
+                        <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} model={model} />
                         <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />
                     </>
                     : <PromptParaCopiar dadosDoProcesso={dadosDoProcesso} requests={requests} />

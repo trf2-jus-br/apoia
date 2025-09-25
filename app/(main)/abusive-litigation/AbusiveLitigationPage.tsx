@@ -40,9 +40,10 @@ const fixOutrosNumerosDeProcessos = (outrosNumerosDeProcessos: string, numeroDoP
     return Array.from(numerosUnicosDeProcessos).join(', ')
 }
 
-export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?: string, hasApiKey: boolean }) {
+export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?: string, hasApiKey: boolean, model?: string }) {
     const NAVIGATE_TO_PROCESS_URL = params.NAVIGATE_TO_PROCESS_URL
     const hasApiKey = params.hasApiKey
+    const model = params.model
     const [outrosNumerosDeProcessos, setOutrosNumerosDeProcessos] = useState('')
     const [numeroDoProcesso, setNumeroDoProcesso] = useState('')
     const [hidden, setHidden] = useState(true)
@@ -373,7 +374,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                     data={{ textos }}
                     options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined} />
 
-                <Chat definition={getInternalPrompt('chat')} data={{ textos }} key={calcSha256({ textos })} />
+                <Chat definition={getInternalPrompt('chat')} data={{ textos }} key={calcSha256({ textos })} model={model} />
             </>}
             <Toast onClose={() => setToast('')} show={!!toast} delay={3000} bg="danger" autohide key={toast} style={{ position: 'fixed', top: 10, right: 10 }}>
                 <Toast.Header>

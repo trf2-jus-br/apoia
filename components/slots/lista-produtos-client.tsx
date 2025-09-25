@@ -38,7 +38,7 @@ const onReady = (Frm: FormHelper, requests: GeneratedContent[], idx: number, con
     }
 }
 
-function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number, dossierCode: string) {
+function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number, dossierCode: string, model: string) {
     const request = requests[idx]
 
     const informationExtractionVariableName = `_information_extraction_${idx}`
@@ -65,7 +65,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
         </div>
     } else if (request.produto === P.CHAT) {
         if (Frm.get('pending') > 0) return null
-        return <Chat definition={request.internalPrompt} data={request.data} key={dataHash} />
+    return <Chat definition={request.internalPrompt} data={request.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} />
     }
 
     return <div key={idx}>
@@ -77,7 +77,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
     </div>
 }
 
-export const ListaDeProdutos = ({ dadosDoProcesso, requests }: { dadosDoProcesso: DadosDoProcessoType, requests: GeneratedContent[] }) => {
+export const ListaDeProdutos = ({ dadosDoProcesso, requests, model }: { dadosDoProcesso: DadosDoProcessoType, requests: GeneratedContent[], model: string }) => {
     const [data, setData] = useState({ pending: 0 } as any)
 
     if (!dadosDoProcesso || dadosDoProcesso.errorMsg) return ''
@@ -90,7 +90,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests }: { dadosDoProcesso
 
     return <>{requests.map((request, idx) => {
         if (idx > 0 && requests[idx - 1].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) return null      
-        return requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso)
+        return requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model)
     })}
 
         {/* <p>{JSON.stringify(data)}</p> */}

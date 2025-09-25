@@ -67,7 +67,6 @@ async function appendServerCookies(headers: Record<string, string>): Promise<Rec
             // build a minimal cookie-like object instead of using an undefined Cookie constructor
             secureNextauth = { name: '__Secure-next-auth.session-token', value: nextauth.value, secure: true }
         const cookieHeader = [nextauth, secureNextauth].filter(c => !!c).map(c => `${c.name}=${c.value}`).join('; ')
-        console.log('Appending cookies to fetch.', { cookieHeader })
         if (nextauth) headers = { ...headers, cookie: cookieHeader }
     } catch {
         // ignore

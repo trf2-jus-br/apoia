@@ -8,6 +8,7 @@ import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
 import showdown from 'showdown'
 import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useChatAnalytics } from '@/lib/analytics/chatAnalytics'
 import TextareaAutosize from 'react-textarea-autosize'
 import { Modal, Button, Form } from 'react-bootstrap';
 import ErrorMessage from '../error-message';
@@ -118,7 +119,7 @@ function convertToUIMessages(modelMsgs: ModelMessage[]): UIMessage[] {
 
 let loadingMessages = false
 
-export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, footer?: ReactElement, withTools?: boolean, setProcessNumber?: (number: string) => void }) {
+export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, model: string, footer?: ReactElement, withTools?: boolean, setProcessNumber?: (number: string) => void }) {
     const [processNumber, setProcessNumber] = useState(params?.data?.numeroDoProcesso || '');
     const [input, setInput] = useState('')
     const [files, setFiles] = useState<FileList | undefined>(undefined)
@@ -131,6 +132,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const [activeModalSubmitHandler, setActiveModalSubmitHandler] = useState<((values: any, ctx: SuggestionContext) => void) | null>(null)
     const [modalDrafts, setModalDrafts] = useState<Record<string, any>>({})
 
+
     const handleProcessNumberChange = (number: string) => {
         setProcessNumber(number)
         if (params.setProcessNumber) params.setProcessNumber(number)
@@ -141,6 +143,15 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
             transport: new DefaultChatTransport({ api: `/api/v1/chat${params.withTools ? '?withTools=true' : ''}` }),
             // messages: fetchedMessages,
         })
+
+    // Hook de analytics encapsula instrumentação (depois de obter messages & error)
+    const { createUserMessage } = useChatAnalytics({
+        kind: params.definition.kind,
+        model: params.model,
+        dossierCode: processNumber || undefined,
+        messages,
+        error,
+    })
 
     useEffect(() => {
         const load = async () => {
@@ -230,7 +241,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         }
         buildFileParts().then(fileParts => {
             if (clientError) return
-            const msg: UIMessage = { id: undefined, role: 'user', parts: [{ type: 'text', text: input }, ...fileParts] }
+            const msg = createUserMessage(input, fileParts)
             sendMessage(msg)
         })
         setInput('')
@@ -248,10 +259,10 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     }, [processNumber])
 
     const sendPrompt = useCallback((text: string) => {
-        const msg: UIMessage = { id: undefined, role: 'user', parts: [{ type: 'text', text }] }
+        const msg = createUserMessage(text, [], { suggestion: true })
         sendMessage(msg)
         setFocusToChatInput()
-    }, [sendMessage, setFocusToChatInput])
+    }, [createUserMessage, sendMessage, setFocusToChatInput])
 
     const suggestionCtx: SuggestionContext = useMemo(() => ({
         processNumber,
@@ -274,6 +285,8 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     }
 
     console.log('Chat messages:', messages)
+
+    // (efeitos de analytics agora vivem em useChatAnalytics)
 
     return (
         <div className={messages.find(m => m.role === 'assistant') ? '' : 'd-print-none h-print'}>

@@ -49,3 +49,23 @@ export function trackAIComplete(meta: Record<string, any>) {
 export function trackAIError(meta: Record<string, any>) {
   gaEvent({ action: 'ai_usage_error', category: 'ai', ...meta })
 }
+
+// -----------------------------
+// Chat (Fase 1)
+// -----------------------------
+
+export function trackChatUserMessage(meta: Record<string, any>) {
+  gaEvent({ action: 'chat_user_message', category: 'chat', ...meta })
+}
+
+export function trackChatAIStart(meta: Record<string, any>) {
+  gaEvent({ action: 'chat_ai_start', category: 'chat', ...meta })
+}
+
+export function trackChatAIComplete(meta: Record<string, any>) {
+  gaEvent({ action: 'chat_ai_complete', category: 'chat', ...meta })
+}
+
+export function trackChatAIError(meta: Record<string, any>) {
+  gaEvent({ action: 'chat_ai_error', category: 'chat', ...meta })
+}

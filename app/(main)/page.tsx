@@ -73,13 +73,13 @@ export default async function HomePage() {
             href: "/anonym",
             color: "text-dark"
         },
-        {
-            icon: faBoxArchive,
-            title: "Relatório de Acervo",
-            description: "Gere relatórios detalhados do acervo processual",
-            href: "/batch",
-            color: "text-success"
-        },
+        // {
+        //     icon: faBoxArchive,
+        //     title: "Relatório de Acervo",
+        //     description: "Gere relatórios detalhados do acervo processual",
+        //     href: "/batch",
+        //     color: "text-success"
+        // },
         {
             icon: faDollar,
             title: "Relatório de Uso de IA",
