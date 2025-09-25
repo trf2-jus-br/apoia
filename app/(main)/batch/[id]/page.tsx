@@ -5,16 +5,16 @@ import { Dao } from '@/lib/db/mysql'
 export const maxDuration = 60
 
 async function getSummary(id: string) {
-  const res = await Fetcher.get(`/api/v1/batch/${id}`)
+  const res = await Fetcher.get<any>(`/api/v1/batch/${id}`)
   return res?.summary
 }
 
 async function getJobs(id: string) {
-  const res = await Fetcher.get(`/api/v1/batch/${id}/jobs?status=all`)
+  const res = await Fetcher.get<any>(`/api/v1/batch/${id}/jobs?status=all`)
   return res?.jobs || []
 }
 
-async function fetchDollar() {
+export async function fetchDollar() {
   const base = process.env.NEXTAUTH_URL_INTERNAL || ''
   if (!base) return null
   try {

@@ -415,6 +415,9 @@ export type IABatchSummary = {
     name: string
     tipo_de_sintese: string | null
     prompt_base_id?: number | null
+    // Latest prompt resolved from prompt_base_id (JOIN ia_prompt ON base_id AND is_latest=1)
+    prompt_latest_id?: number | null
+    prompt_latest_name?: string | null
     complete: boolean
     paused: boolean
     totals: { total: number, pending: number, running: number, ready: number, error: number }

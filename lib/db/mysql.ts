@@ -1238,7 +1238,15 @@ export class Dao {
         const userId = await getCurrentUserId()
         // Aggregate counts and cost in a single query per batch
         const batches: any[] = await knex('ia_batch as b')
-            .select('b.id', 'b.name', 'b.tipo_de_sintese', 'b.prompt_base_id', 'b.complete', 'b.paused')
+            .select(
+                'b.id', 'b.name', 'b.tipo_de_sintese', 'b.prompt_base_id', 'b.complete', 'b.paused',
+                knex.raw('p_latest.id as prompt_latest_id'),
+                knex.raw('p_latest.name as prompt_latest_name')
+            )
+            .leftJoin('ia_prompt as p_latest', function () {
+                this.on('p_latest.base_id', '=', 'b.prompt_base_id')
+                    .andOn('p_latest.is_latest', knex.raw('?', [true]))
+            })
             .where('b.created_by', userId)
             .orderBy('b.created_at', 'desc')
         if (!batches.length) return []
@@ -1262,7 +1270,7 @@ export class Dao {
             .groupBy('batch_id')
         const byId: Record<number, mysqlTypes.IABatchSummary> = {}
         for (const b of batches) {
-            byId[b.id] = { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, prompt_base_id: b.prompt_base_id, complete: !!b.complete, paused: !!b.paused, totals: { total: 0, pending: 0, running: 0, ready: 0, error: 0 }, spentCost: 0, estimatedTotalCost: 0, avgDurationMs: null, etaMs: null }
+            byId[b.id] = { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, prompt_base_id: b.prompt_base_id, prompt_latest_id: b.prompt_latest_id ?? null, prompt_latest_name: b.prompt_latest_name ?? null, complete: !!b.complete, paused: !!b.paused, totals: { total: 0, pending: 0, running: 0, ready: 0, error: 0 }, spentCost: 0, estimatedTotalCost: 0, avgDurationMs: null, etaMs: null }
         }
         for (const jAny of jobs as any[]) {
             const s = jAny.status as mysqlTypes.IABatchJob['status']
@@ -1298,7 +1306,18 @@ export class Dao {
     }
 
     static async getBatchSummary(batch_id: number): Promise<mysqlTypes.IABatchSummary | undefined> {
-        const b = await knex('ia_batch').select('*').where({ id: batch_id }).first()
+        const b = await knex('ia_batch as b')
+            .select(
+                'b.*',
+                knex.raw('p_latest.id as prompt_latest_id'),
+                knex.raw('p_latest.name as prompt_latest_name')
+            )
+            .leftJoin('ia_prompt as p_latest', function () {
+                this.on('p_latest.base_id', '=', 'b.prompt_base_id')
+                    .andOn('p_latest.is_latest', knex.raw('?', [true]))
+            })
+            .where('b.id', batch_id)
+            .first()
         if (!b) return
         const counts = await knex('ia_batch_job')
             .select('status')
@@ -1334,7 +1353,7 @@ export class Dao {
     const estimatedTotalCost = Number.isFinite(avgCost) ? avgCost * totals.total : spentCost
         const remaining = totals.total - totals.ready - totals.error
         const etaMs = avgDurationMs ? Math.round(avgDurationMs * Math.max(remaining, 0)) : null
-        return { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, prompt_base_id: (b as any).prompt_base_id, complete: !!b.complete, paused: !!b.paused, totals, spentCost, estimatedTotalCost, avgDurationMs, etaMs }
+        return { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, prompt_base_id: (b as any).prompt_base_id, prompt_latest_id: (b as any).prompt_latest_id ?? null, prompt_latest_name: (b as any).prompt_latest_name ?? null, complete: !!b.complete, paused: !!b.paused, totals, spentCost, estimatedTotalCost, avgDurationMs, etaMs }
     }
 
     static async listBatchJobs(batch_id: number, status?: mysqlTypes.IABatchJob['status'] | 'all', page?: number, pageSize: number = 50): Promise<mysqlTypes.IABatchJob[]> {
