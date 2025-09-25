@@ -8,6 +8,7 @@ metadata:
 data:
   NEXTAUTH_URL_INTERNAL: "http://localhost:80"
   NEXTAUTH_URL: "http://apoia.stg.pdpj.jus.br"
+  NEXT_PUBLIC_BASE_URL: "http://apoia.stg.pdpj.jus.br"
   ###NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
 
   ###JWT_SECRET: ${JWT_SECRET}

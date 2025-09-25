@@ -29,7 +29,7 @@ export const getTriagem = (str) => {
 }
 
 function findNormasText(str: any) {
-    const regex = /^# Normas\/Jurisprudência Invocadas\n(?<text>.+?)\n\n/ms
+    const regex = /^# Normas\/Jurisprudência Invocadas\s*\n(?<text>.+?)\n\n/ms
     const m = str.match(regex)
     return m
 }
@@ -41,7 +41,7 @@ export const getNormas = (str) => {
 }
 
 function findPalavrasChaveText(str: any) {
-    const regex = /^# Palavras-Chave\n(?<text>.+?)\n\n/ms
+    const regex = /^# Palavras-Chave\s*\n(?<text>.+?)\n\n/ms
     const m = str.match(regex)
     return m
 }

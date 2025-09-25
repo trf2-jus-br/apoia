@@ -35,7 +35,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
     setInfo('')
     try {
       setInfo('Otimizando índice, aguarde...')
-      const res = await Fetcher.post(`/api/v1/batch/${id}/fix-index`, {})
+      const res = await Fetcher.post<any, any>(`/api/v1/batch/${id}/fix-index`, {})
       if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha ao otimizar índice')
       setInfo('Índice otimizado com sucesso')
     } catch (e: any) {
@@ -46,7 +46,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
   const refreshSummary = async () => {
     try {
-      const res = await Fetcher.get(`/api/v1/batch/${id}`)
+      const res = await Fetcher.get<any>(`/api/v1/batch/${id}`)
       if (res?.summary) setSummary(res.summary)
     } catch (e: any) {
       setErr(e?.message || String(e))
@@ -55,7 +55,7 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
   const refreshJobs = async () => {
     try {
-      const res = await Fetcher.get(`/api/v1/batch/${id}/jobs?status=all`)
+      const res = await Fetcher.get<any>(`/api/v1/batch/${id}/jobs?status=all`)
       if (Array.isArray(res?.jobs)) setJobs(res.jobs)
     } catch (e: any) {
       setErr(e?.message || String(e))
@@ -314,47 +314,6 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
 
       <CsvNumbersModal show={showAdd} title="Adicionar processos" onClose={() => setShowAdd(false)} onConfirm={onAddNumbers} />
       <CsvNumbersModal show={showDelete} title="Excluir processos" onClose={() => setShowDelete(false)} onConfirm={onDeleteNumbers} />
-
-
-      {/* <table className="table table-striped table-sm">
-        <thead className="table-dark">
-          <tr>
-            <th>Número</th>
-            <th>Status</th>
-            <th>Tentativas</th>
-            <th>Início</th>
-            <th>Duração</th>
-            <th>Custo</th>
-            <th>Erro</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {jobs.map((j) => (
-            <tr key={j.id}>
-              <td>{j.dossier_code}</td>
-              <td>{statusIcon(j.status)}</td>
-              <td>{j.attempts}</td>
-              <td>{formatDateTime(j.started_at)}</td>
-              <td>{formatDuration(j.duration_ms)}</td>
-              <td>{j.cost_sum != null ? formatMoney(toDisplayCurrency(j.cost_sum as any)) : ''}</td>
-              <td className="small text-wrap" style={{ maxWidth: '24rem' }}>{(j as any).error_msg || ''}</td>
-              <td className="text-end">
-                {j.status === 'PENDING' && (
-                  <a href="#" onClick={async (e) => { e.preventDefault(); await Fetcher.post(`/api/v1/batch/${id}/step`, { job_id: j.id }); await Promise.all([refreshSummary(), refreshJobs()]) }}>
-                    <FontAwesomeIcon icon={faPlay} className="me-2" />Fazer
-                  </a>
-                )}
-                {(j.status === 'READY' || j.status === 'ERROR') && (
-                  <a href="#" onClick={(e) => { e.preventDefault(); onRetry(j.id, j.dossier_code) }}>
-                    <FontAwesomeIcon icon={faRotateRight} className="me-2" />Refazer
-                  </a>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table> */}
     </Container>
 
   )

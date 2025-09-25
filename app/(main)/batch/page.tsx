@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 async function getData() {
-  const res = await Fetcher.get('/api/v1/batch')
+  const res = await Fetcher.get<any>('/api/v1/batch')
   return res?.rows || []
 }
 
