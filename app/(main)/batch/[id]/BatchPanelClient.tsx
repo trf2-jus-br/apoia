@@ -13,9 +13,9 @@ type Totals = { total: number, pending: number, running: number, ready: number, 
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
 type Job = { id: number, dossier_code: string, status: 'PENDING' | 'RUNNING' | 'READY' | 'ERROR', attempts: number, started_at?: string, finished_at?: string, duration_ms?: number | null, cost_sum?: number | null }
 
-export default function BatchPanelClient({ id, initialSummary, initialJobs, usdBrl, promptName }: { id: string, initialSummary: Summary, initialJobs: Job[], usdBrl?: number | null, promptName?: string | null }) {
+export default function BatchPanelClient({ id, initialSummary, usdBrl, promptName }: { id: string, initialSummary: Summary, usdBrl?: number | null, promptName?: string | null }) {
   const [summary, setSummary] = useState<Summary>(initialSummary)
-  const [jobs, setJobs] = useState<Job[]>(initialJobs)
+  const [jobs, setJobs] = useState<Job[]>([])
   const [err, setErr] = useState<string>('')
   const [info, setInfo] = useState<string>('')
   const [showAdd, setShowAdd] = useState(false)
@@ -24,11 +24,6 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
   const [buildingJobId, setBuildingJobId] = useState<number | null>(null) // job currently being built (optimistic UI)
   const steppingRef = useRef(false)
   const playLoopRef = useRef(false)
-
-  // Stop any background loops on unmount
-  useEffect(() => {
-    return () => { playLoopRef.current = false; steppingRef.current = false }
-  }, [])
 
   const fixIndex = async () => {
     setErr('')
@@ -61,6 +56,13 @@ export default function BatchPanelClient({ id, initialSummary, initialJobs, usdB
       setErr(e?.message || String(e))
     }
   }
+
+  // Stop any background loops on unmount
+  useEffect(() => {
+    playLoopRef.current = false
+    steppingRef.current = false
+    refreshJobs()
+  }, [])
 
   const doStep = async (job_id?: number) => {
     if (steppingRef.current) return
