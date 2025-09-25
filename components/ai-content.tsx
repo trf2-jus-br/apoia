@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { trackAIStart, trackAIComplete, trackAIError } from '@/lib/utils/ga'
 import EvaluationModal from './ai-evaluation'
 import { evaluate } from '../lib/ai/generate'
 import { preprocess, Visualization, VisualizationEnum } from '@/lib/ui/preprocess'
@@ -67,6 +68,14 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
 
         if (params.onBusy) params.onBusy()
 
+        // Disparar evento de início
+        trackAIStart({
+            kind: payload.kind,
+            model: payload.modelSlug,
+            prompt: payload.promptSlug,
+            dossier_code: payload.dossierCode,
+        })
+
         let response: Response
         try {
             response = await fetch('/api/v1/ai', {
@@ -85,10 +94,25 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     } catch (e) { }
                 }
                 setErrormsg(msg || `HTTP error: ${response.status}`)
+                trackAIError({
+                    kind: payload.kind,
+                    model: payload.modelSlug,
+                    prompt: payload.promptSlug,
+                    dossier_code: payload.dossierCode,
+                    http_status: response.status,
+                    message: msg || `HTTP error: ${response.status}`
+                })
                 return
             }
         } catch (err) {
             setErrormsg(err.message)
+            trackAIError({
+                kind: payload.kind,
+                model: payload.modelSlug,
+                prompt: payload.promptSlug,
+                dossier_code: payload.dossierCode,
+                message: err.message
+            })
             return
         }
         const reader = response.body?.getReader()
@@ -111,6 +135,15 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                             formated: preprocess(text, params.definition, params.data, complete, visualizationId, params.diffSource).text,
                             json
                         })
+                    // Evento de conclusão (sucesso)
+                    trackAIComplete({
+                        kind: payload.kind,
+                        model: payload.modelSlug,
+                        prompt: payload.promptSlug,
+                        dossier_code: payload.dossierCode,
+                        bytes: text.length,
+                        json: json ? '1' : '0'
+                    })
                     break
                 }
                 chunks.push(value)

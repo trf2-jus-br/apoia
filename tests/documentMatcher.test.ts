@@ -6,6 +6,7 @@ import { PecaType } from "@/lib/proc/process-types";
 // Função auxiliar para criar documentos
 const createDocument = (conteudo: string, descr: string): PecaType => ({
     id: "1",
+    numeroDoProcesso: '',
     numeroDoEvento: "1",
     descricaoDoEvento: "",
     tipoDoConteudo: "text/plain",
