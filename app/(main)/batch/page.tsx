@@ -5,12 +5,16 @@ import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPenToSquare } from '@fortawesome/free-regular-svg-icons'
 import { fetchDollar } from './[id]/page'
+import { headers } from "next/headers"
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 async function getData() {
-  const res = await Fetcher.get<any>('/api/v1/batch')
+  // const res = await Fetcher.get<any>('/api/v1/batch')
+  const cookie = (await headers()).get("cookie") ?? ""
+  const result = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/batch`, { headers: { cookie } })
+  const res = await result.json()
   return res?.rows || []
 }
 
