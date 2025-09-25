@@ -1,27 +1,17 @@
 import { Container } from 'react-bootstrap'
-import Fetcher from '@/lib/utils/fetcher'
 import Link from 'next/link'
 import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPenToSquare } from '@fortawesome/free-regular-svg-icons'
 import { fetchDollar } from './[id]/page'
-import { headers } from "next/headers"
+import { Dao } from '@/lib/db/mysql'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-async function getData() {
-  // const res = await Fetcher.get<any>('/api/v1/batch')
-  const cookie = (await headers()).get("cookie") ?? ""
-  const result = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/batch`, { headers: { cookie } })
-  const res = await result.json()
-  return res?.rows || []
-}
-
 export default async function BatchesPage() {
   const usdBrl = await fetchDollar()
-
-  const rows = await getData()
+  const rows = await Dao.listBatchesForUser()
   return (
     <Container className="mt-3">
       <div className="d-flex align-items-center mb-3">
