@@ -61,9 +61,14 @@ async function appendServerCookies(headers: Record<string, string>): Promise<Rec
         const mod = await import('next/headers')
         const cookieStore = await mod.cookies()
         const all = await cookieStore.getAll()
-        const cookieHeader = all.map(c => `${c.name}=${c.value}`).join('; ')
-        console.log('Appending cookies to fetch.')
-        if (cookieHeader) return { ...headers, cookie: cookieHeader }
+        const nextauth = await cookieStore.get('next-auth.session-token')
+        let secureNextauth: any = await cookieStore.get('__Secure-next-auth.session-token')
+        if (!secureNextauth && nextauth)
+            // build a minimal cookie-like object instead of using an undefined Cookie constructor
+            secureNextauth = { name: '__Secure-next-auth.session-token', value: nextauth.value, secure: true }
+        const cookieHeader = [nextauth, secureNextauth].filter(c => !!c).map(c => `${c.name}=${c.value}`).join('; ')
+        console.log('Appending cookies to fetch.', { cookieHeader })
+        if (nextauth) headers = { ...headers, cookie: cookieHeader }
     } catch {
         // ignore
     }
