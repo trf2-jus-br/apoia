@@ -144,7 +144,8 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                     </>)
                 }
             ],
-            tableClassName: 'table table-sm table-striped table-border-sides'
+            tableClassName: 'table table-sm table-striped table-border-sides',
+            pageSizes: [10, 20, 50, 100, 200, 500],
         },
     }
 }
