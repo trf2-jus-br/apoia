@@ -213,7 +213,7 @@ export class InteropPDPJ implements Interop {
             if (processo.processosRelacionados?.length && !recursivo) {
                 const processoOriginario = processo.processosRelacionados.find((p: any) => p.tipoRelacao === 'ORIGINARIO' && p.numeroProcesso !== numeroDoProcesso)
                 if (processoOriginario) {
-                    const numeroDoProcessoOriginario = processoOriginario.numeroProcesso
+                    const numeroDoProcessoOriginario = processoOriginario.numeroProcesso?.replace(/\D/g, '')
                     const idClasseOriginario = processoOriginario.classe?.id
                     try {
                         const originario = await this.consultarProcesso(numeroDoProcessoOriginario, true)

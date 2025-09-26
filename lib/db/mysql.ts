@@ -782,7 +782,7 @@ export class Dao {
         return getId(dossierResult)
     }
 
-
+    
     static async assertIADocumentId(dossier_id: number, code: string, assigned_category: string | null): Promise<number> {
         if (!knex) return
         let document = await knex('ia_document').select<mysqlTypes.IADocument[]>('id', 'assigned_category').where({ code }).first()
@@ -1336,27 +1336,27 @@ export class Dao {
             .where({ batch_id, status: 'READY' })
             .first()
         const totals = { total: 0, pending: 0, running: 0, ready: 0, error: 0 }
-        ;(counts as any[]).forEach(c => {
-            const s = c.status as mysqlTypes.IABatchJob['status']
-            const cnt = Number(c.cnt)
-            totals.total += cnt
-            if (s === 'PENDING') totals.pending += cnt
-            if (s === 'RUNNING') totals.running += cnt
-            if (s === 'READY') totals.ready += cnt
-            if (s === 'ERROR') totals.error += cnt
-        })
-    const spentCost = Number((costRow as any)?.sum || 0)
-    const avgDurationMs = (durRow as any)?.avg != null ? Number((durRow as any).avg) : null
-    // Média por dossiê (job) pronto, não por item; garante estimado >= atual quando há pendentes
-    const readyCount = Math.max(1, totals.ready)
-    const avgCost = spentCost / readyCount
-    const estimatedTotalCost = Number.isFinite(avgCost) ? avgCost * totals.total : spentCost
+            ; (counts as any[]).forEach(c => {
+                const s = c.status as mysqlTypes.IABatchJob['status']
+                const cnt = Number(c.cnt)
+                totals.total += cnt
+                if (s === 'PENDING') totals.pending += cnt
+                if (s === 'RUNNING') totals.running += cnt
+                if (s === 'READY') totals.ready += cnt
+                if (s === 'ERROR') totals.error += cnt
+            })
+        const spentCost = Number((costRow as any)?.sum || 0)
+        const avgDurationMs = (durRow as any)?.avg != null ? Number((durRow as any).avg) : null
+        // Média por dossiê (job) pronto, não por item; garante estimado >= atual quando há pendentes
+        const readyCount = Math.max(1, totals.ready)
+        const avgCost = spentCost / readyCount
+        const estimatedTotalCost = Number.isFinite(avgCost) ? avgCost * totals.total : spentCost
         const remaining = totals.total - totals.ready - totals.error
         const etaMs = avgDurationMs ? Math.round(avgDurationMs * Math.max(remaining, 0)) : null
         return { id: b.id, name: b.name, tipo_de_sintese: b.tipo_de_sintese, prompt_base_id: (b as any).prompt_base_id, prompt_latest_id: (b as any).prompt_latest_id ?? null, prompt_latest_name: (b as any).prompt_latest_name ?? null, complete: !!b.complete, paused: !!b.paused, totals, spentCost, estimatedTotalCost, avgDurationMs, etaMs }
     }
 
-    static async listBatchJobs(batch_id: number, status?: mysqlTypes.IABatchJob['status'] | 'all', page?: number, pageSize: number = 50): Promise<mysqlTypes.IABatchJob[]> {
+    static async listBatchJobs(batch_id: number, status?: mysqlTypes.IABatchJob['status'] | 'all', page?: number, pageSize: number = 10000): Promise<mysqlTypes.IABatchJob[]> {
         const q = knex('ia_batch_job').select('*').where({ batch_id })
         if (status && status !== 'all') q.andWhere('status', status)
         q.orderBy('created_at', 'asc').limit(pageSize).offset(((page || 1) - 1) * pageSize)
