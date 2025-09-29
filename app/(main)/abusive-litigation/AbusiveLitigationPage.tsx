@@ -17,7 +17,7 @@ import { selecionarPecasPorPadraoComFase, TipoDeSinteseMap } from '@/lib/proc/co
 import DiffViewer from './diff-viewer'
 import { useRouter } from 'next/navigation'
 import Chat from '@/components/slots/chat'
-import { calcSha256 } from '@/lib/utils/hash'
+import { calcMd5 } from '@/lib/utils/hash'
 import ProcessTextarea from '@/components/ProcessTextarea'
 
 type DadosDoProcessoAndControlType =
@@ -374,7 +374,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                     data={{ textos }}
                     options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined} />
 
-                <Chat definition={getInternalPrompt('chat')} data={{ textos }} key={calcSha256({ textos })} model={model} />
+                <Chat definition={getInternalPrompt('chat')} data={{ textos }} key={calcMd5({ textos })} model={model} />
             </>}
             <Toast onClose={() => setToast('')} show={!!toast} delay={3000} bg="danger" autohide key={toast} style={{ position: 'fixed', top: 10, right: 10 }}>
                 <Toast.Header>

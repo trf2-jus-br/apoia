@@ -5,7 +5,7 @@ import { getInternalPrompt } from "@/lib/ai/prompt"
 import { GeneratedContent } from "@/lib/ai/prompt-types"
 import { P } from "@/lib/proc/combinacoes"
 import { FormHelper } from "@/lib/ui/form-support"
-import { calcSha256 } from "@/lib/utils/hash"
+import { calcMd5 } from "@/lib/utils/hash"
 import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
 import { Button } from "react-bootstrap"
 
@@ -77,7 +77,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
                 </div>
             </div>
             <h2>{nextRequest.produto === P.VOTO ? 'Voto' : 'Sentença'}</h2>
-            <AiContent definition={prompt} data={data} key={`prompt: 'sentenca', data: ${calcSha256(data)}`} dossierCode={dossierCode} />
+            <AiContent definition={prompt} data={data} key={`prompt: 'sentenca', data: ${calcMd5(data)}`} dossierCode={dossierCode} />
         </>
     }
 

@@ -1,9 +1,9 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { maiusculasEMinusculas } from '@/lib/utils/utils'
+import { maiusculasEMinusculas, slugify } from '@/lib/utils/utils'
 import { ResumoDePecaLoading } from '@/components/loading'
-import { calcSha256 } from '@/lib/utils/hash'
+import { calcMd5 } from '@/lib/utils/hash'
 import { ContentType, GeneratedContent } from '@/lib/ai/prompt-types'
 import AiContent from '@/components/ai-content'
 import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support'
@@ -27,6 +27,7 @@ const onBusy = (Frm: FormHelper, requests: GeneratedContent[], idx: number) => {
 const onReady = (Frm: FormHelper, requests: GeneratedContent[], idx: number, content: ContentType) => {
     const request = requests[idx]
     Frm.set('pending', Frm.get('pending') - 1)
+    Frm.set(`generated[${idx}]`, content)
 
     // Frm.set(`flow.ready[${idx}]`, content)
     if (requests[idx].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS && content.json) {
@@ -42,7 +43,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
     const request = requests[idx]
 
     const informationExtractionVariableName = `_information_extraction_${idx}`
-    const dataHash = calcSha256(request.data)
+    const dataHash = calcMd5(request.data)
     const lastDataHash = Frm.get(`_lastDataHash_${idx}`)
     if (lastDataHash !== dataHash) {
         Frm.set(`_lastDataHash_${idx}`, dataHash)
@@ -65,7 +66,20 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
         </div>
     } else if (request.produto === P.CHAT) {
         if (Frm.get('pending') > 0) return null
-    return <Chat definition={request.internalPrompt} data={request.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} />
+
+        // Acrescenta os textos gerados anteriormente, se houver
+        const data = { ...request.data }
+        if (data.textos) data.textos = JSON.parse(JSON.stringify(data.textos))
+        let i = 0
+        for (const r of requests) {
+            if (r.produto === P.CHAT) break
+            const content = Frm.get(`generated[${i}]`)
+            if (!content) break
+            data.textos.push({ numeroDoProcesso: data?.numeroDoProcesso || '', slug: slugify(r.title), descr: r.title, texto: content?.json ? content.formated : content.raw, sigilo: '0' })
+            i++
+        }
+
+        return <Chat definition={request.internalPrompt} data={data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} />
     }
 
     return <div key={idx}>
@@ -89,7 +103,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model }: { dadosDoP
     Frm.update(data, setData, EMPTY_FORM_STATE)
 
     return <>{requests.map((request, idx) => {
-        if (idx > 0 && requests[idx - 1].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) return null      
+        if (idx > 0 && requests[idx - 1].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) return null
         return requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model)
     })}
 
