@@ -1,4 +1,4 @@
-import { assertCurrentUser, getCurrentUser } from "../user"
+import { assertCurrentUser, getCurrentUser, isUserModerator } from "../user"
 import { slugify } from "../utils/utils"
 import * as mysqlTypes from "./mysql-types"
 import knex from './knex'
@@ -128,16 +128,18 @@ export class Dao {
 
 
     static async insertIAPrompt(conn: any, data: mysqlTypes.IAPromptToInsert): Promise<mysqlTypes.IAPrompt | undefined> {
-        const { base_id, kind, name, model_id, testset_id, share, content } = data
+        const { base_id, kind, name, model_id, testset_id, share, content, created_by } = data
         const slug = slugify(name)
-        const created_by = await getCurrentUserId()
+        const user = await assertCurrentUser()
+        const isModerator = await isUserModerator(user)
+        const created_by_or_current_user = isModerator && created_by ? created_by : (await getCurrentUserId())
         if (data.base_id) {
             await knex('ia_prompt').update({ is_latest: 0 }).where({ base_id: data.base_id })
         }
         this.dehydratatePromptContent(data.content)
         const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({
             base_id: base_id,
-            kind, name, slug, model_id, testset_id, content: JSON.stringify(content), created_by, is_latest: 1, share
+            kind, name, slug, model_id, testset_id, content: JSON.stringify(content), created_by: created_by_or_current_user, is_latest: 1, share
         }).returning('id')
         const id = getId(result)
         if (!data.base_id) {
@@ -151,7 +153,7 @@ export class Dao {
         const trx = await knex.transaction()
 
         const prompt = await Dao.retrievePromptById(id)
-        if (!prompt) throw new Error('Prompt not found')
+        if (!prompt) throw new PublicError('Prompt não encontrado')
         try {
             await trx('ia_prompt').update<mysqlTypes.IAPrompt>({
                 is_official: 0,

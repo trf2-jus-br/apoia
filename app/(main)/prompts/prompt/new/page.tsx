@@ -33,7 +33,7 @@ export default async function New(
     if (copyFromId) {
         record = await Dao.retrievePromptById(parseInt(copyFromId))
         record.share = "PRIVADO"
-        if (!record) throw new Error('Prompt not found')
+        if (!record) throw new PublicError('Prompt não encontrado')
         const newName = record.name.replace(/\((\d+)\)$/, (_, n) => `(${Number(n) + 1})`)
         record.name = record.name === newName ? record.name + ' (1)' : newName
         record.content.author = author

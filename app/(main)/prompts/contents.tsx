@@ -30,7 +30,7 @@ export const copyPromptToClipboard = (prompt: IAPromptList) => {
     navigator.clipboard.writeText(s)
 }
 
-export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string }) {
+export function Contents({ prompts, user, user_id, apiKeyProvided, model, isModerator }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string, isModerator: boolean }) {
     const currentSearchParams = useSearchParams()
     const router = useRouter()
     const pathname = usePathname()
@@ -331,7 +331,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                     className="mt-3"
                 >
                     <Tab eventKey="principal" title="Principais">
-                        <PromptsTable prompts={promptsPrincipais} onClick={promptOnClick} onProcessNumberChange={setNumeroDoProcesso}>
+                        <PromptsTable prompts={promptsPrincipais} onClick={promptOnClick} onProcessNumberChange={setNumeroDoProcesso} isModerator={isModerator}>
                             <div className="col col-auto">
                                 <DropdownButton id="criar-novo-dropdown" title="Criar Novo" variant="primary">
                                     <Dropdown.Item href="/prompts/prompt/new">Prompt</Dropdown.Item>
@@ -342,7 +342,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model }: { pr
                     </Tab>
 
                     <Tab eventKey="comunidade" title="Prompts Não Avaliados">
-                        <PromptsTable prompts={promptsComunidade} onClick={promptOnClick} onProcessNumberChange={setNumeroDoProcesso}>
+                        <PromptsTable prompts={promptsComunidade} onClick={promptOnClick} onProcessNumberChange={setNumeroDoProcesso} isModerator={isModerator}>
                             <div className="col col-auto">
                                 <DropdownButton id="criar-novo-dropdown" title="Criar Novo" variant="primary">
                                     <Dropdown.Item href="/prompts/prompt/new">Prompt</Dropdown.Item>

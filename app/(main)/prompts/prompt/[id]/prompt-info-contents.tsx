@@ -2,6 +2,7 @@
 
 import { Col, Container, Form, Row, Spinner } from 'react-bootstrap'
 import { IAPrompt } from '@/lib/db/mysql-types'
+import Link from 'next/link'
 
 export default async function PromptInfoContents({ pPrompt, isModerator }: { pPrompt: Promise<IAPrompt>, isModerator: boolean }) {
     const prompt = await pPrompt
@@ -129,10 +130,11 @@ export default async function PromptInfoContents({ pPrompt, isModerator }: { pPr
             </Form>
             {isModerator && (
                 <div className="text-center mt-3">
-                    <a href={`/prompts/prompt/${prompt.id}/set-private`} className="btn btn-danger ms-2">Tornar Privado</a>
-                    <a href={`/prompts/prompt/${prompt.id}/set-unlisted`} className="btn btn-danger ms-2">Tornar Não Listado</a>
-                    <a href={`/prompts/prompt/${prompt.id}/set-public`} className="btn btn-danger ms-2">Tornar Público</a>
-                    <a href={`/prompts/prompt/${prompt.id}/set-standard`} className="btn btn-danger ms-2">Tornar Padrão</a>
+                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/edit`} className="btn btn-danger">Editar como Moderador</Link>
+                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-private`} className="btn btn-danger ms-2">Tornar Privado</Link>
+                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-unlisted`} className="btn btn-danger ms-2">Tornar Não Listado</Link>
+                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-public`} className="btn btn-danger ms-2">Tornar Público</Link>
+                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-standard`} className="btn btn-danger ms-2">Tornar Padrão</Link>
                 </div>)
             }
         </Container>

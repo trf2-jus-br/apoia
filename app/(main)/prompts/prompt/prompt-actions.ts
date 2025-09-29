@@ -17,6 +17,7 @@ const promptSchema = z.object({
     model_id: numericString(z.number()).nullable().optional(),
     testset_id: numericString(z.number()).nullable().optional(),
     share: z.string().nullable().optional(),
+    created_by: numericString(z.number()).nullable().optional(),
     content: z.object({
         author: z.string(),
         

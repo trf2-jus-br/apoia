@@ -76,7 +76,7 @@ export async function GET(_req: Request, context: any): Promise<Response> { // a
             headers: { 'Content-Type': 'application/json' },
         })
     } catch (err) {
-        return new Response(JSON.stringify({ error: 'Prompt not found', detail: (err as Error).message }), {
+        return new Response(JSON.stringify({ error: 'Prompt não encontrado', detail: (err as Error).message }), {
             status: 404,
             headers: { 'Content-Type': 'application/json' },
         })

@@ -61,7 +61,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                                 <Dropdown.Item onClick={() => onClick('executar', data.row.original)}>Executar</Dropdown.Item>
                                 {!data.row.original.kind?.startsWith('^') && <Dropdown.Item onClick={() => onClick('copiar', data.row.original)}>Copiar prompt</Dropdown.Item>}
                                 <Dropdown.Item onClick={() => onClick('copiar link para favoritar', data.row.original)}>Copiar link para adicionar aos favoritos</Dropdown.Item>
-                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/prompts/prompt/${data.row.original.id}/edit`} disabled={!data.row.original.is_mine}>Editar</Dropdown.Item>}
+                                {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/prompts/prompt/${data.row.original.id}/edit`} disabled={!data.row.original.is_mine && !options?.isModerator}>Editar</Dropdown.Item>}
                                 {!data.row.original.kind?.startsWith('^') && <Dropdown.Item href={`/prompts/prompt/new?copyFrom=${data.row.original.id}`}>Fazer uma cópia</Dropdown.Item>}
                                 <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}`}>Informações sobre o prompt</Dropdown.Item>
                                 <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/set-favorite`}>Adicionar aos favoritos</Dropdown.Item>

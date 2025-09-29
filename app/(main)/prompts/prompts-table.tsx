@@ -2,12 +2,9 @@
 
 import { IAPromptList } from "@/lib/db/mysql-types"
 import TableRecords from "@/components/table-records"
-import { Button, Form, FormGroup, FormLabel, FormSelect, Row } from "react-bootstrap"
-import { useEffect, useState } from "react"
-import { enumSorted } from "@/lib/ai/model-types"
-import { Instance, Matter, Scope } from "@/lib/proc/process-types"
+import { Button } from "react-bootstrap"
 
-export default function PromptsTable({ prompts, onClick, onProcessNumberChange, children }: { prompts: IAPromptList[], onClick: (kind: string, row: any) => void, onProcessNumberChange: (number: string) => void, children: any }) {
+export default function PromptsTable({ prompts, onClick, onProcessNumberChange, isModerator, children }: { prompts: IAPromptList[], onClick: (kind: string, row: any) => void, onProcessNumberChange: (number: string) => void, isModerator: boolean, children: any }) {
     // prompts.sort((a, b) => {
     //     if (a.is_favorite !== b.is_favorite)
     //         return b.is_favorite - a.is_favorite;
@@ -24,7 +21,7 @@ export default function PromptsTable({ prompts, onClick, onProcessNumberChange, 
                     <option value="non-favorites">Não Favoritos</option>
                 </FormSelect>
             </div> */}
-            < TableRecords records={prompts} spec="Prompts" pageSize={20} onClick={onClick} >
+            < TableRecords records={prompts} spec="Prompts" pageSize={20} onClick={onClick} options={{isModerator}}>
                 {children}
             </TableRecords >
         </>

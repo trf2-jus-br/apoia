@@ -146,6 +146,7 @@ export type IAPromptToInsert = {
     model_id: number
     testset_id: number | null
     share?: string
+    created_by?: number | null
     content: {
         system_prompt?: string
         prompt: string | null
