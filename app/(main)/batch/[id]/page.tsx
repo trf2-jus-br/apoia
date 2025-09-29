@@ -1,6 +1,8 @@
 import Fetcher from '@/lib/utils/fetcher'
 import BatchPanelClient from '@/app/(main)/batch/[id]/BatchPanelClient'
 import { Dao } from '@/lib/db/mysql'
+import { getSelectedModelParams } from '@/lib/ai/model-server'
+import { redirect } from 'next/navigation'
 
 export const maxDuration = 60
 
@@ -25,6 +27,8 @@ export async function fetchDollar() {
 
 export default async function BatchPanel(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params
+  const { apiKeyFromEnv } = await getSelectedModelParams()
+  if (apiKeyFromEnv) redirect('/batch')
   const summary = await getSummary(parseInt(id))
   const usdBrl = await fetchDollar()
   const promptName = summary?.prompt_base_id && (await Dao.retrieveLatestPromptByBaseId(summary.prompt_base_id))?.name

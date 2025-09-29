@@ -2,6 +2,16 @@
 
 function ErrorMsg(msg: string) {
 
+
+    if (msg.match(/Não foram encontrados registros/)) 
+        return <>
+            <p>A Apoia utiliza o Datalake para obter informações sobre os processos e também o conteúdo das peças processuais.</p>
+            <p>A Apoia solicitou os metadados de um processo e o Datalake respondeu com um erro indicando que o processo não foi encontrado.</p>
+            <p>Este erro pode ser causado por um problema na fila de processamento do Datalake ou na integração entre o tribunal em questão e o Datalake.</p>
+            <p>Sugimos entrar em contato com a equipe que cuida do datalake para resolver esse problema.</p>
+            <p>Isso é um erro bem comum, mas não é um erro da Apoia.</p>
+        </>
+
     if (msg.match(/Input is too long for requested model/))
         return <>
             <p>Cada modelo de inteligência artificial tem um limite da quantidade de texto que consegue processar.</p>
