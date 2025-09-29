@@ -30,7 +30,7 @@ export default async function BatchesPage() {
         <br />
         Não sabe o que é uma chave de API ou como usá-la? Consulte o{' '}
         <Link
-          href="https://trf2.gitbook.io/apoia/chave-de-api-e-modelo-de-ia"
+          href="https://trf2.gitbook.io/apoia/relatorio-de-acervo"
           className="alert-link"
         >Manual da Apoia</Link>.
         <FontAwesomeIcon icon={faBook} className="ms-2" />
@@ -46,7 +46,7 @@ export default async function BatchesPage() {
       <div className="alert alert-info">
         Relatórios de acervo consomem muitos tokens e podem incorrer em <strong>custos elevados</strong>. Antes de gerar um relatório, consulte o{' '}
         <Link
-          href="https://trf2.gitbook.io/apoia/chave-de-api-e-modelo-de-ia"
+          href="https://trf2.gitbook.io/apoia/relatorio-de-acervo"
           className="alert-link"
         >Manual da Apoia</Link>.
         <FontAwesomeIcon icon={faBook} className="ms-2" />
