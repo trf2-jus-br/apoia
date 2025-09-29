@@ -125,6 +125,7 @@ export type TipoDeSinteseType = {
     produtos: (P | ProdutoCompleto)[],
     sort: number,
     status: StatusDeLancamento,
+    relatorioDeAcervo?: boolean,
     // Optional UI filter hints; if omitted, defaults to all
     scope?: string[],
     instance?: string[],
@@ -254,7 +255,7 @@ export const padraoAgravoForcado = [
     PHASE('Conhecimento Fechada'),
     EXACT(T.ACORDAO),
     ANY(),
-]    
+]
 
 
 export const padraoApelacaoAberta = [
@@ -285,7 +286,7 @@ export const padraoApelacaoForcado = [
     PHASE('Conhecimento Fechada'),
     EXACT(T.ACORDAO),
     ANY(),
-]    
+]
 
 
 export const padraoTurmaRecursalAberta = [
@@ -297,15 +298,15 @@ export const padraoTurmaRecursalAberta = [
     OR(...pecasQueIniciamFaseDeTurmaRecursal),
     ANY({
         capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFaseDeTurmaRecursal
-    })    
-]    
+    })
+]
 
 export const padraoTurmaRecursalFechada = [
     ...padraoTurmaRecursalAberta,
     PHASE('Turma Recursal Fechada'),
     EXACT(T.ACORDAO),
     ANY({ except: pecasQueIniciamFases })
-]    
+]
 
 export const padroesTurmaRecursal = [
     padraoTurmaRecursalFechada,
@@ -316,15 +317,15 @@ export const padraoConhecimentoAberta = [
     ANY({ capture: [...pecasRelevantes1aInstancia] }),
     PHASE('Conhecimento Aberta'),
     EXACT(T.PETICAO_INICIAL),
-    ANY({ capture: [...pecasRelevantes1aInstancia], except: pecasQueIniciamFases}),
-]    
+    ANY({ capture: [...pecasRelevantes1aInstancia], except: pecasQueIniciamFases }),
+]
 
 export const padraoConhecimentoFechada = [
     ...padraoConhecimentoAberta,
     PHASE('Conhecimento Fechada'),
     EXACT(T.SENTENCA),
     ANY({ except: pecasQueIniciamFases })
-]    
+]
 
 export const padraoConhecimentoForcado = [
     ...padraoConhecimentoAberta,
@@ -332,7 +333,7 @@ export const padraoConhecimentoForcado = [
     EXACT(T.SENTENCA),
     PHASE('Conhecimento Fechada'),
     ANY(),
-]    
+]
 
 export const padroesConhecimento = [
     padraoConhecimentoFechada,
@@ -369,11 +370,22 @@ const padroesBasicosEForcados = [
 export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
     RESUMOS_TRIAGEM: {
         status: StatusDeLancamento.PUBLICO,
+        relatorioDeAcervo: true,
         sort: 1,
         nome: 'Resumos e triagem',
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.RESUMO, P.CHAT]
     },
+
+    RELATORIO_DE_APELACAO_E_TRIAGEM: {
+        status: StatusDeLancamento.PUBLICO,
+        relatorioDeAcervo: true,
+        sort: 1,
+        nome: 'Relatório de Apelação e Triagem',
+        padroes: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado],
+        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT]
+    },
+
     RESUMOS_ANALISE: {
         status: StatusDeLancamento.PUBLICO,
         sort: 2,
@@ -452,6 +464,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
 
     REL_PROC_COLETIVO_OU_CRIMINAL: {
         status: StatusDeLancamento.PUBLICO,
+        relatorioDeAcervo: true,
         sort: 9,
         nome: 'Relatório de Processo Coletivo ou Criminal',
         padroes: [
@@ -529,14 +542,6 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         produtos: [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, P.CHAT]
     },
 
-    RELATORIO_DE_APELACAO_E_TRIAGEM: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 1000,
-        nome: 'Relatório de Apelação e Triagem',
-        padroes: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado],
-        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT]
-    },
-
 
     // RESUMOS_ACORDAO: {
     //     sort: 4,
@@ -556,6 +561,7 @@ export interface TipoDeSinteseValido {
     padroes: MatchOperator[][],
     produtos: InfoDeProduto[],
     status: StatusDeLancamento,
+    relatorioDeAcervo?: boolean,
 }
 
 export interface InfoDeProduto {

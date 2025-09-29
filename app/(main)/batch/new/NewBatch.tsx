@@ -20,7 +20,7 @@ export default function NewBatchPage(props: { favorites: any[] }) {
 
   useEffect(() => {
     const base = TiposDeSinteseValido
-      .filter(t => t.status <= StatusDeLancamento.PUBLICO)
+      .filter(t => t.status <= StatusDeLancamento.PUBLICO && t.relatorioDeAcervo)
       .map(t => ({ value: t.id, label: t.nome }))
     const favs = props.favorites.map((f: any) => ({ value: String(f.base_id), label: `[Favorito] ${f.name}` }))
     setTipos([...base, ...favs])

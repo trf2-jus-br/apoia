@@ -21,5 +21,5 @@ export const infoDeProduto = (produto: P | ProdutoCompleto): InfoDeProduto => {
 }
 
 export const TiposDeSinteseValido: TipoDeSinteseValido[] =
-    Object.keys(TipoDeSinteseMap).map(ts => ({ id: ts, ...TipoDeSinteseMap[ts], produtos: TipoDeSinteseMap[ts].produtos.map(p => infoDeProduto(p)) })).sort((a, b) => a.sort - b.sort)
+    Object.keys(TipoDeSinteseMap).map(ts => ({ id: ts, ...TipoDeSinteseMap[ts], produtos: TipoDeSinteseMap[ts].produtos.map(p => infoDeProduto(p)), relatorioDeAcervo: TipoDeSinteseMap[ts].relatorioDeAcervo })).sort((a, b) => a.sort - b.sort)
 
