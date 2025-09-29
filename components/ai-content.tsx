@@ -100,7 +100,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     prompt: payload.promptSlug,
                     dossier_code: payload.dossierCode,
                     http_status: response.status,
-                    message: msg || `HTTP error: ${response.status}`
+                    error_message: msg || `HTTP error: ${response.status}`
                 })
                 return
             }
@@ -111,7 +111,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                 model: payload.modelSlug,
                 prompt: payload.promptSlug,
                 dossier_code: payload.dossierCode,
-                message: err.message
+                error_message: err.message
             })
             return
         }

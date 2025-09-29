@@ -3,7 +3,7 @@ import { paramsList } from "@/lib/utils/env"
 
 export async function GET(req: Request) {
     const user = await getCurrentUser()
-    if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+    if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
 
     const r: any = {}
 

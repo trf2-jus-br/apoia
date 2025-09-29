@@ -284,7 +284,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         setActiveModalSubmitHandler(() => result.onSubmit || null)
     }
 
-    console.log('Chat messages:', messages)
+    // console.log('Chat messages:', messages)
 
     // (efeitos de analytics agora vivem em useChatAnalytics)
 

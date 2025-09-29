@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         const messagesOnly = searchParams.get('messagesOnly') === 'true'
 
         const user = await getCurrentUser()
-        if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+        if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
 
         // Update user details
         const userFields = user.corporativo?.length ? {

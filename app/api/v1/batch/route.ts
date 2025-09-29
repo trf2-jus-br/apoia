@@ -9,7 +9,7 @@ export const maxDuration = 60
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
   const body = await req.json()
   const { name, tipo_de_sintese, prompt_base_id, complete, numbers } = body || {}
   if (!name || !Array.isArray(numbers)) return Response.json({ errormsg: 'Invalid body' }, { status: 400 })
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
  */
 export async function GET() {
   const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
   try {
     const rows = await Dao.listBatchesForUser()
     return Response.json({ status: 'OK', rows })

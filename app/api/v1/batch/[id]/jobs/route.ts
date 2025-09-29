@@ -5,7 +5,7 @@ export const maxDuration = 60
 
 export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
   const url = new URL(req.url)
   const status = (url.searchParams.get('status') || 'all') as any
   const page = url.searchParams.get('page') ? Number(url.searchParams.get('page')) : 1
@@ -30,7 +30,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
 
 export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
   const { id } = await props.params
   const body = await req.json()
   const { action, numbers } = body || {}

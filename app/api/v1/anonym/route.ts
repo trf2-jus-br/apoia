@@ -33,7 +33,7 @@ export const maxDuration = 30
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
 
   const { text, options } = await req.json()
   const r = anonymizeText(String(text || ''), options || {})

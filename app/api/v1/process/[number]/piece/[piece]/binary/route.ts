@@ -48,7 +48,7 @@ export async function GET(
   const params = await props.params;
   const pUser = getCurrentUser()
   const user = await pUser
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
 
   try {
     const username = user?.email

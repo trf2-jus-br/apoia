@@ -100,7 +100,7 @@ export async function writeUsage(usage, model: string, user_id: number | undefin
 export async function streamContent(definition: PromptDefinitionType, data: PromptDataType, results?: PromptExecutionResultsType, additionalInformation?: PromptAdditionalInformationType):
     Promise<StreamTextResult<ToolSet, Partial<any>> | StreamObjectResult<DeepPartial<any>, any, never> | string> {
     // const user = await getCurrentUser()
-    // if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+    // if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
     console.log('will build prompt', definition.kind)
     await waitForTexts(data)
 
@@ -292,7 +292,7 @@ export async function evaluate(definition: PromptDefinitionType, data: PromptDat
     const user = await assertCurrentUser()
     const user_id = await Dao.assertIAUserId(user.preferredUsername || user.name)
 
-    if (!user_id) throw new Error('Unauthorized')
+    if (!user_id) throw new Error('Usuário não autenticado')
 
     const { model } = await getModel()
     await waitForTexts(data)

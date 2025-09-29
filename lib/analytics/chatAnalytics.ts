@@ -113,7 +113,7 @@ export function useChatAnalytics(params: {
     aiErrorSentRef.current.add(parentId)
     const userMeta = userMessageMetaRef.current.get(parentId)
     const latency = userMeta ? Date.now() - userMeta.sentAt : null
-    trackChatAIError({ parent_user_msg_id: parentId, error_type: (error as any).name || 'unknown', latency_ms: latency, kind, model: model || 'unknown', dossier_code: dossierCode })
+    trackChatAIError({ parent_user_msg_id: parentId, error_type: (error as any).name || 'unknown', error_message: (error as any).message || 'unknown', latency_ms: latency, kind, model: model || 'unknown', dossier_code: dossierCode })
   }, [error, kind, model, dossierCode])
 
   return { createUserMessage }

@@ -12,7 +12,7 @@ import { assertCurrentUser, isUserCorporativo } from '@/lib/user'
 import Print from '@/components/slots/print'
 import { formatDateTime, formatYYYYMMDDHHMMSS } from '@/lib/utils/date'
 import { slugify } from '@/lib/utils/utils'
-import { getSelectedModelName } from '@/lib/ai/model-server'
+import { assertModel, getSelectedModelName } from '@/lib/ai/model-server'
 
 export default async function Home() {
     noStore()
@@ -21,6 +21,8 @@ export default async function Home() {
     const user = await assertCurrentUser()
     if (!(await isUserCorporativo(user)))
         return <Container><div className="alert alert-danger mt-5">Usuário não é corporativo</div></Container>
+        
+    await assertModel()
     const model = await getSelectedModelName()
 
     const definition = getInternalPrompt('chat-standalone')

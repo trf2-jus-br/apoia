@@ -138,6 +138,8 @@ export async function getModel(params?: { structuredOutputs: boolean, overrideMo
     let { model, apiKey, azureResourceName, awsRegion, awsAccessKeyId, apiKeyFromEnv } = await getSelectedModelParams()
     if (params?.overrideModel) model = params.overrideModel
 
+    if (!model) throw new Error('Nenhum modelo de IA configurado. Por favor, acesse /prefs para configurar um modelo.')
+
 
     if (getEnvKeyByModel(model) === ModelProvider.ANTHROPIC.apiKey) {
         const anthropic = createAnthropic({ apiKey })

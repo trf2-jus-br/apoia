@@ -19,7 +19,7 @@ export async function GET(
 ) {
   const params = await props.params;
   const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
 
   const encoder = new TextEncoder()
 

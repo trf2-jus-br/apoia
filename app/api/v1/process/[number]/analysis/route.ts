@@ -68,7 +68,7 @@ export const maxDuration = 60
 export async function GET(req: Request, props: { params: Promise<{ number: string }> }) {
   const params = await props.params;
   const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Unauthorized' }, { status: 401 })
+  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
 
   const url = new URL(req.url)
   const complete: boolean = url.searchParams.get('complete') === 'true'
