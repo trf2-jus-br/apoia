@@ -128,8 +128,8 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
                         const selecao = selecionarPecasPorPadraoComFase(allPieces, strategy.pattern)
                         if (selecao?.pecas?.length) selectedIds = selecao.pecas.map(p => p.id)
                     } else if (key === 'TIPOS_ESPECIFICOS' && pieceDescr?.length) {
-                        // Seleciona todas as peças dos tipos especificados
-                        selectedIds = allPieces.filter(p => pieceDescr.includes(p.descr as any)).map(p => p.id)
+                        const pieceDescrValues = pieceDescr.map(d => T[d])
+                        selectedIds = allPieces.filter(p => pieceDescrValues.includes(p.descr)).map(p => p.id)
                     } else {
                         throw new Error(`Estratégia de peça inválida: ${pieceStrategy}`)
                     }
@@ -152,7 +152,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
         let requests: GeneratedContent[]
         if (isNumericKind) {
             requests = buildRequests(promptFromDB, dossierNumber, dadosDoProcesso.pecasSelecionadas, undefined).filter(r => r && r.promptSlug !== 'chat')
-            
+
             // Acrescenta o Plugins conforme o conteúdo do prompt
             for (const req of requests) {
                 if (!req.plugins) req.plugins = []
