@@ -6,9 +6,9 @@ import { slugify } from "../utils/utils"
 import { getInternalPrompt } from "./prompt"
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "./prompt-types"
 
-export const buildRequests = (prompt: IAPrompt, numeroDoProcesso: string, selectedPieces: PecaType[], contents: { [key: number]: string }): GeneratedContent[] => {
+export const buildRequests = (prompt: IAPrompt, numeroDoProcesso: string, selectedPieces: PecaType[], contents?: { [key: number]: string }): GeneratedContent[] => {
     const requestArray: GeneratedContent[] = []
-    const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: peca.conteudo || contents[peca.id], sigilo: peca.sigilo }))
+    const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: peca.conteudo || contents?.[peca.id], sigilo: peca.sigilo }))
     let produtos: InfoDeProduto[] = []
     // Internal seeded prompt: use map products
     if (prompt.kind?.startsWith('^')) {

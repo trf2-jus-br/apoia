@@ -10,7 +10,7 @@ import { getTriagem, getNormas, getPalavrasChave } from '@/lib/fix'
 import { generateContent } from '@/lib/ai/generate'
 import { infoDeProduto } from '../proc/info-de-produto'
 import { envString } from '../utils/env'
-import { DadosDoProcessoType } from '../proc/process-types'
+import { DadosDoProcessoType, identificarSituacaoDaPeca } from '../proc/process-types'
 import { buildFooter } from '../utils/footer'
 import { clipPieces } from './clip-pieces'
 import { th } from 'zod/v4/locales'
@@ -145,12 +145,15 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
         }
 
         let pecasComConteudo = await getPiecesWithContent(dadosDoProcesso, dossierNumber, true)
-
+      
         if (pecasComConteudo.length === 0) throw new Error(`${dossierNumber}: Nenhuma peça com conteúdo`)
+            
+        if (!pecasComConteudo.find(p => !identificarSituacaoDaPeca(p.texto).problematica))
+            throw new Error(`${dossierNumber}: Todas as peças estão com problemas (sigilosas, inacessíveis, vazias ou parciais)`)
 
         let requests: GeneratedContent[]
         if (isNumericKind) {
-            requests = buildRequests(promptFromDB, dossierNumber, dadosDoProcesso.pecasSelecionadas, undefined).filter(r => r && r.promptSlug !== 'chat')
+            requests = buildRequests(promptFromDB, dossierNumber, dadosDoProcesso.pecasSelecionadas).filter(r => r && r.promptSlug !== 'chat')
 
             // Acrescenta o Plugins conforme o conteúdo do prompt
             for (const req of requests) {

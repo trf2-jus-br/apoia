@@ -148,3 +148,11 @@ export const REGEX_INDICACAO_PARCIAL = /... $/
 export const formatarMensagemDeConteudoNaoSuportado = (idDaPeca: string, descrDaPeca: string, contentType: string) => {
     return `Peça ${idDaPeca} (${descrDaPeca}) - Tipo de conteúdo não suportado: ${contentType}`
 }
+
+export const identificarSituacaoDaPeca = (texto: string): { sigilosa: boolean, inacessivel: boolean, parcial: boolean, vazia: boolean, problematica: boolean } => {
+    const sigilosa = texto === TEXTO_PECA_SIGILOSA
+    const inacessivel = texto?.startsWith(TEXTO_PECA_COM_ERRO) || texto === TEXTO_PECA_PDF_OCR_ERRO
+    const vazia = !texto || texto === TEXTO_PECA_IMAGEM_JPEG || texto === TEXTO_PECA_IMAGEM_PNG || texto === TEXTO_PECA_VIDEO_XMS_WMV || texto === TEXTO_PECA_VIDEO_MP4 || texto === TEXTO_PECA_PDF_OCR_VAZIO
+    const parcial = texto?.endsWith(TEXTO_INDICACAO_PARCIAL)
+    return { sigilosa, inacessivel, parcial, vazia, problematica: sigilosa || inacessivel || vazia || parcial }
+}

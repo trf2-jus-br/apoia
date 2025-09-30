@@ -264,13 +264,10 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                 if (!peca.conteudo && peca.pConteudo) {
                     const c = await peca.pConteudo
                     if (c?.errorMsg) {
-                        // if (completo) {
                         peca.conteudo = `${TEXTO_PECA_COM_ERRO} - ${c.errorMsg}`
-                        // } else {
-                        //     throw new Error(c.errorMsg)
-                        // }
+                    } else {
+                        peca.conteudo = c?.conteudo
                     }
-                    peca.conteudo = c?.conteudo
                 }
                 delete peca.pConteudo
             }
