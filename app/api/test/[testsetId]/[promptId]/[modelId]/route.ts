@@ -9,7 +9,7 @@ import { slugify } from '@/lib/utils/utils'
 import { ATTEMPTS, buildTest, preprocessQuestion } from '../../../../../../lib/ai/test/test-config'
 import { getInternalPrompt, promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
 import { getCurrentUser } from '@/lib/user'
-import { devLog } from '@/lib/utils/log'
+import { devLog, isDev } from '@/lib/utils/log'
 
 export const maxDuration = 60
 
@@ -136,7 +136,7 @@ async function streamString(key: string, stream: StreamTextResult<ToolSet, any> 
   } else {
     text = ''
     for await (const textPart of stream.textStream) {
-      process.stdout.write(textPart)
+      if (isDev()) process.stdout.write(textPart)
       controller.enqueue(encodeJsonString(textPart))
       text += textPart
     }

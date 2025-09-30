@@ -10,6 +10,7 @@ import { faCheck, faX } from '@fortawesome/free-solid-svg-icons'
 import { faComment } from '@fortawesome/free-regular-svg-icons'
 import { OverlayTrigger, Popover } from 'react-bootstrap'
 import { TestTable } from './test-table'
+import devLog from '@/lib/utils/log'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,7 +55,7 @@ export default function TestBuilder({ kind, testset, prompt, model }: { kind: st
                     setCurrent(text)
                 }
                 catch (e) {
-                    console.log(e.message)
+                    devLog(e.message)
                 }
             }
         }

@@ -51,15 +51,12 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
     }
     const information_extraction = Frm.get(informationExtractionVariableName)
 
-    console.log('requestSlot: request', request.produto)
-
     const pedidos = Frm.get('pedidos')
     if (request.produto === P.PEDIDOS && pedidos) {
         return <Pedidos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
     } else if (request.produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS && pedidos) {
         return <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={request} nextRequest={requests[idx + 1]} Frm={Frm} key={idx} dossierCode={dossierCode} />
     } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction) {
-        // console.log('requestSlot: information_extraction', request.internalPrompt?.prompt, information_extraction)
         return <div key={idx}>
             <AiTitle request={request} />
             <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />

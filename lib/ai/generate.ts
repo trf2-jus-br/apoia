@@ -18,7 +18,7 @@ import { pdfToText } from '../pdf/pdf'
 import { assertAnonimizacaoAutomatica } from '../proc/sigilo'
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google'
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai'
-import devLog from '../utils/log'
+import devLog, { isDev } from '../utils/log'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await Dao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -70,8 +70,9 @@ export async function generateContent(definition: PromptDefinitionType, data: Pr
     } else {
         try {
             text = ''
+            const dev = isDev()
             for await (const textPart of stream.textStream) {
-                process.stdout.write(textPart)
+                if (dev) process.stdout.write(textPart)
                 text += textPart
             }
         } catch (error) {
@@ -243,7 +244,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             messages: processedMessagesModel,
             maxRetries: 0,
             onStepFinish: ({ text, usage }) => {
-                process.stdout.write(text)
+                // if (isDev()) process.stdout.write(text)
             },
             onError: (error) => {
                 console.error('Error during streaming:', error)
