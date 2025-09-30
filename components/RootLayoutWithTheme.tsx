@@ -1,6 +1,7 @@
 import ImportBsJS from "@/components/importBsJS"
 import { Navbar, Container } from "react-bootstrap"
 import NextAuthProvider from "@/app/context/nextAuthProvider"
+import GlobalProviders from './GlobalProviders'
 import UserMenu from "@/components/user-menu"
 import Link from 'next/link'
 import Image from 'next/image'
@@ -39,11 +40,11 @@ export default async function RootLayoutWithTheme({
           </Container>
         </Navbar>
         <Suspense fallback={null}><NonCorporateUserWarning /></Suspense>
-        <NextAuthProvider>
+        <GlobalProviders>
           <div className="content">
             {children}
           </div>
-        </NextAuthProvider>
+        </GlobalProviders>
         {envString('GOOGLE_ANALYTICS_ID') && <GoogleAnalytics gaId={envString('GOOGLE_ANALYTICS_ID')} />}
       </body>
     </html>

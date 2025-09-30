@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Container, Nav, ProgressBar } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlay, faPause, faPlus, faTrash, faFileArrowDown, faClock, faSpinner, faCheck, faTriangleExclamation, faEye, faList } from '@fortawesome/free-solid-svg-icons'
+import { faPlay, faPause, faPlus, faTrash, faFileArrowDown, faClock, faSpinner, faCheck, faTriangleExclamation, faEye, faList, faMinus, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import Fetcher from '@/lib/utils/fetcher'
+import { useConfirm } from '@/components/confirm/ConfirmationProvider'
 import CsvNumbersModal from '@/components/modals/CsvNumbersModal'
 import TableRecords from '@/components/table-records'
 import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
+import { useRouter } from 'next/navigation'
 
 type Totals = { total: number, pending: number, running: number, ready: number, error: number }
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
@@ -24,6 +26,9 @@ export default function BatchPanelClient({ id, initialSummary, usdBrl, promptNam
   const [buildingJobId, setBuildingJobId] = useState<number | null>(null) // job currently being built (optimistic UI)
   const steppingRef = useRef(false)
   const playLoopRef = useRef(false)
+
+  const router = useRouter()
+  const confirmModal = useConfirm()
 
   const fixIndex = async () => {
     setErr('')
@@ -226,6 +231,26 @@ export default function BatchPanelClient({ id, initialSummary, usdBrl, promptNam
     }
   }
 
+  const handleDeleteReport = async () => {
+    setErr('')
+    setInfo('')
+    const accepted = await confirmModal({
+      title: 'Excluir Relatório',
+      message: 'Tem certeza que deseja excluir este relatório e todos os seus dados? Esta ação não pode ser desfeita.',
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      variantConfirm: 'danger'
+    })
+    if (!accepted) return
+    try {
+      const res = await Fetcher.post(`/api/v1/batch/${id}`, undefined, undefined, { method: 'DELETE' })
+      if (res?.status !== 'OK') throw new Error(res?.errormsg || 'Falha ao excluir')
+      router.replace('/batch')
+    } catch (e: any) {
+      setErr(e?.message || String(e))
+    }
+  }
+
   const mappedJobs = jobs.filter(j => statusFilter === 'all' || j.status === statusFilter).map(j => ({ ...j, status_icon: statusIcon(j.status), cost: j.cost_sum != null ? formatMoney(toDisplayCurrency(j.cost_sum as any)) : '' }))
 
   return (
@@ -307,9 +332,11 @@ export default function BatchPanelClient({ id, initialSummary, usdBrl, promptNam
 
       <TableRecords records={mappedJobs} onClick={onClick} spec="Batch" options={{ batchId: id }} pageSize={10} >
         <div className="col col-auto mb-0">
+          <Button variant="outline-primary" onClick={() => { router.replace('/batch') }} className="me-2"><FontAwesomeIcon icon={faArrowLeft} className="me-2" />Voltar</Button>
+          <Button variant="outline-danger" onClick={handleDeleteReport} className="me-2"><FontAwesomeIcon icon={faTrash} className="me-2" />Excluir</Button>
           <Button variant="outline-primary" onClick={() => fixIndex()} className="me-2"><FontAwesomeIcon icon={faList} className="me-2" />Otimizar Índice</Button>
           <Button variant="outline-info" className="me-2" onClick={() => setShowAdd(true)}><FontAwesomeIcon icon={faPlus} className="me-2" />Adicionar</Button>
-          <Button variant="outline-danger" onClick={() => setShowDelete(true)}><FontAwesomeIcon icon={faTrash} className="me-2" />Excluir</Button>
+          <Button variant="outline-info" onClick={() => setShowDelete(true)}><FontAwesomeIcon icon={faMinus} className="me-2" />Remover</Button>
         </div></TableRecords>
 
       <CsvNumbersModal show={showAdd} title="Adicionar processos" onClose={() => setShowAdd(false)} onConfirm={onAddNumbers} />

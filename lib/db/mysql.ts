@@ -1517,5 +1517,40 @@ export class Dao {
         await knex('ia_batch_job').update({ cost_sum: cost, dossier_id: bd.dossier_id }).where({ id: job_id, batch_id })
         return cost
     }
+
+    /**
+     * Delete a batch and all related data (jobs, batch dossiers, items and enum item links).
+     * Only allowed if the current user is the owner (created_by) of the batch.
+     * Returns true if the batch was deleted, false if not found or not authorized.
+     */
+    static async deleteBatch(batch_id: number): Promise<boolean> {
+        if (!knex) throw new Error('DB not ready')
+        const user = await assertCurrentUser()
+        const currentUserId = await Dao.assertIAUserId(user.preferredUsername || user.name)
+        const batchRow: any = await knex('ia_batch').select('id', 'created_by').where({ id: batch_id }).first()
+        if (!batchRow) return false
+        if (batchRow.created_by !== currentUserId) return false
+
+        return await knex.transaction(async trx => {
+            // Collect batch_dossier ids first
+            const batchDossiers = await trx('ia_batch_dossier').select('id').where({ batch_id })
+            const bdIds = batchDossiers.map(r => (r as any).id)
+
+            if (bdIds.length) {
+                // Delete enum item links referencing batch_dossier
+                await trx('ia_batch_dossier_enum_item').whereIn('batch_dossier_id', bdIds).delete()
+                // Delete items
+                await trx('ia_batch_dossier_item').whereIn('batch_dossier_id', bdIds).delete()
+                // Delete batch_dossier
+                await trx('ia_batch_dossier').whereIn('id', bdIds).delete()
+            }
+
+            // Delete jobs
+            await trx('ia_batch_job').where({ batch_id }).delete()
+            // Finally delete the batch
+            const del = await trx('ia_batch').where({ id: batch_id }).delete()
+            return del > 0
+        })
+    }
 }
 

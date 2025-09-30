@@ -22,6 +22,7 @@ interface FetchParams {
 }
 
 interface RequestOptions {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
     redirect?: boolean
 }
 
@@ -142,7 +143,7 @@ const fetcherUtil = {
 
         try {
             const res = await fetch(fullUrl, {
-                method: 'POST',
+                method: options?.method || 'POST',
                 body: body !== undefined ? JSON.stringify(body) : undefined,
                 headers,
                 cache: 'no-store'
