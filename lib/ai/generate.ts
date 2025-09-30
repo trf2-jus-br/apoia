@@ -16,6 +16,8 @@ import { clipPieces } from './clip-pieces'
 import { assert } from 'console'
 import { pdfToText } from '../pdf/pdf'
 import { assertAnonimizacaoAutomatica } from '../proc/sigilo'
+import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google'
+import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await Dao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -255,8 +257,18 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                 writeResponseToFile(kind, processedMessagesLog, text)
             },
             tools,
-            stopWhen: stepCountIs(10)
-            // maxSteps: tools ? 10 : undefined, // Limit the number of steps to avoid infinite loops
+            stopWhen: stepCountIs(10),
+            providerOptions: {
+                google: {
+                    thinkingConfig: {
+                        // thinkingBudget: 2024, // Set a budget (0 to disable, up to 24576 for Flash)
+                        includeThoughts: true, // Crucial to include the thinking process in the response
+                    },
+                } satisfies GoogleGenerativeAIProviderOptions,
+                openai: {
+                    reasoningSummary: 'auto',
+                } satisfies OpenAIResponsesProviderOptions,
+            },
         })
         return pResult as any
         // }

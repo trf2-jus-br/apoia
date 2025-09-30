@@ -2,7 +2,7 @@
 
 import { PromptDataType, PromptDefinitionType } from '@/lib/ai/prompt-types';
 import { faEdit } from '@fortawesome/free-regular-svg-icons';
-import { faFileLines, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faFileLines, faPaperclip, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
@@ -18,6 +18,7 @@ const converter = new showdown.Converter({ tables: true })
 import { getAllSuggestions, resolveSuggestion } from '@/components/suggestions/registry'
 import type { SuggestionContext } from '@/components/suggestions/context'
 import { Suggestion } from '../suggestions/base';
+import { last } from 'lodash';
 
 function preprocessar(mensagem: UIMessage, role: string) {
     const texto = mensagem.parts.reduce((acc, part) => {
@@ -131,6 +132,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const [activeModalInitial, setActiveModalInitial] = useState<any>(null)
     const [activeModalSubmitHandler, setActiveModalSubmitHandler] = useState<((values: any, ctx: SuggestionContext) => void) | null>(null)
     const [modalDrafts, setModalDrafts] = useState<Record<string, any>>({})
+    const [showReasoning, setShowReasoning] = useState(false)
 
 
     const handleProcessNumberChange = (number: string) => {
@@ -284,9 +286,19 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         setActiveModalSubmitHandler(() => result.onSubmit || null)
     }
 
-    // console.log('Chat messages:', messages)
+    const reasoning = (m: UIMessage): { title: string | undefined, content: string | undefined } | undefined => {
+        const part = m?.parts?.find((part) => part.type === 'reasoning')
+        if (!part || part.state === 'done') return undefined
+        const split = part.text.trim().split('\n\n\n')
+        const last = split[split.length - 1]
+        if (!last) return undefined
+        const match = last.match(/\*\*([\s\S]*?)\*\*\s*([\s\S]*?)\s*$/)
+        const title = match ? match[1] : undefined
+        const content = match ? match[2] : undefined
+        return match ? { title: title, content: converter.makeHtml(content) } : undefined
+    }
 
-    // (efeitos de analytics agora vivem em useChatAnalytics)
+    const currentReasoning = messages.length > 0 ? reasoning(messages[messages.length - 1]) : undefined
 
     return (
         <div className={messages.find(m => m.role === 'assistant') ? '' : 'd-print-none h-print'}>
@@ -318,19 +330,38 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                             </div>
                             : m.role === 'assistant' &&
                             <div className="row justify-content-start me-5" key={m.id}>
-                                {m?.parts?.find((part) => part.type.startsWith('tool-')) && <div className="mb-1">
-                                    {m?.parts?.filter((part) => part.type.startsWith('tool-'))?.map((part, index) => (
-                                        <div key={index} className="mb-0">
-                                            <div className={`text-wrap mb-0 chat-tool`}>
-                                                {toolMessage(part)}
+                                {
+                                    currentReasoning && <div className="mb-1">
+                                        <div className="mb-0">
+                                            <div className={`text-wrap mb-0 chat-tool text-secondary`} >
+                                                <span><FontAwesomeIcon icon={faRobot} className="me-1" />
+                                                    <span dangerouslySetInnerHTML={{ __html: currentReasoning.title }} /></span>
+                                                {showReasoning
+                                                    ? <FontAwesomeIcon icon={faChevronUp} className="ms-1" style={{ cursor: 'pointer' }} onClick={() => setShowReasoning(!showReasoning)} />
+                                                    : <FontAwesomeIcon icon={faChevronDown} className="ms-1" style={{ cursor: 'pointer' }} onClick={() => setShowReasoning(!showReasoning)} />
+                                                }
+                                                {showReasoning && <div className="mt-2" dangerouslySetInnerHTML={{ __html: currentReasoning.content }} />}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>}
-                                {hasText(m) &&
+                                    </div>
+                                }
+                                {
+                                    m?.parts?.find((part) => part.type.startsWith('tool-')) && <div className="mb-1">
+                                        {m?.parts?.filter((part) => part.type.startsWith('tool-'))?.map((part, index) => (
+                                            <div key={index} className="mb-0">
+                                                <div className={`text-wrap mb-0 chat-tool`}>
+                                                    {toolMessage(part)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                }
+                                {
+                                    hasText(m) &&
                                     <div className={`col col-auto mb-0`}>
                                         <div className={`text-wrap mb-3 rounded chat-content chat-ai`} dangerouslySetInnerHTML={{ __html: preprocessar(m, m.role) }} />
-                                    </div>}
+                                    </div>
+                                }
                             </div>
                     ))}
 
