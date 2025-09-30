@@ -146,9 +146,7 @@ export async function POST(request: Request) {
         } : undefined
         const user_id = await Dao.assertIAUserId(user.preferredUsername || user.name, userFields)
 
-        // const body = JSON.parse(JSON.stringify(request.body))
         const body = await request.json()
-        // console.log('body', JSON.stringify(body))
         const kind: string = body.kind
         const promptSlug: string | undefined = body.promptSlug
         let promptId: number | undefined = body.promptId
@@ -235,7 +233,7 @@ export async function POST(request: Request) {
             throw new Error('Invalid response')
         }
     } catch (error) {
-        console.log('error', error)
+        console.error('error', error)
         const message = Fetcher.processError(error)
         return NextResponse.json({ errormsg: `${message}` }, { status: 405 })
     }

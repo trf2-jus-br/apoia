@@ -13,6 +13,7 @@ import { Interop } from '../interop/interop'
 import { envString } from '../utils/env'
 import { PecaConteudoType } from './process-types'
 import { TEXTO_PECA_IMAGEM_JPEG, TEXTO_PECA_IMAGEM_PNG, TEXTO_PECA_PDF_OCR_ERRO, TEXTO_PECA_PDF_OCR_VAZIO, TEXTO_PECA_VIDEO_MP4, TEXTO_PECA_VIDEO_XMS_WMV } from './process-types'
+import devLog from '../utils/log'
 
 const limit = pLimit(envString('OCR_LIMIT') ? parseInt(envString('OCR_LIMIT')) : 1)
 
@@ -45,7 +46,7 @@ export const ocrPdf = async (buffer: ArrayBuffer, documentId: number) =>
 // Método que recebe um buffer de um PDF, faz um post http para o serviço de OCR e retorna o PDF processado pelo OCR
 const ocrPdfSemLimite = async (buffer: ArrayBuffer, documentId: number) => {
     if (envString('OCR_URL')) {
-        console.log('ocrPdf', buffer.byteLength)
+        devLog('ocrPdf', buffer.byteLength)
         const url = envString('OCR_URL') as string
         const formData = new FormData()
         const file = new Blob([buffer], { type: 'application/pdf' })
@@ -65,7 +66,7 @@ const ocrPdfSemLimite = async (buffer: ArrayBuffer, documentId: number) => {
         return await res.arrayBuffer()
     }
     if (envString('TIKA_URL')) {
-        console.log('tikaPdf', buffer.byteLength)
+        devLog('tikaPdf', buffer.byteLength)
         const url = envString('TIKA_URL') as string
         const res = await fetch(url, {
             method: 'PUT',
@@ -154,7 +155,7 @@ export const obterConteudoDaPeca = async (dossier_id: number, numeroDoProcesso: 
         const document_id = document ? document.id : undefined
 
         if (document && document.content) {
-            console.log('Retrieving from cache, content of type', document.content_source_id)
+            devLog('Retrieving from cache, content of type', document.content_source_id)
             return { conteudo: document.content }
         }
 
@@ -181,7 +182,7 @@ export const obterConteudoDaPeca = async (dossier_id: number, numeroDoProcesso: 
                 throw new Error(`Peça ${idDaPeca} (${descrDaPeca}) - Tipo de conteúdo não suportado: ${contentType}`)
         }
     } catch (error) {
-        console.log(`Erro ao obter conteúdo da peça ${idDaPeca} (${descrDaPeca}):`, error)
+        devLog(`Erro ao obter conteúdo da peça ${idDaPeca} (${descrDaPeca}):`, error)
         return { conteudo: undefined, errorMsg: error }
     }
 }

@@ -175,8 +175,6 @@ export const preprocess = (text: string, definition: PromptDefinitionType, data:
             case VisualizationEnum.DIFF_COMPACT:
                 return { text: compactarDiff(diff(makeHtml(textoOriginal as string), makeHtml(text), { blocksExpression })) }
             case VisualizationEnum.DIFF_HIGHLIGHT_INCLUSIONS: {
-                // console.log('textoOriginal', textoOriginal)
-                // console.log('textoResultado', text)
                 const textoOriginalLimpo = limparMarcadoresDeIfESnippet(textoOriginal as string)
                 const textoResultadoLimpo = limparMarcadoresDeIfESnippet(text)
                 let d = diff(makeHtml(textoOriginalLimpo), makeHtml(textoResultadoLimpo), { blocksExpression })
@@ -195,13 +193,9 @@ export const preprocess = (text: string, definition: PromptDefinitionType, data:
     // Replace all <!-- add: ... --> with the addition (the content after <!-- add: and before -->)
     text = text.replace(/<!--\s*add:\s*([\s\S]+?)-->/g, (_, addition) => addition.trim());
 
-    // console.log(`Preprocessed text: ${text}`) // Debugging output
-
     // Replicate <ins...> inside first-level <p>, <ul>, <ol> children and remove the outer <ins>
     // If top-level children are not exclusively those elements, leave the <ins> unchanged.
     text = wrapInsTags(text)
-    
-    
     return { text }
 }
 

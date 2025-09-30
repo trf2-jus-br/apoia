@@ -1,7 +1,6 @@
 import pdf from 'pdf-parse'
 
 function render_page(pageData) {
-    // console.log('pageData', pageData)
     //check documents https://mozilla.github.io/pdf.js/
     let render_options = {
         //replaces all occurrences of whitespace with standard spaces (0x20). The default value is `false`.
@@ -29,16 +28,10 @@ function render_page(pageData) {
 
 export async function pdfToText(blob: ArrayBuffer, options): Promise<string> {
     const data = await pdf(blob, { pagerender: render_page })
-
-    // console.log('pdfToText', data)
-
     const text = data.text
         .replace(/\n\n\<page number/gm, '<page number')
         .replace(/\<\/page\><page/gm, '</page>\n<page')
         .replace(/\s+\<\/page\>/gm, '\n</page>')
         .replace(/\<page number="(\d+)"\>\s+/gm, '<page number="$1">\n')
-
-    // console.log('pdfToText', text)
-
     return text
 }

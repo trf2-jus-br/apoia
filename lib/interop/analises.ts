@@ -2,11 +2,12 @@
  * Análises práticas usando a nova estrutura de movimentos
  */
 
+import devLog from '../utils/log';
 import { InteropProcessoType } from './interop-types';
 
 // Análise 1: Produtividade por responsável
 export function analiseProdutividade(processo: InteropProcessoType) {
-  console.log('📊 ANÁLISE DE PRODUTIVIDADE POR RESPONSÁVEL\n');
+  devLog('📊 ANÁLISE DE PRODUTIVIDADE POR RESPONSÁVEL\n');
 
   const produtividade = new Map<string, {
     movimentos: number;
@@ -36,11 +37,11 @@ export function analiseProdutividade(processo: InteropProcessoType) {
     .sort((a, b) => b[1].movimentos - a[1].movimentos);
 
   ranking.forEach(([responsavel, stats], index) => {
-    console.log(`${index + 1}. ${responsavel}`);
-    console.log(`   Movimentos: ${stats.movimentos}`);
-    console.log(`   Documentos: ${stats.documentos}`);
-    console.log(`   Tipos: ${Array.from(stats.tiposMovimento).join(', ')}`);
-    console.log();
+    devLog(`${index + 1}. ${responsavel}`);
+    devLog(`   Movimentos: ${stats.movimentos}`);
+    devLog(`   Documentos: ${stats.documentos}`);
+    devLog(`   Tipos: ${Array.from(stats.tiposMovimento).join(', ')}`);
+    devLog();
   });
 
   return ranking;
@@ -48,7 +49,7 @@ export function analiseProdutividade(processo: InteropProcessoType) {
 
 // Análise 2: Fluxo temporal do processo
 export function analiseFluxoTemporal(processo: InteropProcessoType) {
-  console.log('⏱️ ANÁLISE DE FLUXO TEMPORAL\n');
+  devLog('⏱️ ANÁLISE DE FLUXO TEMPORAL\n');
 
   const movimentosOrdenados = [...processo.movimentosEDocumentos]
     .sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime());
@@ -66,16 +67,16 @@ export function analiseFluxoTemporal(processo: InteropProcessoType) {
   const tempoMinimo = Math.min(...intervalos);
   const tempoMaximo = Math.max(...intervalos);
 
-  console.log(`Tempo médio entre movimentos: ${tempoMedio.toFixed(1)} dias`);
-  console.log(`Menor intervalo: ${tempoMinimo.toFixed(1)} dias`);
-  console.log(`Maior intervalo: ${tempoMaximo.toFixed(1)} dias`);
+  devLog(`Tempo médio entre movimentos: ${tempoMedio.toFixed(1)} dias`);
+  devLog(`Menor intervalo: ${tempoMinimo.toFixed(1)} dias`);
+  devLog(`Maior intervalo: ${tempoMaximo.toFixed(1)} dias`);
 
   // Períodos de inatividade (> 30 dias)
   const inatividade = intervalos.filter(dias => dias > 30);
-  console.log(`Períodos de inatividade (>30 dias): ${inatividade.length}`);
+  devLog(`Períodos de inatividade (>30 dias): ${inatividade.length}`);
 
   if (inatividade.length > 0) {
-    console.log(`Maior período de inatividade: ${Math.max(...inatividade).toFixed(1)} dias`);
+    devLog(`Maior período de inatividade: ${Math.max(...inatividade).toFixed(1)} dias`);
   }
 
   return {
@@ -88,7 +89,7 @@ export function analiseFluxoTemporal(processo: InteropProcessoType) {
 
 // Análise 3: Análise de documentos por tipo
 export function analiseDocumentosPorTipo(processo: InteropProcessoType) {
-  console.log('📄 ANÁLISE DE DOCUMENTOS POR TIPO\n');
+  devLog('📄 ANÁLISE DE DOCUMENTOS POR TIPO\n');
 
   const estatisticas = new Map<string, {
     quantidade: number;
@@ -124,13 +125,13 @@ export function analiseDocumentosPorTipo(processo: InteropProcessoType) {
     .sort((a, b) => b[1].quantidade - a[1].quantidade);
 
   ranking.forEach(([tipo, stats]) => {
-    console.log(`📎 ${tipo}`);
-    console.log(`   Quantidade: ${stats.quantidade}`);
-    console.log(`   Páginas total: ${stats.paginasTotal}`);
-    console.log(`   Tamanho total: ${(stats.tamanhoTotal / 1024 / 1024).toFixed(2)} MB`);
-    console.log(`   Movimentos: ${stats.movimentosAssociados.size}`);
-    console.log(`   Signatários únicos: ${stats.signatarios.size}`);
-    console.log();
+    devLog(`📎 ${tipo}`);
+    devLog(`   Quantidade: ${stats.quantidade}`);
+    devLog(`   Páginas total: ${stats.paginasTotal}`);
+    devLog(`   Tamanho total: ${(stats.tamanhoTotal / 1024 / 1024).toFixed(2)} MB`);
+    devLog(`   Movimentos: ${stats.movimentosAssociados.size}`);
+    devLog(`   Signatários únicos: ${stats.signatarios.size}`);
+    devLog();
   });
 
   return ranking;
@@ -138,24 +139,24 @@ export function analiseDocumentosPorTipo(processo: InteropProcessoType) {
 
 // Análise 4: Padrões de juntada de documentos
 export function analisePadroesJuntada(processo: InteropProcessoType) {
-  console.log('🔄 ANÁLISE DE PADRÕES DE JUNTADA\n');
+  devLog('🔄 ANÁLISE DE PADRÕES DE JUNTADA\n');
 
   const movimentosComDocs = processo.movimentosEDocumentos.filter(m => m.documentos.length > 0);
   const movimentosSemDocs = processo.movimentosEDocumentos.filter(m => m.documentos.length === 0);
 
-  console.log(`Movimentos com documentos: ${movimentosComDocs.length} (${((movimentosComDocs.length / processo.movimentosEDocumentos.length) * 100).toFixed(1)}%)`);
-  console.log(`Movimentos sem documentos: ${movimentosSemDocs.length} (${((movimentosSemDocs.length / processo.movimentosEDocumentos.length) * 100).toFixed(1)}%)`);
+  devLog(`Movimentos com documentos: ${movimentosComDocs.length} (${((movimentosComDocs.length / processo.movimentosEDocumentos.length) * 100).toFixed(1)}%)`);
+  devLog(`Movimentos sem documentos: ${movimentosSemDocs.length} (${((movimentosSemDocs.length / processo.movimentosEDocumentos.length) * 100).toFixed(1)}%)`);
 
   // Análise de múltiplos documentos por movimento
   const multiplosDocumentos = movimentosComDocs.filter(m => m.documentos.length > 1);
-  console.log(`\nMovimentos com múltiplos documentos: ${multiplosDocumentos.length}`);
+  devLog(`\nMovimentos com múltiplos documentos: ${multiplosDocumentos.length}`);
 
   if (multiplosDocumentos.length > 0) {
     const maxDocumentos = Math.max(...movimentosComDocs.map(m => m.documentos.length));
     const movComMax = movimentosComDocs.find(m => m.documentos.length === maxDocumentos);
 
-    console.log(`Maior quantidade de documentos em um movimento: ${maxDocumentos}`);
-    console.log(`Movimento: "${movComMax?.descricao}"`);
+    devLog(`Maior quantidade de documentos em um movimento: ${maxDocumentos}`);
+    devLog(`Movimento: "${movComMax?.descricao}"`);
   }
 
   // Tipos de movimento que mais geram documentos
@@ -168,9 +169,9 @@ export function analisePadroesJuntada(processo: InteropProcessoType) {
   const rankingTipos = Array.from(tiposComDocs.entries())
     .sort((a, b) => b[1] - a[1]);
 
-  console.log('\nTipos de movimento que mais geram documentos:');
+  devLog('\nTipos de movimento que mais geram documentos:');
   rankingTipos.slice(0, 5).forEach(([tipo, quantidade], index) => {
-    console.log(`${index + 1}. ${tipo}: ${quantidade} documentos`);
+    devLog(`${index + 1}. ${tipo}: ${quantidade} documentos`);
   });
 
   return {
@@ -183,20 +184,20 @@ export function analisePadroesJuntada(processo: InteropProcessoType) {
 
 // Função principal que executa todas as análises
 export function executarAnaliseCompleta(processo: InteropProcessoType) {
-  console.log('🔍 ANÁLISE COMPLETA DO PROCESSO\n');
-  console.log(`Processo: ${processo.numeroProcesso}`);
-  console.log(`Tribunal: ${processo.tribunal.nome}`);
-  console.log(`Total de movimentos: ${processo.movimentosEDocumentos.length}`);
-  console.log('\n' + '='.repeat(60) + '\n');
+  devLog('🔍 ANÁLISE COMPLETA DO PROCESSO\n');
+  devLog(`Processo: ${processo.numeroProcesso}`);
+  devLog(`Tribunal: ${processo.tribunal.nome}`);
+  devLog(`Total de movimentos: ${processo.movimentosEDocumentos.length}`);
+  devLog('\n' + '='.repeat(60) + '\n');
 
   const produtividade = analiseProdutividade(processo);
-  console.log('='.repeat(60) + '\n');
+  devLog('='.repeat(60) + '\n');
 
   const fluxo = analiseFluxoTemporal(processo);
-  console.log('\n' + '='.repeat(60) + '\n');
+  devLog('\n' + '='.repeat(60) + '\n');
 
   const documentos = analiseDocumentosPorTipo(processo);
-  console.log('='.repeat(60) + '\n');
+  devLog('='.repeat(60) + '\n');
 
   const padroes = analisePadroesJuntada(processo);
 

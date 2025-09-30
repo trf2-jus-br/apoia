@@ -920,6 +920,5 @@ export function gerarMarkdownTimelineDetalhado(
 
 // // Apenas tabela Markdown detalhada
 // const tabelaDetalhada = gerarMarkdownTimelineDetalhado(resultado, { diaVencimento: 15, incluirAtivoSemCarencia: false, incluirSemQualidade: true });
-// console.log(tabelaDetalhada);
 
 

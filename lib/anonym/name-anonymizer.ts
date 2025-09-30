@@ -37,9 +37,6 @@ export function anonymizeNames(text: string): { text: string; substitutions: num
 
   const words = breakIntoWords(text)
 
-  // return text.replace(/[A-ZAÀÁÂÃÄÅÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÇ][A-ZAÀÁÂÃÄÅÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÇa-zaàáâãäåèéêëìíîïòóôõöùúûüç]+(?:(?:\s+(?:[A-ZAÀÁÂÃÄÅÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÇ][A-ZAÀÁÂÃÄÅÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÇa-zaàáâãäåèéêëìíîïòóôõöùúûüç]+|de|das?|dos?))*)/g, (match) => {
-  // const words = match.split(/\s+/)
-
   let result = []
   let substitutions = 0
 
@@ -66,7 +63,6 @@ export function anonymizeNames(text: string): { text: string; substitutions: num
     }
     if (names.length > 0) {
       substitutions++
-      // const saveNames = [...names]
       // While names and with something that is not a isValidName, remove from names and unshift to words
       while (names.length > 0 && !isValidName(names[names.length - 1])) {
         const name = names.pop()
@@ -74,7 +70,6 @@ export function anonymizeNames(text: string): { text: string; substitutions: num
       }
       const formatedNames = names.filter(name => !/\s+/.test(name) && !connectives.includes(name.toLowerCase())).map(name => `${name[0]}.`)
       result.push(...formatedNames)
-      // console.log(`replaced name ${saveNames.join('')} with ${formatedNames.join('')}`.replace(/\s+/g, ' '))
     }
   }
   return { text: result.join(''), substitutions }

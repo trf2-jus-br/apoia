@@ -32,7 +32,6 @@ function PromptConfigForm({ kind, config, onSave }: { kind: string, config: Prom
     }, [kind])
 
     const returnConfig = () => {
-        // console.log('returnConfig', prompts, prompt_slug, model_slug, extra)
         const prompt_name = prompts.find(p => p.id == prompt_slug)?.name
         const model_name = models.find(m => m.id == model_slug)?.name
         onSave({
@@ -75,7 +74,6 @@ export default function PromptConfig({ kind, setPromptConfig }: { kind: string, 
     }, [])
 
     const onSave = (newConfig: PromptConfigType) => {
-        // console.log('onSave', newConfig)
         setCurrent(newConfig)
         localStorage.setItem(`prompt-config-${kind}`, JSON.stringify(newConfig))
         setPromptConfig(newConfig)

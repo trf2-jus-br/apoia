@@ -10,7 +10,5 @@ export async function inferirCategoriaDaPeca(dossier_id: number, id: number | un
     ] }
     const result = await generateContent(definition, data)
     const json = JSON.parse(result.generation)
-    // console.log('Identificação de Peça - código: ', json.codigo)
-    // console.log('Identificação de Peça - código: ', json.codigo, 'justificativa: ', json.justificativa)
     return json.codigo
 }

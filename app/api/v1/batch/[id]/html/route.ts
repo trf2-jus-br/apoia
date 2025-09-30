@@ -7,6 +7,7 @@ import { tua } from "@/lib/proc/tua"
 import { getCurrentUser } from "@/lib/user"
 import mapping from './mapping.json'
 import mappingByUnit from './mapping-by-unit.json'
+import devLog from "@/lib/utils/log"
 
 export const maxDuration = 60
 
@@ -75,8 +76,6 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
 
     const items = await Dao.retrieveByBatchIdAndEnumId(batch_id, enum_id)
 
-    // console.log('items', items.length)
-
     // use main item if available
     for (const item of items)
         item.enum_item_descr = item.enum_item_descr_main || item.enum_item_descr
@@ -106,7 +105,6 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
             acc.push(i.enum_item_descr)
         return acc
     }, [] as string[])
-    // console.log('enumDescrs', enumDescrs)
     if (!enumDescrs[0]) {
         const firstEnumDescr = enumDescrs.shift() as string
         if (ungrouped)
@@ -171,24 +169,20 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
     // index
     if (false && triageItems.length === 1 && triageItems[0].descr === '') {
         const originalTriageItems = triageItems
-        // console.log('originalIndex', JSON.stringify(originalTriageItems.map(ti => ({ descr: ti.descr, count: ti.items.length }))))
         const mappedTriageItems = mapping.map(m => ({ ...m, items: [] }))
         for (const ti of originalTriageItems) {
             const mappedBy = mappedTriageItems.find(m => m.groupedItems.find(g => g === ti.descr))
             if (mappedBy) {
                 mappedBy.items = [...mappedBy.items, ...ti.items]
             } else {
-                // console.log('mapping not found', ti.descr)
                 mappedTriageItems.push({ descr: ti.descr, items: ti.items, groupedItems: [ti.descr] })
             }
         }
         triageItems = mappedTriageItems //.filter(ti => ti.items.length > 0)
-        // console.log('\n\nmappedTriageItems', JSON.stringify(mappedTriageItems.map(ti => ({ descr: ti.descr, count: ti.items.length }))))
     }
 
     // index by unit
     if (false) {
-        // console.log('originalIndex', JSON.stringify(originalTriageItems.map(ti => ({ descr: ti.descr, count: ti.items.length }))))
         const units = [...new Set(Object.values(mappingByUnit))] as string[]
         const preprocessUnitToSort = (unit: string) => {
             return unit.replace(/\d+/g, (n) => n.padStart(2, '0'));
@@ -202,7 +196,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
                     throw new Error(`Mapping unit not found for ${ti.dossier_code} (${ti.enum_item_descr})`)
                 found.items.push(ti)
             } else {
-                console.log(`Mapping not found for ${ti.dossier_code} (${ti.enum_item_descr})`)
+                devLog(`Mapping not found for ${ti.dossier_code} (${ti.enum_item_descr})`)
             }
         }
         triageItems = mappedItems //.filter(ti => ti.items.length > 0)
@@ -257,7 +251,6 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
 
         for (const item of ti.items) {
             const nomeDaClasse = tua[item.dossier_class_code]
-            // console.log('nomeDaClasse', nomeDaClasse)
             html += `<div class="page"><h1 class="titulo">Processo ${item.dossier_code}</h1>`
             html += `<div class="subtitulo">`
             if (nomeDaClasse) html += nomeDaClasse
@@ -304,8 +297,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
             count++
         }
     }
-    // console.log('count', count)
-    console.log('globalCount', globalCount)
+    devLog('globalCount', globalCount)
 
     return new Response(formated(html, slugPrintTitle), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 }

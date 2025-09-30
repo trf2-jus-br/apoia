@@ -16,6 +16,7 @@ import { clipPieces } from './clip-pieces'
 import { th } from 'zod/v4/locales'
 import { nivelDeSigiloPermitido } from '../proc/sigilo'
 import { buildRequests } from './build-requests'
+import devLog from '../utils/log'
 
 export async function summarize(dossierNumber: string, pieceNumber: string): Promise<{ dossierData: any, generatedContent: GeneratedContent }> {
     const pUser = assertCurrentUser()
@@ -88,7 +89,7 @@ export function buildRequestsForAnalysis(dossierNumber: string, produtos: InfoDe
 }
 
 export async function analyze(batchName: string | undefined, dossierNumber: string, kind: string | number | undefined, complete: boolean): Promise<{ dossierData: any, generatedContent: GeneratedContent[] }> {
-    console.log('analyze', batchName, dossierNumber)
+    devLog('analyze', batchName, dossierNumber)
     try {
         const pUser = assertCurrentUser()
 
@@ -146,8 +147,6 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
         let pecasComConteudo = await getPiecesWithContent(dadosDoProcesso, dossierNumber, true)
 
         if (pecasComConteudo.length === 0) throw new Error(`${dossierNumber}: Nenhuma peça com conteúdo`)
-
-        // console.log('pecasComConteudo', pecasComConteudo)
 
         let requests: GeneratedContent[]
         if (isNumericKind) {

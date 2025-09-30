@@ -71,7 +71,6 @@ export async function getPiecesWithContent(dadosDoProcesso: DadosDoProcessoType,
     let pecasComConteudo: TextoType[] = []
     for (const peca of dadosDoProcesso.pecasSelecionadas) {
         if (peca.pConteudo === undefined && peca.conteudo === undefined && !skipError) {
-            // console.log('peca', peca)
             throw new Error(`Conteúdo não encontrado no processo ${dossierNumber}, peça ${peca.id}, rótulo ${peca.rotulo}`)
         }
         const slug = await slugify(peca.descr)

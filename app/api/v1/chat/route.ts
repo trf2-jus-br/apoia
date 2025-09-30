@@ -31,7 +31,6 @@ export const maxDuration = 60
  */
 export async function POST(req: Request) {
     try {
-        console.log('Chat request received')
         const pUser = getCurrentUser()
         const user = await pUser
         if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
@@ -46,7 +45,6 @@ export async function POST(req: Request) {
         // if (anonymize) {
         //     messages.forEach((message: any) => {
         //         if (message.role === 'user' && message.content) {
-        //             console.log('Anonymizing user message content:', message.content)
         //             message.content = anonymizeText(message.content).text
         //         }
         //     })

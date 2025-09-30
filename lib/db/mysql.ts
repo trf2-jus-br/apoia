@@ -238,7 +238,6 @@ export class Dao {
             )
             .leftJoin('ia_testset as t', 't.kind', '=', 'p.kind')
             .groupBy('k.kind');  // Group by 'kind' from the union
-        // console.log('***counters', sql.toString());
         const result = await sql
 
         if (!result || result.length === 0) return []
@@ -295,7 +294,6 @@ export class Dao {
             .from('t2');
 
         // Exibe a consulta SQL gerada
-        // console.log('***prompts', finalQuery.toString());
         const result = await finalQuery
         if (!result || result.length === 0) return []
         const records = result.map((record: any) => ({ ...record }))
@@ -354,7 +352,7 @@ export class Dao {
             .from('t2');
 
         // Ou para ver a consulta SQL gerada:
-        // console.log('***testsets', finalQuery.toString());
+        // devLog('***testsets', finalQuery.toString());
         const result = await finalQuery
         if (!result || result.length === 0) return []
         const records = result.map((record: any) => ({ ...record }))
@@ -681,7 +679,6 @@ export class Dao {
             .groupBy('ei.descr', 'ei.hidden')
         // .orderBy(knex.raw('count(distinct bd.id)'), 'desc');
         result.sort((a, b) => a.count - b.count)
-        // console.log('result', result)
         return result
     }
 
@@ -1142,7 +1139,6 @@ export class Dao {
             g.orderBy('u.name').orderBy('d.code')
         }
 
-        // console.log('SQL:', g.toQuery())
         const rows: any[] = await g
 
         return rows.map(r => ({

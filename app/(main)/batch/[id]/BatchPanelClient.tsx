@@ -10,6 +10,7 @@ import CsvNumbersModal from '@/components/modals/CsvNumbersModal'
 import TableRecords from '@/components/table-records'
 import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 import { useRouter } from 'next/navigation'
+import devLog from '@/lib/utils/log'
 
 type Totals = { total: number, pending: number, running: number, ready: number, error: number }
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
@@ -227,7 +228,7 @@ export default function BatchPanelClient({ id, initialSummary, usdBrl, promptNam
           onStop(row.id, row.dossier_code)
         break
       default:
-        console.log('Unknown click action', kind, row)
+        devLog('Unknown click action', kind, row)
     }
   }
 

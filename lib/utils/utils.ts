@@ -154,7 +154,6 @@ export const formatBrazilianDateTime = (dt: Date) => {
 }
 
 export const formatBrazilianDate = (dt: Date) => {
-  // console.log('dt', dt, 'type:', typeof dt)
   if (!dt) return ''
   if (typeof dt === 'string')
     dt = new Date(dt)

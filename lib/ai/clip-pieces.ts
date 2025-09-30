@@ -1,5 +1,6 @@
 import { T } from "../proc/combinacoes";
 import { TEXTO_INDICACAO_PARCIAL } from "../proc/process-types";
+import devLog from "../utils/log";
 import { Model, ModelValeuType } from "./model-types";
 import { TextoType } from "./prompt-types";
 
@@ -142,7 +143,7 @@ function clipNumericAndSymbolicPieces(textos: TextoType[]): TextoType[] {
 
         // Se a proporção for maior que o limiar e o texto for maior que o limite, clipa.
         if (ratio > THRESHOLD && text.length > CLIP_LIMIT) {
-            console.log(`Clipando peça com pouco texto ${index + 1} de ${textos.length} com tamanho ${text.length} para ${CLIP_LIMIT} caracteres.`);
+            devLog(`Clipando peça com pouco texto ${index + 1} de ${textos.length} com tamanho ${text.length} para ${CLIP_LIMIT} caracteres.`);
             return {
                 ...piece,
                 texto: text.slice(0, CLIP_LIMIT) + TEXTO_INDICACAO_PARCIAL,
@@ -215,7 +216,7 @@ export function clipPieces(model: string, textos: TextoType[]): TextoType[] {
         const newSize = newClippableSizes[i];
 
         if (newSize < originalSize) {
-            console.log(`Clipando peça ${index + 1} de ${textos.length} de tamanho ${originalSize} para ${newSize} caracteres.`);
+            devLog(`Clipando peça ${index + 1} de ${textos.length} de tamanho ${originalSize} para ${newSize} caracteres.`);
             resultTextos[index] = {
                 ...piece,
                 texto: piece.texto.slice(0, newSize) + TEXTO_INDICACAO_PARCIAL,

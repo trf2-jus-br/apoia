@@ -27,7 +27,6 @@ const formatSimilarity = (value: number) => {
     if (isNaN(value)) return ''
     if (value === -1) return ''
     const formated = `${(value * 100).toFixed(1)}`
-    // console.log('value', value, 'formated', formated)
     if (formated === '100.0' && value < 1) return '99.9'
     return formated
 }
@@ -265,7 +264,6 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
             const numerosUnicosDeProcessos = fixOutrosNumerosDeProcessos(outrosNumerosDeProcessos, numeroDoProcesso).split(',').map(n => n.trim())
             for (const numeroDoOutroProcesso of numerosUnicosDeProcessos) {
                 if (!numeroDoOutroProcesso) continue
-                // console.log('numeroDoOutroProcesso', numeroDoOutroProcesso)
                 setStatus(`Obtendo dados do processo ${numeroDoOutroProcesso} (${procs.length + 1}/${numerosUnicosDeProcessos.length})...`)
                 await carregarProcesso(dadosDoProcesso, numeroDoOutroProcesso, procs, procsMap, simMap)
             }

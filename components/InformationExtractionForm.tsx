@@ -6,6 +6,7 @@ import { flatternPromptVariables, parsePromptVariablesFromMarkdown, PromptVariab
 import { Button } from 'react-bootstrap'
 import { preprocess } from '@/lib/ui/preprocess'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
+import devLog from '@/lib/utils/log'
 
 export type PromptFormProps = {
     promptMarkdown: string
@@ -66,8 +67,7 @@ const Variable: React.FC<{ variable: PromptVariableType; index: number, Frm: For
 
 const Array: React.FC<{ variable: PromptVariableType; index: number, Frm: FormHelper, variableName: string }> = ({ variable, index, Frm, variableName }) => {
     const a = Frm.get(`${variableName}.${variable.name}`)
-    console.log('length:', `${variableName}.${variable.name}`, a?.length)
-    // console.log(`Array: variableName=${variableName}, a=${JSON.stringify(a)}`)
+    devLog('length:', `${variableName}.${variable.name}`, a?.length)
     return <>
         {variable.label && <div className="col-12"><h4 className={`${index ? 'mt-3' : 'mt-0'} mb-1`}>{variable.label.replace(/_/g, ' ')}</h4></div>}
         {a?.length &&
@@ -91,7 +91,6 @@ const Array: React.FC<{ variable: PromptVariableType; index: number, Frm: FormHe
 export const InformationExtractionForm: React.FC<PromptFormProps> = ({ promptMarkdown, promptFormat, Frm, variableName }) => {
     const variables = flatternPromptVariables(parsePromptVariablesFromMarkdown(promptMarkdown))
     // if (!variables || variables.length === 0) return null
-    // console.log(`InformationExtractionForm: variables: ${JSON.stringify(variables, null, 2)}`)
 
     if (!Frm.get('information_extraction_editing')) {
         let promptFormatPreprocessed = promptFormat
@@ -99,8 +98,6 @@ export const InformationExtractionForm: React.FC<PromptFormProps> = ({ promptMar
         promptFormatPreprocessed = promptFormatPreprocessed.replace(/}}/g, '}}</ins>')
         promptFormatPreprocessed = promptFormatPreprocessed.replace(/{=/g, '{{')
         promptFormatPreprocessed = promptFormatPreprocessed.replace(/=}/g, '}}')
-        // console.log(`Prompt format preprocessed: ${promptFormatPreprocessed}`)
-        // console.log('information_extraction', Frm.get(variableName) )
         const html = preprocess(JSON.stringify(Frm.get(variableName)), { format: promptFormatPreprocessed } as PromptDefinitionType, undefined, true).text
         return <>
             <div className="alert alert-info ai-content mb-3" dangerouslySetInnerHTML={{ __html: html }} />

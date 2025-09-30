@@ -1,4 +1,5 @@
 import { StatusDeLancamento } from "../proc/process-types"
+import devLog from "../utils/log"
 import { slugify } from "../utils/utils"
 
 // Tipos de arquivos que podem ser suportados diretamente por modelos
@@ -143,10 +144,10 @@ export function modelCalcUsage(model: string, input_tokens: number, output_token
         ? (input_tokens * inputTokenPPM + output_tokens * outputTokenPPM) / 1000000
         : (200000 * inputTokenPPM + 100000 * outputTokenPPM) / 1000000
 
-    console.log(`Using model: ${modelDetails.name}, inputTokenPPM: ${inputTokenPPM}, outputTokenPPM: ${outputTokenPPM}`)
-    console.log('Input tokens:', input_tokens)
-    console.log('Output tokens:', output_tokens)
-    console.log(`Approximate cost: $${approximate_cost.toFixed(6)}`)
+    devLog(`Using model: ${modelDetails.name}, inputTokenPPM: ${inputTokenPPM}, outputTokenPPM: ${outputTokenPPM}`)
+    devLog('Input tokens:', input_tokens)
+    devLog('Output tokens:', output_tokens)
+    devLog(`Approximate cost: $${approximate_cost.toFixed(6)}`)
     return { input_tokens, output_tokens, approximate_cost }
 }
 

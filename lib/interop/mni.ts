@@ -169,7 +169,6 @@ export class InteropMNI implements Interop {
         const sigilo = '' + dadosBasicos.attributes.nivelSigilo
         assertNivelDeSigilo(sigilo)
         const dataAjuizamento = dadosBasicos.attributes.dataAjuizamento
-        // console.log('dadosBasicos', dadosBasicos)
         const nomeOrgaoJulgador = dadosBasicos.orgaoJulgador.attributes.nomeOrgao
         const ajuizamento = parseYYYYMMDDHHMMSS(dataAjuizamento)
         // ajuizamentoDate.setTime(ajuizamentoDate.getTime() - ajuizamentoDate.getTimezoneOffset() * 60 * 1000)
@@ -177,7 +176,6 @@ export class InteropMNI implements Interop {
 
         let pecas: PecaType[] = []
         const documentos = respQuery[0].processo.documento
-        // console.log('documentos', JSON.stringify(documentos, null, 2))
         for (const doc of documentos) {
             // if (!Object.values(T).includes(doc.attributes.descricao)) continue
             pecas.unshift({

@@ -222,7 +222,6 @@ export const flatternPromptVariables = (variables: PromptVariableType[] | undefi
 
     walk(variables, [])
 
-    // console.log('Flattened variables:', JSON.stringify(result, null, 2))
     return result
 }
 

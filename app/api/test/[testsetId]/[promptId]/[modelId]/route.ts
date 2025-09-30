@@ -9,6 +9,7 @@ import { slugify } from '@/lib/utils/utils'
 import { ATTEMPTS, buildTest, preprocessQuestion } from '../../../../../../lib/ai/test/test-config'
 import { getInternalPrompt, promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
 import { getCurrentUser } from '@/lib/user'
+import { devLog } from '@/lib/utils/log'
 
 export const maxDuration = 60
 
@@ -64,11 +65,11 @@ const execute = async (testsetId: number, promptId: number, modelId: number, con
 
   const progress: ProgressType = {
     set: (s: string, percent: number) => {
-      console.log(`Progress: ${s} (${percent}%)`)
+      devLog(`Progress: ${s} (${percent}%)`)
       yieldProgress(s, percent)
     },
     remove: () => {
-      console.log(`Progress: removed`)
+      devLog(`Progress: removed`)
     }
   }
 
@@ -94,7 +95,7 @@ const execute = async (testsetId: number, promptId: number, modelId: number, con
       removeEmptyKeys(definition)
       const resultStream = await streamContent(definition, data)
       const result = await streamString(`prompt-result-${attempt * stepMax + i * 2}`, resultStream, controller)
-      console.log(`Result: ${result}`)
+      devLog(`Result: ${result}`)
       promptResults.push(result)
 
       yieldProgress(`Teste ${i} - ${test.name} - Testando o Resultado`, 0)
@@ -111,7 +112,7 @@ const execute = async (testsetId: number, promptId: number, modelId: number, con
 
       const resultStream2 = await streamContent(definition2, data2)
       const result2 = await streamString(`questions-result-${attempt * stepMax + i * 2 + 1}`, resultStream2, controller)
-      console.log(`Result2: ${result2}`)
+      devLog(`Result2: ${result2}`)
       questionsResults.push(JSON.parse(result2))
     }
   }

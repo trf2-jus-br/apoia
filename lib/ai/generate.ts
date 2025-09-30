@@ -18,6 +18,7 @@ import { pdfToText } from '../pdf/pdf'
 import { assertAnonimizacaoAutomatica } from '../proc/sigilo'
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google'
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai'
+import devLog from '../utils/log'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await Dao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -103,7 +104,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     Promise<StreamTextResult<ToolSet, Partial<any>> | StreamObjectResult<DeepPartial<any>, any, never> | string> {
     // const user = await getCurrentUser()
     // if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
-    console.log('will build prompt', definition.kind)
+    devLog('will build prompt', definition.kind)
     await waitForTexts(data)
 
     // Anonymize text if the cookie is set
@@ -111,7 +112,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const anonymize = cookiesList.get('anonymize')?.value === 'true'
     data.textos = data.textos.map((texto: TextoType) => {
         if (anonymize || assertAnonimizacaoAutomatica(texto.sigilo)) {
-            console.log(`Anonymizing piece ${texto.id} (${texto.descr}) with confidentiality level ${texto.sigilo}`)
+            devLog(`Anonymizing piece ${texto.id} (${texto.descr}) with confidentiality level ${texto.sigilo}`)
             return { ...texto, texto: anonymizeText(texto.texto).text }
         } else {
             return texto
@@ -217,7 +218,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
     }
 
     if (!structuredOutputs) { // text streaming branch
-        console.log('streaming text', kind) //, messages, modelRef)
+        devLog('streaming text', kind) //, messages, modelRef)
         if (apiKeyFromEnv) {
             await Dao.assertIAUserDailyUsageId(user_id, court_id)
         }
@@ -273,7 +274,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
         return pResult as any
         // }
     } else {
-        console.log('streaming object', kind) //, messages, modelRef, structuredOutputs.schema)
+        devLog('streaming object', kind) //, messages, modelRef, structuredOutputs.schema)
         if (apiKeyFromEnv) {
             await Dao.assertIAUserDailyUsageId(user_id, court_id)
         }

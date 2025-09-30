@@ -42,7 +42,6 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
         // const pedidos = [...Frm.get('pedidos')].filter(p => p.dispositivo).map(p => ({ ...p, fundamentacoes: [...p.fundamentacoes.filter(f => f.selecionada).map(f => f.texto)] }))
         // const proximoPrompt = Frm.get('pedidos').proximoPrompt || 'SENTENCA'
         const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
-        // console.log('pedidosAnalisados', pedidos)
     const data = { ...request.data }
     data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0' }]
 

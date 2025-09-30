@@ -24,15 +24,11 @@ const preprocessInput = (value: string) => {
 // and inserts the cleaned, comma-separated list at the cursor position.
 const ProcessTextarea: React.FC<Props> = ({ value, onChange, placeholder, className, id, name, rows, autoFocus = false }) => {
     const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-        console.log('Pasting text...')
         event.preventDefault()
         const pastedText = event.clipboardData.getData('text')
         const processedText = extractProcessNumbers(pastedText)
-        console.log('Pasted text:', pastedText)
-
         const target = event.target as HTMLTextAreaElement
         const { selectionStart, selectionEnd } = target
-
         const newValue = value.substring(0, selectionStart) + processedText + value.substring(selectionEnd)
         onChange(newValue)
     }
@@ -40,8 +36,6 @@ const ProcessTextarea: React.FC<Props> = ({ value, onChange, placeholder, classN
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         onChange(preprocessInput(e.target.value))
     }
-
-    console.log('Rendering ProcessTextarea with value:', value)
 
     return (
         <textarea autoFocus={autoFocus}

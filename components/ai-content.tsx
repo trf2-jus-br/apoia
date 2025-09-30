@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faThumbsDown } from '@fortawesome/free-regular-svg-icons'
 import { faRefresh } from '@fortawesome/free-solid-svg-icons'
 import { Form } from 'react-bootstrap'
+import devLog from '@/lib/utils/log'
 
 export const getColor = (text, errormsg) => {
     let color = 'info'
@@ -152,7 +153,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     setCurrent(text)
                 }
                 catch (e) {
-                    console.log(e.message)
+                    devLog(e.message)
                 }
             }
         }

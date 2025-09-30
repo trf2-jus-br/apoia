@@ -31,7 +31,6 @@ const authOptions = {
         }
       }
       token = { roles, corporativo, preferredUsername, iss, accessToken: account?.access_token, ...token, ...user }
-      // console.log("[jwt callback] token " + JSON.stringify(token))
       return token
     },
     async session({ session, token, user }) {
