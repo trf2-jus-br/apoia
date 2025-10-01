@@ -9,7 +9,7 @@ export const assertStr = (str: string): string => {
 
 export const removeHyphen = (str) => {
     str = assertStr(str)
-    const regex = /^(?:- )?(?<text>.+?)$/ms
+    const regex = /^(?:-|\*)?\s*(?<text>.+?)$/ms
     const m = str.match(regex)
     if (!m || !m.groups) return ''
     return assertStr(m.groups.text)

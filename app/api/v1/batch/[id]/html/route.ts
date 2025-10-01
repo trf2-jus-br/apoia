@@ -297,8 +297,6 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
             count++
         }
     }
-    devLog('globalCount', globalCount)
-
     return new Response(formated(html, slugPrintTitle), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 }
 
