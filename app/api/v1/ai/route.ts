@@ -188,6 +188,10 @@ export async function POST(request: Request) {
         const executionResults: PromptExecutionResultsType = { messagesOnly }
         const ret = await streamContent(definitionWithOptions, data, executionResults, { dossierCode })
 
+        if (ret.messages && messagesOnly) {
+            return new Response(ret.messages, { status: 200 })
+        }
+
         if (ret.cached) {
             return new Response(ret.cached, { status: 200 })
         }
@@ -236,9 +240,9 @@ export async function POST(request: Request) {
                     'Content-Type': definitionWithOptions.jsonSchema ? 'application/json' : 'text/plain; charset=utf-8',
                 },
             })
-        } else {
-            throw new Error('Invalid response')
         }
+
+        throw new Error('Invalid response')
     } catch (error) {
         console.error('error', error)
         const message = Fetcher.processError(error)
