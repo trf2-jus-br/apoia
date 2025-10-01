@@ -186,16 +186,18 @@ export async function POST(request: Request) {
             definitionWithOptions.prompt += '\n\n' + body.extra
 
         const executionResults: PromptExecutionResultsType = { messagesOnly }
-        const result = await streamContent(definitionWithOptions, data, executionResults, { dossierCode })
+        const ret = await streamContent(definitionWithOptions, data, executionResults, { dossierCode })
 
-        if (typeof result === 'string') {
-            return new Response(result, { status: 200 })
+        if (ret.cached) {
+            return new Response(ret.cached, { status: 200 })
         }
 
-        if (searchParams.get('uiMessageStream') === 'true')
-            return ((await result) as StreamTextResult<ToolSet, any>).toUIMessageStreamResponse();
+        if (ret.textStream && searchParams.get('uiMessageStream') === 'true') {
+            return ((await ret.textStream) as StreamTextResult<ToolSet, any>).toUIMessageStreamResponse();
+        }
 
-        if (result) {
+        if (ret.textStream || ret.objectStream) {
+            const result = ret.textStream ? await ret.textStream : ret.objectStream ? await ret.objectStream : null
             const reader: ReadableStreamDefaultReader = (result as any).fullStream.getReader()
             const { value, done } = await reader.read()
             if (value?.type === 'error') {

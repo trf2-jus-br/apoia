@@ -61,8 +61,8 @@ function writeResponseToFile(kind: string, messages: ModelMessage[], text: strin
 
 export async function generateContent(definition: PromptDefinitionType, data: PromptDataType): Promise<IAGenerated> {
     const results: PromptExecutionResultsType = {}
-    const pResult = await streamContent(definition, data, results)
-    const stream = await pResult
+    const ret = await streamContent(definition, data, results)
+    const stream = ret.textStream ? await ret.textStream : ret.objectStream ? await ret.objectStream : ret.cached ? ret.cached : undefined
 
     let text: string
     if (typeof stream === 'string') {
@@ -101,8 +101,16 @@ export async function writeUsage(usage, model: string, user_id: number | undefin
     if (user_id && court_id)
         await Dao.addToIAUserDailyUsage(user_id, court_id, calculedUsage.input_tokens, calculedUsage.output_tokens, calculedUsage.approximate_cost)
 }
+
+export type PromptReturnType = {
+    messages?: string
+    cached?: string
+    textStream?: Promise<StreamTextResult<ToolSet, any>>
+    objectStream?: Promise<StreamObjectResult<DeepPartial<any>, any, never>>
+}
+
 export async function streamContent(definition: PromptDefinitionType, data: PromptDataType, results?: PromptExecutionResultsType, additionalInformation?: PromptAdditionalInformationType):
-    Promise<StreamTextResult<ToolSet, Partial<any>> | StreamObjectResult<DeepPartial<any>, any, never> | string> {
+    Promise<PromptReturnType> {
     // const user = await getCurrentUser()
     // if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
     devLog('will build prompt', definition.kind)
@@ -135,7 +143,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const attempt = definition?.cacheControl !== true && definition?.cacheControl || null
 
     if (results?.messagesOnly) {
-        return JSON.stringify(messages)
+        return { messages: JSON.stringify(messages) }
     }
 
     // try to retrieve cached generations
@@ -147,7 +155,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
                 results.generationId = cached.id
                 results.model = cached.model || model
             }
-            return cached.generation
+            return { cached: cached.generation }
         }
     }
 
@@ -158,7 +166,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
 }
 
 export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>):
-    Promise<StreamTextResult<ToolSet, Partial<any>> | StreamObjectResult<DeepPartial<any>, any, never> | string> {
+    Promise<PromptReturnType> {
     const pUser = assertCurrentUser()
     const user = await pUser
     const user_id = await Dao.assertIAUserId(user.preferredUsername || user.name)
@@ -272,7 +280,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                 } satisfies OpenAIResponsesProviderOptions,
             },
         })
-        return pResult as any
+        return { textStream: pResult as any }
         // }
     } else {
         devLog('streaming object', kind) //, messages, modelRef, structuredOutputs.schema)
@@ -297,7 +305,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             schema: structuredOutputs.schema,
         })
         // @ts-ignore-next-line
-        return pResult
+        return { objectStream: pResult }
     }
 }
 

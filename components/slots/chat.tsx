@@ -19,6 +19,7 @@ import { getAllSuggestions, resolveSuggestion } from '@/components/suggestions/r
 import type { SuggestionContext } from '@/components/suggestions/context'
 import { Suggestion } from '../suggestions/base';
 import { last } from 'lodash';
+import { reasoning } from '@/lib/ai/reasoning';
 
 function preprocessar(mensagem: UIMessage, role: string) {
     const texto = mensagem.parts.reduce((acc, part) => {
@@ -286,18 +287,6 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         setActiveModalSubmitHandler(() => result.onSubmit || null)
     }
 
-    const reasoning = (m: UIMessage): { title: string | undefined, content: string | undefined } | undefined => {
-        const part = m?.parts?.find((part) => part.type === 'reasoning')
-        if (!part || part.state === 'done') return undefined
-        const split = part.text.trim().split('\n\n\n')
-        const last = split[split.length - 1]
-        if (!last) return undefined
-        const match = last.match(/\*\*([\s\S]*?)\*\*\s*([\s\S]*?)\s*$/)
-        const title = match ? match[1] : undefined
-        const content = match ? match[2] : undefined
-        return match ? { title: title, content: converter.makeHtml(content) } : undefined
-    }
-
     const currentReasoning = messages.length > 0 ? reasoning(messages[messages.length - 1]) : undefined
 
     return (
@@ -331,7 +320,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                             : m.role === 'assistant' &&
                             <div className="row justify-content-start me-5" key={m.id}>
                                 {
-                                    currentReasoning && <div className="mb-1">
+                                    currentReasoning && idx === messages.length - 1 && <div className="mb-1">
                                         <div className="mb-0">
                                             <div className={`text-wrap mb-0 chat-tool text-secondary`} >
                                                 <span><FontAwesomeIcon icon={faRobot} className="me-1" />

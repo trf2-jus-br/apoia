@@ -72,7 +72,7 @@ export async function POST(req: Request) {
             return new Response(result, { status: 200 })
         }
 
-        return ((await result) as StreamTextResult<ToolSet, any>).toUIMessageStreamResponse();
+        return ((await result.textStream) as StreamTextResult<ToolSet, any>).toUIMessageStreamResponse();
     } catch (error) {        
         console.error('Error in chat route:', error)
         return new Response(

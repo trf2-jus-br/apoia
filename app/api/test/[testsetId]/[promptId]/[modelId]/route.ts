@@ -94,7 +94,8 @@ const execute = async (testsetId: number, promptId: number, modelId: number, con
       }
       removeEmptyKeys(definition)
       const resultStream = await streamContent(definition, data)
-      const result = await streamString(`prompt-result-${attempt * stepMax + i * 2}`, resultStream, controller)
+      const stream = resultStream.textStream ? await resultStream.textStream : resultStream.objectStream ? await resultStream.objectStream : resultStream.cached ? resultStream.cached : undefined
+      const result = await streamString(`prompt-result-${attempt * stepMax + i * 2}`, stream, controller)
       devLog(`Result: ${result}`)
       promptResults.push(result)
 
@@ -111,7 +112,8 @@ const execute = async (testsetId: number, promptId: number, modelId: number, con
       const definition2 = promptDefinitionFromDefinitionAndOptions(getInternalPrompt('int-testar'), options2)
 
       const resultStream2 = await streamContent(definition2, data2)
-      const result2 = await streamString(`questions-result-${attempt * stepMax + i * 2 + 1}`, resultStream2, controller)
+      const stream2 = resultStream2.textStream ? await resultStream2.textStream : resultStream2.objectStream ? await resultStream2.objectStream : resultStream2.cached ? resultStream2.cached : undefined
+      const result2 = await streamString(`questions-result-${attempt * stepMax + i * 2 + 1}`, stream2, controller)
       devLog(`Result2: ${result2}`)
       questionsResults.push(JSON.parse(result2))
     }
