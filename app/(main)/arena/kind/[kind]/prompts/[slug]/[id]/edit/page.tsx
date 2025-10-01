@@ -1,6 +1,7 @@
 import { Container } from 'react-bootstrap'
 import PromptForm from '../../../prompt-form'
 import { Dao } from '@/lib/db/mysql'
+import { PublicError } from '@/lib/utils/public-error';
 
 export default async function New(props: { params: Promise<{ kind: string, slug: string, id: number }> }) {
     const params = await props.params;

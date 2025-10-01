@@ -8,6 +8,7 @@ import { envNumber, envString } from "../utils/env"
 import { dailyLimits } from "../utils/limits"
 import { IS_APPLE } from "@mdxeditor/editor"
 import type { IABatch, IABatchJob, IABatchSummary } from './mysql-types'
+import { PublicError } from "../utils/public-error"
 
 function getId(returning: number | { id: number }): number {
     return typeof returning === 'number' ? returning : returning.id

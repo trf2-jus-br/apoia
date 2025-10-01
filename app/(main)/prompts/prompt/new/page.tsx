@@ -4,6 +4,7 @@ import { Dao } from '@/lib/db/mysql'
 import { assertCurrentUser } from '@/lib/user'
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { Instance, Matter, Scope } from '@/lib/proc/process-types'
+import { PublicError } from '@/lib/utils/public-error'
 
 export default async function New(
     props: { params: Promise<{ kind: string }>, searchParams: Promise<{ copyFrom: string, template: string }> }
