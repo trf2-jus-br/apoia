@@ -7,6 +7,7 @@ import { Dao } from '@/lib/db/mysql'
 import { IAPrompt } from '@/lib/db/mysql-types'
 import { getCurrentUser } from '@/lib/user'
 import { preprocessTemplate } from '@/lib/ai/template'
+import { StreamTextResult, ToolSet } from 'ai'
 
 export const maxDuration = 60
 
@@ -190,6 +191,10 @@ export async function POST(request: Request) {
         if (typeof result === 'string') {
             return new Response(result, { status: 200 })
         }
+
+        if (searchParams.get('uiMessageStream') === 'true')
+            return ((await result) as StreamTextResult<ToolSet, any>).toUIMessageStreamResponse();
+
         if (result) {
             const reader: ReadableStreamDefaultReader = (result as any).fullStream.getReader()
             const { value, done } = await reader.read()
