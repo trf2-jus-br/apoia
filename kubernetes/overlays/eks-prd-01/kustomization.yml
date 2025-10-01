@@ -5,3 +5,8 @@ resources:
   - ../../base
   - configmaps.yml 
   - ingress.yml
+
+replicas:
+  - name: apoia
+    count: 2
+
