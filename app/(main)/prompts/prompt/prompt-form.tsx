@@ -22,17 +22,20 @@ import { findUnclosedMarking } from '@/lib/ai/template'
 const Frm = new FormHelper()
 
 export default function PromptForm(props) {
+    const router = useRouter()
+    const initialState = props.record || { content: {} }
+    // if (!initialState.model_id || (props.models && props.models[0] && !props.models.map(i => i.id).includes(initialState.model_id))) initialState.model_id = props.models && props.models[0] ? props.models[0].id : null
+    // if (!initialState.testset_id || (props.testsets && props.testsets[0] && !props.testsets.map(i => i.id).includes(initialState.testset_id))) initialState.testset_id = props.testsets && props.testsets[0] ? props.testsets[0].id : null
+    const [data, setData] = useState(cloneDeep(initialState))
+    const [yaml, setYaml] = useState(yamlps.dump(initialState.content))
+    const [formState, setFormState] = useState(EMPTY_FORM_STATE)
+    const [tab, setTab] = useState('fields')
+    const [showAdvancedOptions, setShowAdvancedOptions] = useState(initialState?.content?.system_prompt || initialState?.content?.json_schema || initialState?.content?.format ? true : false)
+    const [isTemplate, setIsTemplate] = useState(initialState?.content?.template || props.template ? true : false)
+    const [pending, setPending] = useState(false)
+
+
     try {
-        const router = useRouter()
-        const initialState = props.record || { content: {} }
-        // if (!initialState.model_id || (props.models && props.models[0] && !props.models.map(i => i.id).includes(initialState.model_id))) initialState.model_id = props.models && props.models[0] ? props.models[0].id : null
-        // if (!initialState.testset_id || (props.testsets && props.testsets[0] && !props.testsets.map(i => i.id).includes(initialState.testset_id))) initialState.testset_id = props.testsets && props.testsets[0] ? props.testsets[0].id : null
-        const [data, setData] = useState(cloneDeep(initialState))
-        const [yaml, setYaml] = useState(yamlps.dump(initialState.content))
-        const [formState, setFormState] = useState(EMPTY_FORM_STATE)
-        const [tab, setTab] = useState('fields')
-        const [showAdvancedOptions, setShowAdvancedOptions] = useState(initialState?.content?.system_prompt || initialState?.content?.json_schema || initialState?.content?.format ? true : false)
-        const [isTemplate, setIsTemplate] = useState(initialState?.content?.template || props.template ? true : false)
         Frm.update(data, (d) => { setData(d); updateYaml(d) }, formState)
         const pristine = isEqual(data, { ...initialState })
 
@@ -49,8 +52,6 @@ export default function PromptForm(props) {
         if (formState?.message === 'success') {
             handleBack()
         }
-
-        const [pending, setPending] = useState(false)
 
         function handleBack() {
             if (data.name && data.id)
@@ -88,7 +89,6 @@ export default function PromptForm(props) {
         const pieceDescrOptions = enumSorted(PieceDescr).map(e => ({ id: e.value.name, name: e.value.descr }))
         const summaryOptions = [{ id: 'NAO', name: 'Não' }, { id: 'SIM', name: 'Sim' }]
         const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }]
-        const [field, setField] = useState([]);
 
         if (data?.share === 'EM_ANALISE') {
             data.share = 'PUBLICO'
