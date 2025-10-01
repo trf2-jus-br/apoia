@@ -19,3 +19,4 @@ export const reasoning = (m: UIMessage): ReasoningType | undefined => {
     const content = match ? match[2] : undefined
     return match ? { title: title, content: converter.makeHtml(content) } : undefined
 }
+

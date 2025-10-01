@@ -20,6 +20,7 @@ import type { SuggestionContext } from '@/components/suggestions/context'
 import { Suggestion } from '../suggestions/base';
 import { last } from 'lodash';
 import { reasoning } from '@/lib/ai/reasoning';
+import Reasoning from '../reasoning-control';
 
 function preprocessar(mensagem: UIMessage, role: string) {
     const texto = mensagem.parts.reduce((acc, part) => {
@@ -320,19 +321,8 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                             : m.role === 'assistant' &&
                             <div className="row justify-content-start me-5" key={m.id}>
                                 {
-                                    currentReasoning && idx === messages.length - 1 && <div className="mb-1">
-                                        <div className="mb-0">
-                                            <div className={`text-wrap mb-0 chat-tool text-secondary`} >
-                                                <span><FontAwesomeIcon icon={faRobot} className="me-1" />
-                                                    <span dangerouslySetInnerHTML={{ __html: currentReasoning.title }} /></span>
-                                                {showReasoning
-                                                    ? <FontAwesomeIcon icon={faChevronUp} className="ms-1" style={{ cursor: 'pointer' }} onClick={() => setShowReasoning(!showReasoning)} />
-                                                    : <FontAwesomeIcon icon={faChevronDown} className="ms-1" style={{ cursor: 'pointer' }} onClick={() => setShowReasoning(!showReasoning)} />
-                                                }
-                                                {showReasoning && <div className="mt-2" dangerouslySetInnerHTML={{ __html: currentReasoning.content }} />}
-                                            </div>
-                                        </div>
-                                    </div>
+                                    currentReasoning && idx === messages.length - 1
+                                    && <Reasoning currentReasoning={currentReasoning} showReasoning={showReasoning} setShowReasoning={setShowReasoning} />
                                 }
                                 {
                                     m?.parts?.find((part) => part.type.startsWith('tool-')) && <div className="mb-1">
