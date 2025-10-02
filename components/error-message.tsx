@@ -2,6 +2,18 @@
 
 function ErrorMsg(msg: string) {
 
+    if (msg.match(/You exceeded your current quota, please check your plan and billing details/)) {
+        return <>
+            <span>Você excedeu sua cota atual, por favor verifique seu plano e detalhes de cobrança.</span>
+            <p>Dependendo do seu plano e do modelo escolhido, você terá direito a determinado número de solicitações de IA por minuto. Quando esse limite é atingido, esse erro é lançado.</p>
+            <p>Atenção, <strong>não utilize o plano gratuito do Gemini API</strong>, pois os dados enviados são utilizados para treinar futuras versões da IA. O plano gratuito não está de acordo a LGPD e a Resolução 615/2025 do CNJ.</p>
+            <p>Para mais informações sobre este erro, acesse: https://ai.google.dev/gemini-api/docs/rate-limits</p>
+        </>
+    }
+
+    if (msg.match(/API key not valid. Please pass a valid API key/)) {
+        return <span>A chave da API informada não é válida. Por favor, forneça uma chave de API válida.</span>
+    }
 
     if (msg.match(/Não foram encontrados registros/)) 
         return <>
@@ -73,7 +85,7 @@ export default function ErrorMessage(params: { message: string }) {
     return (<>
         {ErrorMsg(msg)
             ? <>{ErrorMsg(msg)}
-                <p className="text-muted mb-0">{msg}</p>
+                <p className="text-muted mb-0 mt-1" style={{ fontSize: '70%' }}>{msg}</p>
             </>
             : msg}
 

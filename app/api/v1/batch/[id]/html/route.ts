@@ -4,10 +4,12 @@ import { formatBrazilianDate, maiusculasEMinusculas, slugify } from "@/lib/utils
 import { preprocess } from "@/lib/ui/preprocess"
 import { fixText } from "@/lib/fix"
 import { tua } from "@/lib/proc/tua"
-import { getCurrentUser } from "@/lib/user"
+import { getCurrentUser, assertApiUser } from "@/lib/user"
 import mapping from './mapping.json'
 import mappingByUnit from './mapping-by-unit.json'
 import devLog from "@/lib/utils/log"
+import { UnauthorizedError, ForbiddenError, withErrorHandler } from '@/lib/utils/api-error'
+import { NextRequest, NextResponse } from "next/server"
 
 export const maxDuration = 60
 
@@ -53,10 +55,9 @@ const preprocessAgrupamento = (text: string) => {
  *       200:
  *         description: Relatório em HTML
  */
-export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+async function GET_HANDLER(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const user = await getCurrentUser()
-    if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
+    const user = await assertApiUser()
 
     const { searchParams } = new URL(req.url)
     const ungrouped = searchParams.get('ungrouped') === 'true'
@@ -66,7 +67,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
 
     const batch_id = Number(params.id)
     const owns = await Dao.assertBatchOwnership(batch_id)
-    if (!owns) return Response.json({ errormsg: 'Forbidden' }, { status: 403 })
+    if (!owns) throw new ForbiddenError()
 
     const batch = await Dao.getBatchSummary(batch_id)
 
@@ -297,7 +298,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
             count++
         }
     }
-    return new Response(formated(html, slugPrintTitle), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+    return new NextResponse(formated(html, slugPrintTitle), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
 }
 
 const buildPDF = async (html: string, filename: string, disposition) => {
@@ -323,7 +324,7 @@ const buildPDF = async (html: string, filename: string, disposition) => {
     headers.append("Content-Type", "application/pdf")
     headers.append("Content-Length", pdf.length.toString())
 
-    return new Response(pdf, { headers })
+    return new NextResponse(pdf, { headers })
 }
 
 const formated = (html: string, title?: string) => {
@@ -436,3 +437,4 @@ ${html}
 </html>`
 }
 
+export const GET = withErrorHandler(GET_HANDLER)

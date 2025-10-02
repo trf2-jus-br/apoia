@@ -1,9 +1,10 @@
-import { getCurrentUser } from "@/lib/user"
+import { getCurrentUser, assertApiUser } from "@/lib/user"
+import { UnauthorizedError, ApiError, withErrorHandler } from '@/lib/utils/api-error'
 
-export async function GET(req: Request) {
-    const pUser = getCurrentUser()
-    const user = await pUser
-    if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
-    if (!user.corporativo?.[0]?.seq_tribunal_pai) return Response.json({ errormsg: 'Código do tribunal não encontrado' }, { status: 500 })
-    return Response.json(user.corporativo[0].seq_tribunal_pai)        
+async function GET_HANDLER(_req: Request) {
+    const user = await assertApiUser()
+    if (!user.corporativo?.[0]?.seq_tribunal_pai) throw new ApiError('Código do tribunal não encontrado', 500)
+    return Response.json(user.corporativo[0].seq_tribunal_pai)
 }
+
+export const GET = withErrorHandler(GET_HANDLER as any)

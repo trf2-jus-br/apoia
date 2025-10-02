@@ -1,5 +1,6 @@
-import { getCurrentUser } from '@/lib/user'
+import { getCurrentUser, assertApiUser } from '@/lib/user'
 import { obterDadosDoProcesso } from '@/lib/proc/process'
+import { UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -28,20 +29,15 @@ export const maxDuration = 60
  *       200:
  *         description: OK, processo analisado e resultado armazenado no banco de dados
  */
-export async function POST(req: Request, props: { params: Promise<{ name: string, number: string }> }) {
+async function POST_HANDLER(req: Request, props: { params: Promise<{ name: string, number: string }> }) {
   const params = await props.params;
   const { name, number } = params
-  try {
-    const pUser = getCurrentUser()
-    if (!(await pUser)) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
-
-    const dadosDoProcesso = await obterDadosDoProcesso({numeroDoProcesso: number, pUser, identificarPecas:true})
-    if (dadosDoProcesso.errorMsg) throw new Error(dadosDoProcesso.errorMsg)
-
-    return Response.json({ status: 'OK', dadosDoProcesso })
-  } catch (error) {
-    console.error('Erro identificando peças', error)
-    return Response.json({ errormsg: error.message }, { status: 500 })
-  }
+  const pUser = assertApiUser()
+  const user = await pUser
+  const dadosDoProcesso = await obterDadosDoProcesso({ numeroDoProcesso: number, pUser, identificarPecas: true })
+  if (dadosDoProcesso.errorMsg) throw new Error(dadosDoProcesso.errorMsg)
+  return Response.json({ status: 'OK', dadosDoProcesso })
 }
+
+export const POST = withErrorHandler(POST_HANDLER as any)
 

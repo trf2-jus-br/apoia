@@ -1,5 +1,5 @@
 import { anonymizeText } from '@/lib/anonym/anonym'
-import { getCurrentUser } from '@/lib/user'
+import { withErrorHandler, BadRequestError } from '@/lib/utils/api-error'
 
 export const maxDuration = 30
 
@@ -31,11 +31,11 @@ export const maxDuration = 30
  *       401:
  *         description: Não autorizado.
  */
-export async function POST(req: Request) {
-  const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
-
+async function POST_HANDLER(req: Request) {
   const { text, options } = await req.json()
+  if (text == null) throw new BadRequestError('Campo text é obrigatório')
   const r = anonymizeText(String(text || ''), options || {})
   return Response.json(r)
 }
+
+export const POST = withErrorHandler(POST_HANDLER as any)

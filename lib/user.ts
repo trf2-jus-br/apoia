@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { headers } from "next/headers"
 import { verifyJweToken, verifyJwkSignedToken } from './utils/jwt'
 import { envString } from './utils/env'
+import { UnauthorizedError } from './utils/api-error'
 
 export type UserType = {
     id?: number, name: string, email: string, preferredUsername?: string, iss?: string, image: { password: string, system: string }, accessToken?: string, corporativo?: any[], roles?: string[]
@@ -106,6 +107,13 @@ export const assertCurrentUserCorporativo = async () => {
     const user = await assertCurrentUser()
     if (!await isUserCorporativo(user))
         throw new Error('Usuário não é corporativo')
+    return user
+}
+
+// Helper padronizado para rotas API: lança UnauthorizedError ao invés de redirecionar
+export const assertApiUser = async () => {
+    const user = await getCurrentUser()
+    if (!user) throw new UnauthorizedError('Usuário não autenticado')
     return user
 }
 

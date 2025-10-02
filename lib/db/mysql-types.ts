@@ -92,6 +92,7 @@ export enum IADocumentContentSource {
     VIDEO = 5,
     OCR_VAZIO = 6,
     OCR_ERRO = 7,
+    // AUDIO = 8,
 }
 
 export type IADocument = {

@@ -1,11 +1,11 @@
-import { getCurrentUser } from '@/lib/user'
+import { assertApiUser } from '@/lib/user'
 import { Dao } from '@/lib/db/mysql'
 
 export const maxDuration = 60
 
 // POST /api/v1/batch/{id}/pause
-export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser()
+async function POST_HANDLER(req: Request, props: { params: Promise<{ id: string }> }) {
+  const user = await assertApiUser()
   if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
   const { id } = await props.params
   try {
@@ -16,3 +16,5 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     return Response.json({ errormsg: e?.message || String(e) }, { status: 500 })
   }
 }
+
+export const POST = POST_HANDLER as any

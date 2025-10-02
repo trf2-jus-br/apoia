@@ -16,6 +16,8 @@ import { readUIMessageStream, UIMessage } from 'ai'
 import { reasoning, ReasoningType } from '@/lib/ai/reasoning'
 import { parseSSEToUIMessageChunkStream } from '@/lib/ai/message-stream'
 import Reasoning from './reasoning-control'
+import ErrorMsg from '@/app/(main)/prompts/error-msg'
+import ErrorMessage from './error-message'
 
 export const getColor = (text, errormsg) => {
     let color = 'info'
@@ -235,7 +237,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                             : <button className="btn btn-sm bt float-end d-print-none" onClick={() => { handleShow() }}><FontAwesomeIcon icon={faThumbsDown} /></button>
                         : null}
                     {errormsg
-                        ? <span>{errormsg}</span>
+                        ? <ErrorMessage message={errormsg} />
                         : <div dangerouslySetInnerHTML={{ __html: spinner(preprocessed.text, complete) }} />}
                     <EvaluationModal show={show} onClose={handleClose} />
                 </div>

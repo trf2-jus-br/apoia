@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Dao } from '@/lib/db/mysql'
-import { assertCurrentUser, isUserModerator } from '@/lib/user'
+import { assertApiUser, assertCurrentUser, isUserModerator } from '@/lib/user'
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await assertCurrentUser()
+    const user = await assertApiUser()
     const isModerator = await isUserModerator(user)
     const { dossier_code, user_cpf, startDate, endDate } = await req.json()
 

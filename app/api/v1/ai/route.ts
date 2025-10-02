@@ -5,11 +5,12 @@ import { PromptDefinitionType, PromptExecutionResultsType, PromptOptionsType } f
 import { getInternalPrompt, promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
 import { Dao } from '@/lib/db/mysql'
 import { IAPrompt } from '@/lib/db/mysql-types'
-import { getCurrentUser } from '@/lib/user'
+import { getCurrentUser, assertApiUser } from '@/lib/user'
 import { preprocessTemplate } from '@/lib/ai/template'
 import { StreamTextResult, ToolSet } from 'ai'
 import * as Sentry from '@sentry/nextjs'
 import { devLog } from '@/lib/utils/log'
+import { ApiError, UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 
@@ -128,13 +129,11 @@ async function getPromptDefinition(kind: string, promptSlug?: string, promptId?:
  *       405:
  *         description: Erro durante a execução do prompt ou comunicação com o provedor.
  */
-export async function POST(request: Request) {
-    try {
+async function POST_HANDLER(request: Request) {
         const { searchParams } = new URL(request.url)
         const messagesOnly = searchParams.get('messagesOnly') === 'true'
 
-        const user = await getCurrentUser()
-        if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
+    const user = await assertApiUser()
 
         // Update user details
         const userFields = user.corporativo?.length ? {
@@ -244,11 +243,7 @@ export async function POST(request: Request) {
             })
         }
 
-        throw new Error('Invalid response')
-    } catch (error) {
-        Sentry.captureException(error, { tags: { route: '/api/v1/ai' } })
-        devLog('Error in AI route:', error)
-        const message = Fetcher.processError(error)
-        return NextResponse.json({ errormsg: `${message}` }, { status: 405 })
-    }
+        throw new ApiError('Invalid response', 500)
 }
+
+export const POST = withErrorHandler(POST_HANDLER as any)

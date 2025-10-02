@@ -1,18 +1,18 @@
-import { getCurrentUser } from '@/lib/user'
+import { assertApiUser } from '@/lib/user'
 import { Dao } from '@/lib/db/mysql'
 import { analyze } from '@/lib/ai/analysis'
+import { ForbiddenError, NotFoundError, withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 
-export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
+async function POST_HANDLER(req: Request, props: { params: Promise<{ id: string }> }) {
+  const user = await assertApiUser()
   const { id } = await props.params
   const batch_id = Number(id)
   const owns = await Dao.assertBatchOwnership(batch_id)
-  if (!owns) return Response.json({ errormsg: 'Forbidden' }, { status: 403 })
+  if (!owns) throw new ForbiddenError()
   const summary = await Dao.getBatchSummary(batch_id)
-  if (!summary) return Response.json({ errormsg: 'Not found' }, { status: 404 })
+  if (!summary) throw new NotFoundError('Not found')
   let dossier_code: string | undefined
   let job_id: number | undefined
   try {
@@ -48,3 +48,5 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
   }
   return Response.json({ status: 'OK', processedJobId: processed?.id || null })
 }
+
+export const POST = withErrorHandler(POST_HANDLER as any)

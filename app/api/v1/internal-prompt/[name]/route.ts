@@ -1,5 +1,6 @@
 import { getInternalPrompt } from '@/lib/ai/prompt'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
+import { BadRequestError, NotFoundError, withErrorHandler } from '@/lib/utils/api-error'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60
@@ -59,26 +60,19 @@ export const maxDuration = 60
  *       500:
  *         description: Erro interno do servidor
  */
-export async function GET(_req: Request, context: any): Promise<Response> { // afrouxa tipagem para compatibilidade com tipos internos
-    // Suporta caso context.params seja direto ou uma Promise
+async function GET_HANDLER(_req: Request, context: any): Promise<Response> { // afrouxa tipagem para compatibilidade com tipos internos
     const params = await Promise.resolve(context?.params)
     const name = params?.name
-    if (!name) {
-        return new Response(JSON.stringify({ error: 'Missing prompt name' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' },
-        })
-    }
+    if (!name) throw new BadRequestError('Missing prompt name')
     try {
         const internalPrompt: PromptDefinitionType = getInternalPrompt(name)
         return new Response(JSON.stringify(internalPrompt, null, 2), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
         })
-    } catch (err) {
-        return new Response(JSON.stringify({ error: 'Prompt não encontrado', detail: (err as Error).message }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-        })
+    } catch (err: any) {
+        throw new NotFoundError('Prompt não encontrado')
     }
 }
+
+export const GET = withErrorHandler(GET_HANDLER as any)

@@ -3,7 +3,8 @@ import fetcher from '@/lib/utils/fetcher'
 import { NextResponse } from 'next/server'
 import { filterText } from '@/lib/ui/preprocess'
 import { GeneratedContent } from '@/lib/ai/prompt-types'
-import { getCurrentUser } from '@/lib/user'
+import { getCurrentUser, assertApiUser } from '@/lib/user'
+import { UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -65,20 +66,16 @@ export const maxDuration = 60
  *                         type: string
  *                         description: Conteúdo gerado
  */
-export async function GET(req: Request, props: { params: Promise<{ number: string }> }) {
+async function GET_HANDLER(req: Request, props: { params: Promise<{ number: string }> }) {
   const params = await props.params;
-  const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
+  await assertApiUser()
 
   const url = new URL(req.url)
   const complete: boolean = url.searchParams.get('complete') === 'true'
   const kind: string | undefined = url.searchParams.get('kind')
-  try {
-    const analysis = await analyze(undefined, params.number, kind, complete)
-    const resp = analysis.generatedContent.map((content: GeneratedContent) => ({ descr: content.title, prompt: content.promptSlug, generated: filterText(content.generated) }))
-    return Response.json({ status: 'OK', products: resp })
-  } catch (error) {
-    const message = fetcher.processError(error)
-    return NextResponse.json({ message: `${message}` }, { status: 405 });
-  }
+  const analysis = await analyze(undefined, params.number, kind, complete)
+  const resp = analysis.generatedContent.map((content: GeneratedContent) => ({ descr: content.title, prompt: content.promptSlug, generated: filterText(content.generated) }))
+  return Response.json({ status: 'OK', products: resp })
 }
+
+export const GET = withErrorHandler(GET_HANDLER as any)

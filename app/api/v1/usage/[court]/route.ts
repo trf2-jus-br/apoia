@@ -1,6 +1,7 @@
 import fetcher from "@/lib/utils/fetcher"
 import { NextResponse } from "next/server"
 import { Dao } from "@/lib/db/mysql"
+import { withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -54,7 +55,7 @@ export const maxDuration = 60
  *                         type: number
  *                         description: Custo aproximado do serviço no dia, em reais (R$)
  */
-export async function GET(
+async function GET_HANDLER(
   req: Request,
   props: { params: Promise<{ court }> }
 ) {
@@ -64,28 +65,20 @@ export async function GET(
   const startDate = searchParams.get('start_date')
   const endDate = searchParams.get('end_date')
 
+  const records = await Dao.retrieveCourtMonthlyUsage(court_id, startDate, endDate)
 
-  // const pUser = getCurrentUser()
-  // const user = await pUser
-  // if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
-
-  try {
-    const records = await Dao.retrieveCourtMonthlyUsage(court_id, startDate, endDate)
-
-    const acceptHeader = req.headers.get('accept')
-    if (acceptHeader && acceptHeader === 'application/text') {
-      const a: string[] = []
-      a.push('date^usage_count^approximate_cost')
-      records.forEach((record) => {
-        a.push(`${record.date}^${record.usage_count}^${record.approximate_cost}`)
-      })
-      const csvContent = a.join('\n')
-      return new NextResponse(csvContent)
-    }
-
-    return Response.json({ status: 'OK', usage: records }, { status: 200 })
-  } catch (error) {
-    const message = fetcher.processError(error)
-    return NextResponse.json({ message: `${message}` }, { status: 405 })
+  const acceptHeader = req.headers.get('accept')
+  if (acceptHeader && acceptHeader === 'application/text') {
+    const a: string[] = []
+    a.push('date^usage_count^approximate_cost')
+    records.forEach((record) => {
+      a.push(`${record.date}^${record.usage_count}^${record.approximate_cost}`)
+    })
+    const csvContent = a.join('\n')
+    return new NextResponse(csvContent)
   }
+
+  return Response.json({ status: 'OK', usage: records }, { status: 200 })
 }
+
+export const GET = withErrorHandler(GET_HANDLER as any)

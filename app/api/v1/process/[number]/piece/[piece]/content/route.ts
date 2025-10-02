@@ -2,10 +2,11 @@ import { summarize } from "@/lib/ai/analysis"
 import fetcher from "@/lib/utils/fetcher"
 import { filterText } from "@/lib/ui/preprocess"
 import { NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/user"
+import { getCurrentUser, assertApiUser } from "@/lib/user"
 import { obterDadosDoProcesso } from "@/lib/proc/process"
 import { PecaConteudoType } from "@/lib/proc/process-types"
 import * as Sentry from '@sentry/nextjs'
+import { UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -44,26 +45,21 @@ export const maxDuration = 60
  *                   type: string
  *                   description: Conteúdo da peça processual
  */
-export async function GET(
+async function GET_HANDLER(
   req: Request,
   props: { params: Promise<{ number: string, piece: string }> }
 ) {
   const params = await props.params;
-  const pUser = getCurrentUser()
+  const pUser = assertApiUser()
   const user = await pUser
-  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
 
-  try {
-    const dadosDoProcesso = await obterDadosDoProcesso({ numeroDoProcesso: params.number, pUser, idDaPeca: params.piece })
-    if (!dadosDoProcesso.pecas[0].conteudo && dadosDoProcesso.pecas[0].pConteudo) {
-      const conteudo: PecaConteudoType = await dadosDoProcesso.pecas[0].pConteudo
-      if (conteudo.errorMsg) throw new Error(conteudo.errorMsg)
-      dadosDoProcesso.pecas[0].conteudo = conteudo.conteudo
-    }
-    return Response.json({ status: 'OK', content: dadosDoProcesso.pecas[0].conteudo })
-  } catch (error) {
-    Sentry.captureException(error, { tags: { route: '/api/v1/process/[number]/piece/[piece]/content' } })
-    const message = fetcher.processError(error)
-    return NextResponse.json({ message: `${message}` }, { status: 405 });
+  const dadosDoProcesso = await obterDadosDoProcesso({ numeroDoProcesso: params.number, pUser, idDaPeca: params.piece })
+  if (!dadosDoProcesso.pecas[0].conteudo && dadosDoProcesso.pecas[0].pConteudo) {
+    const conteudo: PecaConteudoType = await dadosDoProcesso.pecas[0].pConteudo
+    if (conteudo.errorMsg) throw new Error(conteudo.errorMsg)
+    dadosDoProcesso.pecas[0].conteudo = conteudo.conteudo
   }
+  return Response.json({ status: 'OK', content: dadosDoProcesso.pecas[0].conteudo })
 }
+
+export const GET = withErrorHandler(GET_HANDLER as any)

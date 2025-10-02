@@ -13,12 +13,12 @@ import { getModel } from './model-server'
 import { modelCalcUsage, Model, FileTypeEnum } from './model-types'
 import { cookies } from 'next/headers';
 import { clipPieces } from './clip-pieces'
-import { assert } from 'console'
 import { pdfToText } from '../pdf/pdf'
 import { assertAnonimizacaoAutomatica } from '../proc/sigilo'
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google'
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai'
 import devLog, { isDev } from '../utils/log'
+import * as Sentry from '@sentry/nextjs'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await Dao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -255,6 +255,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                 // if (isDev()) process.stdout.write(text)
             },
             onError: (error) => {
+                Sentry.captureException(error, { extra: { context: 'streamingText', model, kind, user_id, court_id } })
                 console.error('Error during streaming:', error)
             },
             onFinish: async ({ text, usage }) => {
@@ -291,6 +292,10 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             model: modelRef as LanguageModel,
             messages: processedMessagesModel,
             maxRetries: 1,
+            onError: (error) => {
+                Sentry.captureException(error, { extra: { context: 'streamingText', model, kind, user_id, court_id } })
+                console.error('Error during streaming:', error)
+            },
             onFinish: async ({ object, usage }) => {
                 if (apiKeyFromEnv)
                     writeUsage(usage, model, user_id, court_id)

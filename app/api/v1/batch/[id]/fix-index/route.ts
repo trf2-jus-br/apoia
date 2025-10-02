@@ -1,19 +1,18 @@
-import { getCurrentUser } from '@/lib/user'
+import { getCurrentUser, assertApiUser } from '@/lib/user'
 import { Dao } from '@/lib/db/mysql'
 import { Plugin } from '@/lib/proc/combinacoes'
 import { PromptDataType } from '@/lib/ai/prompt-types'
 import { getInternalPrompt } from '@/lib/ai/prompt'
 import { generateContent } from '@/lib/ai/generate'
+import { UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 
 // POST /api/v1/batch/{id}/fix-index
-export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser()
-  if (!user) return Response.json({ errormsg: 'Usuário não autenticado' }, { status: 401 })
+async function POST_HANDLER(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const user = await assertApiUser()
   const params = await props.params
   const id: number = Number(params.id)
-  try {
     const enum_id = await Dao.assertIAEnumId(Plugin.TRIAGEM)
     const items = await Dao.retrieveByBatchIdAndEnumId(id, enum_id)
 
@@ -92,7 +91,6 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     const saved = await Dao.rewriteBatchFixIndexMap(id, deduped)
 
     return Response.json({ status: 'OK', saved, summary: { groups: groups.length, pairs: deduped.length } })
-  } catch (e: any) {
-    return Response.json({ errormsg: e?.message || String(e) }, { status: 500 })
-  }
 }
+
+export const POST = withErrorHandler(POST_HANDLER as any)

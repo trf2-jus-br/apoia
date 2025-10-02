@@ -1,5 +1,6 @@
 // PTAX USD/BRL rate endpoint with 24h ISR cache (moved to /api/v1/report/dollar)
 import { NextRequest } from 'next/server'
+import { withErrorHandler, ApiError } from '@/lib/utils/api-error'
 
 export const revalidate = 86400; // 24 hours
 
@@ -35,11 +36,9 @@ async function getLatestPtax(maxLookbackDays = 7) {
   throw new Error('Nenhuma cotação PTAX encontrada no período')
 }
 
-export async function GET(_req: NextRequest) {
-  try {
-    const data = await getLatestPtax()
-    return Response.json(data)
-  } catch (e: any) {
-    return Response.json({ error: e.message }, { status: 500 })
-  }
+async function GET_HANDLER(_req: NextRequest) {
+  const data = await getLatestPtax()
+  return Response.json(data)
 }
+
+export const GET = withErrorHandler(GET_HANDLER as any)
