@@ -12,7 +12,7 @@ import { assertNivelDeSigilo } from './sigilo'
 import { Interop } from '../interop/interop'
 import { envString } from '../utils/env'
 import { PecaConteudoType } from './process-types'
-import { TEXTO_PECA_IMAGEM_JPEG, TEXTO_PECA_IMAGEM_PNG, TEXTO_PECA_PDF_OCR_ERRO, TEXTO_PECA_PDF_OCR_VAZIO, TEXTO_PECA_VIDEO_MP4, TEXTO_PECA_VIDEO_XMS_WMV } from './process-types'
+import { TEXTO_PECA_IMAGEM_JPEG, TEXTO_PECA_IMAGEM_PNG, TEXTO_PECA_PDF_OCR_ERRO, TEXTO_PECA_PDF_OCR_VAZIO, TEXTO_PECA_VIDEO_MP4, TEXTO_PECA_VIDEO_XMS_WMV, TEXTO_PECA_AUDIO_XMS_WMA } from './process-types'
 import devLog from '../utils/log'
 
 const limit = pLimit(envString('OCR_LIMIT') ? parseInt(envString('OCR_LIMIT')) : 1)
@@ -174,6 +174,8 @@ export const obterConteudoDaPeca = async (dossier_id: number, numeroDoProcesso: 
                 return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.IMAGE, TEXTO_PECA_IMAGEM_JPEG) }
             case 'image/png':
                 return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.IMAGE, TEXTO_PECA_IMAGEM_PNG) }
+            // case 'audio/x-ms-wma':
+            //     return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.AUDIO, TEXTO_PECA_AUDIO_XMS_WMA) }
             case 'video/x-ms-wmv':
                 return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.VIDEO, TEXTO_PECA_VIDEO_XMS_WMV) }
             case 'video/mp4':

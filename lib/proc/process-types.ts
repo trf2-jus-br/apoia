@@ -138,6 +138,7 @@ export const TEXTO_PECA_SIGILOSA = 'Peça sigilosa, conteúdo não acessado.'
 export const TEXTO_PECA_COM_ERRO = 'Não foi possível obter o conteúdo.'
 export const TEXTO_PECA_IMAGEM_JPEG = 'Peça no formato de imagem JPEG, conteúdo não acessado.'
 export const TEXTO_PECA_IMAGEM_PNG = 'Peça no formato de imagem PNG, conteúdo não acessado.'
+export const TEXTO_PECA_AUDIO_XMS_WMA = 'Peça no formato de áudio X-MS-WMA, conteúdo não acessado.'
 export const TEXTO_PECA_VIDEO_XMS_WMV = 'Peça no formato de vídeo X-MS-WMV, conteúdo não acessado.'
 export const TEXTO_PECA_VIDEO_MP4 = 'Peça no formato de vídeo MP4, conteúdo não acessado.'
 export const TEXTO_PECA_PDF_OCR_VAZIO = 'Peça no formato PDF, conteúdo não acessado. O OCR não retornou texto.'
@@ -152,7 +153,7 @@ export const formatarMensagemDeConteudoNaoSuportado = (idDaPeca: string, descrDa
 export const identificarSituacaoDaPeca = (texto: string): { sigilosa: boolean, inacessivel: boolean, parcial: boolean, vazia: boolean, problematica: boolean } => {
     const sigilosa = texto === TEXTO_PECA_SIGILOSA
     const inacessivel = texto?.startsWith(TEXTO_PECA_COM_ERRO) || texto === TEXTO_PECA_PDF_OCR_ERRO
-    const vazia = !texto || texto === TEXTO_PECA_IMAGEM_JPEG || texto === TEXTO_PECA_IMAGEM_PNG || texto === TEXTO_PECA_VIDEO_XMS_WMV || texto === TEXTO_PECA_VIDEO_MP4 || texto === TEXTO_PECA_PDF_OCR_VAZIO
+    const vazia = !texto || texto === TEXTO_PECA_IMAGEM_JPEG || texto === TEXTO_PECA_IMAGEM_PNG || texto === TEXTO_PECA_AUDIO_XMS_WMA || texto === TEXTO_PECA_VIDEO_XMS_WMV || texto === TEXTO_PECA_VIDEO_MP4 || texto === TEXTO_PECA_PDF_OCR_VAZIO
     const parcial = texto?.endsWith(TEXTO_INDICACAO_PARCIAL)
     return { sigilosa, inacessivel, parcial, vazia, problematica: sigilosa || inacessivel || vazia || parcial }
 }

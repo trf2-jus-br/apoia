@@ -2,6 +2,16 @@
 
 function ErrorMsg(msg: string) {
 
+    
+    if (msg.match(/O tempo de resposta do serviço Codex excedeu o limite/)) {
+        return <>
+            <p>A Apoia utiliza o Datalake para obter informações sobre os processos e também o conteúdo das peças processuais.</p>
+            <p>A Apoia fez uma solicitação ao Datalake que respondeu com um erro indicando que está sobrecarregado.</p>
+            <p>Sugimos entrar em contato com a equipe que cuida do datalake para resolver esse problema.</p>
+            <p>Isso é um erro bem comum, mas não é um erro da Apoia.</p>
+        </>
+    }
+
     if (msg.match(/You exceeded your current quota, please check your plan and billing details/)) {
         return <>
             <span>Você excedeu sua cota atual, por favor verifique seu plano e detalhes de cobrança.</span>
