@@ -398,14 +398,14 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 3,
         nome: 'Minuta de Sentença',
         padroes: [...padroesConhecimento, padraoConhecimentoForcado],
-        produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.SENTENCA, P.CHAT]
+        produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.SENTENCA, P.CHAT]
     },
     MINUTA_DE_VOTO: {
         status: StatusDeLancamento.PUBLICO,
         sort: 3,
         nome: 'Minuta de Voto',
         padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
-        produtos: [P.RESUMOS, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT],
+        produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT],
         instance: [Instance.SEGUNDO_GRAU.name]
     },
     RESUMOS: {
