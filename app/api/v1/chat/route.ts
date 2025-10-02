@@ -1,11 +1,11 @@
 import { generateAndStreamContent } from '@/lib/ai/generate'
 import { getModel } from '@/lib/ai/model-server'
 import { getTools } from '@/lib/ai/tools'
-import { anonymizeText } from '@/lib/anonym/anonym'
 import { Dao } from '@/lib/db/mysql'
 import { getCurrentUser } from '@/lib/user'
-import { envString } from '@/lib/utils/env'
 import { convertToModelMessages, StreamTextResult, ToolSet } from 'ai'
+import * as Sentry from '@sentry/nextjs'
+import devLog from '@/lib/utils/log'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60
@@ -73,8 +73,9 @@ export async function POST(req: Request) {
         }
 
         return ((await result.textStream) as StreamTextResult<ToolSet, any>).toUIMessageStreamResponse();
-    } catch (error) {        
-        console.error('Error in chat route:', error)
+    } catch (error) {
+        Sentry.captureException(error, { tags: { route: '/api/v1/chat' } })
+        devLog('Error in chat route:', error)
         return new Response(
             error instanceof Error ? error.message : String(error ?? 'Erro desconhecido'),
             { status: 500, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }

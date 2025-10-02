@@ -2,6 +2,7 @@ import fetcher from "@/lib/utils/fetcher"
 import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/user"
 import { CargaDeConteudoEnum, obterDadosDoProcesso2 } from "@/lib/proc/process"
+import * as Sentry from '@sentry/nextjs'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -59,6 +60,7 @@ export async function GET(
     })
     return Response.json(dadosDoProcesso)
   } catch (error) {
+    Sentry.captureException(error, { tags: { route: '/api/v1/process/[number]' } })
     const message = fetcher.processError(error)
     return NextResponse.json({ message: `${message}` }, { status: 405 });
   }

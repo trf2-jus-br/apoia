@@ -9,6 +9,7 @@ import { getInterop, Interop } from '../interop/interop'
 import { DadosDoProcessoType, PecaType, StatusDeLancamento, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
 import { UserType } from '../user'
 import devLog from '../utils/log'
+import * as Sentry from '@sentry/nextjs'
 
 const selecionarPecas = (pecas: PecaType[], descricoes: string[]) => {
     const pecasRelevantes = pecas.filter(p => descricoes.includes(p.descr))
@@ -276,7 +277,8 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         // return { ...dadosDoProcesso, pecas: [] as PecaType[], pecasSelecionadas: [] as PecaType[], tipoDeSintese: tipoDeSinteseSelecionado, produtos: TipoDeSinteseMap[tipoDeSinteseSelecionado]?.produtos }
     } catch (error) {
         if (error?.message === 'NEXT_REDIRECT') throw error
-        console.error(`Erro ao obter dados do processo ${numeroDoProcesso}: ${error.stack}`)
+        Sentry.captureException(error, { tags: { function: 'obterDadosDoProcesso', numeroDoProcesso } })
+        devLog(`Erro ao obter dados do processo ${numeroDoProcesso}: ${error.stack}`)
         errorMsg = `${error.message}`
         return { pecas, poloAtivo: '', poloPassivo: '', errorMsg }
     }
@@ -305,7 +307,8 @@ export const obterDadosDoProcesso2 = async ({ numeroDoProcesso, pUser, pieces, c
         // return { ...dadosDoProcesso, pecas: [] as PecaType[], pecasSelecionadas: [] as PecaType[], tipoDeSintese: tipoDeSinteseSelecionado, produtos: TipoDeSinteseMap[tipoDeSinteseSelecionado]?.produtos }
     } catch (error) {
         if (error?.message === 'NEXT_REDIRECT') throw error
-        console.error(`Erro ao obter dados do processo ${numeroDoProcesso}: ${error.stack}`)
+        Sentry.captureException(error, { tags: { function: 'obterDadosDoProcesso2', numeroDoProcesso } })
+        devLog(`Erro ao obter dados do processo ${numeroDoProcesso}: ${error.stack}`)
         errorMsg = `${error.message}`
         return { errorMsg }
     }

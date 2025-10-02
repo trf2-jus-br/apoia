@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/user"
 import { decrypt } from "@/lib/utils/crypt"
 import { getInterop } from "@/lib/interop/interop"
+import * as Sentry from '@sentry/nextjs'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -66,6 +67,7 @@ export async function GET(
       status: 200,
     })
   } catch (error) {
+    Sentry.captureException(error, { tags: { route: '/api/v1/process/[number]/piece/[piece]/binary' } })
     const message = fetcher.processError(error)
     return NextResponse.json({ message: `${message}` }, { status: 405 });
   }

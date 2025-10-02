@@ -8,6 +8,8 @@ import { IAPrompt } from '@/lib/db/mysql-types'
 import { getCurrentUser } from '@/lib/user'
 import { preprocessTemplate } from '@/lib/ai/template'
 import { StreamTextResult, ToolSet } from 'ai'
+import * as Sentry from '@sentry/nextjs'
+import { devLog } from '@/lib/utils/log'
 
 export const maxDuration = 60
 
@@ -244,7 +246,8 @@ export async function POST(request: Request) {
 
         throw new Error('Invalid response')
     } catch (error) {
-        console.error('error', error)
+        Sentry.captureException(error, { tags: { route: '/api/v1/ai' } })
+        devLog('Error in AI route:', error)
         const message = Fetcher.processError(error)
         return NextResponse.json({ errormsg: `${message}` }, { status: 405 })
     }

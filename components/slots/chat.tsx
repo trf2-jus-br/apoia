@@ -2,7 +2,7 @@
 
 import { PromptDataType, PromptDefinitionType } from '@/lib/ai/prompt-types';
 import { faEdit } from '@fortawesome/free-regular-svg-icons';
-import { faChevronDown, faChevronUp, faFileLines, faPaperclip, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/user"
 import { obterDadosDoProcesso } from "@/lib/proc/process"
 import { PecaConteudoType } from "@/lib/proc/process-types"
+import * as Sentry from '@sentry/nextjs'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -61,6 +62,7 @@ export async function GET(
     }
     return Response.json({ status: 'OK', content: dadosDoProcesso.pecas[0].conteudo })
   } catch (error) {
+    Sentry.captureException(error, { tags: { route: '/api/v1/process/[number]/piece/[piece]/content' } })
     const message = fetcher.processError(error)
     return NextResponse.json({ message: `${message}` }, { status: 405 });
   }
