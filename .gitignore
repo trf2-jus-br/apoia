@@ -41,3 +41,6 @@ next-env.d.ts
 todo.md
 .env.local
 scripts/cnis.json
+
+# Sentry Config File
+.env.sentry-build-plugin

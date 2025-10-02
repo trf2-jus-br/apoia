@@ -1,4 +1,14 @@
+import * as Sentry from '@sentry/nextjs'
+
 export async function register() {
+    if (process.env.NEXT_RUNTIME === 'nodejs') {
+        await import('./sentry.server.config');
+        console.log('Sentry register - runtime:', process.env.NEXT_RUNTIME)
+    }
+
+    if (process.env.NEXT_RUNTIME === 'edge') {
+        await import('./sentry.edge.config');
+    }
     if (process.env.NEXT_RUNTIME === 'nodejs') {
         const { migrateIfNeeded } = await import('./lib/migrate-on-start')
         await migrateIfNeeded()
@@ -6,3 +16,5 @@ export async function register() {
         // await import('lib/eureka')
     }
 }
+
+export const onRequestError = Sentry.captureRequestError;

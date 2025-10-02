@@ -18,7 +18,7 @@ data:
   
   CONFIDENTIALITY_LEVEL_MAX: "0"
   VERCEL: "1"
-  VERCEL_ENV: "development"
+  VERCEL_ENV: "staging"
   
   DB_CLIENT: "pg"
   DB_HOST: "postgres.comum-homologacao"
