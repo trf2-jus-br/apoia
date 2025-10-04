@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { useEffect, useMemo, useState, Suspense } from 'react'
 import { Button, Form, Modal, Table } from 'react-bootstrap'
 import AiContent from '@/components/ai-content'
-import TextareaAutosize from 'react-textarea-autosize'
 import { findUnclosedMarking } from '@/lib/ai/template'
+
+const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
 import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
 import { useRouter } from 'next/navigation'
@@ -210,7 +212,7 @@ export default function LibraryForm({ record }: { record: any }) {
         </Form.Group>
       </div>
 
-      <div className="col-4" style={{ display: 'none'}}>
+      <div className="col-4" style={{ display: 'none' }}>
         <Form.Group className="mb-3">
           <Form.Label>Tipo</Form.Label>
           <Form.Select value={data.kind} onChange={e => setData({ ...data, kind: e.target.value as IALibraryKind })} disabled={!!data.id}>
@@ -244,7 +246,11 @@ export default function LibraryForm({ record }: { record: any }) {
         {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.MODELO) && (
           <Form.Group className="mb-3">
             <Form.Label>{data.kind === IALibraryKind.MODELO ? 'Modelo' : 'Documento'}</Form.Label>
-            <TextareaAutosize className="form-control" minRows={10} value={data.content_markdown || ''} onChange={e => setData({ ...data, content_markdown: e.target.value })} />
+            <div className="alert alert-secondary mb-1 p-0">
+              <Suspense fallback={null}>
+                <EditorComp markdown={data.content_markdown || ''} onChange={(text) => setData({ ...data, content_markdown: text })} />
+              </Suspense>
+            </div>
             {isModel && unclosed && (
               <div className="alert alert-danger mt-2">
                 Marcação não fechada: <strong>{unclosed.kind}</strong> na linha <strong>{unclosed.lineNumber}</strong> - <span className="template-error" dangerouslySetInnerHTML={{ __html: unclosed.lineContent }} />
@@ -297,8 +303,9 @@ export default function LibraryForm({ record }: { record: any }) {
           {isModel && examples.length > 0 && (
             <Button variant="secondary" disabled={runningAI} onClick={generateFromExamples}>Gerar modelo a partir dos exemplos</Button>
           )}
-          {data.id && (
-            <div className="col"><Button variant="outline-danger" disabled={pending} onClick={async () => {
+          <div className="col">
+            <Button variant="outline-secondary" onClick={() => router.replace('/library')}>Cancelar</Button>
+            {data.id && (<Button variant="outline-danger" className="ms-2" disabled={pending} onClick={async () => {
               if (confirm('Tem certeza que deseja excluir este item?')) {
                 setPending(true)
                 try {
@@ -314,9 +321,10 @@ export default function LibraryForm({ record }: { record: any }) {
                   setPending(false)
                 }
               }
-            }}>Excluir</Button>
-            </div>
-          )}
+            }
+            }>Excluir</Button>
+            )}
+          </div>
           <div className="col text-end">
             <Button variant="primary" disabled={pending} onClick={save}>Salvar</Button>
           </div>
