@@ -16,10 +16,10 @@ export async function POST(req: Request) {
   const contentType = req.headers.get('content-type') || ''
   if (contentType.startsWith('multipart/form-data')) {
     const form = await req.formData()
-    const type = String(form.get('type') || '') as any
+    const kind = String(form.get('kind') || '') as any
     const title = String(form.get('title') || '')
     const file = form.get('file') as File | null
-    if (!type || !title) return NextResponse.json({ errormsg: 'type e title são obrigatórios' }, { status: 400 })
+    if (!kind || !title) return NextResponse.json({ errormsg: 'kind e title são obrigatórios' }, { status: 400 })
     let content_binary: Buffer | undefined
     let fileContentType: string | undefined
     if (file) {
@@ -30,13 +30,21 @@ export async function POST(req: Request) {
       content_binary = Buffer.from(bytes)
       fileContentType = file.type || 'application/octet-stream'
     }
-    const id = await Dao.insertLibrary({ type, title, content_type: fileContentType, content_binary })
+    const id = await Dao.insertLibrary({ kind, title, content_type: fileContentType, content_binary })
     return NextResponse.json({ id })
   } else {
     const body = await req.json()
-    const { type, title, content_type, content_markdown, model_subtype } = body
-    if (!type || !title) return NextResponse.json({ errormsg: 'type e title são obrigatórios' }, { status: 400 })
-    const id = await Dao.insertLibrary({ type, title, content_type: content_type ?? null, content_markdown: content_markdown ?? null, model_subtype: model_subtype ?? null })
+    const { kind, title, content_type, content_markdown, model_subtype, inclusion, context } = body
+    if (!kind || !title) return NextResponse.json({ errormsg: 'kind e title são obrigatórios' }, { status: 400 })
+    const id = await Dao.insertLibrary({ 
+      kind, 
+      title, 
+      content_type: content_type ?? null, 
+      content_markdown: content_markdown ?? null, 
+      model_subtype: model_subtype ?? null,
+      inclusion: inclusion ?? 'NAO',
+      context: context ?? null
+    })
     return NextResponse.json({ id })
   }
 }

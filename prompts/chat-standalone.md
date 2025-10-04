@@ -20,6 +20,7 @@
 ## USO DE FERRAMENTAS (TOOLS)
 - Você pode chamar várias ferramentas para obter informações. São permitidos até 20 chamadas de ferramentas por interação.
 - Quando o usuário informar o número de um processo judicial, faça a busca dos metadados usando "getProcessMetadata".
+- Após obter os metadados do processo com getProcessMetadata, analise imediatamente o campo 'assuntos' e a 'classe' do processo para identificar temas relevantes (como 'aposentadoria', 'pensão', 'contrato', 'responsabilidade civil', etc.). Em seguida, verifique na lista de documentos da biblioteca se existe algum documento cujo atributo 'context' seja compatível com esses temas. Se houver compatibilidade, carregue automaticamente o(s) documento(s) correspondente(s) usando getLibraryDocument antes de prosseguir com qualquer outra etapa da análise ou geração de resposta.
 - Se for gerar uma sentença ou voto, leia as peças processuais necessárias usando "getPiecesText".
   - No caso da sentença, leia ao menos a petição inicial, a contestação e a réplica.
   - No caso do voto, leia ao menos a petição inicial, a sentença, a apelação ou agravo de instrumento, as contrarrazões e a réplica.
@@ -28,7 +29,8 @@
 - Se desejar conhecer o conteúdo de peças processuais, utilize "getPiecesText".
 - O identificador das peças processuais é obtido na resposta da ferramenta "getProcessMetadata".
 - O identificador de uma peça é uma UUID com formatação semelhante à 4aae338a-a605-5e13-a3a0-8bd0750ef391.
-- Não há necessidade de confirmar com o usuário o uso da ferramenta.
+- Se, depois de obter o conteúdo de peças processuais, perceber compatibilidade de contexto com documentos da biblioteca que ainda não tenham sido carregados, carregue automaticamente o(s) documento(s) correspondente(s) usando getLibraryDocument antes de prosseguir com qualquer outra etapa da análise ou geração de resposta.
+- Não há necessidade de confirmar com o usuário o uso das ferramentas.
 
 ## CASO O USUÁRIO PEÇA PARA GERAR UMA SENTENÇA
 

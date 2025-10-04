@@ -31,16 +31,24 @@ export class Dao {
         return row
     }
 
+    static async getLibrariesByIds(ids: number[]): Promise<mysqlTypes.IALibrary[]> {
+        const userId = await getCurrentUserId()
+        const rows = await knex('ia_library').select('*').where({ user_id: userId }).whereIn('id', ids)
+        return rows
+    }
+
     static async insertLibrary(data: mysqlTypes.IALibraryToInsert): Promise<number> {
         const userId = await getCurrentUserId()
         const [ret] = await knex('ia_library').insert({
             user_id: userId,
-            type: data.type,
+            kind: data.kind,
             title: data.title,
             content_type: data.content_type ?? null,
             content_markdown: data.content_markdown ?? null,
             content_binary: data.content_binary ?? null,
             model_subtype: data.model_subtype ?? null,
+            inclusion: data.inclusion ?? mysqlTypes.IALibraryInclusion.NAO,
+            context: data.context ?? null,
             created_by: userId,
         }).returning('id')
         return getId(ret)
@@ -49,12 +57,14 @@ export class Dao {
     static async updateLibrary(id: number, patch: Partial<mysqlTypes.IALibraryToInsert>): Promise<boolean> {
         const userId = await getCurrentUserId()
         const upd = await knex('ia_library').update({
-            ...(patch.type ? { type: patch.type } : {}),
+            ...(patch.kind ? { kind: patch.kind } : {}),
             ...(patch.title !== undefined ? { title: patch.title } : {}),
             ...(patch.content_type !== undefined ? { content_type: patch.content_type } : {}),
             ...(patch.content_markdown !== undefined ? { content_markdown: patch.content_markdown } : {}),
             ...(patch.content_binary !== undefined ? { content_binary: patch.content_binary } : {}),
             ...(patch.model_subtype !== undefined ? { model_subtype: patch.model_subtype } : {}),
+            ...(patch.inclusion !== undefined ? { inclusion: patch.inclusion } : {}),
+            ...(patch.context !== undefined ? { context: patch.context } : {}),
         }).where({ id, user_id: userId })
         return upd > 0
     }

@@ -5,9 +5,9 @@ import { Button, Form, Modal, Table } from 'react-bootstrap'
 import AiContent from '@/components/ai-content'
 import TextareaAutosize from 'react-textarea-autosize'
 import { findUnclosedMarking } from '@/lib/ai/template'
-
-type LibraryType = 'ARQUIVO' | 'MODELO' | 'MARKDOWN'
-type ModelSubtype = 'PRIMEIRO_DESPACHO' | 'SENTENCA' | 'VOTO'
+import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
+import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
+import { useRouter } from 'next/navigation'
 
 export default function LibraryForm({ record }: { record: any }) {
   const [data, setData] = useState<any>({ ...record })
@@ -23,7 +23,8 @@ export default function LibraryForm({ record }: { record: any }) {
   const [promptDefinition, setPromptDefinition] = useState<any>(null)
   const [selecting, setSelecting] = useState<{ pn: string, pieces: any[] } | null>(null)
   const [selectedPieceId, setSelectedPieceId] = useState<string>('')
-  const isModel = data.type === 'MODELO'
+  const isModel = data.kind === IALibraryKind.MODELO
+  const router = useRouter()
 
   useEffect(() => { setData({ ...record }) }, [record])
   useEffect(() => {
@@ -44,16 +45,20 @@ export default function LibraryForm({ record }: { record: any }) {
     setPending(true)
     try {
       if (data.id) {
-        await fetch(`/api/v1/library/${data.id}`, { method: 'PATCH', body: JSON.stringify({
-          title: data.title,
-          content_markdown: data.content_markdown,
-          content_type: data.content_type,
-          model_subtype: data.model_subtype,
-        }) })
+        await fetch(`/api/v1/library/${data.id}`, {
+          method: 'PATCH', body: JSON.stringify({
+            title: data.title,
+            content_markdown: data.content_markdown,
+            content_type: data.content_type,
+            model_subtype: data.model_subtype,
+            inclusion: data.inclusion,
+            context: data.context,
+          })
+        })
       } else {
         // create
         let res: Response
-        if (data.type === 'ARQUIVO') {
+        if (data.kind === IALibraryKind.ARQUIVO) {
           if (!file) {
             setFileError('Selecione um arquivo para enviar')
             return
@@ -63,22 +68,28 @@ export default function LibraryForm({ record }: { record: any }) {
             return
           }
           const form = new FormData()
-          form.append('type', data.type)
+          form.append('kind', data.kind)
           form.append('title', data.title || '')
           form.append('file', file)
           res = await fetch('/api/v1/library', { method: 'POST', body: form })
+          router.push(`/library`)
         } else {
-          res = await fetch('/api/v1/library', { method: 'POST', body: JSON.stringify({
-            type: data.type,
-            title: data.title,
-            content_markdown: data.content_markdown,
-            content_type: data.content_type,
-            model_subtype: data.model_subtype,
-          }) })
+          res = await fetch('/api/v1/library', {
+            method: 'POST', body: JSON.stringify({
+              kind: data.kind,
+              title: data.title,
+              content_markdown: data.content_markdown,
+              content_type: data.content_type,
+              model_subtype: data.model_subtype,
+              inclusion: data.inclusion,
+              context: data.context,
+            })
+          })
         }
         const j = await res.json()
         if (res.ok) {
-          window.location.href = `/library/${j.id}/edit`
+          // window.location.href = `/library/${j.id}/edit`
+          router.push(`/library`)
           return
         }
       }
@@ -93,7 +104,7 @@ export default function LibraryForm({ record }: { record: any }) {
     setPending(true)
     try {
       let res: Response
-      if (data.type === 'ARQUIVO') {
+      if (data.kind === IALibraryKind.ARQUIVO) {
         if (!file) {
           setFileError('Selecione um arquivo para enviar')
           return null
@@ -103,18 +114,22 @@ export default function LibraryForm({ record }: { record: any }) {
           return null
         }
         const form = new FormData()
-        form.append('type', data.type)
+        form.append('kind', data.kind)
         form.append('title', data.title || '')
         form.append('file', file)
         res = await fetch('/api/v1/library', { method: 'POST', body: form })
       } else {
-        res = await fetch('/api/v1/library', { method: 'POST', body: JSON.stringify({
-          type: data.type,
-          title: data.title,
-          content_markdown: data.content_markdown,
-          content_type: data.content_type,
-          model_subtype: data.model_subtype,
-        }) })
+        res = await fetch('/api/v1/library', {
+          method: 'POST', body: JSON.stringify({
+            kind: data.kind,
+            title: data.title,
+            content_markdown: data.content_markdown,
+            content_type: data.content_type,
+            model_subtype: data.model_subtype,
+            inclusion: data.inclusion,
+            context: data.context,
+          })
+        })
       }
       const j = await res.json()
       if (res.ok) {
@@ -188,10 +203,42 @@ export default function LibraryForm({ record }: { record: any }) {
           <Form.Label>Título</Form.Label>
           <Form.Control value={data.title || ''} onChange={e => setData({ ...data, title: e.target.value })} />
         </Form.Group>
+      </div>
 
-        {(data.type === 'MARKDOWN' || data.type === 'MODELO') && (
+      <div className="col-4">
+        <Form.Group className="mb-3">
+          <Form.Label>Tipo</Form.Label>
+          <Form.Select value={data.kind} onChange={e => setData({ ...data, kind: e.target.value as IALibraryKind })} disabled={!!data.id}>
+            {Object.entries(IALibraryKindLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+      </div>
+
+      <div className="col-4">
+        <Form.Group className="mb-3">
+          <Form.Label>Inclusão Automática</Form.Label>
+          <Form.Select value={data.inclusion} onChange={e => setData({ ...data, inclusion: e.target.value as IALibraryInclusion })}>
+            {Object.entries(IALibraryInclusionLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+      </div>
+
+      <div className="col-12" style={{ display: data.inclusion !== IALibraryInclusion.CONTEXTUAL ? 'none' : 'block' }}>
+        <Form.Group className="mb-3">
+          <Form.Label>Contexto</Form.Label>
+          <Form.Control value={data.context || ''} onChange={e => setData({ ...data, context: e.target.value })} />
+          <div className="form-text text-muted">Explique para a IA em que contexto esse documento deve ser automaticamente considerado. Exemplo: &quot;Se for um processo de propriedade industrial.&quot;</div>
+        </Form.Group>
+      </div>
+
+      <div className="col-12">
+        {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.MODELO) && (
           <Form.Group className="mb-3">
-            <Form.Label>{data.type === 'MODELO' ? 'Modelo' : 'Documento (Markdown)'}</Form.Label>
+            <Form.Label>{data.kind === IALibraryKind.MODELO ? 'Modelo' : 'Documento (Markdown)'}</Form.Label>
             <TextareaAutosize className="form-control" minRows={10} value={data.content_markdown || ''} onChange={e => setData({ ...data, content_markdown: e.target.value })} />
             {isModel && unclosed && (
               <div className="alert alert-danger mt-2">
@@ -200,8 +247,9 @@ export default function LibraryForm({ record }: { record: any }) {
             )}
           </Form.Group>
         )}
-
-        {data.type === 'ARQUIVO' && (
+      </div>
+      <div className="col-12">
+        {data.kind === IALibraryKind.ARQUIVO && (
           <Form.Group className="mb-3">
             <Form.Label>Arquivo (máx. 10MB)</Form.Label>
             <Form.Control type="file" onChange={(e: any) => {
@@ -211,7 +259,7 @@ export default function LibraryForm({ record }: { record: any }) {
               if (f) setData({ ...data, content_type: f.type || 'application/octet-stream' })
             }} />
             {file && (
-              <div className="form-text">{file.name} • {(file.size/1024/1024).toFixed(2)} MB • {file.type || 'application/octet-stream'}</div>
+              <div className="form-text">{file.name} • {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type || 'application/octet-stream'}</div>
             )}
             {fileError && <div className="text-danger small mt-1">{fileError}</div>}
             {data.id && (
@@ -220,25 +268,15 @@ export default function LibraryForm({ record }: { record: any }) {
           </Form.Group>
         )}
       </div>
-
-      <div className="col-4">
-        <Form.Group className="mb-3">
-          <Form.Label>Tipo</Form.Label>
-          <Form.Select value={data.type} onChange={e => setData({ ...data, type: e.target.value as LibraryType })} disabled={!!data.id}>
-            <option value="ARQUIVO">Arquivo</option>
-            <option value="MODELO">Modelo</option>
-            <option value="MARKDOWN">Markdown</option>
-          </Form.Select>
-        </Form.Group>
-
+      <div className="col-12">
         {isModel && (
           <Form.Group className="mb-3">
             <Form.Label>Tipo de Modelo</Form.Label>
-            <Form.Select value={data.model_subtype || ''} onChange={e => setData({ ...data, model_subtype: (e.target.value || null) as ModelSubtype | null })}>
+            <Form.Select value={data.model_subtype || ''} onChange={e => setData({ ...data, model_subtype: (e.target.value || null) as IAModelSubtype | null })}>
               <option value="">Selecione</option>
-              <option value="PRIMEIRO_DESPACHO">Primeiro Despacho</option>
-              <option value="SENTENCA">Sentença</option>
-              <option value="VOTO">Voto</option>
+              {Object.entries(IAModelSubtypeLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </Form.Select>
           </Form.Group>
         )}
@@ -258,55 +296,61 @@ export default function LibraryForm({ record }: { record: any }) {
         </div>
       </div>
 
-      {examples.length > 0 && (
-        <div className="col-12 mt-4">
-          <h5>Exemplos</h5>
-          <Table bordered hover>
-            <thead>
-              <tr>
-                <th>Nº do Processo</th>
-                <th>Evento</th>
-                <th>Peça</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {examples.map(ex => (
-                <tr key={ex.id}>
-                  <td>{ex.process_number}</td>
-                  <td>{ex.event_number || '-'}</td>
-                  <td>{ex.piece_title || '-'}</td>
-                  <td className="text-end">
-                    <Button size="sm" variant="light" className="me-2" onClick={() => openSelectPiece(ex.process_number)}>Selecionar peça</Button>
-                    <Button size="sm" variant="outline-danger" onClick={() => removeExample(ex.process_number)}>Excluir</Button>
-                  </td>
+      {
+        examples.length > 0 && (
+          <div className="col-12 mt-4">
+            <h5>Exemplos</h5>
+            <Table bordered hover>
+              <thead>
+                <tr>
+                  <th>Nº do Processo</th>
+                  <th>Evento</th>
+                  <th>Peça</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {examples.map(ex => (
+                  <tr key={ex.id}>
+                    <td>{ex.process_number}</td>
+                    <td>{ex.event_number || '-'}</td>
+                    <td>{ex.piece_title || '-'}</td>
+                    <td className="text-end">
+                      <Button size="sm" variant="light" className="me-2" onClick={() => openSelectPiece(ex.process_number)}>Selecionar peça</Button>
+                      <Button size="sm" variant="outline-danger" onClick={() => removeExample(ex.process_number)}>Excluir</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        )
+      }
 
-      {showAI && promptDefinition && (
-        <div className="col-12 mt-3">
-          <div className="alert alert-info">Gerando modelo a partir dos exemplos...</div>
-          <AiContent
-            definition={promptDefinition}
-            data={{ textos: examples.map((ex, idx) => ({
-              descr: ex.piece_title || `Exemplo ${idx + 1}`,
-              slug: `exemplo-${idx + 1}`,
-              texto: ex.content_markdown ? `<despacho-decisao>\n${ex.content_markdown}\n</despacho-decisao>` : '',
-              sigilo: '0',
-            })) }}
-            config={{ prompt_slug: 'template-a-partir-de-exemplos' }}
-            dossierCode={''}
-            onReady={(content) => {
-              setData((d: any) => ({ ...d, content_markdown: content?.raw || '' }))
-              setShowAI(false)
-            }}
-          />
-        </div>
-      )}
+      {
+        showAI && promptDefinition && (
+          <div className="col-12 mt-3">
+            <div className="alert alert-info">Gerando modelo a partir dos exemplos...</div>
+            <AiContent
+              definition={promptDefinition}
+              data={{
+                textos: examples.map((ex, idx) => ({
+                  descr: ex.piece_title || `Exemplo ${idx + 1}`,
+                  slug: `exemplo-${idx + 1}`,
+                  texto: ex.content_markdown ? `<despacho-decisao>\n${ex.content_markdown}\n</despacho-decisao>` : '',
+                  sigilo: '0',
+                }))
+              }}
+              config={{ prompt_slug: 'template-a-partir-de-exemplos' }}
+              dossierCode={''}
+              onReady={(content) => {
+                setData((d: any) => ({ ...d, content_markdown: content?.raw || '' }))
+                setShowAI(false)
+              }}
+            />
+          </div>
+        )
+      }
 
       <Modal show={!!selecting} onHide={() => setSelecting(null)}>
         <Modal.Header closeButton>
@@ -345,6 +389,6 @@ export default function LibraryForm({ record }: { record: any }) {
           <Button variant="primary" onClick={addExamples} disabled={pending || !csv.trim()}>Confirmar</Button>
         </Modal.Footer>
       </Modal>
-    </div>
+    </div >
   )
 }

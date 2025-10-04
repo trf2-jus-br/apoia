@@ -35,6 +35,7 @@ function hasText(mensagem: UIMessage) {
 
 function toolMessage(part: any): ReactElement {
     const regexPiece = /^(.+):$\n<[a-z\-]+ event="([^"]+)"/gm
+    const regexLibrary = /<library id="\d+" title="([^"]+)"/gm
     if (!part) return null
     switch (part.type) {
         case 'tool-getProcessMetadata':
@@ -72,6 +73,31 @@ function toolMessage(part: any): ReactElement {
                         return <span className="text-secondary">Consultei conteúdo da peça: {matches[0]}</span>
                     else
                         return <span className="text-secondary">Consultei conteúdo das peças: {matches.join(', ')}</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
+        case 'tool-getLibraryDocument':
+            switch (part.state) {
+                case 'input-streaming':
+                    return <span className="text-secondary">Acessando a biblioteca...</span>
+                case 'input-available':
+                    if (part.input.documentIdArray?.length === 1)
+                        return <span className="text-secondary">Obtendo conteúdo do documento: {part.input.documentIdArray[0]}...</span>
+                    else if (part.input.pieceIdArray?.length > 1)
+                        return <span className="text-secondary">Obtendo conteúdo dos documentos: {part.input.documentIdArray.join(', ')}...</span>
+                    else
+                        return <span className="text-secondary">Obtendo conteúdo dos documentos...</span>
+                case 'output-available':
+                    const matches = []
+                    let match
+                    regexLibrary.lastIndex = 0 // Reset regex state
+                    while ((match = regexLibrary.exec(part.output)) !== null) {
+                        matches.push(match[1].trim())
+                    }
+                    if (matches.length === 1)
+                        return <span className="text-secondary">Consultei documento da biblioteca: {matches[0]}</span>
+                    else
+                        return <span className="text-secondary">Consultei documentos da biblioteca: {matches.join(', ')}</span>
                 case 'output-error':
                     return <div>Error: {part.errorText}</div>;
             }

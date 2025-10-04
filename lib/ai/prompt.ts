@@ -80,7 +80,7 @@ export async function getPiecesWithContent(dadosDoProcesso: DadosDoProcessoType,
     return pecasComConteudo
 }
 
-export const promptExecuteBuilder = (definition: PromptDefinitionType, data: PromptDataType): PromptExecuteType => {
+export const promptExecuteBuilder = async (definition: PromptDefinitionType, data: PromptDataType): Promise<PromptExecuteType> => {
     const message: ModelMessage[] = []
     if (definition.systemPrompt) {
         definition.systemPrompt.split('\n---\n').forEach(part => {
@@ -110,6 +110,13 @@ export const promptExecuteBuilder = (definition: PromptDefinitionType, data: Pro
         params.structuredOutputs = { schemaName: 'structuredOutputs', schemaDescription: 'Structured Outputs', schema: jsonSchema(JSON.parse(definition.jsonSchema)) }
     if (definition.format)
         params.format = buildFormatter(definition.format)
+
+    const libraryPrompt = await getLibraryDocumentsForPrompt()
+    if (libraryPrompt) {
+        const lastSystemIndex = message.map(m => m.role).lastIndexOf('system')
+        const insertAt = lastSystemIndex === -1 ? 0 : lastSystemIndex + 1
+        message.splice(insertAt, 0, { role: 'system', content: libraryPrompt })
+    }
     return { message, params, fixedPrompt: promptContent }
 }
 
@@ -170,13 +177,6 @@ export const promptDefinitionFromMarkdown = (slug, md: string): PromptDefinition
     return { kind: slug, prompt, systemPrompt: system_prompt, jsonSchema: json_schema, format, template, cacheControl: true }
 }
 
-
-export const promptExecutionFromMarkdown = (md: string): (data: PromptDataType) => PromptExecuteType => {
-    const definition = promptDefinitionFromMarkdown('md', md)
-
-    return (data) => promptExecuteBuilder(definition, data)
-}
-
 export function getPromptIdentifier(prompt: string) {
     let promptUnderscore = prompt.replace(/-/g, '_')
     let buildPrompt = internalPrompts[promptUnderscore]
@@ -227,6 +227,7 @@ import prev_bi_sentenca_laudo_favoravel from '@/prompts/prev-bi-sentenca-laudo-f
 import prev_bi_sentenca_laudo_desfavoravel from '@/prompts/prev-bi-sentenca-laudo-desfavoravel.md'
 import linguagem_simples from '@/prompts/linguagem-simples.md'
 import relatorio_de_apelacao_e_triagem from '@/prompts/relatorio-de-apelacao-e-triagem.md'
+import { getLibraryDocumentsForPrompt } from "./library"
 
 // Enum for the different types of prompts
 export const internalPrompts = {

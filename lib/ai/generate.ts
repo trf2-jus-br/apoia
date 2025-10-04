@@ -112,7 +112,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const { model: modelPreSelected } = await getModel({ structuredOutputs: false, overrideModel: definition.model })
     data.textos = clipPieces(modelPreSelected, data.textos)
 
-    const exec = promptExecuteBuilder(definition, data)
+    const exec = await promptExecuteBuilder(definition, data)
     const messages = exec.message
     const structuredOutputs = exec.params?.structuredOutputs
     const { model, modelRef, apiKeyFromEnv } = await getModel({ structuredOutputs: !!structuredOutputs, overrideModel: definition.model })
@@ -284,7 +284,7 @@ export async function evaluate(definition: PromptDefinitionType, data: PromptDat
 
     const { model } = await getModel()
     await waitForTexts(data)
-    const exec = promptExecuteBuilder(definition, data)
+    const exec = await promptExecuteBuilder(definition, data)
     const messages = exec.message
     const sha256 = calcSha256(messages)
 

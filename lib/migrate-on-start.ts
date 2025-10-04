@@ -35,11 +35,14 @@ export async function migrateIfNeeded() {
     if (process.env.MIGRATE_ON_START === '0') return // opt-out explícito
     const client = process.env.DB_CLIENT || knexBase.client
     if (!client) return
-    const dialect = client === 'pg' ? 'postgres' : client === 'mysql' ? 'mysql' : undefined
-    if (!dialect) return
+    const dialect = client === 'pg' ? 'postgres' : client === 'mysql2' ? 'mysql' : undefined
+    if (!dialect) {
+        console.error('[migrate] Dialeto não suportado:', client)
+        return
+    }
     const sqlDir = path.resolve(process.cwd(), 'migrations', dialect, 'knex')
     if (!fs.existsSync(sqlDir)) {
-        console.warn('[migrate] Diretório não encontrado:', sqlDir)
+        console.error('[migrate] Diretório não encontrado:', sqlDir)
         return
     }
     const cfg: any = { ...knexBase, connection: { ...knexBase.connection } }

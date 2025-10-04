@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import AiContent from '@/components/ai-content'
 import { Button } from 'react-bootstrap'
 import { PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'
@@ -35,13 +35,21 @@ export default function TargetText({ prompt, visualization, apiKeyProvided }: { 
     const textoDescr = prompt.content.editor_label || 'Texto'
 
     const PromptParaCopiar = () => {
+        const [exec, setExec] = useState(undefined as any)
         if (!prompt || !markdown) return ''
 
-        const exec = promptExecuteBuilder(definition, { textos: [{ descr: prompt.content?.editor_label || 'Texto', slug: slugify(prompt.content?.editor_label || 'texto'), texto: markdown, sigilo: '0' }] })
+        useEffect(() => {
+            const f = async () => {
+                const exec = await promptExecuteBuilder(definition, { textos: [{ descr: prompt.content?.editor_label || 'Texto', slug: slugify(prompt.content?.editor_label || 'texto'), texto: markdown, sigilo: '0' }] })
+                setExec(exec)
+            }
+            f()
+        }, [definition, markdown, prompt])
 
-        const s: string = exec.message.map(m => m.role === 'system' ? `# PROMPT DE SISTEMA\n\n${m.content}\n\n# PROMPT` : m.content).join('\n\n')
+        const s: string = exec?.message.map(m => m.role === 'system' ? `# PROMPT DE SISTEMA\n\n${m.content}\n\n# PROMPT` : m.content).join('\n\n')
 
-        navigator.clipboard.writeText(s)
+        if (s)
+            navigator.clipboard.writeText(s)
 
         return <>
             <p className="alert alert-warning text-center mt-3">Prompt copiado para a área de transferência, já com o conteúdo do texto informado acima!</p>

@@ -373,29 +373,62 @@ export type IAUsageDetailRow = {
 }
 
 // --- Library ---
-export type IALibraryType = 'ARQUIVO' | 'MODELO' | 'MARKDOWN'
+export enum IALibraryKind {
+    ARQUIVO = 'ARQUIVO',
+    MODELO = 'MODELO',
+    MARKDOWN = 'MARKDOWN'
+}
+
+export const IALibraryKindLabels: Record<IALibraryKind, string> = {
+    [IALibraryKind.ARQUIVO]: 'Arquivo',
+    [IALibraryKind.MODELO]: 'Modelo de Documento',
+    [IALibraryKind.MARKDOWN]: 'Texto Markdown'
+}
+
+export enum IALibraryInclusion {
+    NAO = 'NAO',
+    SIM = 'SIM',
+    CONTEXTUAL = 'CONTEXTUAL'
+}
+
+export const IALibraryInclusionLabels: Record<IALibraryInclusion, string> = {
+    [IALibraryInclusion.NAO]: 'Nunca',
+    [IALibraryInclusion.SIM]: 'Sempre',
+    [IALibraryInclusion.CONTEXTUAL]: 'Contextual'
+}
+
 export type IAModelSubtype = 'PRIMEIRO_DESPACHO' | 'SENTENCA' | 'VOTO'
+
+export const IAModelSubtypeLabels: Record<IAModelSubtype, string> = {
+    'PRIMEIRO_DESPACHO': 'Primeiro Despacho',
+    'SENTENCA': 'Sentença',
+    'VOTO': 'Voto'
+}
 
 export type IALibrary = {
     id: number
     user_id: number
-    type: IALibraryType
+    kind: IALibraryKind
     model_subtype: IAModelSubtype | null
     title: string
     content_type: string | null
     content_markdown: string | null
     content_binary: Buffer | null
+    inclusion: IALibraryInclusion | null
+    context: string | null
     created_at: Date | null
     created_by: number | null
 }
 
 export type IALibraryToInsert = {
-    type: IALibraryType
+    kind: IALibraryKind
     title: string
     content_type?: string | null
     content_markdown?: string | null
     content_binary?: Buffer | null
     model_subtype?: IAModelSubtype | null
+    inclusion?: IALibraryInclusion | null
+    context?: string | null
 }
 
 export type IALibraryExample = {
