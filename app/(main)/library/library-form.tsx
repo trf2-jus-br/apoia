@@ -45,8 +45,10 @@ export default function LibraryForm({ record }: { record: any }) {
     setPending(true)
     try {
       if (data.id) {
+        // Update existing record
         await fetch(`/api/v1/library/${data.id}`, {
-          method: 'PATCH', body: JSON.stringify({
+          method: 'PATCH',
+          body: JSON.stringify({
             title: data.title,
             content_markdown: data.content_markdown,
             content_type: data.content_type,
@@ -56,8 +58,9 @@ export default function LibraryForm({ record }: { record: any }) {
           })
         })
       } else {
-        // create
+        // Create new record
         let res: Response
+
         if (data.kind === IALibraryKind.ARQUIVO) {
           if (!file) {
             setFileError('Selecione um arquivo para enviar')
@@ -72,10 +75,10 @@ export default function LibraryForm({ record }: { record: any }) {
           form.append('title', data.title || '')
           form.append('file', file)
           res = await fetch('/api/v1/library', { method: 'POST', body: form })
-          router.push(`/library`)
         } else {
           res = await fetch('/api/v1/library', {
-            method: 'POST', body: JSON.stringify({
+            method: 'POST',
+            body: JSON.stringify({
               kind: data.kind,
               title: data.title,
               content_markdown: data.content_markdown,
@@ -86,13 +89,15 @@ export default function LibraryForm({ record }: { record: any }) {
             })
           })
         }
-        const j = await res.json()
-        if (res.ok) {
-          // window.location.href = `/library/${j.id}/edit`
-          router.push(`/library`)
+
+        if (!res.ok) {
+          const j = await res.json()
+          console.error('Error creating library item:', j)
           return
         }
       }
+
+      router.push(`/library`)
     } finally {
       setPending(false)
     }
@@ -205,7 +210,7 @@ export default function LibraryForm({ record }: { record: any }) {
         </Form.Group>
       </div>
 
-      <div className="col-4">
+      <div className="col-4" style={{ display: 'none'}}>
         <Form.Group className="mb-3">
           <Form.Label>Tipo</Form.Label>
           <Form.Select value={data.kind} onChange={e => setData({ ...data, kind: e.target.value as IALibraryKind })} disabled={!!data.id}>
@@ -238,7 +243,7 @@ export default function LibraryForm({ record }: { record: any }) {
       <div className="col-12">
         {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.MODELO) && (
           <Form.Group className="mb-3">
-            <Form.Label>{data.kind === IALibraryKind.MODELO ? 'Modelo' : 'Documento (Markdown)'}</Form.Label>
+            <Form.Label>{data.kind === IALibraryKind.MODELO ? 'Modelo' : 'Documento'}</Form.Label>
             <TextareaAutosize className="form-control" minRows={10} value={data.content_markdown || ''} onChange={e => setData({ ...data, content_markdown: e.target.value })} />
             {isModel && unclosed && (
               <div className="alert alert-danger mt-2">
@@ -281,7 +286,7 @@ export default function LibraryForm({ record }: { record: any }) {
           </Form.Group>
         )}
 
-        <div className="d-flex gap-2 flex-wrap">
+        <div className="row">
           {isModel && (
             <Button variant="light" onClick={async () => {
               // ensure saved before opening modal
@@ -292,7 +297,29 @@ export default function LibraryForm({ record }: { record: any }) {
           {isModel && examples.length > 0 && (
             <Button variant="secondary" disabled={runningAI} onClick={generateFromExamples}>Gerar modelo a partir dos exemplos</Button>
           )}
-          <Button variant="primary" disabled={pending} onClick={save}>Salvar</Button>
+          {data.id && (
+            <div className="col"><Button variant="outline-danger" disabled={pending} onClick={async () => {
+              if (confirm('Tem certeza que deseja excluir este item?')) {
+                setPending(true)
+                try {
+                  const { deleteLibraryAction } = await import('@/app/(main)/library/actions')
+                  const formData = new FormData()
+                  formData.set('id', String(data.id))
+                  await deleteLibraryAction(formData)
+                  router.push('/library')
+                } catch (error) {
+                  console.error('Erro ao excluir:', error)
+                  alert('Erro ao excluir o item')
+                } finally {
+                  setPending(false)
+                }
+              }
+            }}>Excluir</Button>
+            </div>
+          )}
+          <div className="col text-end">
+            <Button variant="primary" disabled={pending} onClick={save}>Salvar</Button>
+          </div>
         </div>
       </div>
 

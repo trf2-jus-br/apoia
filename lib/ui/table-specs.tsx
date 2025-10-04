@@ -127,7 +127,23 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
         },
         Library: {
             columns: [
-                { header: 'Título', accessorKey: 'title', enableSorting: true },
+                { 
+                    header: 'Título', 
+                    accessorKey: 'title', 
+                    enableSorting: true,
+                    cell: data => {
+                        const title = data.row.original.title;
+                        return title ? (
+                            <Link href={`${pathname}/${data.row.original.id}/edit`} className="text-primary">
+                                {title}
+                            </Link>
+                        ) : (
+                            <Link href={`${pathname}/${data.row.original.id}/edit`} className="text-primary" title="Editar">
+                                <FontAwesomeIcon icon={faPenToSquare} />
+                            </Link>
+                        );
+                    }
+                },
                 /*{ header: 'Tipo', accessorKey: 'kind', enableSorting: true, cell: data => {
                     const { IALibraryKindLabels } = require('@/lib/db/mysql-types');
                     return IALibraryKindLabels[data.row.original.kind];
@@ -137,33 +153,6 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                     return data.row.original.inclusion ? IALibraryInclusionLabels[data.row.original.inclusion] : IALibraryInclusionLabels.NAO;
                 } },
                 { header: 'Contexto', accessorKey: 'context', enableSorting: true, cell: data => data.row.original.context ? (data.row.original.context.length > 50 ? data.row.original.context.substring(0, 50) + '...' : data.row.original.context) : '-' },
-                { 
-                    header: '', 
-                    accessorKey: 'id', 
-                    enableSorting: false, 
-                    style: { textAlign: "right", width: "1%" },
-                    cell: data => {
-                        const { deleteLibraryAction } = require('@/app/(main)/library/actions');
-                        return (
-                            <span className="text-nowrap">
-                                <form action={deleteLibraryAction} style={{ display: 'inline' }}>
-                                    <input type="hidden" name="id" value={String(data.row.original.id)} />
-                                    <span 
-                                        onClick={(e) => { e.currentTarget.closest('form')?.requestSubmit(); }} 
-                                        className="text-danger me-3" 
-                                        style={{ cursor: 'pointer' }}
-                                        title="Excluir"
-                                    >
-                                        <FontAwesomeIcon icon={faTrashCan} />
-                                    </span>
-                                </form>
-                                <Link href={`${pathname}/${data.row.original.id}/edit`} className="text-primary" title="Editar">
-                                    <FontAwesomeIcon icon={faPenToSquare} />
-                                </Link>
-                            </span>
-                        );
-                    }
-                },
             ],
             tableClassName: 'table table-bordered table-hover',
             pageSizes: [10, 20, 50, 100],
