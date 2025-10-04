@@ -1,7 +1,7 @@
 import { formatDate } from "@/lib/utils/utils"
 import { faStar, faUser } from "@fortawesome/free-regular-svg-icons"
 import { faStar as faStarSolid, faUser as faUserSolid } from "@fortawesome/free-solid-svg-icons"
-import { faCheck, faPlay } from "@fortawesome/free-solid-svg-icons"
+import { faCheck, faPlay, faPenToSquare, faTrashCan } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from 'next/link'
 import { Button, ButtonGroup, Dropdown, DropdownButton, Form } from "react-bootstrap"
@@ -124,6 +124,49 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 { header: 'Modelo', accessorKey: 'model_name', enableSorting: true },
                 { header: 'Nota %', accessorKey: 'score', enableSorting: true, style: { textAlign: "right" }, cell: data => <a href={`${pathname}/../test/${data.row.original.testset_id}/${data.row.original.prompt_id}/${data.row.original.model_id}`}>{(data.row.original.score).toFixed(1)}</a> },
             ]
+        },
+        Library: {
+            columns: [
+                { header: 'Título', accessorKey: 'title', enableSorting: true },
+                /*{ header: 'Tipo', accessorKey: 'kind', enableSorting: true, cell: data => {
+                    const { IALibraryKindLabels } = require('@/lib/db/mysql-types');
+                    return IALibraryKindLabels[data.row.original.kind];
+                } },*/
+                { header: 'Inclusão', accessorKey: 'inclusion', enableSorting: true, cell: data => {
+                    const { IALibraryInclusionLabels } = require('@/lib/db/mysql-types');
+                    return data.row.original.inclusion ? IALibraryInclusionLabels[data.row.original.inclusion] : IALibraryInclusionLabels.NAO;
+                } },
+                { header: 'Contexto', accessorKey: 'context', enableSorting: true, cell: data => data.row.original.context ? (data.row.original.context.length > 50 ? data.row.original.context.substring(0, 50) + '...' : data.row.original.context) : '-' },
+                { 
+                    header: '', 
+                    accessorKey: 'id', 
+                    enableSorting: false, 
+                    style: { textAlign: "right", width: "1%" },
+                    cell: data => {
+                        const { deleteLibraryAction } = require('@/app/(main)/library/actions');
+                        return (
+                            <span className="text-nowrap">
+                                <form action={deleteLibraryAction} style={{ display: 'inline' }}>
+                                    <input type="hidden" name="id" value={String(data.row.original.id)} />
+                                    <span 
+                                        onClick={(e) => { e.currentTarget.closest('form')?.requestSubmit(); }} 
+                                        className="text-danger me-3" 
+                                        style={{ cursor: 'pointer' }}
+                                        title="Excluir"
+                                    >
+                                        <FontAwesomeIcon icon={faTrashCan} />
+                                    </span>
+                                </form>
+                                <Link href={`${pathname}/${data.row.original.id}/edit`} className="text-primary" title="Editar">
+                                    <FontAwesomeIcon icon={faPenToSquare} />
+                                </Link>
+                            </span>
+                        );
+                    }
+                },
+            ],
+            tableClassName: 'table table-bordered table-hover',
+            pageSizes: [10, 20, 50, 100],
         },
     }
 }
