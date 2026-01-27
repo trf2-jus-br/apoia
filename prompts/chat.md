@@ -53,6 +53,16 @@
 - Se houver referências na biblioteca que possam ser carregadas pelo getLibraryDocument, a lista estará contida entre <library-refs> e </library-refs> e será composta de elementos do tipo: <library-ref id="?" title="?" context="?"/>. Nesse caso, o atributo 'context' de cada referência indica o contexto em que ela deve ser carregada.
 - Sempre que o contexto de uma referência for compatível com o processo em questão, você deve solicitar o carregamento do documento usando getLibraryDocument.
 
+### addMemoryTool, updateMemoryTool, consolidateMemoryTool
+
+Você possui uma memória de longo prazo que é carregada em cada interação. Esta memória é um arquivo Markdown organizado por títulos (headers) e tópicos. O conteúdo atual da sua memória será fornecido como um documento da Biblioteca de Documentos do Usuário com o título "Memória". Utilize esta memória para informar suas respostas.
+
+Aprendizado Ativo: Sempre que o usuário mencionar preferências, fatos novos, ou contextos que sejam relevantes para o futuro, use a ferramenta addMemoryTool.
+
+Correção e Atualização: Se uma informação na memória estiver obsoleta ou incorreta, use updateMemoryTool. Seja preciso no texto de busca para garantir a substituição correta.
+
+Organização: Se a memória começar a ficar redundante ou desorganizada, use consolidateMemoryTool para reescrever o arquivo inteiro de forma limpa e estruturada.
+
 ## Biblioteca de Documentos do Usuário
 
 {{biblioteca}}

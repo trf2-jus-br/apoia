@@ -1,5 +1,5 @@
 import { LibraryDao } from "../db/dao"
-import { IALibrary, IALibraryInclusion } from "../db/mysql-types"
+import { IALibrary, IALibraryInclusion, IALibraryKind } from "../db/mysql-types"
 
 /**
  * Obtém e formata os documentos da biblioteca do usuário atual para inclusão em prompts.
@@ -109,6 +109,52 @@ export async function formatLibraryDocument(doc: { id: number, title: string, co
     }
 
     return `<library-document title="${doc.title}">\n${docContent}\n</library-document>`
+}
+
+/**
+ * Obtém o conteúdo da memória do usuário em formato Markdown.
+ * Se não existir, retorna string vazia.
+ * 
+ * @returns String com o conteúdo da memória em Markdown
+ */
+export async function getMemoryAsMarkdownString(): Promise<string> {
+    try {
+        const memory = await LibraryDao.getLibraryByTitle('Memória')
+        return memory?.content_markdown || ''
+    } catch (error) {
+        console.error('Error getting memory:', error)
+        return ''
+    }
+}
+
+/**
+ * Define o conteúdo da memória do usuário em formato Markdown.
+ * Se não existir, cria um novo documento de memória.
+ * 
+ * @param content - Conteúdo da memória em Markdown
+ */
+export async function setMemoryAsMarkdownString(content: string): Promise<void> {
+    try {
+        const memory = await LibraryDao.getLibraryByTitle('Memória')
+        
+        if (memory) {
+            // Atualiza memória existente
+            await LibraryDao.updateLibrary(memory.id, {
+                content_markdown: content
+            })
+        } else {
+            // Cria nova memória
+            await LibraryDao.insertLibrary({
+                kind: IALibraryKind.MARKDOWN,
+                title: 'Memória',
+                content_markdown: content,
+                inclusion: IALibraryInclusion.SIM as any
+            })
+        }
+    } catch (error) {
+        console.error('Error setting memory:', error)
+        throw error
+    }
 }
 
 

@@ -83,6 +83,39 @@ function toolMessage(part: any): ReactElement {
                 case 'output-error':
                     return <div>Error: {part.errorText}</div>;
             }
+        case 'tool-addMemory':
+            switch (part.state) {
+                case 'input-streaming':
+                    return <span className="text-secondary">Acessando memória...</span>
+                case 'input-available':
+                    return <span className="text-secondary">Adicionando informação à memória...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Memória atualizada</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
+        case 'tool-updateMemory':
+            switch (part.state) {
+                case 'input-streaming':
+                    return <span className="text-secondary">Acessando memória...</span>
+                case 'input-available':
+                    return <span className="text-secondary">Atualizando memória...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Memória atualizada</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
+        case 'tool-consolidateMemory':
+            switch (part.state) {
+                case 'input-streaming':
+                    return <span className="text-secondary">Acessando memória...</span>
+                case 'input-available':
+                    return <span className="text-secondary">Reorganizando memória...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Memória consolidada</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
         case 'tool-getPrecedent':
             switch (part.state) {
                 case 'input-streaming':

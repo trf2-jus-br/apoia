@@ -73,6 +73,15 @@ export class LibraryDao {
         return row
     }
 
+    static async getLibraryByTitle(title: string): Promise<mysqlTypes.IALibrary | undefined> {
+        const userId = await UserDao.getCurrentUserId()
+        const row = await knex('ia_library')
+            .select('*')
+            .where({ title, user_id: userId })
+            .first()
+        return row
+    }
+
     static async getLibrariesByIds(ids: number[]): Promise<mysqlTypes.IALibrary[]> {
         const userId = await UserDao.getCurrentUserId()
         const rows = await knex('ia_library')
