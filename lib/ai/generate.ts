@@ -10,7 +10,7 @@ import { calcSha256 } from '../utils/hash'
 import { envString } from '../utils/env'
 import { anonymizeText } from '../anonym/anonym'
 import { getModel } from './model-server'
-import { modelCalcUsage, Model, FileTypeEnum } from './model-types'
+import { modelCalcUsage, Model, FileTypeEnum, ModelUsageResult } from './model-types'
 import { cookies } from 'next/headers';
 import { clipPieces } from './clip-pieces'
 import { pdfToText } from '../pdf/pdf'
@@ -48,10 +48,9 @@ async function saveToCache(data: IAGeneration): Promise<number | undefined> {
     return inserted.id
 }
 
-async function saveLog(user: UserType, additionalInformation: PromptAdditionalInformationType, model: string, usage, sha256: string, kind: string, text: string, attempt: number, messages: ModelMessage[]) {
+async function saveLog(user: UserType, additionalInformation: PromptAdditionalInformationType, model: string, usage, sha256: string, kind: string, text: string, attempt: number, messages: ModelMessage[], calculedUsage: ModelUsageResult): Promise<number> {
     const system_id = await SystemDao.assertSystemId(await assertSystemCode(user))
     const dossier_id = additionalInformation?.dossierCode ? (await DossierDao.assertIADossierId(additionalInformation.dossierCode, system_id, undefined, undefined)) : null
-    const calculedUsage = modelCalcUsage(model, usage)
     const generationId = await saveToCache({
         sha256, model, prompt: kind, generation: text, attempt: attempt || null,
         prompt_payload: JSON.stringify(messages), dossier_id, document_id: null,
@@ -106,8 +105,7 @@ export async function generateContent(definition: PromptDefinitionType, data: Pr
     }
 }
 
-export async function writeUsage(usage, model: string, user_id: number | undefined, court_id: number | undefined) {
-    const calculedUsage = modelCalcUsage(model, usage)
+export async function writeUsage(usage, model: string, user_id: number | undefined, court_id: number | undefined, calculedUsage: ModelUsageResult) {
     if (user_id && court_id)
         await UserDao.addToIAUserDailyUsage(user_id, court_id, calculedUsage.input_tokens, calculedUsage.output_tokens, calculedUsage.approximate_cost)
 }
@@ -223,11 +221,12 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             console.error('Error during streaming:', error, (error as any)?.cause)
         },
         onFinish: async ({ text, usage, providerMetadata }) => {
-            returnData.usage = { ...usage, dollarValue: modelCalcUsage(model, usage).approximate_cost }
+            const modelUsage = modelCalcUsage(model, usage)
+            returnData.usage = { ...usage, dollarValue: modelUsage.approximate_cost }
             if (apiKeyFromEnv)
-                writeUsage(usage, model, user_id, court_id)
+                writeUsage(usage, model, user_id, court_id, modelUsage)
             if (cacheControl !== false) {
-                const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, processedMessagesLog)
+                const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, processedMessagesLog, modelUsage)
                 if (results) results.generationId = generationId
             }
             writeResponseToFile(kind, processedMessagesLog, text)
