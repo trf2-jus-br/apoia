@@ -105,6 +105,17 @@ function toolMessage(part: any): ReactElement {
                 case 'output-error':
                     return <div>Error: {part.errorText}</div>;
             }
+        case 'tool-getSemanticSearch':
+            switch (part.state) {
+                case 'input-streaming':
+                    return <span className="text-secondary">Acessando busca semântica...</span>
+                case 'input-available':
+                    return <span className="text-secondary">Buscando temas e recursos repetitivos: {part.input?.query}...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Consultei busca semântica: {part.input?.query}</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
         default:
             return <span className="text-secondary">Ferramenta desconhecida: {part.type}</span>
     }
