@@ -19,15 +19,15 @@ export function format(formatter: string, s: string): string {
     formatter = formatter.replace(/{=/g, '{{')
     formatter = formatter.replace(/=}/g, '}}')
 
-//    var env = nunjucks.configure()
-//    env.addFilter('deProcedencia', arr => arr.filter(e => e.tipo == 'PROCEDENTE'))
-//    env.addFilter('deImprocedencia', arr => arr.filter(e => e.tipo == 'IMPROCEDENTE'))
+    //    var env = nunjucks.configure()
+    //    env.addFilter('deProcedencia', arr => arr.filter(e => e.tipo == 'PROCEDENTE'))
+    //    env.addFilter('deImprocedencia', arr => arr.filter(e => e.tipo == 'IMPROCEDENTE'))
 
     const env = nunjucks.configure()
-    env.addFilter('sortByDate', (arr, field='Dt_Inicio', order='asc') => {
+    env.addFilter('sortByDate', (arr, field = 'Dt_Inicio', order = 'asc') => {
         if (!Array.isArray(arr)) return arr
         const dir = order === 'desc' ? -1 : 1
-        return [...arr].sort((a,b) => {
+        return [...arr].sort((a, b) => {
             const da = toKey(a[field])
             const db = toKey(b[field])
             if (da > db) return 1 * dir
@@ -36,7 +36,7 @@ export function format(formatter: string, s: string): string {
         })
         function toKey(v) {
             if (!v || !/^\d{2}\/\d{2}\/\d{4}$/.test(v)) return ''
-            const [dd,mm,yyyy] = v.split('/')
+            const [dd, mm, yyyy] = v.split('/')
             return `${yyyy}-${mm}-${dd}` // compara lexicograficamente correto
         }
     })
@@ -46,11 +46,20 @@ export function format(formatter: string, s: string): string {
     json.dateAddMonths = dateAddMonths
 
     try {
+        if (typeof json !== 'object' || json === null || Array.isArray(json)) {
+            return `Erro: JSON inválido - esperado um objeto, recebido ${typeof json === 'object' ? 'array' : typeof json}`
+        }
+        // Validate formatter syntax
+        try {
+            env.renderString(formatter, {})
+        } catch (e) {
+            return `Erro no formato do template: ${e.message} - formato: <pre>${formatter}</pre>`
+        }
         const result = env.renderString(formatter, json)
         return result
     } catch (e) {
         console.error('Error formatting string:', e)
-        return `Erro ao formatar: ${e.message}`
+        return `Erro ao formatar: ${e.message}, formato: ${formatter}, valor: ${JSON.stringify(json)}`
     }
 }
 

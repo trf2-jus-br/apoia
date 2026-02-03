@@ -1,5 +1,6 @@
 import { ReactElement } from "react"
-import { UIMessage } from "ai"
+import { UIMessage, UIMessagePart } from "ai"
+import { joinWithAnd } from "@/lib/utils/utils"
 
 export default function ToolUsage({ m }: { m: UIMessage }) {
     return m?.parts?.find((part) => part.type.startsWith('tool-')) && (<div className="mb-1">
@@ -13,7 +14,7 @@ export default function ToolUsage({ m }: { m: UIMessage }) {
     </div>)
 }
 
-function toolMessage(part: any): ReactElement {
+function toolMessage(part: UIMessagePart<any, any>): ReactElement {
     const regexPiece = /^(.+):$\n<[a-z\-]+ event="([^"]+)"/gm
     const regexLibrary = /<library id="\d+" title="([^"]+)"/gm
     if (!part) return null
@@ -110,9 +111,9 @@ function toolMessage(part: any): ReactElement {
                 case 'input-streaming':
                     return <span className="text-secondary">Acessando busca semântica...</span>
                 case 'input-available':
-                    return <span className="text-secondary">Buscando temas e recursos repetitivos: {part.input?.query}...</span>
+                    return <span className="text-secondary">Executando busca semântica: {part.input?.query}...</span>
                 case 'output-available':
-                    return <span className="text-secondary">Consultei busca semântica: {part.input?.query}</span>
+                    return <span className="text-secondary">Consultei busca semântica: {part.input?.query} e localizei: {joinWithAnd(part.output?.results?.map(i => i.title))}.</span>
                 case 'output-error':
                     return <div>Error: {part.errorText}</div>;
             }

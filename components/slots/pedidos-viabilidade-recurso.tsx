@@ -32,6 +32,9 @@ const searchTemasNoPangea = async (query: string): Promise<PangeaResultadoItem[]
     return data.resultados || []
 }
 
+// Função que realiza busca semântica de temas via API
+
+
 // Formatar item do Pangea para exibição na lista de opções
 const formatarOpcaoTema = (item: PangeaResultadoItem): string => {
     const partes = []
