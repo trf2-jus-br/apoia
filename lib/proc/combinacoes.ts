@@ -59,7 +59,7 @@ export enum P {
     PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS = 'Pedidos, Fundamentações e Dispositivos',
     SENTENCA = 'Sentença',
     VOTO = 'Voto',
-    PEDIDOS_VIABILIDADE_RECURSO = 'Pedidos do Recurso e Argumentos',
+    PEDIDOS_DO_RECURSO_E_ARGUMENTOS = 'Pedidos do Recurso e Argumentos',
     PESQUISA_TESES_E_SUMULAS = 'Pesquisa de Teses e Súmulas',
     JUIZO_VIABILIDADE_RECURSO = 'Juízo de Viabilidade de Recurso',
     DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO = 'Decisão de Viabilidade de Recurso Extraordinário',
@@ -105,7 +105,7 @@ export const ProdutosValidos = {
     [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS]: { titulo: P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, prompt: 'pedidos-fundamentacoes-e-dispositivos', plugins: [] },
     [P.SENTENCA]: { titulo: P.SENTENCA, prompt: 'sentenca', plugins: [] },
     [P.VOTO]: { titulo: P.VOTO, prompt: 'voto', plugins: [] },
-    [P.PEDIDOS_VIABILIDADE_RECURSO]: { titulo: P.PEDIDOS_VIABILIDADE_RECURSO, prompt: 'pedidos-viabilidade-recurso', plugins: [] },
+    [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS]: { titulo: P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, prompt: 'pedidos-viabilidade-recurso', plugins: [] },
     [P.PESQUISA_TESES_E_SUMULAS]: { titulo: P.PESQUISA_TESES_E_SUMULAS, prompt: 'pesquisa-teses-e-sumulas', plugins: [] },
     [P.JUIZO_VIABILIDADE_RECURSO]: { titulo: P.JUIZO_VIABILIDADE_RECURSO, prompt: 'pedidos-viabilidade-recurso', plugins: [] },
     [P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO]: { titulo: P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO, prompt: 'decisao-viabilidade-recurso-extraordinario', plugins: [] },
@@ -489,7 +489,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 3,
         nome: 'Minuta de Decisão de Viabilidade de Recurso Especial',
         padroes: [padraoViabilidadeDeRecursoEspecial],
-        produtos: [P.PEDIDOS_VIABILIDADE_RECURSO, P.PESQUISA_TESES_E_SUMULAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT]
+        produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_TESES_E_SUMULAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT]
     },
     RESUMOS: {
         status: StatusDeLancamento.PUBLICO,
