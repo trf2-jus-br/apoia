@@ -7,6 +7,43 @@ import { PangeaResultadoItem, PangeaSearchRawResponse } from "@/lib/ai/tools-pan
 import { P } from "@/lib/proc/combinacoes"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { FormHelper } from "@/lib/ui/form-support"
+
+// Tipos para busca semântica
+interface SemanticSearchItem {
+    item: {
+        id: string
+        sourceId: string
+        externalId: string
+        content: string
+        data: {
+            id: string
+            nr: number
+            tipo: string
+            orgao: string
+            questao: string
+            situacao?: string
+            suspensoes?: Array<{
+                ativa: boolean
+                descricao: string
+                dataSuspensao: string
+            }>
+            ultimaAtualizacao?: string
+        }
+    }
+    renderedTitle: string
+    renderedDisplay: string
+    similarity: number
+    source: {
+        id: string
+        slug: string
+        name: string
+    }
+}
+
+interface SemanticSearchResponse {
+    results: SemanticSearchItem[]
+    total: number
+}
 import { calcMd5 } from "@/lib/utils/hash"
 import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
 import { Button } from "react-bootstrap"
@@ -14,44 +51,32 @@ import { Button } from "react-bootstrap"
 // Tipos de dispositivo que requerem seleção de tema
 const DISPOSITIVOS_COM_TEMA = ['SUSPENDER', 'NEGAR_SEGUIMENTO', 'ENCAMINHAR_PARA_RETRATACAO']
 
-// Função para buscar temas no Pangea via API
-const searchTemasNoPangea = async (query: string): Promise<PangeaResultadoItem[]> => {
-    const response = await fetch('/api/v1/pangea/search', {
+// Função para buscar temas via busca semântica
+const semanticSearchDeTemas = async (query: string): Promise<SemanticSearchItem[]> => {
+    const response = await fetch('/api/v1/semantic/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, page: 1 })
+        body: JSON.stringify({ 
+            query, 
+            limit: 10,
+            offset: 0
+        })
     })
     if (!response.ok) {
         throw new Error('Erro ao buscar temas')
     }
-    const data: PangeaSearchRawResponse = await response.json()
-
-    // Remover alguns campos desnecessários do resultado: missing, processosParadigma
-    data.resultados = data.resultados.map(({ missing, processosParadigma, ...rest }) => rest)
-
-    return data.resultados || []
+    const data: SemanticSearchResponse = await response.json()
+    return data.results || []
 }
 
-// Função que realiza busca semântica de temas via API
-
-
-// Formatar item do Pangea para exibição na lista de opções
-const formatarOpcaoTema = (item: PangeaResultadoItem): string => {
-    const partes = []
-    if (item.orgao) partes.push(item.orgao)
-    if (item.tipo) partes.push(item.tipo)
-    if (item.nr) partes.push(`${item.nr}`)
-    if (item.questao) partes.push(item.questao)
-    return partes.join(' - ') || item.id
+// Formatar item da busca semântica para exibição na lista de opções
+const formatarOpcaoTema = (item: SemanticSearchItem): string => {
+    return `${item.renderedTitle} - ${item.item.data.questao}`
 }
 
 // Formatar item selecionado para exibição compacta
-const formatarTemaSelecionado = (item: PangeaResultadoItem): string => {
-    const partes = []
-    if (item.orgao) partes.push(item.orgao)
-    if (item.tipo) partes.push(item.tipo)
-    if (item.nr) partes.push(`${item.nr}`)
-    return partes.join(' - ') || item.id
+const formatarTemaSelecionado = (item: SemanticSearchItem): string => {
+    return item.renderedTitle
 }
 
 interface PedidosViabilidadeRecursoProps {
@@ -193,12 +218,13 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
                         {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
                         {Frm.get(`pedidos.pedidos[${i}].dispositivo`) === 'INADIMITIR' && <Frm.Select label="Motivo" name={`pedidos.pedidos[${i}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
                         {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].dispositivo`)) &&
-                            <Frm.AsyncSelect<PangeaResultadoItem>
+                            <Frm.AsyncSelect<SemanticSearchItem>
                                 label="Tema"
                                 name={`pedidos.pedidos[${i}].tema`}
-                                searchFn={searchTemasNoPangea}
+                                searchFn={semanticSearchDeTemas}
                                 formatOption={formatarOpcaoTema}
                                 formatSelected={formatarTemaSelecionado}
+                                minSearchLength={1}
                                 width={'col-12'}
                                 explanation="Digite para buscar temas de repercussão geral ou recursos repetitivos"
                             />
@@ -213,12 +239,13 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
                                     {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
                                     {Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`) === 'INADIMITIR' && <Frm.Select label="Motivo" name={`pedidos.pedidos[${i}].argumentos[${j}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
                                     {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`)) &&
-                                        <Frm.AsyncSelect<PangeaResultadoItem>
+                                        <Frm.AsyncSelect<SemanticSearchItem>
                                             label="Tema"
                                             name={`pedidos.pedidos[${i}].argumentos[${j}].tema`}
-                                            searchFn={searchTemasNoPangea}
+                                            searchFn={semanticSearchDeTemas}
                                             formatOption={formatarOpcaoTema}
                                             formatSelected={formatarTemaSelecionado}
+                                            minSearchLength={1}
                                             width={'col-12'}
                                             explanation="Digite para buscar temas de repercussão geral ou recursos repetitivos"
                                         />

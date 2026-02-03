@@ -122,7 +122,8 @@ export const searchSemantic = async (params: {
     })
 
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const errorText = await response.text().catch(() => 'Unknown error')
+        throw new Error(`Semantic Search API error (HTTP ${response.status}): ${errorText}`)
     }
 
     const json = await response.json() as SemanticSearchRawResponse
