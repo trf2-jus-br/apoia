@@ -19,6 +19,7 @@ export function createBuilderState(): HtmlBuilderState {
         insideCitation: false,
         currentContextString: '',
         hadAnyCitation: false,
+        hadBlockSinceLastCitation: true, // Começa true pois não há citação prévia
         nonCitationBuffer: []
     };
 }
@@ -65,7 +66,8 @@ export function hasNextMatchWithSameContext(
  * Marca como "não-citação" apenas se:
  * 1. Já houve uma citação antes
  * 2. Vai haver uma citação depois
- * 3. O número de tokens significativos está dentro do threshold
+ * 3. NÃO houve tag block desde a última citação (continuidade imediata)
+ * 4. O número de tokens significativos está dentro do threshold
  */
 export function flushNonCitationBuffer(
     state: HtmlBuilderState,
@@ -80,6 +82,7 @@ export function flushNonCitationBuffer(
     
     const shouldMark = state.hadAnyCitation && 
                        isBeforeCitation && 
+                       !state.hadBlockSinceLastCitation && 
                        maxNonCitationHighlight > 0 && 
                        significantCount > 0 && 
                        significantCount <= maxNonCitationHighlight;
@@ -143,6 +146,7 @@ export function handleMatchedToken(
     
     flushNonCitationBuffer(state, true, maxNonCitationHighlight);
     state.hadAnyCitation = true;
+    state.hadBlockSinceLastCitation = false; // Resetar - temos continuidade imediata
     
     const tokenContextStr = formatContextToString(token.context);
     const shouldBreakForBlock = token.startsAfterBlockTag && state.insideCitation;
@@ -213,7 +217,9 @@ export function handleTagToken(
     maxNonCitationHighlight: number
 ): void {
     if (isBlockTag(token.content)) {
-        // Tags block-level fecham o span
+        // Tags block-level quebram a continuidade e fecham o span
+        state.hadBlockSinceLastCitation = true;
+        
         if (state.insideCitation) {
             state.outputHtml += `</span>${token.content}`;
             state.insideCitation = false;

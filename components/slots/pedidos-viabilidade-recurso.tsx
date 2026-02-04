@@ -261,7 +261,6 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
 
     return <>
         <h2>{maiusculasEMinusculas(request.title)}</h2>
-        {JSON.stringify(Frm.data)}
         <div className="alert alert-warning pt-2 pb-0 mb-0">
             {pedidos.pedidos.map((pedido, i) =>
                 <div className="mb-3" key={i}>

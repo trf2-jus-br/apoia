@@ -90,6 +90,8 @@ export interface HtmlBuilderState {
     currentContextString: string;
     /** Se já houve alguma citação no texto */
     hadAnyCitation: boolean;
+    /** Se houve uma tag block desde a última citação (quebra de continuidade) */
+    hadBlockSinceLastCitation: boolean;
     /** Buffer de tokens não-citados sendo acumulados */
     nonCitationBuffer: Token[];
 }
