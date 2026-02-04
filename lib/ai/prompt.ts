@@ -262,11 +262,12 @@ import linguagem_simples from '@/prompts/linguagem-simples.md'
 import relatorio_de_apelacao_e_triagem from '@/prompts/relatorio-de-apelacao-e-triagem.md'
 import degravacao from '@/prompts/degravacao.md'
 import template_a_partir_de_modelo from '@/prompts/template-a-partir-de-modelo.md'
-import pedidos_viabilidade_recurso from '@/prompts/pedidos-viabilidade-recurso.md'
-import juizo_viabilidade_recurso from '@/prompts/juizo-viabilidade-recurso.md'
-import decisao_viabilidade_recurso_extraordinario from '@/prompts/decisao-viabilidade-recurso-extraordinario.md'
-import decisao_viabilidade_recurso_especial from '@/prompts/decisao-viabilidade-recurso-especial.md'
-import pesquisa_de_temas from '@/prompts/pesquisa-de-temas.md'
+
+import pedidos_viabilidade_recurso from '@/prompts/admissibilidade-de-recurso/pedidos-viabilidade-recurso.md'
+import juizo_viabilidade_recurso from '@/prompts/admissibilidade-de-recurso/juizo-viabilidade-recurso.md'
+import decisao_viabilidade_recurso_extraordinario from '@/prompts/admissibilidade-de-recurso/decisao-viabilidade-recurso-extraordinario.md'
+import decisao_viabilidade_recurso_especial from '@/prompts/admissibilidade-de-recurso/decisao-viabilidade-recurso-especial.md'
+import pesquisa_de_temas from '@/prompts/admissibilidade-de-recurso/pesquisa-de-temas.md'
 
 // Enum for the different types of prompts
 export const internalPrompts = {

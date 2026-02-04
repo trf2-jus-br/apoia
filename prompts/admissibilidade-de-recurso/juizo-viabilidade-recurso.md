@@ -14,7 +14,7 @@ Você receberá os textos de peças processuais recursais (Recurso Extraordinár
 
 Você receberá, também, um documento marcado como <pedidos-do-recurso-e-argumentos> que contém os pedidos formulados no recurso judicial e os argumentos apresentados para embasar cada pedido. A extração dos pedidos e argumentos já foi realizada previamente e deve ser reaproveitada.
 
-Você receberá, também, um documento marcado como <analise-de-temas> que contém a análise de viabilidade jurídica do recurso com base em teses e súmulas vinculantes. Você deverá trascrever os dados dessa análise nos campos apropriados da resposta.
+Você receberá, também, um documento marcado como <pesquisa-de-temas> que contém a análise de viabilidade jurídica do recurso com base em teses e súmulas vinculantes. Você deverá trascrever os dados dessa análise nos campos apropriados da resposta.
 
 
 ## Instruções para o Preenchimento do JSON de Resposta
@@ -30,14 +30,19 @@ Você receberá, também, um documento marcado como <analise-de-temas> que cont�
 - Esse texto deve ser copiado do documento ipsis litteris, do documento marcado como <pedidos-do-recurso-e-argumentos>.
 
 ##### dispositivo
-- Conforme o indicado no documento marcado como <analise-de-temas>, o pedido pode ter como dispositivo uma das seguintes opções: SUSPENDER, NEGAR_SEGUIMENTO, ENCAMINHAR_PARA_RETRATACAO, ADMITIR, INADIMITIR, DESCONSIDERAR. Ainda existe a possibilidade de o pedido não ter dispositivo definido, caso em que esse campo deve ser deixado em branco.
+- Conforme o indicado no documento marcado como <pesquisa-de-temas>, o pedido pode ter como dispositivo uma das seguintes opções: SUSPENDER, NEGAR_SEGUIMENTO, ENCAMINHAR_PARA_RETRATACAO, ADMITIR, INADIMITIR, DESCONSIDERAR. Ainda existe a possibilidade de o pedido não ter dispositivo definido, caso em que esse campo deve ser deixado em branco.
+- Se foi identificado um tema, as opções SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO devem ser utilizadas conforme o caso.
+- Se foi identificado um motivo de inadmissão, a opção INADIMITIR deve ser utilizada.
+- Se não houver conclusão sobre o pedido, deixe esse campo em branco.
+- Se um pedido anterior já foi marcado com SUSPENDER, e não houver tema ou motivo de inadmissão específico para o pedido atual, deixe esse campo em branco.
 
 ##### tema - Tema do Pedido
-- Quando o dispositivo for SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO, deve ser informado neste campo o identificador do tema que poderá ser obtido no documento marcado como <analise-de-temas>. Caso a análise de temas não tenha informado o tema para suspensão, negativa de seguimento ou encaminhamento para retratação, deixe esse campo em branco.
-- O identificador do tema tem o formato "stj-rr-123" ou "stf-rg-456", conforme o tribunal e o tipo de tema. Ele pode ser encontrado no documento marcado como <analise-de-temas> em passagens como por exemplo: (ID: stf-rg-123) ou (ID: stj-rr-456).
+- Quando o dispositivo for SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO, deve ser informado neste campo o identificador do tema que poderá ser obtido no documento marcado como <pesquisa-de-temas>. Caso a análise de temas não tenha informado o tema para suspensão, negativa de seguimento ou encaminhamento para retratação, deixe esse campo em branco.
+- O identificador do tema tem o formato "stj-rr-123" ou "stf-rg-456", conforme o tribunal e o tipo de tema. Ele pode ser encontrado no documento marcado como <pesquisa-de-temas> em passagens como por exemplo: (ID: stf-rg-123) ou (ID: stj-rr-456).
 
 ##### motivo - Motivo da Inadmissão
-- Quando o dispositivo for INADIMITIR, deve ser informado neste campo o identificador do motivo da inadmissão do recurso. Caso o pedido de inadmissão não tenha um motivo específico informado no documento marcado como <analise-de-temas>, deixe esse campo em branco.
+- Quando o dispositivo for INADIMITIR, deve ser informado neste campo o identificador do motivo da inadmissão do recurso.
+- Caso o pedido de inadmissão não tenha um motivo específico informado no documento marcado como <pesquisa-de-temas>, deixe esse campo em branco.
 - As opções de motivo da inadmissão são as seguintes: 
 
 | Preencher Com | Descrição |
@@ -62,13 +67,14 @@ Você receberá, também, um documento marcado como <analise-de-temas> que cont�
 - Esse texto deve ser copiado do documento marcado como <pedidos-do-recurso-e-argumentos>.
 
 ##### dispositivo
-- Caso o documento marcado com <analise-de-temas> tenha indicado um dispositivo especificamente para o argumento, preencha este campo conforme indicado. Caso contrário, deixe em branco.
+- Caso o documento marcado com <pesquisa-de-temas> tenha indicado um dispositivo especificamente para o argumento, preencha este campo conforme indicado. Caso contrário, deixe em branco.
+- Se o pedido ao qual o argumento pertence tiver o campo dispositivo preenchido com SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO, deixe esse campo em branco.
 
 ##### tema - Tema do Pedido
-- Caso o campo dispositivo tenha sido preenchido com SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO, faça conforme acima, mas para o argumento específico, ou deixe em branco.
+- Caso o campo dispositivo do argumento tenha sido preenchido com SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO, faça conforme acima, mas para o argumento específico, ou deixe em branco.
 
 ##### motivo - Motivo da Inadmissão
-- Caso o campo dispositivo tenha sido preenchido com INADIMITIR, faça conforme acima, mas para o argumento específico, ou deixe em branco.
+- Caso o campo dispositivo do argumento tenha sido preenchido com INADIMITIR, faça conforme acima, mas para o argumento específico, ou deixe em branco.
 
 
 ## Tarefa Principal
