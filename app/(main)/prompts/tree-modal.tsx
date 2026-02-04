@@ -201,7 +201,7 @@ export function TreeModal({ show, onClose, pieces, onSave, selectedIds, onSelect
                                 }}
                                 onClick={() => handleNodeClick(node)}>
                                     {node.children && node.children.length > 0 
-                                        ? `(${node.label.replace(/\D/g, '')}) - ${node.children[0].label.toLowerCase()} - 
+                                        ? `(${node.label.replace(/[E|e]vento\s/, '')}) - ${node.children[0].label.toLowerCase()} - 
                                         ${new Intl.DateTimeFormat('pt-BR', { 
                                             day: '2-digit', 
                                             month: '2-digit', 
