@@ -14,7 +14,7 @@ import {
     filterFns,
     FilterMeta
 } from '@tanstack/react-table'
-import { Table as BTable, Pagination, Form } from 'react-bootstrap'
+import { Table as BTable, Pagination, Form, Button } from 'react-bootstrap'
 import tableSpecs from '@/lib/ui/table-specs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAdd } from '@fortawesome/free-solid-svg-icons'
@@ -36,9 +36,9 @@ const customFilterFn = (row: any, columnId: string, filterValue: any, addMeta: (
 }
 
 
-export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, selectedIds, onSelectdIdsChanged, onClick, options, children }: {
+export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, selectedIds, onSelectdIdsChanged, onClick, options, modalActions, children }: {
     records: any[], spec: string | any, linkToAdd?: string, linkToBack?: string, pageSize?: number,
-    selectedIds?: string[], onSelectdIdsChanged?: (ids: string[]) => void, onClick?: (kind: string, row: any) => void, options?: any, children?: any
+    selectedIds?: string[], onSelectdIdsChanged?: (ids: string[]) => void, onClick?: (kind: string, row: any) => void, options?: any, modalActions?: { onClick: () => void }, children?: any
 }) {
     const [currentPageSize, setCurrentPageSize] = useState(pageSize || 5)
     const [sorting, setSorting] = useState([])
@@ -150,6 +150,7 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                 {options?.apenasSelecionadas &&
                     <div className="col col-auto ms-auto mt-3 mb-0">
                         <div className="d-flex align-items-center gap-2 d-print-none">
+                            <Button onClick={modalActions.onClick} variant='outline-secondary'>Árvore</Button> 
                             <div className="btn-group" role="group" aria-label="Filtro de seleção">
                                 <input
                                     type="radio"

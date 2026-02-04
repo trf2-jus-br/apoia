@@ -31,11 +31,11 @@ export function formatContextToString(ctx?: SourceContext): string {
         if (ctx.event === '-')
             parts.push(`${ctx.label}`);
         else
-            parts.push(`Trecho encontrado na peça ${ctx.label} (e. ${ctx.event.toUpperCase()})`);
+            parts.push(`Informação extraída da peça ${ctx.label} (e. ${ctx.event.toUpperCase()})`);
     } else if (ctx.sourceType) {
         parts.push(formatSourceType(ctx.sourceType));
     } else {
-        parts.push('Trecho encontrado no prompt');
+        parts.push('Informação extraída do prompt');
     }
 
     if (ctx.title) parts.push(`Título: ${ctx.title}`);
@@ -51,9 +51,9 @@ export function formatContextToString(ctx?: SourceContext): string {
 function formatSourceType(sourceType: string): string {
     switch (sourceType) {
         case 'library-document':
-            return 'Documento da Biblioteca';
+            return 'Informação extraída do documento da biblioteca';
         case 'library-attachment':
-            return 'Anexo da Biblioteca';
+            return 'Informação extraída de anexo de documento da biblioteca';
         default:
             return `[${sourceType.toUpperCase()}]`;
     }

@@ -543,12 +543,12 @@
 
     span.citacao {
         color: #0b3415;
-        background-color: #cdffd0;
+        background-color: #cdffd0b0;
     }
 
     span.nao-citacao {
         color: #000;
-        background-color: #fffacd;
+        background-color: #fffacdb0;
     }
 
     span.widgetlinkdocumento {

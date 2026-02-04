@@ -29,7 +29,7 @@ describe('highlightCitationsLongestMatch', () => {
     expect(result).toContain('<span class="citacao"');
     expect(result).toContain('title=');
     // O contexto será do LIBRARY-ATTACHMENT pois é a tag mais interna que define o documento
-    expect(result).toContain('Anexo da Biblioteca');
+    expect(result).toContain('anexo de documento da biblioteca');
     expect(result).toContain('Título: Manual');
     expect(result).toContain('Arq: doc.pdf');
     expect(result).toContain('Pág: 1');
@@ -71,7 +71,7 @@ describe('highlightCitationsLongestMatch', () => {
 
     // Verifica que há citação detectada
     expect(result).toContain('<span class="citacao"');
-    expect(result).toContain('Anexo da Biblioteca');
+    expect(result).toContain('anexo de documento da biblioteca');
 
     // Verifica que os números de página estão presentes
     expect(result).toContain('Pág: 1');
@@ -306,7 +306,7 @@ describe('highlightCitationsLongestMatch', () => {
 
     expect(result).toContain('<span class="citacao"');
     // As tags <p>, <b>, <i> não devem interferir no contexto
-    expect(result).toContain('Documento da Biblioteca');
+    expect(result).toContain('documento da biblioteca');
   });
 
   test('deve lidar com tag que não tem event E label juntos', () => {
@@ -351,9 +351,9 @@ describe('highlightCitationsLongestMatch', () => {
     const generatedHtml = 'Cita: Texto inicial do documento. Depois: Texto dentro do anexo. Finalmente: Texto final do documento.';
 
     const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 4);
-    expect(result).toContain('<span class="citacao" title="Documento da Biblioteca, Título: Doc">Texto inicial do documento.</span>');
-    expect(result).toContain('<span class="citacao" title="Anexo da Biblioteca, Título: Doc, Arq: anexo.pdf">Texto dentro do anexo.</span>');
-    expect(result).toContain('<span class="citacao" title="Documento da Biblioteca, Título: Doc">Texto final do documento.</span>');
+    expect(result).toContain('<span class="citacao" title="Informação extraída do documento da biblioteca, Título: Doc">Texto inicial do documento.</span>');
+    expect(result).toContain('<span class="citacao" title="Informação extraída de anexo de documento da biblioteca, Título: Doc, Arq: anexo.pdf">Texto dentro do anexo.</span>');
+    expect(result).toContain('<span class="citacao" title="Informação extraída do documento da biblioteca, Título: Doc">Texto final do documento.</span>');
   });
 
   test('deve gerenciar corretamente a pilha de contextos em todas as situações possíveis', () => {
@@ -420,47 +420,45 @@ describe('highlightCitationsLongestMatch', () => {
     const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 4);
 
     // T1: Contexto raiz do library-document (só título, sem anexo, sem página)
-    expect(result).toContain('<span class="citacao" title="Documento da Biblioteca, Título: Manual Principal">Texto raiz do manual principal');
+    expect(result).toContain('<span class="citacao" title="Informação extraída do documento da biblioteca, Título: Manual Principal">Texto raiz do manual principal');
 
     // T2: Dentro de library-attachment > page 1 (herda título + adiciona anexo + página)
-    expect(result).toContain('<span class="citacao" title="Anexo da Biblioteca, Título: Manual Principal, Arq: anexo1.pdf, Pág: 1">Conteúdo da página um do primeiro anexo');
+    expect(result).toContain('<span class="citacao" title="Informação extraída de anexo de documento da biblioteca, Título: Manual Principal, Arq: anexo1.pdf, Pág: 1">Conteúdo da página um do primeiro anexo');
 
     // T3: Dentro de library-attachment > page 2 (mesmo anexo, página diferente)
-    expect(result).toContain('<span class="citacao" title="Anexo da Biblioteca, Título: Manual Principal, Arq: anexo1.pdf, Pág: 2">Conteúdo da página dois do primeiro anexo');
+    expect(result).toContain('<span class="citacao" title="Informação extraída de anexo de documento da biblioteca, Título: Manual Principal, Arq: anexo1.pdf, Pág: 2">Conteúdo da página dois do primeiro anexo');
 
     // T4: Dentro de library-attachment mas fora de page (tem anexo mas não tem página)
-    expect(result).toContain('<span class="citacao" title="Anexo da Biblioteca, Título: Manual Principal, Arq: anexo1.pdf">Texto entre páginas mas ainda dentro do anexo um');
+    expect(result).toContain('<span class="citacao" title="Informação extraída de anexo de documento da biblioteca, Título: Manual Principal, Arq: anexo1.pdf">Texto entre páginas mas ainda dentro do anexo um');
 
     // T5: Dentro de library-attachment > page 3
-    expect(result).toContain('<span class="citacao" title="Anexo da Biblioteca, Título: Manual Principal, Arq: anexo1.pdf, Pág: 3">Conteúdo da página três do primeiro anexo');
-
+    expect(result).toContain('<span class="citacao" title="Informação extraída de anexo de documento da biblioteca, Título: Manual Principal, Arq: anexo1.pdf, Pág: 3">Conteúdo da página três do primeiro anexo');
     // T6: Voltou para library-document (fechou anexo1, volta ao contexto do documento)
-    expect(result).toContain('<span class="citacao" title="Documento da Biblioteca, Título: Manual Principal">Texto entre anexos voltando ao contexto do documento principal');
+    expect(result).toContain('<span class="citacao" title="Informação extraída do documento da biblioteca, Título: Manual Principal">Texto entre anexos voltando ao contexto do documento principal');
 
     // T7: Dentro de library-attachment 2 > page 1 (novo anexo do mesmo documento)
-    expect(result).toContain('<span class="citacao" title="Anexo da Biblioteca, Título: Manual Principal, Arq: anexo2.pdf, Pág: 1">Primeira página do segundo anexo');
+    expect(result).toContain('<span class="citacao" title="Informação extraída de anexo de documento da biblioteca, Título: Manual Principal, Arq: anexo2.pdf, Pág: 1">Primeira página do segundo anexo');
 
     // T8: Voltou para library-document (fechou anexo2, volta ao documento)
-    expect(result).toContain('<span class="citacao" title="Documento da Biblioteca, Título: Manual Principal">Texto final do documento principal após todos os anexos');
+    expect(result).toContain('<span class="citacao" title="Informação extraída do documento da biblioteca, Título: Manual Principal">Texto final do documento principal após todos os anexos');
 
     // T9: Dentro de acordao (tag dinâmica com event e label, sem página)
-    expect(result).toContain('<span class="citacao" title="Trecho encontrado na peça ACOR1 (e. 123, 2º GRAU)">Texto inicial do acórdão antes de qualquer página');
+    expect(result).toContain('<span class="citacao" title="Informação extraída da peça ACOR1 (e. 123, 2º GRAU)">Texto inicial do acórdão antes de qualquer página');
 
     // T10: Dentro de acordao > page 5 (adiciona página ao contexto do acordao)
-    expect(result).toContain('<span class="citacao" title="Trecho encontrado na peça ACOR1 (e. 123, 2º GRAU), Pág: 5">Conteúdo da página cinco do acórdão');
+    expect(result).toContain('<span class="citacao" title="Informação extraída da peça ACOR1 (e. 123, 2º GRAU), Pág: 5">Conteúdo da página cinco do acórdão');
 
     // T11: Dentro de acordao > page 6 (mesma tag dinâmica, página diferente)
-    expect(result).toContain('<span class="citacao" title="Trecho encontrado na peça ACOR1 (e. 123, 2º GRAU), Pág: 6">Conteúdo da página seis do acórdão');
+    expect(result).toContain('<span class="citacao" title="Informação extraída da peça ACOR1 (e. 123, 2º GRAU), Pág: 6">Conteúdo da página seis do acórdão');
 
     // T12: Voltou para acordao (fechou page 6, volta ao acordao sem página)
-    expect(result).toContain('<span class="citacao" title="Trecho encontrado na peça ACOR1 (e. 123, 2º GRAU)">Texto final do acórdão após as páginas numeradas');
+    expect(result).toContain('<span class="citacao" title="Informação extraída da peça ACOR1 (e. 123, 2º GRAU)">Texto final do acórdão após as páginas numeradas');
 
     // T13: Novo library-document (contexto completamente novo, independente do anterior)
-    expect(result).toContain('<span class="citacao" title="Documento da Biblioteca, Título: Segundo Manual">Início do segundo documento da biblioteca completamente separado');
+    expect(result).toContain('<span class="citacao" title="Informação extraída do documento da biblioteca, Título: Segundo Manual">Início do segundo documento da biblioteca completamente separado');
 
     // T14: Dentro do novo document > attachment > page (herda título do novo documento)
-    expect(result).toContain('<span class="citacao" title="Anexo da Biblioteca, Título: Segundo Manual, Arq: outro-anexo.pdf, Pág: 10">Página dez de outro anexo em um documento totalmente diferente');
-
+    expect(result).toContain('<span class="citacao" title="Informação extraída de anexo de documento da biblioteca, Título: Segundo Manual, Arq: outro-anexo.pdf, Pág: 10">Página dez de outro anexo em um documento totalmente diferente');
     // Verificações adicionais de integridade
     const spanCount = (result.match(/<span class="citacao"/g) || []).length;
     expect(spanCount).toBeGreaterThanOrEqual(14); // Pelo menos 14 citações (uma para cada T1-T14)
@@ -575,7 +573,7 @@ describe('highlightCitationsLongestMatch', () => {
       expect(citacaoCount).toBeGreaterThanOrEqual(2);
 
       // "Gap curto" DEVE ter nao-citacao (está entre duas citações e tem 2 palavras <= 3)
-      expect(result.match(/<span class="nao-citacao">\W*Gap curto\W*<\/span>/g)).toBeTruthy();
+      expect(result.match(/<span class="nao-citacao" title="[^"]*">\W*Gap curto\W*<\/span>/g)).toBeTruthy();
     });
 
     test('nao-citacao NÃO deve aparecer se o gap for maior que o threshold', () => {
@@ -623,8 +621,8 @@ describe('highlightCitationsLongestMatch', () => {
       expect(citacaoCount).toBeGreaterThanOrEqual(3);
 
       // Ambos gaps DEVEM ter nao-citacao
-      expect(result.match(/<span class="nao-citacao">\W*Gap A\W*<\/span>/g)).toBeTruthy();
-      expect(result.match(/<span class="nao-citacao">\W*Gap B\W*<\/span>/g)).toBeTruthy();
+      expect(result.match(/<span class="nao-citacao" title="[^"]*">\W*Gap A\W*<\/span>/g)).toBeTruthy();
+      expect(result.match(/<span class="nao-citacao" title="[^"]*">\W*Gap B\W*<\/span>/g)).toBeTruthy();
     });
   });
 

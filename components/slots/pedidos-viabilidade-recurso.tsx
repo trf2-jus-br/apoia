@@ -178,7 +178,7 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
     if (pedidosAnalisados) {
         const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         const data = { ...request.data }
-        data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0', event: '-', label: 'Trecho encontrado no formulário preenchido pelo usuário' }]
+        data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0', event: '-', label: 'Informação extraída do formulário preenchido pelo usuário' }]
         const prompt = getInternalPrompt(nextRequest.produto === P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO ? 'decisao-viabilidade-recurso-extraordinario' : 'decisao-viabilidade-recurso-especial')
         const aiContentKey = `prompt: ${prompt}, data: ${calcMd5(data)}}`
 

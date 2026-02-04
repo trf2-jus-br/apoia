@@ -23,7 +23,6 @@ function extractDocumentType(mimeType: string): string {
 }
 
 export function addLinkToPieces(html: string, textos: TextoType[], dadosDoProcesso: DadosDoProcessoType): string {
-    console.log('Adding links to pieces in HTML content');
     return html.replace(/([Ee]vento)\s+(\d+)(,\s+\d+º?\s*Grau)?((?:\s*(?:,|e)?\s*[A-Z]+\d+)+)/gm, (match, eventWord, eventNumber, instance, rest) => {
         const eventNum = parseInt(eventNumber);
 

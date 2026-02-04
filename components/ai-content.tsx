@@ -265,18 +265,18 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const processedText = useMemo(() => {
         let resultText = preprocessed.text
 
-        // // For text edited visualization, highlight citations in the prompt messages
-        // if (complete && (!visualizationId || visualizationId === VisualizationEnum.TEXT_EDITED)) {
-        //     const promptMessages = (currentMessage?.metadata as any)?.messages
-        //     if (promptMessages) {
-        //         let a: string[] = []
-        //         for (const m of promptMessages) a.push(`${m.role === 'system' ? '---\\# SYSTEM PROMPT' : m.role === 'user' ? '---\\# PROMPT' : `---\\# ROLE: ${m.role}`}\n\n${typeof m.content === 'string' ? m.content : m.content && typeof m.content === 'object' ? JSON.stringify(m.content, null, 2) : String(m.content)}\n\n`)
-        //         let promptAsHtml = a.join('')
-        //         promptAsHtml = promptAsHtml.replace(/^\s+/gm, '')
-        //         promptAsHtml = preprocess(promptAsHtml, { kind: '' }, { textos: [] }, true).text
-        //         resultText = highlightCitationsLongestMatch(promptAsHtml, resultText)
-        //     }
-        // }
+        // For text edited visualization, highlight citations in the prompt messages
+        if (complete && (!visualizationId || visualizationId === VisualizationEnum.TEXT_EDITED)) {
+            const promptMessages = (currentMessage?.metadata as any)?.messages
+            if (promptMessages) {
+                let a: string[] = []
+                for (const m of promptMessages) a.push(`${m.role === 'system' ? '---\\# SYSTEM PROMPT' : m.role === 'user' ? '---\\# PROMPT' : `---\\# ROLE: ${m.role}`}\n\n${typeof m.content === 'string' ? m.content : m.content && typeof m.content === 'object' ? JSON.stringify(m.content, null, 2) : String(m.content)}\n\n`)
+                let promptAsHtml = a.join('')
+                promptAsHtml = promptAsHtml.replace(/^\s+/gm, '')
+                promptAsHtml = preprocess(promptAsHtml, { kind: '' }, { textos: [] }, true).text
+                resultText = highlightCitationsLongestMatch(promptAsHtml, resultText)
+            }
+        }
 
         if (params.dadosDoProcesso)
             resultText = addLinkToPieces(resultText, params.data.textos || [], params.dadosDoProcesso)

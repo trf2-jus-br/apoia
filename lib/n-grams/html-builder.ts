@@ -85,7 +85,7 @@ export function flushNonCitationBuffer(
                        significantCount <= maxNonCitationHighlight;
     
     if (shouldMark) {
-        state.outputHtml += '<span class="nao-citacao">';
+        state.outputHtml += '<span class="nao-citacao" title="Trecho destacado para indicar que não é uma citação, mas está entre citações">';
     }
     
     for (const t of state.nonCitationBuffer) {
