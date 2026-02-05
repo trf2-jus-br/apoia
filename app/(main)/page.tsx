@@ -47,7 +47,7 @@ export default async function HomePage() {
         },
         {
             icon: faBalanceScale,
-            title: "Viabilidade de Recurso",
+            title: "Admissibilidade de Recursos",
             description: "Analise a viabilidade de recursos extraordinários e especiais",
             href: "/prompts?group=decisao-de-viabilidade",
             color: "text-library"

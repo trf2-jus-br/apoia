@@ -144,7 +144,7 @@ export interface GrupoDeSinteseType {
 export const GrupoDeSinteseMap: Record<string, GrupoDeSinteseType> = {
     DECISAO_DE_VIABILIDADE: {
         slug: 'decisao-de-viabilidade',
-        titulo: 'Decisão de Viabilidade',
+        titulo: 'Admissibilidade de Recursos',
         descricao: 'Ferramentas para análise de viabilidade de recursos extraordinários e especiais',
         icone: 'faBalanceScale',
         cor: 'text-info'
