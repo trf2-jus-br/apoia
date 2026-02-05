@@ -12,6 +12,7 @@ import { filterPrompts, getPromptsPrincipais, getPromptsComunidade, getPromptsSi
 import { MainView } from "./components/MainView"
 import { SidekickView } from "./components/SidekickView"
 import { PromptExecutionView } from "./components/PromptExecutionView"
+import { GroupView } from "./components/GroupView"
 import axios from "axios"
 
 export const copyPromptToClipboard = (prompt: IAPromptList) => {
@@ -40,6 +41,8 @@ function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModera
         setSinkButtonText,
         setSourcePayload,
         replacePiecesParam,
+        group,
+        setGroup,
     } = usePromptContext()
 
     useEffect(() => {
@@ -165,6 +168,23 @@ function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModera
                 resetToHome={resetToHome}
                 resetProcess={resetProcess}
                 resetPrompt={resetPrompt}
+            />
+        )
+    }
+
+    // Callback para quando um prompt do grupo é clicado
+    const handleGroupPromptClick = (selectedPrompt: IAPromptList) => {
+        setGroup(null)
+        setPrompt(selectedPrompt)
+    }
+
+    // Se tem grupo selecionado, mostra a view de grupo
+    if (group) {
+        return (
+            <GroupView
+                groupSlug={group}
+                prompts={prompts}
+                onPromptClick={handleGroupPromptClick}
             />
         )
     }

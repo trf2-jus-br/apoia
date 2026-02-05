@@ -44,6 +44,8 @@ interface PromptContextValue {
     setSourcePayload: (payload: SourcePayloadType | null) => void
     replacePiecesParam: (numbersOrNull: number[] | null) => void
     maxConfidentialityLevel: number
+    group: string | null
+    setGroup: (group: string | null) => void
 }
 
 const PromptContext = createContext<PromptContextValue | undefined>(undefined)

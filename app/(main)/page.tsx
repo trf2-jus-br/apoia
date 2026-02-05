@@ -1,6 +1,6 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret, faBoxArchive, faBookOpen, faPen, faPencil, faUsers } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret, faBoxArchive, faBookOpen, faPen, faPencil, faUsers, faBalanceScale } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
@@ -44,6 +44,13 @@ export default async function HomePage() {
             description: "Minute votos informando fundamentação e dispositivo",
             href: "/prompts?prompt=minuta-de-voto",
             color: "text-brown"
+        },
+        {
+            icon: faBalanceScale,
+            title: "Viabilidade de Recurso",
+            description: "Analise a viabilidade de recursos extraordinários e especiais",
+            href: "/prompts?group=decisao-de-viabilidade",
+            color: "text-library"
         },
         {
             icon: faFileText,

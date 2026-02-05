@@ -132,6 +132,27 @@ export const PC = (p: P, d?: T | T[]): ProdutoCompleto => {
     return { produto: p, dados: d ? [d as T] : [] }
 }
 
+// Grupos de Síntese - agrupam tipos de síntese relacionados
+export interface GrupoDeSinteseType {
+    slug: string
+    titulo: string
+    descricao: string
+    icone?: string  // nome do ícone FontAwesome (ex: 'faGavel')
+    cor?: string    // classe CSS de cor (ex: 'text-primary')
+}
+
+export const GrupoDeSinteseMap: Record<string, GrupoDeSinteseType> = {
+    DECISAO_DE_VIABILIDADE: {
+        slug: 'decisao-de-viabilidade',
+        titulo: 'Decisão de Viabilidade',
+        descricao: 'Ferramentas para análise de viabilidade de recursos extraordinários e especiais',
+        icone: 'faBalanceScale',
+        cor: 'text-info'
+    },
+}
+
+export type GrupoDeSinteseEnum = keyof typeof GrupoDeSinteseMap
+
 export type TipoDeSinteseType = {
     nome: string,
     author?: string,
@@ -146,6 +167,8 @@ export type TipoDeSinteseType = {
     scope?: string[],
     instance?: string[],
     matter?: string[],
+    // Grupo ao qual este tipo de síntese pertence
+    grupo?: GrupoDeSinteseType,
 }
 
 const pecasQueRepresentamContestacao = [
@@ -482,14 +505,16 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 3,
         nome: 'Minuta de Decisão de Viabilidade de Recurso Extraordinário',
         padroes: [padraoViabilidadeDeRecursoExtraordinario],
-        produtos: [P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO, P.CHAT]
+        produtos: [P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO, P.CHAT],
+        grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
     },
     DECISAO_DE_VIABILIDADE_DE_RESP: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 3,
         nome: 'Minuta de Decisão de Viabilidade de Recurso Especial',
         padroes: [padraoViabilidadeDeRecursoEspecial],
-        produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_DE_TEMAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT]
+        produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_DE_TEMAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT],
+        grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
     },
     RESUMOS: {
         status: StatusDeLancamento.PUBLICO,

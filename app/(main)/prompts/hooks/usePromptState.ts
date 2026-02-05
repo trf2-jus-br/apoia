@@ -8,6 +8,7 @@ import { html2md } from "@/lib/utils/html2md"
 import { SOURCE_PARAM_THAT_INDICATES_TO_RETRIEVE_USING_MESSAGE_TO_PARENT, SourceMessageFromParentType, SourceMessageToParentType, SinkFromURLType, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT_AUTOMATICALLY, SinkMessageToParentType, SinkMessageFromParentType, SourcePayloadType } from "@/lib/utils/messaging"
 import devLog from "@/lib/utils/log"
 import { formatEprocStandardToHtml } from "@/lib/utils/messaging-helper"
+import { GrupoDeSinteseMap } from "@/lib/proc/combinacoes"
 
 export interface UsePromptStateResult {
     prompt: IAPromptList | null
@@ -34,6 +35,8 @@ export interface UsePromptStateResult {
     setSourcePayload: (payload: SourcePayloadType | null) => void
     replacePiecesParam: (numbersOrNull: number[] | null) => void
     maxConfidentialityLevel: number
+    group: string | null
+    setGroup: (group: string | null) => void
 }
 
 export function usePromptState(
@@ -68,6 +71,7 @@ export function usePromptState(
     const [sinkButtonText, setSinkButtonText] = useState<string | null>(null)
     const [source, setSource] = useState<string | null>(null)
     const [sourcePayload, setSourcePayload] = useState<SourcePayloadType | null>(null)
+    const [group, setGroup] = useState<string | null>(null)
     const hasRunSource = useRef(false)
     const hasRunSink = useRef(false)
 
@@ -120,10 +124,19 @@ export function usePromptState(
         const sourceFromURL = currentSearchParams.get('source')
         const sinkFromURL = currentSearchParams.get('sink') as SinkFromURLType
         const sinkButtonText = currentSearchParams.get('sink-button-text')
+        const groupFromURL = currentSearchParams.get('group')
 
         if (p) {
             const found = findPromptFromParam(prompts, p)
             if (found) setPrompt(found)
+        }
+
+        // Verifica se o group é válido (slug existe no GrupoDeSinteseMap)
+        if (groupFromURL) {
+            const isValidGroup = Object.values(GrupoDeSinteseMap).some(
+                g => g.slug === groupFromURL
+            )
+            if (isValidGroup) setGroup(groupFromURL)
         }
 
         if (proc && proc.length === 20) {
@@ -196,6 +209,12 @@ export function usePromptState(
         if (activeTab === 'comunidade') params.set('tab', 'comunidade')
         else params.delete('tab')
 
+        if (group) {
+            params.set('group', group)
+        } else {
+            params.delete('group')
+        }
+
         if (!prompt || !numeroDoProcesso) {
             params.delete('pieces')
         }
@@ -205,7 +224,7 @@ export function usePromptState(
 
         lastQueryRef.current = qs
         router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-    }, [prompt, numeroDoProcesso, idxProcesso, scope, instance, matter, activeTab, arrayDeDadosDoProcesso, promptInitialized, pathname, router, currentSearchParams])
+    }, [prompt, numeroDoProcesso, idxProcesso, scope, instance, matter, activeTab, group, arrayDeDadosDoProcesso, promptInitialized, pathname, router, currentSearchParams])
 
     useEffect(() => {
         if (!parent || !prompt) return
@@ -298,6 +317,8 @@ export function usePromptState(
         sourcePayload,
         setSourcePayload,
         replacePiecesParam,
-        maxConfidentialityLevel
+        maxConfidentialityLevel,
+        group,
+        setGroup
     }
 }
