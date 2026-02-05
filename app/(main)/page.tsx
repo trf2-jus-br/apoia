@@ -5,9 +5,14 @@ import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
 import { assertCurrentUser } from '@/lib/user'
+import { cookies } from 'next/headers'
 
 export default async function HomePage() {
     const user = await assertCurrentUser()
+    
+    // Verifica se é beta tester
+    const cookieStore = await cookies()
+    const isBetaTester = cookieStore.get('beta-tester')?.value === '2'
 
     const features = [
         {
@@ -50,7 +55,8 @@ export default async function HomePage() {
             title: "Admissibilidade de Recursos",
             description: "Analise a viabilidade de recursos extraordinários e especiais",
             href: "/prompts?group=decisao-de-viabilidade",
-            color: "text-library"
+            color: "text-library",
+            betaOnly: true
         },
         {
             icon: faFileText,
@@ -132,7 +138,7 @@ export default async function HomePage() {
                     <h2 className="text-center mb-4">Escolha uma das ferramentas abaixo para começar:</h2>
 
                     <Row className="g-4">
-                        {features.map((feature, index) => (
+                        {features.filter(f => !f.betaOnly || isBetaTester).map((feature, index) => (
                             <Col key={index} md={6} lg={3}>
                                 <Link href={feature.href} className="text-decoration-none text-dark">
                                     <Card className="h-100 text-center">
