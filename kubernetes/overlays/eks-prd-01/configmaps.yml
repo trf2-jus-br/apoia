@@ -143,3 +143,6 @@ data:
   # JFES_KIND: "MNI"
   # JFES_MNI_WSDL_URL: "https://eproc-ws.jfes.jus.br/eproc/wsdl.php?srv=intercomunicacao2.2"
   # JFES_MNI_ENDPOINT_URL: "https://eproc-ws.jfes.jus.br/eproc/ws/controlador_ws.php?srv=intercomunicacao2.2"
+
+  SEMANTIC_SEARCH_API_URL_ENCRYPTED: "867e57b2453b0f722a1fbc3139a6279574d84b75500b85e254cbf9562931d2a55b7087128fe98fe695d00bb2244349cdb104f18a19f759c48d61f5b2a555e99d6fd01dab59c6e9a37dcba6dac07d4dfa5bb2d7f7a01537d537464c887b71a80955a77a680e4290f33e998bd4e4dd92d44139e2f6745a96114325604405aba0d097cc1561c652"
+
