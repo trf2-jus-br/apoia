@@ -131,7 +131,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
         <Suspense fallback={ResumoDePecaLoading()}>
             <AiContent definition={request.internalPrompt} data={requestComTextosAnteriores.data} key={`prompt: ${request.promptSlug} data: ${dataHash}`} onBusy={() => onBusy(Frm, requests, idx)} onReady={(content) => onReady(Frm, requests, idx, content)}
                 visualization={request.internalPrompt.template ? VisualizationEnum.DIFF_HIGHLIGHT_INCLUSIONS : undefined} diffSource={request.internalPrompt.template ? preprocessTemplate(request.internalPrompt.template) : undefined} dossierCode={dossierCode}
-                dadosDoProcesso={dadosDoProcesso} />
+                dadosDoProcesso={dadosDoProcesso} requestIdx={idx} title={request.title} />
         </Suspense>
         {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx}]`) && <Row className="h-print mb-3">
             <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx}]`), sourcePayload, slugify(requests[idx]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>

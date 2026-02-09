@@ -1,11 +1,17 @@
 'use client'
 
-import { createContext, useContext, ReactNode, useMemo } from 'react'
+import { createContext, useContext, ReactNode, useMemo, useState, useCallback } from 'react'
 import { IAPromptList, IALibrary } from '@/lib/db/mysql-types'
 import { DadosDoProcessoType, InstanceKeyType } from '@/lib/proc/process-types'
 import { useProcessData } from '../hooks/useProcessData'
 import { usePromptState } from '../hooks/usePromptState'
 import { SinkFromURLType, SourcePayloadType } from '@/lib/utils/messaging'
+
+interface ProcessedContentType {
+    title: string
+    html: string
+    timestamp: string
+}
 
 interface PromptContextValue {
     // Process Data
@@ -44,6 +50,11 @@ interface PromptContextValue {
     setSourcePayload: (payload: SourcePayloadType | null) => void
     replacePiecesParam: (numbersOrNull: number[] | null) => void
     maxConfidentialityLevel: number
+
+    // Processed Contents for Static Page Generation
+    processedContents: Record<number, ProcessedContentType>
+    setProcessedContent: (requestIdx: number, title: string, html: string) => void
+    clearProcessedContents: () => void
 }
 
 const PromptContext = createContext<PromptContextValue | undefined>(undefined)
@@ -86,6 +97,24 @@ export function PromptProvider({ children, prompts, toastMessage, maxConfidentia
         sidekick
     )
 
+    // Processed Contents State
+    const [processedContents, setProcessedContentsState] = useState<Record<number, ProcessedContentType>>({})
+
+    const setProcessedContent = useCallback((requestIdx: number, title: string, html: string) => {
+        setProcessedContentsState(prev => ({
+            ...prev,
+            [requestIdx]: {
+                title,
+                html,
+                timestamp: new Date().toISOString()
+            }
+        }))
+    }, [])
+
+    const clearProcessedContents = useCallback(() => {
+        setProcessedContentsState({})
+    }, [])
+
     const value = useMemo(() => ({
         // Process Data
         numeroDoProcesso,
@@ -99,7 +128,12 @@ export function PromptProvider({ children, prompts, toastMessage, maxConfidentia
         setNumber,
 
         // Prompt State
-        ...promptState
+        ...promptState,
+
+        // Processed Contents
+        processedContents,
+        setProcessedContent,
+        clearProcessedContents
     }), [
         numeroDoProcesso,
         setNumeroDoProcesso,
@@ -110,7 +144,8 @@ export function PromptProvider({ children, prompts, toastMessage, maxConfidentia
         setDadosDoProcesso,
         number,
         setNumber,
-        promptState
+        promptState,
+        processedContents
     ])
 
     return (

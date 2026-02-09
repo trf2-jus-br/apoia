@@ -22,6 +22,7 @@ import { formatHtmlToEprocStandard } from '@/lib/utils/messaging-helper'
 import { highlightCitationsLongestMatch } from '@/lib/n-grams'
 import { addLinkToPieces } from '@/lib/ui/link-to-piece'
 import { DadosDoProcessoType } from '@/lib/proc/process-types'
+import { usePromptContext } from '@/app/(main)/prompts/context/PromptContext'
 
 export const getColor = (text, errormsg) => {
     let color = 'info'
@@ -44,7 +45,7 @@ export const spinner = (s: string, complete: boolean): string => {
 }
 
 
-export default function AiContent(params: { definition: PromptDefinitionType, data: PromptDataType, options?: PromptOptionsType, config?: PromptConfigType, visualization?: VisualizationEnum, dossierCode: string, diffSource?: string, onBusy?: () => void, onReady?: (content: ContentType) => void, dadosDoProcesso?: DadosDoProcessoType }) {
+export default function AiContent(params: { definition: PromptDefinitionType, data: PromptDataType, options?: PromptOptionsType, config?: PromptConfigType, visualization?: VisualizationEnum, dossierCode: string, diffSource?: string, onBusy?: () => void, onReady?: (content: ContentType) => void, dadosDoProcesso?: DadosDoProcessoType, requestIdx?: number, title?: string }) {
     const [current, setCurrent] = useState('')
     const [complete, setComplete] = useState(false)
     const [errormsg, setErrormsg] = useState('')
@@ -56,6 +57,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const [copySuccess, setCopySuccess] = useState(false)
     const initialized = useRef(false)
     const contentRef = useRef<HTMLDivElement>(null);
+    const { setProcessedContent } = usePromptContext()
 
     const reportError = (err: any, payload: any) => {
         if (err && typeof err === 'object' && 'message' in err && (err as Error).message === 'NEXT_REDIRECT') throw err
@@ -308,6 +310,20 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         window.open(url, '_blank');
     };
 
+    // Register processed content in context for static page generation
+    useEffect(() => {
+        if (complete && params.requestIdx !== undefined && processedText) {
+            setProcessedContent(
+                params.requestIdx,
+                params.title || `Resultado ${params.requestIdx + 1}`,
+                processedText
+            )
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [complete, params.requestIdx, processedText, params.title])
+
+    console.log("processedText ", processedText)
+
     return <>
         <MessageStatus message={currentMessage} />
         {current || errormsg
@@ -329,7 +345,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     )}
                     {errormsg
                         ? <ErrorMessage message={errormsg} />
-                        : <div ref={contentRef} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
+                        : <article ref={contentRef} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
                     <EvaluationModal show={show} onClose={handleClose} />
                 </div>
                 {complete && <MessageFooter message={currentMessage} />}
