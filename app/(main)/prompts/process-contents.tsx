@@ -95,6 +95,15 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         }
 
         try {
+            const now = new Date()
+            const generatedAt = now.toLocaleDateString('pt-BR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+
             const response = await fetch(`/api/v1/static-page-cache`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -103,7 +112,8 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                     promptId: prompt.id,
                     promptName: prompt.name,
                     processNumber: dadosDoProcesso.numeroDoProcesso,
-                    processTitle: dadosDoProcesso.classe || dadosDoProcesso.materia || 'Processo'
+                    processTitle: dadosDoProcesso.classe || dadosDoProcesso.materia || 'Processo',
+                    generatedAt
                 })
             })
 

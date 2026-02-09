@@ -6,6 +6,7 @@ interface CacheData {
     promptName: string
     processNumber: string
     processTitle: string
+    generatedAt: string
 }
 
 // In-memory cache com expiração automática

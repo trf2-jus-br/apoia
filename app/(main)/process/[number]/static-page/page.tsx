@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react'
 import { headers } from 'next/headers'
-import { PrintButtons } from './print-buttons'
+import { ActionButtons } from './print-buttons'
 
 interface ProcessedContent {
     title: string
@@ -16,6 +16,7 @@ interface CacheData {
     promptName: string
     processNumber: string
     processTitle: string
+    generatedAt: string
 }
 
 async function StaticPageContent({ cacheKey }: { cacheKey: string }) {
@@ -57,12 +58,10 @@ async function StaticPageContent({ cacheKey }: { cacheKey: string }) {
 
         return (
             <div>
-                <PrintButtons />
-
-                <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
-                    <header style={{ marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
-                        <h1>{data.promptName}</h1>
-                        <p className="text-muted">
+                <div className="container-lg bg-white py-5">
+                    <header className="mb-5 pb-4 border-bottom">
+                        <h1 className="mb-3">{data.promptName}</h1>
+                        <p className="text-muted mb-2">
                             <strong>Processo:</strong> {data.processNumber}
                         </p>
                         <p className="text-muted">
@@ -75,46 +74,24 @@ async function StaticPageContent({ cacheKey }: { cacheKey: string }) {
                         .map(([idx, content]) => (
                             <section
                                 key={idx}
-                                style={{
-                                    marginBottom: '40px',
-                                    pageBreakInside: 'avoid'
-                                }}
+                                className="mb-5"
+                                style={{ pageBreakInside: 'avoid' }}
                             >
-                                <h2 style={{ fontSize: '1.5rem', marginBottom: '15px', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
+                                <h2 className="h4 mb-3 pb-2 border-bottom">
                                     {content.title}
                                 </h2>
                                 <article
-                                    className="content-article"
-                                    style={{
-                                        lineHeight: '1.6',
-                                        fontSize: '1rem',
-                                        color: '#333'
-                                    }}
+                                    className="content-article lh-lg text-dark"
                                     dangerouslySetInnerHTML={{ __html: content.html }}
                                 />
                             </section>
                         ))}
 
-                    <footer
-                        style={{
-                            marginTop: '60px',
-                            paddingTop: '20px',
-                            borderTop: '1px solid #ddd',
-                            fontSize: '0.9rem',
-                            color: '#666',
-                            textAlign: 'center'
-                        }}
-                    >
-                        <p>
-                            Documento gerado pela Apoia em {new Date().toLocaleDateString('pt-BR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                    <footer className="mt-5 pt-4 border-top text-center small text-muted">
+                        <p className="mb-2">
+                            Documento gerado pela Apoia em {data.generatedAt}
                         </p>
-                        <p style={{ fontSize: '0.85rem' }}>
+                        <p className="mb-0" style={{ fontSize: '0.85rem' }}>
                             Esta página foi otimizada para leitura em navegadores móveis e suporta Web Speech API para síntese de voz.
                         </p>
                     </footer>
@@ -138,8 +115,9 @@ async function StaticPageContent({ cacheKey }: { cacheKey: string }) {
                     }
 
                     @media (max-width: 768px) {
-                        div {
-                            padding: 10px;
+                        .container-lg {
+                            padding-left: 10px;
+                            padding-right: 10px;
                         }
                         h1 {
                             font-size: 1.5rem;
@@ -181,42 +159,14 @@ export default async function StaticAudioPage({
     const { cache } = await searchParams
 
     return (
-        <html lang="pt-BR">
-            <head>
-                <meta charSet="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <meta name="description" content="Página estática otimizada para síntese de voz e leitura" />
-                <meta property="og:type" content="document" />
-                <title>Página Estática - Apoia</title>
-                <style>{`
-                    * {
-                        margin: 0;
-                        padding: 0;
-                        box-sizing: border-box;
-                    }
-                    body {
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                        background: #f5f5f5;
-                        color: #333;
-                    }
-                    .container {
-                        max-width: 900px;
-                        margin: 0 auto;
-                        background: white;
-                    }
-                `}</style>
-            </head>
-            <body>
-                <Suspense
-                    fallback={
-                        <div className="container mt-5">
-                            <div className="alert alert-info">Carregando conteúdo...</div>
-                        </div>
-                    }
-                >
-                    <StaticPageContent cacheKey={cache || ''} />
-                </Suspense>
-            </body>
-        </html>
+        <Suspense
+            fallback={
+                <div className="container mt-5">
+                    <div className="alert alert-info">Carregando conteúdo...</div>
+                </div>
+            }
+        >
+            <StaticPageContent cacheKey={cache || ''} />
+        </Suspense>
     )
 }

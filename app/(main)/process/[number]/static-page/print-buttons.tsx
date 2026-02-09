@@ -1,8 +1,8 @@
 'use client'
 
-export function PrintButtons() {
+export function ActionButtons() {
     return (
-        <div className="d-print-none" style={{ padding: '20px', borderBottom: '1px solid #ddd' }}>
+        <div className="d-print-none px-3 py-3 border-bottom">
             <button onClick={() => window.history.back()} className="btn btn-secondary btn-sm ms-2">
                 Voltar
             </button>
