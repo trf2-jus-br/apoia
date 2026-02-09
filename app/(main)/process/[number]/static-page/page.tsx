@@ -1,6 +1,8 @@
 'use server'
 
 import { Suspense } from 'react'
+import { headers } from 'next/headers'
+import { PrintButtons } from './print-buttons'
 
 interface ProcessedContent {
     title: string
@@ -30,8 +32,13 @@ async function StaticPageContent({ cacheKey }: { cacheKey: string }) {
     }
 
     try {
-        // Caminho relativo - Next.js resolve automaticamente
-        const response = await fetch(`/api/v1/static-page-cache?key=${encodeURIComponent(cacheKey)}`, {
+        // Construir URL absoluta usando headers do Next.js
+        const headersList = await headers()
+        const host = headersList.get('host') || 'localhost:3000'
+        const protocol = headersList.get('x-forwarded-proto') || 'http'
+        const baseUrl = `${protocol}://${host}`
+        
+        const response = await fetch(`${baseUrl}/api/v1/static-page-cache?key=${encodeURIComponent(cacheKey)}`, {
             next: { revalidate: 300 } // Cache por 5 minutos
         })
 
@@ -50,14 +57,7 @@ async function StaticPageContent({ cacheKey }: { cacheKey: string }) {
 
         return (
             <div>
-                <div className="d-print-none" style={{ padding: '20px', borderBottom: '1px solid #ddd' }}>
-                    <button onClick={() => window.print()} className="btn btn-primary btn-sm">
-                        Imprimir / Salvar PDF
-                    </button>
-                    <button onClick={() => window.history.back()} className="btn btn-secondary btn-sm ms-2">
-                        Voltar
-                    </button>
-                </div>
+                <PrintButtons />
 
                 <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
                     <header style={{ marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
