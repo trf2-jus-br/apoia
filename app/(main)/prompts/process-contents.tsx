@@ -104,11 +104,22 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                 minute: '2-digit'
             })
 
+            const formatingForStaticPage = Object.fromEntries(
+                Object.entries(processedContents).map(([key, value]) => [
+                    key,
+                    {
+                        ...value,
+                        // html: value.html
+                        html: value.html.replace(/<li>/gm, '<p>').replace(/<\/li>/gm, '</p>').replace(/<ul>|<\/ul>|<ol>|<\/ol>/gm, '')
+                    }
+                ])
+            )
+
             const response = await fetch(`/api/v1/static-page-cache`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    processedContents,
+                    processedContents: formatingForStaticPage,
                     promptId: prompt.id,
                     promptName: prompt.name,
                     processNumber: dadosDoProcesso.numeroDoProcesso,

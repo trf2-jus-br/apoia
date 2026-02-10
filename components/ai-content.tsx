@@ -322,8 +322,6 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [complete, params.requestIdx, processedText, params.title])
 
-    console.log("processedText ", processedText)
-
     return <>
         <MessageStatus message={currentMessage} />
         {current || errormsg
