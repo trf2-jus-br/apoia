@@ -277,7 +277,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                     ? <>
                         <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} model={model} sidekick={sidekick} promptButtons={promptButtons} sinkFromURL={sinkFromURL} sinkButtonText={sinkButtonText} />
                         <div className="d-flex flex-row justify-content-end gap-2">
-                            {!sidekick && !isBetaTester && <Button variant="outline-primary" onClick={generateStaticAudioPage}>Gerar versão para áudio</Button>}
+                            {!sidekick && isBetaTester && <Button variant="outline-primary" onClick={generateStaticAudioPage}>Gerar versão para áudio</Button>}
                             {!sidekick && <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />}
                         </div>
                     </>
