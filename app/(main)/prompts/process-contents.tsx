@@ -2,7 +2,7 @@
 
 import { IALibrary, IALibraryInclusion, IAPrompt } from "@/lib/db/mysql-types";
 import { PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, use, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PieceStrategy, selecionarPecasPorPadraoComFase, T, TipoDeSinteseMap } from "@/lib/proc/combinacoes";
 import { GeneratedContent } from "@/lib/ai/prompt-types";
@@ -56,6 +56,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const [choosingPieces, setChoosingPieces] = useState(!(sidekick && prompt?.kind === '^CHAT'))
     const [choosingLibrary, setChoosingLibrary] = useState(false)
     const searchParams = useSearchParams()
+    const isBetaTester = document.cookie.includes('beta-tester=2') || null
     const { push } = useRouter()
 
     const changeSelectedPieces = (pieces: string[]) => {
@@ -276,7 +277,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                     ? <>
                         <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} model={model} sidekick={sidekick} promptButtons={promptButtons} sinkFromURL={sinkFromURL} sinkButtonText={sinkButtonText} />
                         <div className="d-flex flex-row justify-content-end gap-2">
-                            {!sidekick && <Button variant="outline-primary" onClick={generateStaticAudioPage}>Gerar versão para áudio</Button>}
+                            {!sidekick && !isBetaTester && <Button variant="outline-primary" onClick={generateStaticAudioPage}>Gerar versão para áudio</Button>}
                             {!sidekick && <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />}
                         </div>
                     </>
