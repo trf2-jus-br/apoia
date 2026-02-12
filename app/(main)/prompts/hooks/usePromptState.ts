@@ -5,11 +5,13 @@ import { slugify } from "@/lib/utils/utils"
 import { decodeEnumParam, findPromptFromParam } from "../utils/promptFilters"
 import { Instance, InstanceKeyType, Matter, Scope } from "@/lib/proc/process-types"
 import { html2md } from "@/lib/utils/html2md"
-import { SOURCE_PARAM_THAT_INDICATES_TO_RETRIEVE_USING_MESSAGE_TO_PARENT, SourceMessageFromParentType, SourceMessageToParentType, SinkFromURLType, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT_AUTOMATICALLY, SinkMessageToParentType, SinkMessageFromParentType, SourcePayloadType } from "@/lib/utils/messaging"
+import { SOURCE_PARAM_THAT_INDICATES_TO_RETRIEVE_USING_MESSAGE_TO_PARENT, SourceMessageFromParentType, SourceMessageToParentType, SinkFromURLType, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT_AUTOMATICALLY, SinkMessageToParentType, SinkMessageFromParentType, SourcePayloadType, PromptsMessageToParentType, PromptsMessageFromParentType } from "@/lib/utils/messaging"
 import devLog from "@/lib/utils/log"
 import { formatEprocStandardToHtml } from "@/lib/utils/messaging-helper"
 
 export interface UsePromptStateResult {
+    prompts: IAPromptList[]
+    setPrompts: (prompts: IAPromptList[]) => void
     prompt: IAPromptList | null
     setPrompt: (prompt: IAPromptList | null) => void
     scope: string | undefined
@@ -34,10 +36,12 @@ export interface UsePromptStateResult {
     setSourcePayload: (payload: SourcePayloadType | null) => void
     replacePiecesParam: (numbersOrNull: number[] | null) => void
     maxConfidentialityLevel: number
+    action: string | null
+    setAction: (action: string | null) => void
 }
 
 export function usePromptState(
-    prompts: IAPromptList[],
+    originalPrompts: IAPromptList[],
     numeroDoProcesso: string | null,
     idxProcesso: number,
     arrayDeDadosDoProcesso: any[] | null,
@@ -54,7 +58,7 @@ export function usePromptState(
     const router = useRouter()
     const pathname = usePathname()
     const lastQueryRef = useRef<string>('')
-
+    const [prompts, setPrompts] = useState<IAPromptList[]>(originalPrompts)
     const [prompt, setPrompt] = useState<IAPromptList | null>(null)
     const [scope, setScope] = useState<string | undefined>()
     const [instance, setInstance] = useState<InstanceKeyType | undefined>()
@@ -68,8 +72,10 @@ export function usePromptState(
     const [sinkButtonText, setSinkButtonText] = useState<string | null>(null)
     const [source, setSource] = useState<string | null>(null)
     const [sourcePayload, setSourcePayload] = useState<SourcePayloadType | null>(null)
+    const [action, setAction] = useState<string | null>(null)
     const hasRunSource = useRef(false)
     const hasRunSink = useRef(false)
+    const hasRunPrompts = useRef(false)
 
     const PIECES_PARAM = 'pieces' // stores hyphen-separated 1-based indices (1..N) in original allPieces order
 
@@ -120,6 +126,7 @@ export function usePromptState(
         const sourceFromURL = currentSearchParams.get('source')
         const sinkFromURL = currentSearchParams.get('sink') as SinkFromURLType
         const sinkButtonText = currentSearchParams.get('sink-button-text')
+        const actionFromURL = currentSearchParams.get('action')
 
         if (p) {
             const found = findPromptFromParam(prompts, p)
@@ -143,10 +150,41 @@ export function usePromptState(
         if (sourceFromURL) setSourceFromURL(sourceFromURL)
         if (sinkFromURL) setSinkFromURL(sinkFromURL)
         if (sinkButtonText) setSinkButtonText(sinkButtonText)
-
+        if (actionFromURL) setAction(actionFromURL)
         setPromptInitialized(true)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    useEffect(() => {
+        if (!parent || !prompts || !prompts.length) return
+
+        devLog('*** Sending prompts')
+        if (hasRunPrompts.current) return
+        hasRunPrompts.current = true
+        parent.postMessage({ type: 'get-prompts', payload: { prompts } } satisfies PromptsMessageToParentType, '*')
+
+        // Listener para mensagem do popup
+        const handleMessage = (event: MessageEvent) => {
+            switch (event.data?.type) {
+                case 'set-prompts':
+                    const receivedPrompts = (event.data as PromptsMessageFromParentType).payload.prompts
+                    if (Array.isArray(receivedPrompts) && receivedPrompts.length > 0) {
+                        const promptsMap = new Map(prompts.map(p => [p.id, p]))
+                        const list = []
+                        for (const p of receivedPrompts) {
+                            if (p.id != null && promptsMap.has(p.id)) {
+                                list.push({ ...promptsMap.get(p.id), is_hidden: p.is_hidden })
+                            }
+                        }
+                        setPrompts(list)
+                    }
+            }
+        }
+        window.addEventListener('message', handleMessage)
+        return () => {
+            window.removeEventListener('message', handleMessage)
+        }
+    }, [prompts])
 
     useEffect(() => {
         if (!sidekick && prompt && prompt.content?.target && prompt.content.target !== 'PROCESSO') {
@@ -200,12 +238,15 @@ export function usePromptState(
             params.delete('pieces')
         }
 
+        if (action) params.set('action', action)
+        else params.delete('action')
+
         const qs = params.toString()
         if (qs === lastQueryRef.current) return
 
         lastQueryRef.current = qs
         router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-    }, [prompt, numeroDoProcesso, idxProcesso, scope, instance, matter, activeTab, arrayDeDadosDoProcesso, promptInitialized, pathname, router, currentSearchParams])
+    }, [prompt, numeroDoProcesso, idxProcesso, scope, instance, matter, activeTab, arrayDeDadosDoProcesso, action, promptInitialized, pathname, router, currentSearchParams])
 
     useEffect(() => {
         if (!parent || !prompt) return
@@ -275,6 +316,8 @@ export function usePromptState(
     }, [sinkFromURL, prompt])
 
     return {
+        prompts,
+        setPrompts,
         prompt,
         setPrompt,
         scope,
@@ -298,6 +341,8 @@ export function usePromptState(
         sourcePayload,
         setSourcePayload,
         replacePiecesParam,
-        maxConfidentialityLevel
+        maxConfidentialityLevel,
+        action,
+        setAction
     }
 }

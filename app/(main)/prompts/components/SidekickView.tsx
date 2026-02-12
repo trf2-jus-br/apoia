@@ -53,7 +53,7 @@ export function SidekickView({
         return (
             <div className="d-flex flex-wrap gap-2 justify-content-center">
                 {promptsSidekick && promptsSidekick.length > 0 ? (
-                    promptsSidekick.filter(p => p?.kind !== prompt?.kind).map((p, i) => (
+                    promptsSidekick.filter(p => p.is_hidden === false).filter(p => p?.kind !== prompt?.kind).map((p, i) => (
                         <Button
                             key={p.base_id ?? `${p.kind}-${i}`}
                             onClick={() => setPrompt(p)}

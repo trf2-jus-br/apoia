@@ -128,6 +128,16 @@ export const PC = (p: P, d?: T | T[]): ProdutoCompleto => {
     return { produto: p, dados: d ? [d as T] : [] }
 }
 
+export type ExibitionContextActionType = 'processo_selecionar' | 'minuta_editar'
+
+export type ContextoDeExibicaoType = {
+    action?: ExibitionContextActionType | ExibitionContextActionType[],
+    document?: string | string[],
+    instance?: string | string[],
+    matter?: string | string[],
+    scope?: string | string[],
+}
+
 export type TipoDeSinteseType = {
     nome: string,
     author?: string,
@@ -142,6 +152,7 @@ export type TipoDeSinteseType = {
     scope?: string[],
     instance?: string[],
     matter?: string[],
+    context?: ContextoDeExibicaoType
 }
 
 const pecasQueRepresentamContestacao = [
@@ -438,7 +449,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1,
         nome: 'Resumos e triagem',
         padroes: padroesBasicos,
-        produtos: [P.RESUMOS, P.RESUMO, P.CHAT]
+        produtos: [P.RESUMOS, P.RESUMO, P.CHAT],
+        context: { action: 'processo_selecionar' }
     },
 
     RELATORIO_DE_APELACAO_E_TRIAGEM: {
@@ -447,7 +459,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1,
         nome: 'Relatório de Apelação e Triagem',
         padroes: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento],
-        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT]
+        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT],
+        context: { action: 'processo_selecionar', instance: Instance.SEGUNDO_GRAU.name }
     },
 
     RESUMOS_ANALISE: {
@@ -455,7 +468,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 2,
         nome: 'Resumos e análise',
         padroes: padroesBasicos,
-        produtos: [P.RESUMOS, P.ANALISE, P.CHAT]
+        produtos: [P.RESUMOS, P.ANALISE, P.CHAT],
+        context: { action: 'processo_selecionar' }
     },
     MINUTA_DE_SENTENCA: {
         status: StatusDeLancamento.PUBLICO,
@@ -463,7 +477,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Minuta de Sentença',
         padroes: [...padroesConhecimento, padraoConhecimentoForcado],
         produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.SENTENCA, P.CHAT],
-        instance: [Instance.PRIMEIRO_GRAU.name]
+        instance: [Instance.PRIMEIRO_GRAU.name],
+        context: { action: 'minuta_editar', instance: Instance.PRIMEIRO_GRAU.name }
     },
     MINUTA_DE_VOTO: {
         status: StatusDeLancamento.PUBLICO,
@@ -471,7 +486,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Minuta de Voto',
         padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
         produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT],
-        instance: [Instance.SEGUNDO_GRAU.name]
+        instance: [Instance.SEGUNDO_GRAU.name],
+        context: { action: 'minuta_editar', instance: Instance.SEGUNDO_GRAU.name }
     },
     DECISAO_DE_VIABILIDADE_DE_RE: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
@@ -523,14 +539,16 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         // tipos: [
         //     [T.PETICAO_INICIAL],
         // ],
-        produtos: [P.CHAT]
+        produtos: [P.CHAT],
+        context: {}
     },
     CHAT_STANDALONE: {
         status: StatusDeLancamento.PUBLICO,
         sort: 7,
         nome: 'Chat Padrão',
         target: 'CHAT',
-        produtos: [P.CHAT_STANDALONE]
+        produtos: [P.CHAT_STANDALONE],
+        context: {}
     },
 
     INDICE: {
@@ -634,7 +652,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1001,
         nome: 'Refinamento de Texto',
         target: 'REFINAMENTO',
-        produtos: [P.REFINAMENTO]
+        produtos: [P.REFINAMENTO],
+        context: { action: 'minuta_editar' }
     },
 
     REVISAO_DE_TEXTO: {
@@ -642,7 +661,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1001,
         nome: 'Revisão Ortográfica',
         target: 'REFINAMENTO',
-        produtos: [P.REVISAO]
+        produtos: [P.REVISAO],
+        context: { action: 'minuta_editar' }
     }
 
 

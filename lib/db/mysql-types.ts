@@ -209,6 +209,7 @@ export type IAPromptList = {
     is_favorite: number
     favorite_count: number
     is_internal?: boolean
+    is_hidden?: boolean
 }
 
 export type IAPromptRating = {
