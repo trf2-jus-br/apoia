@@ -450,7 +450,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Resumos e triagem',
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.RESUMO, P.CHAT],
-        context: { action: 'processo_selecionar' }
+        // context: { action: 'processo_selecionar' }
     },
 
     RELATORIO_DE_APELACAO_E_TRIAGEM: {
@@ -460,7 +460,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Relatório de Apelação e Triagem',
         padroes: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento],
         produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT],
-        context: { action: 'processo_selecionar', instance: Instance.SEGUNDO_GRAU.name }
+        // context: { action: 'processo_selecionar', instance: Instance.SEGUNDO_GRAU.name }
     },
 
     RESUMOS_ANALISE: {
@@ -469,7 +469,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Resumos e análise',
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.ANALISE, P.CHAT],
-        context: { action: 'processo_selecionar' }
+        // context: { action: 'processo_selecionar' }
     },
     MINUTA_DE_SENTENCA: {
         status: StatusDeLancamento.PUBLICO,
