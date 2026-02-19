@@ -262,12 +262,12 @@ import linguagem_simples from '@/prompts/linguagem-simples.md'
 import relatorio_de_apelacao_e_triagem from '@/prompts/relatorio-de-apelacao-e-triagem.md'
 import degravacao from '@/prompts/degravacao.md'
 import template_a_partir_de_modelo from '@/prompts/template-a-partir-de-modelo.md'
-
 import pedidos_viabilidade_recurso from '@/prompts/admissibilidade-de-recurso/pedidos-viabilidade-recurso.md'
 import juizo_viabilidade_recurso from '@/prompts/admissibilidade-de-recurso/juizo-viabilidade-recurso.md'
 import decisao_viabilidade_recurso_extraordinario from '@/prompts/admissibilidade-de-recurso/decisao-viabilidade-recurso-extraordinario.md'
 import decisao_viabilidade_recurso_especial from '@/prompts/admissibilidade-de-recurso/decisao-viabilidade-recurso-especial.md'
 import pesquisa_de_temas from '@/prompts/admissibilidade-de-recurso/pesquisa-de-temas.md'
+import linha_do_tempo_fatica from '@/prompts/linha-do-tempo-fatica.md'
 
 // Enum for the different types of prompts
 export const internalPrompts = {
@@ -315,4 +315,5 @@ export const internalPrompts = {
     decisao_viabilidade_recurso_extraordinario: promptDefinitionFromMarkdown('decisao_viabilidade_recurso_extraordinario', decisao_viabilidade_recurso_extraordinario),
     decisao_viabilidade_recurso_especial: promptDefinitionFromMarkdown('decisao_viabilidade_recurso_especial', decisao_viabilidade_recurso_especial),
     pesquisa_de_temas: promptDefinitionFromMarkdown('pesquisa_de_temas', pesquisa_de_temas),
+    linha_do_tempo_fatica: promptDefinitionFromMarkdown('linha_do_tempo_fatica', linha_do_tempo_fatica),
 }

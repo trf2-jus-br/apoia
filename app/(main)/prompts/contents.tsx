@@ -22,12 +22,12 @@ export const copyPromptToClipboard = (prompt: IAPromptList) => {
     navigator.clipboard.writeText(s)
 }
 
-function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModerator, sidekick, toastMessage }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string, isModerator: boolean, sidekick?: boolean, toastMessage?: (message: string, variant: string) => void }) {
+function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, sidekick, toastMessage }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string, isModerator: boolean, sidekick?: boolean, toastMessage?: (message: string, variant: string) => void }) {
     const [termosAceitos, setTermosAceitos] = useState<boolean | null>(null)
     const [viewKey, setViewKey] = useState<number>(0)
-    const [promptsState, setPromptsState] = useState<IAPromptList[]>(prompts)
 
     const {
+        prompts,
         prompt,
         setPrompt,
         numeroDoProcesso,
@@ -43,7 +43,10 @@ function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModera
         replacePiecesParam,
         group,
         setGroup,
+        action
     } = usePromptContext()
+
+    const [promptsState, setPromptsState] = useState<IAPromptList[]>(prompts)
 
     useEffect(() => {
         const getCookie = (name: string): string | null => {
@@ -150,8 +153,8 @@ function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModera
     )
 
     const promptsSidekick = useMemo(
-        () => getPromptsSidekick(filteredPromptsBase, prompt, numeroDoProcesso, instance),
-        [filteredPromptsBase, prompt, numeroDoProcesso]
+        () => getPromptsSidekick(prompts, prompt, numeroDoProcesso, instance, action),
+        [prompts, prompt, numeroDoProcesso]
     )
 
     if (sidekick) {
@@ -217,7 +220,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model, isMode
     }
 
     return (
-        <PromptProvider prompts={prompts} toastMessage={toastMessage} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={sidekick}>
+        <PromptProvider originalPrompts={prompts} toastMessage={toastMessage} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={sidekick}>
             <ContentsInner
                 prompts={prompts}
                 user={user}

@@ -62,6 +62,7 @@
  * - Sanitizar HTML com DOMPurify quando aplicável
  */
 
+import { IAPromptList } from "../db/mysql-types"
 import { TargetKeys } from "../proc/process-types"
 
 // ============================================================================
@@ -88,7 +89,7 @@ export type SinkFromURLType = 'to-parent' | 'to-parent-automatic'
 // ============================================================================
 
 /** Tipos de mensagens suportados pelo sistema */
-export type MessageTypeType = 'auth-popup' | 'auth-completed' | 'get-source' | 'set-source' | 'approved' | 'get-sink' | 'set-sink'
+export type MessageTypeType = 'auth-popup' | 'auth-completed' | 'get-source' | 'set-source' | 'approved' | 'get-sink' | 'set-sink' | 'get-prompts' | 'set-prompts'
 
 /** Union type de todas as mensagens possíveis */
 export type MessageWithType = {
@@ -101,6 +102,8 @@ export type MessageWithType = {
         | ApproveMessageToParentType
         | SinkMessageToParentType
         | SinkMessageFromParentType
+        | PromptsMessageToParentType
+        | PromptsMessageFromParentType
     )
 
 /** Solicita abertura de popup de autenticação */
@@ -185,3 +188,16 @@ export type SinkMessageFromParentType = {
     }
 }
 
+export type PromptsMessageToParentType = {
+    type: 'get-prompts'
+    payload: {
+        prompts: IAPromptList[]
+    }
+}
+
+export type PromptsMessageFromParentType = {
+    type: 'set-prompts'
+    payload: {
+        prompts: IAPromptList[]
+    }
+}

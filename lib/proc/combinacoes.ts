@@ -77,6 +77,7 @@ export enum P {
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
     RELATORIO_DE_APELACAO_E_TRIAGEM = 'Relatório de Apelação e Triagem',
+    LINHA_DO_TEMPO_FATICA = 'Linha do Tempo Fática',
 }
 
 export enum Plugin {
@@ -123,6 +124,7 @@ export const ProdutosValidos = {
     [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
     [P.RELATORIO_DE_APELACAO_E_TRIAGEM]: { titulo: P.RELATORIO_DE_APELACAO_E_TRIAGEM, prompt: 'relatorio-de-apelacao-e-triagem', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
+    [P.LINHA_DO_TEMPO_FATICA]: { titulo: P.LINHA_DO_TEMPO_FATICA, prompt: 'linha-do-tempo-fatica', plugins: [] },
 }
 
 export interface ProdutoCompleto { produto: P, dados: T[] }
@@ -153,6 +155,16 @@ export const GrupoDeSinteseMap: Record<string, GrupoDeSinteseType> = {
 
 export type GrupoDeSinteseEnum = keyof typeof GrupoDeSinteseMap
 
+export type ExibitionContextActionType = 'processo_selecionar' | 'minuta_editar'
+
+export type ContextoDeExibicaoType = {
+    action?: ExibitionContextActionType | ExibitionContextActionType[],
+    document?: string | string[],
+    instance?: string | string[],
+    matter?: string | string[],
+    scope?: string | string[],
+}
+
 export type TipoDeSinteseType = {
     nome: string,
     author?: string,
@@ -169,6 +181,7 @@ export type TipoDeSinteseType = {
     matter?: string[],
     // Grupo ao qual este tipo de síntese pertence
     grupo?: GrupoDeSinteseType,
+    context?: ContextoDeExibicaoType
 }
 
 const pecasQueRepresentamContestacao = [
@@ -465,7 +478,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1,
         nome: 'Resumos e triagem',
         padroes: padroesBasicos,
-        produtos: [P.RESUMOS, P.RESUMO, P.CHAT]
+        produtos: [P.RESUMOS, P.RESUMO, P.CHAT],
+        // context: { action: 'processo_selecionar' }
     },
 
     RELATORIO_DE_APELACAO_E_TRIAGEM: {
@@ -474,7 +488,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1,
         nome: 'Relatório de Apelação e Triagem',
         padroes: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento],
-        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT]
+        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT],
+        // context: { action: 'processo_selecionar', instance: Instance.SEGUNDO_GRAU.name }
     },
 
     RESUMOS_ANALISE: {
@@ -482,7 +497,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 2,
         nome: 'Resumos e análise',
         padroes: padroesBasicos,
-        produtos: [P.RESUMOS, P.ANALISE, P.CHAT]
+        produtos: [P.RESUMOS, P.ANALISE, P.CHAT],
+        // context: { action: 'processo_selecionar' }
     },
     MINUTA_DE_SENTENCA: {
         status: StatusDeLancamento.PUBLICO,
@@ -490,7 +506,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Minuta de Sentença',
         padroes: [...padroesConhecimento, padraoConhecimentoForcado],
         produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.SENTENCA, P.CHAT],
-        instance: [Instance.PRIMEIRO_GRAU.name]
+        instance: [Instance.PRIMEIRO_GRAU.name],
+        context: { action: 'minuta_editar', instance: Instance.PRIMEIRO_GRAU.name }
     },
     MINUTA_DE_VOTO: {
         status: StatusDeLancamento.PUBLICO,
@@ -498,7 +515,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Minuta de Voto',
         padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
         produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT],
-        instance: [Instance.SEGUNDO_GRAU.name]
+        instance: [Instance.SEGUNDO_GRAU.name],
+        context: { action: 'minuta_editar', instance: Instance.SEGUNDO_GRAU.name }
     },
     DECISAO_DE_VIABILIDADE_DE_RE: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
@@ -535,6 +553,16 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         ],
         produtos: [PC(P.RESUMOS, [T.PETICAO_INICIAL]), P.LITIGANCIA_PREDATORIA, P.CHAT]
     },
+    LINHA_DO_TEMPO_FATICA: {
+        status: StatusDeLancamento.PUBLICO,
+        sort: 5,
+        nome: 'Linha do Tempo Fática',
+        padroes: [
+            [ANY(), EXACT(T.PETICAO_INICIAL), ANY()],
+        ],
+        produtos: [P.LINHA_DO_TEMPO_FATICA, P.CHAT],
+        // context: { action: 'processo_selecionar' }
+    },
     PEDIDOS: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 6,
@@ -552,14 +580,16 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         // tipos: [
         //     [T.PETICAO_INICIAL],
         // ],
-        produtos: [P.CHAT]
+        produtos: [P.CHAT],
+        context: {}
     },
     CHAT_STANDALONE: {
         status: StatusDeLancamento.PUBLICO,
         sort: 7,
         nome: 'Chat Padrão',
         target: 'CHAT',
-        produtos: [P.CHAT_STANDALONE]
+        produtos: [P.CHAT_STANDALONE],
+        context: {}
     },
 
     INDICE: {
@@ -663,7 +693,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1001,
         nome: 'Refinamento de Texto',
         target: 'REFINAMENTO',
-        produtos: [P.REFINAMENTO]
+        produtos: [P.REFINAMENTO],
+        context: { action: 'minuta_editar' }
     },
 
     REVISAO_DE_TEXTO: {
@@ -671,7 +702,8 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         sort: 1001,
         nome: 'Revisão Ortográfica',
         target: 'REFINAMENTO',
-        produtos: [P.REVISAO]
+        produtos: [P.REVISAO],
+        context: { action: 'minuta_editar' }
     }
 
 
