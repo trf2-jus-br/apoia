@@ -525,7 +525,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         produtos: [PC(P.RESUMOS, [T.PETICAO_INICIAL]), P.LITIGANCIA_PREDATORIA, P.CHAT]
     },
     LINHA_DO_TEMPO_FATICA: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        status: StatusDeLancamento.PUBLICO,
         sort: 5,
         nome: 'Linha do Tempo Fática',
         padroes: [
