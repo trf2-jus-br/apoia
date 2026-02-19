@@ -91,8 +91,7 @@ export default async function HomePage() {
             title: "Busca de Temas",
             description: "Encontre temas dos Tribunais Superiores através de busca semântica",
             href: "/semantic-search",
-            color: "text-library",
-            betaOnly: true
+            color: "text-library"
         },
         {
             icon: faBookOpen,

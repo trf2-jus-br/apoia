@@ -260,7 +260,7 @@ export default function SearchComponent() {
       </div>
 
       {/* Results */}
-      {searched && (
+      {searched && !loading && (
         <div className="mt-5" style={{ margin: "0 auto", width: "100%" }}>
           {results.length === 0 ? (
             <div className="text-center py-5">
