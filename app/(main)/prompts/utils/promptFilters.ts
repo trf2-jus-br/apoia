@@ -74,7 +74,7 @@ export function getPromptsSidekick(
         }
     }
 
-    let list = prompts
+    const list = [...prompts]
 
     list.sort((a, b) => {
         if (a.kind === '^CHAT_STANDALONE' && b.kind !== '^CHAT_STANDALONE') return -1
