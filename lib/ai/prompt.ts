@@ -265,6 +265,7 @@ import template_a_partir_de_modelo from '@/prompts/template-a-partir-de-modelo.m
 import pedidos_viabilidade_recurso from '@/prompts/pedidos-viabilidade-recurso.md'
 import decisao_viabilidade_recurso_extraordinario from '@/prompts/decisao-viabilidade-recurso-extraordinario.md'
 import decisao_viabilidade_recurso_especial from '@/prompts/decisao-viabilidade-recurso-especial.md'
+import linha_do_tempo_fatica from '@/prompts/linha-do-tempo-fatica.md'
 
 // Enum for the different types of prompts
 export const internalPrompts = {
@@ -310,4 +311,5 @@ export const internalPrompts = {
     pedidos_viabilidade_recurso: promptDefinitionFromMarkdown('pedidos_viabilidade_recurso', pedidos_viabilidade_recurso),
     decisao_viabilidade_recurso_extraordinario: promptDefinitionFromMarkdown('decisao_viabilidade_recurso_extraordinario', decisao_viabilidade_recurso_extraordinario),
     decisao_viabilidade_recurso_especial: promptDefinitionFromMarkdown('decisao_viabilidade_recurso_especial', decisao_viabilidade_recurso_especial),
+    linha_do_tempo_fatica: promptDefinitionFromMarkdown('linha_do_tempo_fatica', linha_do_tempo_fatica),
 }

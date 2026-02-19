@@ -75,6 +75,7 @@ export enum P {
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
     RELATORIO_DE_APELACAO_E_TRIAGEM = 'Relatório de Apelação e Triagem',
+    LINHA_DO_TEMPO_FATICA = 'Linha do Tempo Fática',
 }
 
 export enum Plugin {
@@ -119,6 +120,7 @@ export const ProdutosValidos = {
     [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
     [P.RELATORIO_DE_APELACAO_E_TRIAGEM]: { titulo: P.RELATORIO_DE_APELACAO_E_TRIAGEM, prompt: 'relatorio-de-apelacao-e-triagem', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
+    [P.LINHA_DO_TEMPO_FATICA]: { titulo: P.LINHA_DO_TEMPO_FATICA, prompt: 'linha-do-tempo-fatica', plugins: [] },
 }
 
 export interface ProdutoCompleto { produto: P, dados: T[] }
@@ -521,6 +523,16 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
             [ANY(), EXACT(T.PETICAO_INICIAL, true), ANY()],
         ],
         produtos: [PC(P.RESUMOS, [T.PETICAO_INICIAL]), P.LITIGANCIA_PREDATORIA, P.CHAT]
+    },
+    LINHA_DO_TEMPO_FATICA: {
+        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        sort: 5,
+        nome: 'Linha do Tempo Fática',
+        padroes: [
+            [ANY(), EXACT(T.PETICAO_INICIAL), ANY()],
+        ],
+        produtos: [P.LINHA_DO_TEMPO_FATICA, P.CHAT],
+        // context: { action: 'processo_selecionar' }
     },
     PEDIDOS: {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
