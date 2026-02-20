@@ -182,13 +182,15 @@ export function usePromptState(
                 case 'set-prompts':
                     const receivedPrompts = (event.data as PromptsMessageFromParentType).payload.prompts
                     if (Array.isArray(receivedPrompts) && receivedPrompts.length > 0) {
-                        const promptsMap = new Map(prompts.map(p => [p.id, p]))
-                        const list = []
+                        const hiddenById = new Map<number, boolean | undefined>()
                         for (const p of receivedPrompts) {
-                            if (p.id != null && promptsMap.has(p.id)) {
-                                list.push({ ...promptsMap.get(p.id), is_hidden: p.is_hidden })
-                            }
+                            if (p.id != null) hiddenById.set(p.id, p.is_hidden)
                         }
+                        const list = prompts.map((p) =>
+                            hiddenById.has(p.id)
+                                ? { ...p, is_hidden: hiddenById.get(p.id) }
+                                : p
+                        )
                         setPrompts(list)
                     }
             }

@@ -66,6 +66,9 @@ export function getPromptsSidekick(
                 p.is_hidden = calcHidden(hInstance, hAction)
             }
             if (p.is_favorite) p.is_hidden = false
+        } else if (p.is_favorite) {
+            // Non-internal favorites have no TipoDeSintese/context; keep them visible in Sidekick.
+            p.is_hidden = false
         }
 
         if (!p.is_hidden) {
