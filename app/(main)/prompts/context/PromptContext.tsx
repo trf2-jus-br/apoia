@@ -1,11 +1,17 @@
 'use client'
 
-import { createContext, useContext, ReactNode, useMemo } from 'react'
+import { createContext, useContext, ReactNode, useMemo, useState, useCallback } from 'react'
 import { IAPromptList, IALibrary } from '@/lib/db/mysql-types'
 import { DadosDoProcessoType, InstanceKeyType } from '@/lib/proc/process-types'
 import { useProcessData } from '../hooks/useProcessData'
 import { usePromptState } from '../hooks/usePromptState'
 import { SinkFromURLType, SourcePayloadType } from '@/lib/utils/messaging'
+
+interface ProcessedContentType {
+    title: string
+    html: string
+    timestamp: string
+}
 
 interface PromptContextValue {
     // Process Data
@@ -50,6 +56,11 @@ interface PromptContextValue {
     setGroup: (group: string | null) => void
     action: string | null
     setAction: (action: string | null) => void
+    
+    // Processed Contents for Static Page Generation
+    processedContents: Record<number, ProcessedContentType>
+    setProcessedContent: (requestIdx: number, title: string, html: string) => void
+    clearProcessedContents: () => void
 }
 
 const PromptContext = createContext<PromptContextValue | undefined>(undefined)
@@ -92,6 +103,24 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         sidekick
     )
 
+    // Processed Contents State
+    const [processedContents, setProcessedContentsState] = useState<Record<number, ProcessedContentType>>({})
+
+    const setProcessedContent = useCallback((requestIdx: number, title: string, html: string) => {
+        setProcessedContentsState(prev => ({
+            ...prev,
+            [requestIdx]: {
+                title,
+                html,
+                timestamp: new Date().toISOString()
+            }
+        }))
+    }, [])
+
+    const clearProcessedContents = useCallback(() => {
+        setProcessedContentsState({})
+    }, [])
+
     const value = useMemo(() => ({
         // Process Data
         numeroDoProcesso,
@@ -105,7 +134,12 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setNumber,
 
         // Prompt State
-        ...promptState
+        ...promptState,
+
+        // Processed Contents
+        processedContents,
+        setProcessedContent,
+        clearProcessedContents
     }), [
         numeroDoProcesso,
         setNumeroDoProcesso,
@@ -116,7 +150,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setDadosDoProcesso,
         number,
         setNumber,
-        promptState
+        promptState,
+        processedContents
     ])
 
     return (

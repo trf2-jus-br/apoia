@@ -2,11 +2,11 @@
 
 import { IALibrary, IALibraryInclusion, IAPrompt } from "@/lib/db/mysql-types";
 import { PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
-import { ReactNode, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { ReactNode, use, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { PieceStrategy, selecionarPecasPorPadraoComFase, T, TipoDeSinteseMap } from "@/lib/proc/combinacoes";
 import { GeneratedContent } from "@/lib/ai/prompt-types";
-import { ProgressBar } from "react-bootstrap";
+import { Button, ProgressBar } from "react-bootstrap";
 import Print from "@/components/slots/print";
 import Subtitulo from "@/components/slots/subtitulo";
 import ChoosePieces from "./choose-pieces";
@@ -41,7 +41,8 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         sinkFromURL,
         sinkButtonText,
         sourcePayload,
-        maxConfidentialityLevel
+        maxConfidentialityLevel,
+        processedContents
     } = usePromptContext()
     
     if (!prompt || !dadosDoProcesso) return null
@@ -55,6 +56,8 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const [choosingPieces, setChoosingPieces] = useState(!(sidekick && prompt?.kind === '^CHAT'))
     const [choosingLibrary, setChoosingLibrary] = useState(false)
     const searchParams = useSearchParams()
+    const isBetaTester = document.cookie.includes('beta-tester=2') || null
+    const { push } = useRouter()
 
     const changeSelectedPieces = (pieces: string[]) => {
         setSelectedPieces(dadosDoProcesso.pecas.filter(p => pieces.includes(p.id)))
@@ -84,6 +87,57 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         }
         const validDescrs = pieceDescr.map(d => T[d] || d)
         return allPieces.filter(p => validDescrs.includes(p.descr))
+    }
+
+    const generateStaticAudioPage = async () => {
+        if (!processedContents || Object.keys(processedContents).length === 0) {
+            alert('Nenhum conteúdo processado disponível.')
+            return
+        }
+
+        try {
+            const now = new Date()
+            const generatedAt = now.toLocaleDateString('pt-BR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+
+            const formatingForStaticPage = Object.fromEntries(
+                Object.entries(processedContents).map(([key, value]) => [
+                    key,
+                    {
+                        ...value,
+                        // html: value.html
+                        html: value.html.replace(/<li>/gm, '<p>').replace(/<\/li>/gm, '</p>').replace(/<ul>|<\/ul>|<ol>|<\/ol>/gm, '')
+                    }
+                ])
+            )
+
+            const response = await fetch(`/api/v1/static-page-cache`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    processedContents: formatingForStaticPage,
+                    promptId: prompt.id,
+                    promptName: prompt.name,
+                    processNumber: dadosDoProcesso.numeroDoProcesso,
+                    processTitle: dadosDoProcesso.classe || dadosDoProcesso.materia || 'Processo',
+                    generatedAt
+                })
+            })
+
+            if (!response.ok) throw new Error('Erro ao cachear dados')
+            const { cacheKey } = await response.json()
+            
+            // Navega com o cache key
+            push(`/process/${dadosDoProcesso.numeroDoProcesso}/static-page?cache=${cacheKey}`)
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'desconhecido'
+            alert(`Erro ao gerar página: ${message}`)
+        }
     }
 
     const getSelectedPiecesContents = async () => {
@@ -222,7 +276,10 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                 apiKeyProvided
                     ? <>
                         <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} model={model} sidekick={sidekick} promptButtons={promptButtons} sinkFromURL={sinkFromURL} sinkButtonText={sinkButtonText} />
-                        {!sidekick && <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />}
+                        <div className="d-flex flex-row justify-content-end gap-2">
+                            {!sidekick && isBetaTester && <Button variant="outline-primary" onClick={generateStaticAudioPage}>Gerar versão para áudio</Button>}
+                            {!sidekick && <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />}
+                        </div>
                     </>
                     : <PromptParaCopiar dadosDoProcesso={dadosDoProcesso} requests={requests} />
             )}</>}
