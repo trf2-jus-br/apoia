@@ -10,6 +10,7 @@ import { InteropProcessoType } from "../interop/interop-types"
 import { getPrecedentTool } from "./tools-juris"
 import { getLibraryDocumentTool } from "./tools-library"
 import { getPangeaTool } from "./tools-pangea"
+import { getSemanticSearchTool } from "./tools-semantic-search"
 import { cookies } from "next/headers"
 import { anonymizeText } from "../anonym/anonym"
 import { isAllowedUser } from "../utils/env"
@@ -180,6 +181,7 @@ export const getTools = async (pUser: Promise<UserType>) => {
         getPiecesText: getPieceContentTool(pUser),
         getLibraryDocument: getLibraryDocumentTool(pUser),
         getPangea: getPangeaTool(pUser), // sempre disponível (fase 1)
+        getSemanticSearch: getSemanticSearchTool(pUser), // busca semântica de temas e recursos repetitivos
     }
     try {
         // Check if the user is allowed to access the precedent tool, must be TRF2 and have a specific CPF

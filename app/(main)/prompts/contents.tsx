@@ -12,6 +12,7 @@ import { filterPrompts, getPromptsPrincipais, getPromptsComunidade, getPromptsSi
 import { MainView } from "./components/MainView"
 import { SidekickView } from "./components/SidekickView"
 import { PromptExecutionView } from "./components/PromptExecutionView"
+import { GroupView } from "./components/GroupView"
 import axios from "axios"
 
 export const copyPromptToClipboard = (prompt: IAPromptList) => {
@@ -21,12 +22,12 @@ export const copyPromptToClipboard = (prompt: IAPromptList) => {
     navigator.clipboard.writeText(s)
 }
 
-function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModerator, sidekick, toastMessage }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string, isModerator: boolean, sidekick?: boolean, toastMessage?: (message: string, variant: string) => void }) {
+function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, sidekick, toastMessage }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string, isModerator: boolean, sidekick?: boolean, toastMessage?: (message: string, variant: string) => void }) {
     const [termosAceitos, setTermosAceitos] = useState<boolean | null>(null)
     const [viewKey, setViewKey] = useState<number>(0)
-    const [promptsState, setPromptsState] = useState<IAPromptList[]>(prompts)
 
     const {
+        prompts,
         prompt,
         setPrompt,
         numeroDoProcesso,
@@ -40,7 +41,12 @@ function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModera
         setSinkButtonText,
         setSourcePayload,
         replacePiecesParam,
+        group,
+        setGroup,
+        action
     } = usePromptContext()
+
+    const [promptsState, setPromptsState] = useState<IAPromptList[]>(prompts)
 
     useEffect(() => {
         const getCookie = (name: string): string | null => {
@@ -147,8 +153,8 @@ function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModera
     )
 
     const promptsSidekick = useMemo(
-        () => getPromptsSidekick(filteredPromptsBase, prompt, numeroDoProcesso, instance),
-        [filteredPromptsBase, prompt, numeroDoProcesso]
+        () => getPromptsSidekick(prompts, prompt, numeroDoProcesso, instance, action),
+        [prompts, prompt, numeroDoProcesso]
     )
 
     if (sidekick) {
@@ -165,6 +171,23 @@ function ContentsInner({ prompts, user, user_id, apiKeyProvided, model, isModera
                 resetToHome={resetToHome}
                 resetProcess={resetProcess}
                 resetPrompt={resetPrompt}
+            />
+        )
+    }
+
+    // Callback para quando um prompt do grupo é clicado
+    const handleGroupPromptClick = (selectedPrompt: IAPromptList) => {
+        setGroup(null)
+        setPrompt(selectedPrompt)
+    }
+
+    // Se tem grupo selecionado, mostra a view de grupo
+    if (group) {
+        return (
+            <GroupView
+                groupSlug={group}
+                prompts={prompts}
+                onPromptClick={handleGroupPromptClick}
             />
         )
     }
@@ -197,7 +220,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model, isMode
     }
 
     return (
-        <PromptProvider prompts={prompts} toastMessage={toastMessage} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={sidekick}>
+        <PromptProvider originalPrompts={prompts} toastMessage={toastMessage} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={sidekick}>
             <ContentsInner
                 prompts={prompts}
                 user={user}

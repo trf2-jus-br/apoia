@@ -89,7 +89,7 @@ const ModelArray: ModelArrayType[] = [
     // { id: 9, name: 'gemini-2.0-flash', provider: ModelProvider.GOOGLE, inputTokenPPM: 0.1, outputTokenPPM: 0.4, status: StatusDeLancamento.PUBLICO },
     { id: 10, name: 'gemini-2.5-pro', provider: ModelProvider.GOOGLE, cachedInputTokenPPM: 0.25, inputTokenPPM: 2.5, outputTokenPPM: 15, status: StatusDeLancamento.PUBLICO, clip: 1000, supportedFileTypes: [FileTypeEnum.PDF, FileTypeEnum.MP3, FileTypeEnum.MP4, FileTypeEnum.WAV, FileTypeEnum.AIFF, FileTypeEnum.AAC, FileTypeEnum.OGG, FileTypeEnum.FLAC] },
     { id: 10, name: 'gemini-3-pro-preview', provider: ModelProvider.GOOGLE, cachedInputTokenPPM: 0.4, inputTokenPPM: 4, outputTokenPPM: 18, status: StatusDeLancamento.PUBLICO, clip: 1000, supportedFileTypes: [FileTypeEnum.PDF, FileTypeEnum.MP3, FileTypeEnum.MP4, FileTypeEnum.WAV, FileTypeEnum.AIFF, FileTypeEnum.AAC, FileTypeEnum.OGG, FileTypeEnum.FLAC] },
-    
+
     // { id: 4, name: 'gemini-1.5-pro-002', provider: ModelProvider.GOOGLE, inputTokenPPM: 2.5, outputTokenPPM: 10, status: StatusDeLancamento.PUBLICO },
     // { id: 5, name: 'llama-3.2-90b-text-preview', provider: ModelProvider.GROQ, inputTokenPPM: 1, outputTokenPPM: 1, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
     // { id: 6, name: 'llama-3.1-70b-versatile', provider: ModelProvider.GROQ, inputTokenPPM: 1, outputTokenPPM: 1, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
@@ -168,34 +168,38 @@ export function enumSorted(e: EnumOfObjectsType): any[] {
     return r.sort((a, b) => a.value.sort - b.value.sort)
 }
 
-export function modelCalcUsage(model: string, usage: UsageType): { input_tokens: number, output_tokens: number, approximate_cost: number } {
+export type ModelUsageResult = {
+    input_tokens: number, output_tokens: number, approximate_cost: number
+}
+
+export function modelCalcUsage(model: string, usage: UsageType): ModelUsageResult {
     const modelDetails: ModelValueType = Object.values(Model).find(m => m.name === model)
-    if (!modelDetails) {
-        console.warn(`Model not found: ${model}, using default token costs.`)
-    }
-    const cachedInputTokenPPM = modelDetails?.cachedInputTokenPPM || modelDetails?.inputTokenPPM || 5
-    const inputTokenPPM = modelDetails?.inputTokenPPM || 5
-    const reasoningTokenPPM = modelDetails?.outputTokenPPM || 15
-    const outputTokenPPM = modelDetails?.outputTokenPPM || 15
+    if(!modelDetails) {
+    console.warn(`Model not found: ${model}, using default token costs.`)
+}
+const cachedInputTokenPPM = modelDetails?.cachedInputTokenPPM || modelDetails?.inputTokenPPM || 5
+const inputTokenPPM = modelDetails?.inputTokenPPM || 5
+const reasoningTokenPPM = modelDetails?.outputTokenPPM || 15
+const outputTokenPPM = modelDetails?.outputTokenPPM || 15
 
-    const cachedInputTokens = usage.cachedInputTokens || 0
-    const reasoningTokens = usage.reasoningTokens || 0
-    const inputTokens = (usage.inputTokens || 0) - cachedInputTokens
-    const outputTokens = usage.outputTokens || 0
+const cachedInputTokens = usage.cachedInputTokens || 0
+const reasoningTokens = usage.reasoningTokens || 0
+const inputTokens = (usage.inputTokens || 0) - cachedInputTokens
+const outputTokens = usage.outputTokens || 0
 
-    const approximate_cost = (reasoningTokens + outputTokens) > 0
-        ? (cachedInputTokens * cachedInputTokenPPM
-            + inputTokens * inputTokenPPM
-            + reasoningTokens * reasoningTokenPPM
-            + outputTokens * outputTokenPPM) / 1000000
-        : (200000 * inputTokenPPM + 100000 * outputTokenPPM) / 1000000
+const approximate_cost = (reasoningTokens + outputTokens) > 0
+    ? (cachedInputTokens * cachedInputTokenPPM
+        + inputTokens * inputTokenPPM
+        + reasoningTokens * reasoningTokenPPM
+        + outputTokens * outputTokenPPM) / 1000000
+    : (200000 * inputTokenPPM + 100000 * outputTokenPPM) / 1000000
 
-    devLog(`Using model: ${modelDetails.name}, inputTokenPPM: ${inputTokenPPM}, outputTokenPPM: ${outputTokenPPM}`)
-    devLog('Cached input tokens:', cachedInputTokens)
-    devLog('Input tokens:', inputTokens)
-    devLog('Reasoning tokens:', reasoningTokens)
-    devLog('Output tokens:', outputTokens)
-    devLog(`Approximate cost: $${approximate_cost.toFixed(6)}`)
-    return { input_tokens: cachedInputTokens + inputTokens, output_tokens: reasoningTokens + outputTokens, approximate_cost }
+devLog(`Using model: ${modelDetails.name}, inputTokenPPM: ${inputTokenPPM}, outputTokenPPM: ${outputTokenPPM}`)
+devLog('Cached input tokens:', cachedInputTokens)
+devLog('Input tokens:', inputTokens)
+devLog('Reasoning tokens:', reasoningTokens)
+devLog('Output tokens:', outputTokens)
+devLog(`Approximate cost: $${approximate_cost.toFixed(6)}`)
+return { input_tokens: cachedInputTokens + inputTokens, output_tokens: reasoningTokens + outputTokens, approximate_cost }
 }
 

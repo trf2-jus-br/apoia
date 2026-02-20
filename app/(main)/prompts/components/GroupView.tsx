@@ -1,0 +1,101 @@
+'use client'
+
+import { Container, Row, Col, Card, CardBody, CardTitle, CardText, Button } from "react-bootstrap"
+import { IAPromptList } from "@/lib/db/mysql-types"
+import { GrupoDeSinteseMap, TipoDeSinteseMap } from "@/lib/proc/combinacoes"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faArrowLeft, faFileAlt } from "@fortawesome/free-solid-svg-icons"
+import { useRouter } from "next/navigation"
+
+interface GroupViewProps {
+    groupSlug: string
+    prompts: IAPromptList[]
+    onPromptClick: (prompt: IAPromptList) => void
+}
+
+export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps) {
+    const router = useRouter()
+    
+    // Encontra o grupo pelo slug
+    const group = Object.values(GrupoDeSinteseMap).find(g => g.slug === groupSlug)
+
+    if (!group) {
+        return (
+            <Container className="mt-4">
+                <div className="alert alert-warning">Grupo nao encontrado</div>
+            </Container>
+        )
+    }
+
+    // Filtra os prompts que pertencem a este grupo
+    const groupPrompts = prompts.filter(p => {
+        if (!p.kind?.startsWith('^')) return false
+        const tipoDeSinteseKey = p.kind.substring(1)
+        const tipoDeSintese = TipoDeSinteseMap[tipoDeSinteseKey]
+        return tipoDeSintese?.grupo?.slug === groupSlug
+    })
+
+    const handleBack = () => {
+        router.push('/')
+    }
+
+    return (
+        <Container className="mt-4" fluid={false}>
+            {/* Header */}
+            <div className="mb-4">
+                <h1 className="mb-1">{group.titulo}</h1>
+                <p className="text-muted mb-0">{group.descricao}</p>
+            </div>
+
+            {/* Cards dos prompts do grupo */}
+            {groupPrompts.length === 0 ? (
+                <div className="alert alert-info">
+                    Nenhum prompt disponivel neste grupo.
+                </div>
+            ) : (
+                <Row className="g-4">
+                    {groupPrompts.map((prompt) => {
+                        const tipoDeSinteseKey = prompt.kind?.substring(1) || ''
+                        const tipoDeSintese = TipoDeSinteseMap[tipoDeSinteseKey]
+                        
+                        return (
+                            <Col key={prompt.id} md={6} lg={3}>
+                                <Card 
+                                    className="h-100 text-center cursor-pointer"
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => onPromptClick(prompt)}
+                                >
+                                    <CardBody className="d-flex flex-column">
+                                        <div className="mb-3">
+                                            <FontAwesomeIcon
+                                                icon={faFileAlt}
+                                                size="3x"
+                                                className={group.cor || 'text-primary'}
+                                            />
+                                        </div>
+                                        <CardTitle className="h5 mb-3">
+                                            <span className="alert-link">{prompt.name}</span>
+                                        </CardTitle>
+                                        {tipoDeSintese?.author && (
+                                            <CardText className="text-body-tertiary flex-grow-1 small">
+                                                Autor: {tipoDeSintese.author}
+                                            </CardText>
+                                        )}
+                                    </CardBody>
+                                </Card>
+                            </Col>
+                        )
+                    })}
+                </Row>
+            )}
+
+            {/* Botao Voltar no final */}
+            <div className="mt-4">
+                <Button variant="outline-secondary" onClick={handleBack}>
+                    <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+                    Voltar
+                </Button>
+            </div>
+        </Container>
+    )
+}

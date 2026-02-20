@@ -38,10 +38,10 @@ O texto deve começar **diretamente** com o parágrafo abaixo, sem saudações:
 [INSERIR EMENTA RECUADA - BLOCKQUOTE]
 
 *Se houver Embargos de Declaração prévios:*
-> "Opostos embargos de declaração, estes foram desprovidos (evento X)."
+> "Opostos embargos de declaração, estes foram desprovidos [citar o evento e a peça]."
 
 *Se houver Contrarrazões:*
-> "Contrarrazões apresentadas no evento X."
+> "Contrarrazões apresentadas no [citar o evento e a peça]."
 
 #### B. A Ponte de Transição
 Imediatamente após o relatório, insira esta frase isolada em parágrafo próprio:

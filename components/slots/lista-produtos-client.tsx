@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, Suspense, useState } from 'react'
+import { Fragment, ReactNode, Suspense, useState } from 'react'
 import { slugify } from '@/lib/utils/utils'
 import { ResumoDePecaLoading } from '@/components/loading'
 import { calcMd5 } from '@/lib/utils/hash'
@@ -79,8 +79,10 @@ function previousArePending(Frm: FormHelper, requests: GeneratedContent[], idx: 
 }
 
 function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number, dossierCode: string, model: string, sidekick?: boolean, promptButtons?: ReactNode, sinkFromURL?: SinkFromURLType | null, sinkButtonText?: string | null, sourcePayload?: SourcePayloadType | null, dadosDoProcesso?: DadosDoProcessoType) {
+    if (previousArePending(Frm, requests, idx)) return null
     const request = requests[idx]
     let requestComTextosAnteriores = request
+    requestComTextosAnteriores = { ...requestComTextosAnteriores, data: dataComTextosAnteriores(Frm, requests, idx) }
 
     const informationExtractionVariableName = `_information_extraction_${idx}`
     const dataHash = calcMd5(request.data)
@@ -94,27 +96,23 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
     if (request.produto === P.PEDIDOS && pedidos) {
         return <Pedidos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
     } else if (request.produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) {
-        if (previousArePending(Frm, requests, idx)) return null
-        requestComTextosAnteriores = { ...requestComTextosAnteriores, data: dataComTextosAnteriores(Frm, requests, idx) }
         if (pedidos) {
-            return <>
-                <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} key={idx} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
+            return <Fragment key={idx}>
+                <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
                 {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx + 1}]`) && <Row className="h-print mb-3">
                     <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx + 1}]`), sourcePayload, slugify(requests[idx + 1]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
                 </Row>}
-            </>
+            </Fragment>
         }
     } else if (request.produto === P.JUIZO_VIABILIDADE_RECURSO) {
         console.log('requestSlot.PEDIDOS_VIABILIDADE_RECURSO', { request, pedidos })
-        if (previousArePending(Frm, requests, idx)) return null
-        requestComTextosAnteriores = { ...requestComTextosAnteriores, data: dataComTextosAnteriores(Frm, requests, idx) }
         if (pedidos) {
-            return <>
-                <PedidosViabilidadeRecurso pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} key={idx} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
+            return <Fragment key={idx}>
+                <PedidosViabilidadeRecurso pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
                 {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx + 1}]`) && <Row className="h-print mb-3">
                     <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx + 1}]`), sourcePayload, slugify(requests[idx + 1]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
                 </Row>}
-            </>
+            </Fragment>
         }
     } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction) {
         return <div key={idx}>
@@ -123,7 +121,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
         </div>
     } else if (request.produto === P.CHAT || request?.title.toLowerCase().startsWith('chat ')) {
         if (previousArePending(Frm, requests, idx)) return null
-        return <Chat definition={request.internalPrompt} data={dataComTextosAnteriores(Frm, requests, idx)} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
+        return <Chat definition={request.internalPrompt} data={requestComTextosAnteriores.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
     }
 
     return <div key={idx}>
@@ -156,6 +154,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
     for (let idx = 0; idx < requests.length; idx++) {
         if (idx > 0 && requests[idx - 1].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) continue
         if (idx > 0 && requests[idx - 1].produto === P.JUIZO_VIABILIDADE_RECURSO) continue
+        if (previousArePending(Frm, requests, idx)) break
         const ctrl = requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model, sidekick, promptButtons, sinkFromURL, sinkButtonText, sourcePayload, dadosDoProcesso)
         if (ctrl === null) break
         ctrls.push(ctrl)

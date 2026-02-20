@@ -59,7 +59,8 @@ async function POST_HANDLER(req: Request) {
         {}, // results
         null, // attempt
         apiKeyFromEnv,
-        withTools ? await getTools(pUser) : undefined
+        //withTools ? await getTools(pUser) : undefined
+        await getTools(pUser)
     )
 
     if (typeof ret === 'string') {

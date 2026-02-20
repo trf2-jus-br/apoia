@@ -12,13 +12,6 @@ Escreva de modo CONCISO, mas completo e abrangente, sem redundância
 
 Você receberá os textos de peças processuais recursais (Recurso Extraordinário ou Recurso Especial) e deverá identificar os pedidos realizados pelo recorrente que são objeto da análise de admissibilidade.
 
-Analise o teor do recurso para definir o campo `proximoPrompt`:
-- Se for um Recurso Extraordinário (matéria constitucional/STF), preencha com "DECISAO_ADMISSIBILIDADE_RECURSO_EXTRAORDINARIO".
-- Se for um Recurso Especial (matéria infraconstitucional/STJ), preencha com "DECISAO_ADMISSIBILIDADE_RECURSO_ESPECIAL".
-
-
-
-
 ## Formato da Resposta
 
 Sua resposta será no formato JSON e deve observar alguns campos padronizados conforme listagens abaixo:
@@ -121,5 +114,9 @@ Identifique os pedidos realizados na peça recursal abaixo:
 }
 
 # FORMAT
-{% for d in pedidos %}{{loop.index}}. {% if d.pedidoDeEfeitoSuspensivo === 'SIM' %}[C/ EFEITO SUSPENSIVO] {% endif %}{{ d.texto }}{% for a in d.argumentos %}
-  * {{ a.texto }}% endfor %}{% endfor %}
+{% for d in pedidos %}{% set outerIndex = loop.index %}**Pedido {{loop.index}}:** {% if d.pedidoDeEfeitoSuspensivo === 'SIM' %}[C/ EFEITO SUSPENSIVO] {% endif %}{{ d.texto }}
+
+Argumentos:{% for a in d.argumentos %}
+{{loop.index}}. {{ a.texto }}{% endfor %}
+    
+{% endfor %}

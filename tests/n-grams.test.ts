@@ -710,21 +710,157 @@ describe('highlightCitationsLongestMatch', () => {
   });
 
 
-  //   test('embargos de declaracao desprovidos', () => {
-  //     const sourceHtml = `
-  // o momento no qual é verificada a disponibilidade jurídica de renda em repetição de indébito tributário ou em reconhecimento do direito à compensação julgado procedente e já transitado em julgado, para a caracterização do fato gerador do IRPJ e da CSLL, na hipótese de créditos ilíquidos 
+  describe('Bug: nao-citacao marcado incorretamente', () => {
 
-  //     `;
-  //     const generatedHtml = `
-  // <p>Discute-se, no presente caso, o momento no qual é verificada a disponibilidade jurídica de renda em repetição de indébito tributário ou em reconhecimento do direito à compensação julgado procedente e já transitado em julgado, para a caracterização do fato gerador do IRPJ e da CSLL, na hipótese de créditos ilíquidos.</p>
-  //     `;
+    test('NÃO deve marcar nao-citacao no início de item de lista', () => {
+      const sourceHtml = `
+        <library-document title="Doc1">
+          116, II, e 117, I, do CTN,
+        </library-document>
+      `;
+      const generatedHtml = `
+        <ol>
+          <li>Afronta aos artigos 116, II, e 117, I, do CTN, pois o crédito estaria sujeito a condições futuras.</li>
+        </ol>
+      `;
 
-  //     const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 8);
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
 
-  //     console.log('Result:', result);
-  //     // O gap longo NÃO deve ter nao-citacao (tem mais de 3 palavras)
-  //     expect(result).not.toContain('<li>Embargos de declaração desprovidos.</li>');
-  //     // expect(result).toContain('<li><span class="citacao" title="gproc_20001282156.html (e. 72, 2º GRAU)">Embargos de declaração desprovidos.</span></li>');
-  //   });
+      // "Afronta aos artigos" NÃO deve ser marcado como nao-citacao
+      // (não está entre duas citações, está no início)
+      expect(result).not.toContain('<span class="nao-citacao">Afronta aos artigos</span>');
+      
+      // A citação deve existir
+      expect(result).toContain('<span class="citacao"');
+      expect(result).toContain('116, II, e 117, I, do CTN');
+    });
+
+    test('NÃO deve marcar nao-citacao entre citações quebradas na mesma frase', () => {
+      const sourceHtml = `
+        <library-document title="Doc1">
+          da Lei nº 7.689/88 e ao
+        </library-document>
+        <library-document title="Doc2">
+          12 da Lei nº 9.430/96,
+        </library-document>
+      `;
+      const generatedHtml = `
+        <li>Ofensa aos artigos 1º e 2º da Lei nº 7.689/88 e ao artigo 12 da Lei nº 9.430/96, dado que a tributação é indevida.</li>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      // "Ofensa aos artigos 1º e 2º" não deve ser nao-citacao (está no início)
+      expect(result).not.toContain('<span class="nao-citacao">Ofensa aos artigos 1º e 2º</span>');
+      
+      // " artigo " é apenas 1 palavra entre duas citações, mas em contexto de lista
+      // Se for marcado, deve ser por estar realmente entre citações
+      // O problema é que pode estar marcando incorretamente
+      
+      // As citações devem existir
+      expect(result).toContain('da Lei nº 7.689/88 e ao');
+      expect(result).toContain('12 da Lei nº 9.430/96');
+    });
+
+    test('NÃO deve marcar nao-citacao quando há apenas UMA citação no texto', () => {
+      const sourceHtml = `
+        <library-document title="Doc1">
+          respectivas Declarações de Compensação (PER/DCOMP).
+        </library-document>
+      `;
+      const generatedHtml = `
+        <p>Pedido: reconhecendo o direito da recorrente de submeter à tributação apenas no momento da transmissão das respectivas Declarações de Compensação (PER/DCOMP).</p>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      // Não deve haver nao-citacao (só há 1 citação, não há "entre citações")
+      expect(result).not.toContain('class="nao-citacao"');
+      
+      // A citação deve existir
+      expect(result).toContain('<span class="citacao"');
+      expect(result).toContain('respectivas Declarações de Compensação');
+    });
+
+    test('caso real: múltiplos itens de lista com citações parciais', () => {
+      const sourceHtml = `
+        <doc1>de que o fato gerador do IRPJ e da CSLL</doc1>
+        <doc2>116, II, e 117, I, do CTN,</doc2>
+        <doc3>da Lei nº 7.689/88 e ao</doc3>
+        <doc4>12 da Lei nº 9.430/96,</doc4>
+        <doc5>ser excluído da base de cálculo do PIS/COFINS.</doc5>
+      `;
+      const generatedHtml = `
+        <ol>
+          <li>Violação aos artigos 43 e 45 do CTN, sob o fundamento de que o fato gerador do IRPJ e da CSLL pressupõe a disponibilidade econômica.</li>
+          <li>Afronta aos artigos 116, II, e 117, I, do CTN, pois o crédito estaria sujeito a condições futuras.</li>
+          <li>Ofensa aos artigos 1º e 2º da Lei nº 7.689/88 e ao artigo 12 da Lei nº 9.430/96, dado que a tributação é indevida.</li>
+          <li>Impossibilidade de mensuração do indébito, que consolidou o entendimento sobre qual ICMS deve ser excluído da base de cálculo do PIS/COFINS.</li>
+        </ol>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      // Textos no INÍCIO de cada item de lista NÃO devem ser marcados como nao-citacao
+      expect(result).not.toContain('<span class="nao-citacao">Violação aos artigos 43 e 45 do CTN, sob o fundamento</span>');
+      expect(result).not.toContain('<span class="nao-citacao">Afronta aos artigos</span>');
+      expect(result).not.toContain('<span class="nao-citacao">Ofensa aos artigos 1º e 2º</span>');
+      expect(result).not.toContain('<span class="nao-citacao">Impossibilidade de mensuração do indébito, que consolidou o entendimento sobre qual ICMS deve</span>');
+      
+      // As citações devem existir
+      expect(result).toContain('de que o fato gerador do IRPJ e da CSLL');
+      expect(result).toContain('116, II, e 117, I, do CTN');
+      expect(result).toContain('da Lei nº 7.689/88 e ao');
+      expect(result).toContain('12 da Lei nº 9.430/96');
+      expect(result).toContain('ser excluído da base de cálculo do PIS/COFINS');
+    });
+
+    test('caso real completo do bug reportado', () => {
+      const sourceHtml = `
+        <acordao event="74, 2º Grau" label="ACOR1">
+          <page number="1">respectivas Declarações de Compensação (PER/DCOMP).</page>
+        </acordao>
+        <acordao event="88, 2º Grau" label="CONTRAZRESP1">
+          <page number="12">de que o fato gerador do IRPJ e da CSLL</page>
+        </acordao>
+        <acordao event="80, 2º Grau" label="RECESPEC1">
+          <page number="5">116, II, e 117, I, do CTN,</page>
+          <page number="3">da Lei nº 7.689/88 e ao</page>
+          <page number="3">12 da Lei nº 9.430/96,</page>
+          <page number="17">ser excluído da base de cálculo do PIS/COFINS.</page>
+          <page number="15">o retorno dos autos ao Tribunal de origem</page>
+        </acordao>
+      `;
+      
+      const generatedHtml = `
+        <div><p>Pedido 1: Conhecer e dar provimento ao recurso especial para reformar o acórdão recorrido, reconhecendo o direito da recorrente de submeter à tributação pelo IRPJ e pela CSLL o indébito tributário reconhecido judicialmente apenas no momento da transmissão das respectivas Declarações de Compensação (PER/DCOMP).</p>
+        <p>Argumentos:</p>
+        <ol>
+        <li>Violação aos artigos 43 e 45 do CTN, sob o fundamento de que o fato gerador do IRPJ e da CSLL pressupõe a disponibilidade econômica ou jurídica de renda.</li>
+        <li>Afronta aos artigos 116, II, e 117, I, do CTN, pois o crédito estaria sujeito a condições futuras.</li>
+        <li>Ofensa aos artigos 1º e 2º da Lei nº 7.689/88 e ao artigo 12 da Lei nº 9.430/96, dado que a tributação de créditos incertos antes da efetiva recuperação viola o conceito de lucro real.</li>
+        <li>Divergência jurisprudencial em relação a julgados que entendem que o fato gerador somente ocorre com a homologação.</li>
+        <li>Impossibilidade de mensuração do indébito antes do julgamento definitivo dos embargos, que consolidou o entendimento sobre qual ICMS deve ser excluído da base de cálculo do PIS/COFINS.</li>
+        </ol>
+        <p>Pedido 2: Subsidiariamente, decretar a nulidade do acórdão recorrido por violação ao artigo 1.022 do CPC, determinando o retorno dos autos ao Tribunal de origem para novo julgamento.</p></div>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      // Principais verificações: textos no início dos itens NÃO devem ser nao-citacao
+      expect(result).not.toContain('<span class="nao-citacao" title="Trecho destacado para indicar que não é uma citação, mas está entre citações">Afronta aos artigos </span>');
+      expect(result).not.toContain('<span class="nao-citacao" title="Trecho destacado para indicar que não é uma citação, mas está entre citações">Ofensa aos artigos 1º e 2º </span>');
+      
+      // Verificar que as citações existem
+      expect(result).toContain('respectivas Declarações de Compensação (PER/DCOMP)');
+      expect(result).toContain('de que o fato gerador do IRPJ e da CSLL');
+      expect(result).toContain('116, II, e 117, I, do CTN');
+      expect(result).toContain('da Lei nº 7.689/88 e ao');
+      expect(result).toContain('12 da Lei nº 9.430/96');
+      expect(result).toContain('ser excluído da base de cálculo do PIS/COFINS');
+      expect(result).toContain('o retorno dos autos ao Tribunal de origem');
+    });
+
+  });
 
 });

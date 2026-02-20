@@ -2,6 +2,7 @@ import { IAPromptList } from "@/lib/db/mysql-types"
 import { Instance, Matter, Scope } from "@/lib/proc/process-types"
 import { slugify } from "@/lib/utils/utils"
 import { enumSorted } from "@/lib/ai/model-types"
+import { TipoDeSinteseMap } from "@/lib/proc/combinacoes"
 
 export interface PromptFilters {
     scope?: string
@@ -33,30 +34,47 @@ export function getPromptsSidekick(
     prompts: IAPromptList[],
     selectedPrompt: IAPromptList | null,
     numeroDoProcesso: string | null,
-    instance: string | null
+    instance: string | null,
+    action: string | null
 ): IAPromptList[] {
     const chatIsCurrentPrompt = selectedPrompt?.kind === '^CHAT'
 
     const chat = prompts.find((p) => p.kind === '^CHAT')
     if (chat) chat.name = 'Chat com Peças Selecionadas'
 
-    let list = prompts.filter(
-        (p) =>
-            p.is_favorite ||
-            (p.kind === '^MINUTA_DE_SENTENCA') ||
-            (p.kind === '^MINUTA_DE_VOTO') ||
-            (p.kind === '^REFINAMENTO_DE_TEXTO') ||
-            (p.kind === '^REVISAO_DE_TEXTO') ||
-            (p.kind === '^CHAT' && !chatIsCurrentPrompt) ||
-            (p.kind === '^CHAT_STANDALONE' && !numeroDoProcesso)
-    )
-
-    if (instance) {
-        list = list.filter((p) => {
-            if (!p.content.instance || p.content.instance.length === 0) return true
-            return p.content.instance.includes(instance)
-        })
+    const isVisible = (v: string, contextV: string | string[]) => {
+        if (!v) return undefined
+        if (!contextV) return undefined
+        if (Array.isArray(contextV)) {
+            return contextV.includes(v)
+        } else {
+            return contextV === v
+        }
     }
+
+    const calcHidden = (...flags: (boolean | undefined)[]) => {
+        return flags.some(f => f === false)
+    }
+
+    for (const p of prompts) {
+        if (p.kind?.startsWith('^')) {
+            const tipoDeSintese = TipoDeSinteseMap[p.kind.substring(1)]
+            if (tipoDeSintese && tipoDeSintese.context) {
+                const hInstance = isVisible(instance, tipoDeSintese.context?.instance)
+                console.log('Prompt', p.name, 'instance visibility:', hInstance)
+                const hAction = isVisible(action, tipoDeSintese.context?.action)
+                p.is_hidden = calcHidden(hInstance, hAction)
+            }
+            if (p.is_favorite) p.is_hidden = false
+        }
+
+        if (!p.is_hidden) {
+            if (p.kind === '^CHAT' && chatIsCurrentPrompt) p.is_hidden = true
+            if (p.kind === '^CHAT_STANDALONE' && numeroDoProcesso) p.is_hidden = true
+        }
+    }
+
+    const list = [...prompts]
 
     list.sort((a, b) => {
         if (a.kind === '^CHAT_STANDALONE' && b.kind !== '^CHAT_STANDALONE') return -1

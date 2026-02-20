@@ -1,13 +1,18 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret, faBoxArchive, faBookOpen, faPen, faPencil, faUsers } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret, faBoxArchive, faBookOpen, faPen, faPencil, faUsers, faBalanceScale, faSearch } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
 import { assertCurrentUser } from '@/lib/user'
+import { cookies } from 'next/headers'
 
 export default async function HomePage() {
     const user = await assertCurrentUser()
+    
+    // Verifica se é beta tester
+    const cookieStore = await cookies()
+    const isBetaTester = cookieStore.get('beta-tester')?.value === '2'
 
     const features = [
         {
@@ -46,6 +51,14 @@ export default async function HomePage() {
             color: "text-brown"
         },
         {
+            icon: faBalanceScale,
+            title: "Admissibilidade de Recursos",
+            description: "Analise a viabilidade de recursos extraordinários e especiais",
+            href: "/prompts?group=decisao-de-viabilidade",
+            color: "text-library",
+            betaOnly: true
+        },
+        {
             icon: faFileText,
             title: "Revisão de Texto",
             description: "Revise e aprimore textos jurídicos com IA",
@@ -72,6 +85,13 @@ export default async function HomePage() {
             description: "Transcreva áudios de audiências e sessões com IA",
             href: "/transcription",
             color: "text-info"
+        },
+        {
+            icon: faSearch,
+            title: "Busca de Temas",
+            description: "Encontre temas dos Tribunais Superiores através de busca semântica",
+            href: "/semantic-search",
+            color: "text-library"
         },
         {
             icon: faBookOpen,
@@ -125,7 +145,7 @@ export default async function HomePage() {
                     <h2 className="text-center mb-4">Escolha uma das ferramentas abaixo para começar:</h2>
 
                     <Row className="g-4">
-                        {features.map((feature, index) => (
+                        {features.filter(f => !f.betaOnly || isBetaTester).map((feature, index) => (
                             <Col key={index} md={6} lg={3}>
                                 <Link href={feature.href} className="text-decoration-none text-dark">
                                     <Card className="h-100 text-center">

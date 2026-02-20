@@ -240,7 +240,7 @@ function AsyncSelectComponent<T>({
 
         debounceTimerRef.current = setTimeout(() => {
             handleSearch(query)
-        }, 400)
+        }, 1000)
     }
 
     const handleSelect = (item: T) => {
