@@ -485,7 +485,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         </>
     ), [messagesContent, controlsContent])
 
-    return (<div className={params.sidekick ? 'sidekick-container' : (messages.find(m => m.role === 'assistant') ? '' : 'd-print-none h-print')}>
+    return (<article className={params.sidekick ? 'sidekick-container' : (messages.find(m => m.role === 'assistant') ? '' : 'd-print-none h-print')}>
         {params.sidekick
             ? <>
                 <div className="sidekick-chat-box pb-3">
@@ -534,6 +534,6 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                 <CompAny show={true} context={suggestionCtx} initial={activeModalInitial} draft={draft} onSubmit={onSubmit} onClose={onClose} />
             )
         })()}
-    </div>
+    </article>
     );
 }

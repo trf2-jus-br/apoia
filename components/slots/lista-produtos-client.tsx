@@ -97,34 +97,34 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
         return <Pedidos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
     } else if (request.produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) {
         if (pedidos) {
-            return <Fragment key={idx}>
+            return <article key={idx}>
                 <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
                 {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx + 1}]`) && <Row className="h-print mb-3">
                     <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx + 1}]`), sourcePayload, slugify(requests[idx + 1]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
                 </Row>}
-            </Fragment>
+            </article>
         }
     } else if (request.produto === P.JUIZO_VIABILIDADE_RECURSO) {
         console.log('requestSlot.PEDIDOS_VIABILIDADE_RECURSO', { request, pedidos })
         if (pedidos) {
-            return <Fragment key={idx}>
+            return <article key={idx}>
                 <PedidosViabilidadeRecurso pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
                 {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx + 1}]`) && <Row className="h-print mb-3">
                     <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx + 1}]`), sourcePayload, slugify(requests[idx + 1]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
                 </Row>}
-            </Fragment>
+            </article>
         }
     } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction) {
-        return <div key={idx}>
+        return <article key={idx}>
             <AiTitle request={request} />
             <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />
-        </div>
+        </article>
     } else if (request.produto === P.CHAT || request?.title.toLowerCase().startsWith('chat ')) {
         if (previousArePending(Frm, requests, idx)) return null
         return <Chat definition={request.internalPrompt} data={requestComTextosAnteriores.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
     }
 
-    return <div key={idx}>
+    return <article key={idx}>
         <AiTitle request={request} />
         <Suspense fallback={ResumoDePecaLoading()}>
             <AiContent definition={request.internalPrompt} data={requestComTextosAnteriores.data} key={`prompt: ${request.promptSlug} data: ${dataHash}`} onBusy={() => onBusy(Frm, requests, idx)} onReady={(content) => onReady(Frm, requests, idx, content)}
@@ -135,7 +135,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
             <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx}]`), sourcePayload, slugify(requests[idx]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
         </Row>}
 
-    </div>
+    </article>
 }
 
 export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, promptButtons, sinkFromURL, sinkButtonText }: { dadosDoProcesso: DadosDoProcessoType, requests: GeneratedContent[], model: string, sidekick?: boolean, promptButtons?: ReactNode, sinkFromURL?: SinkFromURLType, sinkButtonText?: string }) => {

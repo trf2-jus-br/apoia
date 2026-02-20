@@ -18,6 +18,7 @@ import { buildFooterFromPieces } from "@/lib/utils/footer";
 import { formatDateTime } from "@/lib/utils/date";
 import { buildRequests } from "@/lib/ai/build-requests";
 import { usePromptContext } from "./context/PromptContext";
+import Listen from "@/components/slots/listen";
 
 // Helper function to check confidentiality level on client side
 const isNivelDeSigiloPermitidoClient = (maxConfidentialityLevel: number, nivel: string): boolean => {
@@ -43,7 +44,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         sourcePayload,
         maxConfidentialityLevel
     } = usePromptContext()
-    
+
     if (!prompt || !dadosDoProcesso) return null
     const [selectedPieces, setSelectedPieces] = useState<PecaType[] | null>(null)
     const [defaultPieceIds, setDefaultPieceIds] = useState<string[] | null>(null)
@@ -55,6 +56,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const [choosingPieces, setChoosingPieces] = useState(!(sidekick && prompt?.kind === '^CHAT'))
     const [choosingLibrary, setChoosingLibrary] = useState(false)
     const searchParams = useSearchParams()
+    const isBetaTester = document.cookie.includes('beta-tester=2') || null
 
     const changeSelectedPieces = (pieces: string[]) => {
         setSelectedPieces(dadosDoProcesso.pecas.filter(p => pieces.includes(p.id)))
@@ -222,14 +224,17 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                 apiKeyProvided
                     ? <>
                         <ListaDeProdutos dadosDoProcesso={dadosDoProcesso} requests={requests} model={model} sidekick={sidekick} promptButtons={promptButtons} sinkFromURL={sinkFromURL} sinkButtonText={sinkButtonText} />
-                        {!sidekick && <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />}
+                        {!sidekick && <div className="d-flex flex-row justify-content-end gap-2">
+                            {isBetaTester && <Listen />}
+                            <Print numeroDoProcesso={dadosDoProcesso.numeroDoProcesso} />
+                        </div>}
                     </>
                     : <PromptParaCopiar dadosDoProcesso={dadosDoProcesso} requests={requests} />
             )}</>}
         {!sidekick && <>
-            <hr className="mt-5" />
-            <p style={{ textAlign: 'center' }}>Este documento foi gerado pela Apoia, ferramenta de inteligência artificial desenvolvida exclusivamente para facilitar a triagem de acervo, e não substitui a elaboração de relatório específico em cada processo, a partir da consulta manual aos eventos dos autos. Textos gerados por inteligência artificial podem conter informações imprecisas ou incorretas.</p>
-            <p style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}), em ${formatDateTime(new Date().toISOString())}, ${buildFooterFromPieces(model, (selectedPieces || []).map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
+            <hr className="mt-5 h-listen" />
+            <p className="h-listen" style={{ textAlign: 'center' }}>Este documento foi gerado pela Apoia, ferramenta de inteligência artificial desenvolvida exclusivamente para facilitar a triagem de acervo, e não substitui a elaboração de relatório específico em cada processo, a partir da consulta manual aos eventos dos autos. Textos gerados por inteligência artificial podem conter informações imprecisas ou incorretas.</p>
+            <p className="h-listen" style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}), em ${formatDateTime(new Date().toISOString())}, ${buildFooterFromPieces(model, (selectedPieces || []).map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
         </>}
     </div >
 }
