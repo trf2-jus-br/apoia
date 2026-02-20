@@ -1,18 +1,21 @@
 'use client'
 
-import { Button } from "react-bootstrap"
+import { useEffect, useRef, useState } from "react"
+import { Button, Form } from "react-bootstrap"
 
 export default function Listen(params) {
     const dadosDoProcesso = params.dadosDoProcesso
+    const [html, setHtml] = useState('')
+    const formRef = useRef<HTMLFormElement>(null)
 
     // Remover:
     // - todos os elementos marcados com d-print-none ou h-print, d-listen-none ou h-listen, 
     //   para evitar que sejam incluídos na versão para áudio. 
     // - elementos do tipo <span> e deixar apenas o texto, a menos que o span tenha alguma classe específica que deva ser mantida (isso pode ser ajustado conforme necessário).
     // - classes alert e alert-* de <div>, mas manter a div.
-    const sanitizeHtml = (html: string) => {
+    const sanitizeHtml = (rawHtml: string) => {
         const parser = new DOMParser()
-        const doc = parser.parseFromString(html, 'text/html')
+        const doc = parser.parseFromString(rawHtml, 'text/html')
 
         doc.querySelectorAll('.d-print-none, .h-print, .d-listen-none, .h-listen').forEach(el => el.remove())
 
@@ -30,10 +33,10 @@ export default function Listen(params) {
         return doc.body.innerHTML
     }
 
-    const handleClick = (e) => {
+    const handleClick = () => {
         const printDiv = document.querySelector('#printDiv')
         const innerHTML = printDiv ? printDiv.innerHTML : ''
-        const htm = sanitizeHtml(innerHTML)
+        const body = sanitizeHtml(innerHTML)
 
         const fullHtml = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -48,24 +51,26 @@ export default function Listen(params) {
 </style>
 </head>
 <body>
-${htm}
+${body}
 </body>
 </html>`
 
-        const blob = new Blob([fullHtml], { type: 'text/html' })
-        const url = URL.createObjectURL(blob)
-        const win = window.open(url, '_blank')
-        if (!win) {
-            alert('Não foi possível abrir a nova aba. Verifique se o bloqueador de pop-ups está ativo.')
-        }
-        // Libera a URL após a aba ter tido tempo de carregar o conteúdo
-        setTimeout(() => URL.revokeObjectURL(url), 10_000)
+        setHtml(fullHtml)
     }
+
+    useEffect(() => {
+        if (!html) return
+        formRef.current?.submit()
+        setHtml('')
+    }, [html])
 
     return (
         <div className="h-print" style={{ height: '1em' }}>
+            <Form ref={formRef} action="/api/listen" method="post" target="_blank" className="d-none">
+                <input type="hidden" name="html" value={html} />
+            </Form>
             <div className="float-end">
-                <Button variant="primary" type="button" onClick={(e) => handleClick(e)}>Ouvir</Button>
+                <Button variant="primary" type="button" onClick={handleClick}>Ouvir</Button>
             </div>
         </div>
     )
