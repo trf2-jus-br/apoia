@@ -35,12 +35,7 @@ export default function Listen(params) {
         const innerHTML = printDiv ? printDiv.innerHTML : ''
         const htm = sanitizeHtml(innerHTML)
 
-        const win = window.open('', '_blank')
-        if (!win) {
-            alert('Não foi possível abrir a nova aba. Verifique se o bloqueador de pop-ups está ativo.')
-            return
-        }
-        win.document.write(`<!DOCTYPE html>
+        const fullHtml = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -55,8 +50,16 @@ export default function Listen(params) {
 <body>
 ${htm}
 </body>
-</html>`)
-        win.document.close()
+</html>`
+
+        const blob = new Blob([fullHtml], { type: 'text/html' })
+        const url = URL.createObjectURL(blob)
+        const win = window.open(url, '_blank')
+        if (!win) {
+            alert('Não foi possível abrir a nova aba. Verifique se o bloqueador de pop-ups está ativo.')
+        }
+        // Libera a URL após a aba ter tido tempo de carregar o conteúdo
+        setTimeout(() => URL.revokeObjectURL(url), 10_000)
     }
 
     return (
