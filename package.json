@@ -37,6 +37,7 @@
     "@sentry/nextjs": "^10.29.0",
     "@tanstack/react-table": "^8.21.3",
     "@types/diff-match-patch": "^1.0.36",
+    "@types/jsdom": "^27.0.0",
     "@types/knex": "^0.16.1",
     "@types/ms": "^2.1.0",
     "@types/node": "24.2.1",

@@ -1,12 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from "react"
-import { Button, Form } from "react-bootstrap"
+import { Button } from "react-bootstrap"
 
 export default function Listen(params) {
     const dadosDoProcesso = params.dadosDoProcesso
-    const [html, setHtml] = useState('')
-    const formRef = useRef<HTMLFormElement>(null)
 
     // Remover:
     // - todos os elementos marcados com d-print-none ou h-print, d-listen-none ou h-listen, 
@@ -33,45 +30,32 @@ export default function Listen(params) {
         return doc.body.innerHTML
     }
 
-    const handleClick = () => {
+    const handleClick = async () => {
         const printDiv = document.querySelector('#printDiv')
         const innerHTML = printDiv ? printDiv.innerHTML : ''
         const body = sanitizeHtml(innerHTML)
 
-        const fullHtml = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${dadosDoProcesso?.numeroDoProcesso || 'Processo'}</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; line-height: 1.8; font-size: 1.1rem; color: #222; }
-  h1, h2, h3 { margin-top: 1.5rem; }
-  p { margin-bottom: 1rem; }
-</style>
-</head>
-<body>
-${body}
-</body>
-</html>`
+        const res = await fetch('/api/plain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html: body, title: dadosDoProcesso?.numeroDoProcesso || 'Processo' }),
+        })
 
-        setHtml(fullHtml)
+        if (!res.ok) {
+            alert('Erro ao gerar página de texto simples.')
+            return
+        }
+
+        const { id } = await res.json()
+        window.open(`/plain/${id}`, '_blank')
     }
-
-    useEffect(() => {
-        if (!html) return
-        formRef.current?.submit()
-        setHtml('')
-    }, [html])
 
     return (
         <div className="h-print" style={{ height: '1em' }}>
-            <Form ref={formRef} action="/api/listen" method="post" target="_blank" className="d-none">
-                <input type="hidden" name="html" value={html} />
-            </Form>
             <div className="float-end">
-                <Button variant="primary" type="button" onClick={handleClick}>Ouvir</Button>
+                <Button variant="primary" type="button" onClick={handleClick}>Texto simples</Button>
             </div>
         </div>
     )
 }
+
