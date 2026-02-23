@@ -47,7 +47,7 @@ export default function Listen(params) {
         }
 
         const { id } = await res.json()
-        window.open(`/plain/${id}`, '_blank')
+        window.open(`/plain/${id}.html`, '_blank')
     }
 
     return (

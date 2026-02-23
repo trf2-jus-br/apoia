@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import knex from '@/lib/db/knex'
 
 export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
-    const { id } = await props.params
+    const id = (await props.params).id?.replace(/\.html$/, '') || ''
     const row = await knex!('ia_plain').where({ id }).first()
     if (!row) {
         return new NextResponse('Página não encontrada.', { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
