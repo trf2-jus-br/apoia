@@ -134,6 +134,17 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         }
     }
 
+    const handleCopySelected = (event: React.ClipboardEvent<HTMLDivElement>) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
+        const container = document.createElement('div');
+        container.appendChild(range.cloneContents());
+        event.clipboardData.setData('text/html', formatHtmlToEprocStandard(container.innerHTML));
+        event.clipboardData.setData('text/plain', container.innerText);
+        event.preventDefault();
+    };
+
     const fetchStream = async () => {
         const textDecoder = new TextDecoder('utf-8')
         const payload = {
@@ -329,7 +340,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     )}
                     {errormsg
                         ? <ErrorMessage message={errormsg} />
-                        : <div ref={contentRef} onCopy={handleCopy} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
+                        : <div ref={contentRef} onCopy={handleCopySelected} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
                     <EvaluationModal show={show} onClose={handleClose} />
                 </div>
                 {complete && <MessageFooter message={currentMessage} />}

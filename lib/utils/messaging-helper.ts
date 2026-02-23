@@ -21,6 +21,9 @@ export const formatHtmlToEprocStandard = (html: string) => {
     html = html.replace(/<\/h1>/g, '</p>')
     html = html.replace(/<\/h2>/g, '</p>')
     html = html.replace(/<\/h3>/g, '</p>')
+    html = html.replace(/<span class="citacao"[^>]*>/g, '<span>')
+    html = html.replace(/<span class="nao-citacao"[^>]*>/g, '<span>')
+    html = html.replace(/<span>([^<]*)<\/span>/g, '$1')
     return html
 }
 
