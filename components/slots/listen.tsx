@@ -17,10 +17,10 @@ export default function Listen(params) {
         doc.querySelectorAll('.d-print-none, .h-print, .d-listen-none, .h-listen').forEach(el => el.remove())
 
         doc.querySelectorAll('span').forEach(span => {
-            if (span.classList.length === 0) {
+            // if (span.classList.length === 0) {
                 const textNode = document.createTextNode(span.textContent || '')
                 span.replaceWith(textNode)
-            }
+            // }
         })
 
         doc.querySelectorAll('div.alert').forEach(div => {
@@ -53,7 +53,7 @@ export default function Listen(params) {
     return (
         <div className="h-print" style={{ height: '1em' }}>
             <div className="float-end">
-                <Button variant="primary" type="button" onClick={handleClick}>Texto simples</Button>
+                <Button variant="primary" type="button" onClick={handleClick}>Ouvir</Button>
             </div>
         </div>
     )

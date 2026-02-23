@@ -21,13 +21,13 @@ export const Subtitulo = ({ dadosDoProcesso }: { dadosDoProcesso: DadosDoProcess
 
     return (<>
         {nomeDaClasse
-            ? <div className="text-center">{nomeDaClasse}</div>
+            ? <div className="text-center" aria-hidden="true">{nomeDaClasse}</div>
             : ''}
         {poloAtivo && poloPassivo
-            ? <div className="text-center">{`${maiusculasEMinusculasOuSigla(poloAtivo)}  x  ${maiusculasEMinusculasOuSigla(poloPassivo)}`}</div>
+            ? <div className="text-center" aria-hidden="true">{`${maiusculasEMinusculasOuSigla(poloAtivo)}  x  ${maiusculasEMinusculasOuSigla(poloPassivo)}`}</div>
             : ''}
         {ajuizamento
-            ? <div className="text-center">{`Ajuizado em ${formatBrazilianDate(ajuizamento)}`}</div>
+            ? <div className="text-center" aria-hidden="true">{`Ajuizado em ${formatBrazilianDate(ajuizamento)}`}</div>
             : ''}
     </>
     )
