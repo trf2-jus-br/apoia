@@ -26,8 +26,23 @@ function render_page(pageData) {
         })
 }
 
+/** Suppress noisy pdf.js Info/Warning/Deprecated logs during PDF parsing */
+async function silentPdf(blob: ArrayBuffer, options: object) {
+    const originalLog = console.log
+    console.log = (...args: unknown[]) => {
+        const msg = typeof args[0] === 'string' ? args[0] : ''
+        if (msg.startsWith('Info:') || msg.startsWith('Warning:') || msg.startsWith('Deprecated API usage:')) return
+        originalLog.apply(console, args)
+    }
+    try {
+        return await pdf(blob, options)
+    } finally {
+        console.log = originalLog
+    }
+}
+
 export async function pdfToText(blob: ArrayBuffer, options): Promise<string> {
-    const data = await pdf(blob, { pagerender: render_page })
+    const data = await silentPdf(blob, { pagerender: render_page })
     const text = data.text
         .replace(/\n\n\<page number/gm, '<page number')
         .replace(/\<\/page\><page/gm, '</page>\n<page')
