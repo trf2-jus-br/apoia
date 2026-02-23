@@ -26,6 +26,9 @@ ${row.html}
 </body>
 </html>`
     return new NextResponse(page, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=300, s-maxage=300',
+        },
     })
 }

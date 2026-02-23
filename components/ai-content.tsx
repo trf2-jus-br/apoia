@@ -329,7 +329,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     )}
                     {errormsg
                         ? <ErrorMessage message={errormsg} />
-                        : <article ref={contentRef} onCopy={handleCopy} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
+                        : <div ref={contentRef} onCopy={handleCopy} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
                     <EvaluationModal show={show} onClose={handleClose} />
                 </div>
                 {complete && <MessageFooter message={currentMessage} />}
