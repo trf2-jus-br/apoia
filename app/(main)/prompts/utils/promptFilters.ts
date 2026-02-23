@@ -61,7 +61,7 @@ export function getPromptsSidekick(
             const tipoDeSintese = TipoDeSinteseMap[p.kind.substring(1)]
             if (tipoDeSintese && tipoDeSintese.context) {
                 const hInstance = isVisible(instance, tipoDeSintese.context?.instance)
-                console.log('Prompt', p.name, 'instance visibility:', hInstance)
+                // console.log('Prompt', p.name, 'instance visibility:', hInstance)
                 const hAction = isVisible(action, tipoDeSintese.context?.action)
                 p.is_hidden = calcHidden(hInstance, hAction)
             }

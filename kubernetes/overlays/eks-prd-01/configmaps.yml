@@ -145,4 +145,5 @@ data:
   # JFES_MNI_ENDPOINT_URL: "https://eproc-ws.jfes.jus.br/eproc/ws/controlador_ws.php?srv=intercomunicacao2.2"
 
   SEMANTIC_SEARCH_API_URL: "https://apoia-vector.trf2.jus.br/api/v1"
+  MIGRATE_ON_START: "1"
 
