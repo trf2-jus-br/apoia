@@ -414,14 +414,14 @@ export type IAUsageDetailRow = {
 // --- Library ---
 export enum IALibraryKind {
     ARQUIVO = 'ARQUIVO',
-    MODELO = 'MODELO',
+    GUIDELINE = 'GUIDELINE',
     MARKDOWN = 'MARKDOWN'
 }
 
 export const IALibraryKindLabels: Record<IALibraryKind, string> = {
+    [IALibraryKind.MARKDOWN]: 'Texto',
+    [IALibraryKind.GUIDELINE]: 'Manual',
     [IALibraryKind.ARQUIVO]: 'Arquivo',
-    [IALibraryKind.MODELO]: 'Modelo de Documento',
-    [IALibraryKind.MARKDOWN]: 'Texto Markdown'
 }
 
 export enum IALibraryInclusion {

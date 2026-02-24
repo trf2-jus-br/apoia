@@ -26,7 +26,7 @@ export default function LibraryForm({ record }: { record: any }) {
   const [promptDefinition, setPromptDefinition] = useState<any>(null)
   const [selecting, setSelecting] = useState<{ pn: string, pieces: any[] } | null>(null)
   const [selectedPieceId, setSelectedPieceId] = useState<string>('')
-  const isModel = data.kind === IALibraryKind.MODELO
+  const isGuideline = data.kind === IALibraryKind.GUIDELINE
   const isReadOnly = data.id && !data.is_mine
   const router = useRouter()
 
@@ -42,8 +42,8 @@ export default function LibraryForm({ record }: { record: any }) {
   }, [record?.id])
 
   const unclosed = useMemo(() => {
-    return isModel ? findUnclosedMarking(data.content_markdown || '') : null
-  }, [isModel, data.content_markdown])
+    return isGuideline ? findUnclosedMarking(data.content_markdown || '') : null
+  }, [isGuideline, data.content_markdown])
 
   const save = async (stayOnPage = false) => {
     if (!data.title || data.title.trim() === '') {
@@ -226,25 +226,39 @@ export default function LibraryForm({ record }: { record: any }) {
           <div className="alert alert-info">Este documento é de outro usuário e está na sua biblioteca como favorito. Você não pode editá-lo.</div>
         </div>
       )}
-      <div className="col-8">
+      <div className="col-6">
         <Form.Group className="mb-3">
           <Form.Label>Título</Form.Label>
           <Form.Control value={data.title || ''} onChange={e => setData({ ...data, title: e.target.value })} disabled={isReadOnly} />
         </Form.Group>
       </div>
 
-      <div className="col-4" style={{ display: 'none' }}>
+      <div className="col-2">
         <Form.Group className="mb-3">
           <Form.Label>Tipo</Form.Label>
           <Form.Select value={data.kind} onChange={e => setData({ ...data, kind: e.target.value as IALibraryKind })} disabled={!!data.id}>
-            {Object.entries(IALibraryKindLabels).map(([value, label]) => (
+            {Object.entries(IALibraryKindLabels).filter(([value]) => value !== IALibraryKind.ARQUIVO).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </Form.Select>
         </Form.Group>
       </div>
 
-      <div className="col-4">
+      {isGuideline && (
+        <div className="col-2">
+          <Form.Group className="mb-3">
+            <Form.Label>Tipo de Modelo</Form.Label>
+            <Form.Select value={data.model_subtype || ''} onChange={e => setData({ ...data, model_subtype: (e.target.value || null) as IAModelSubtype | null })} disabled={isReadOnly}>
+              <option value="">Selecione</option>
+              {Object.entries(IAModelSubtypeLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </div>
+      )}
+
+      <div className="col-2">
         <Form.Group className="mb-3">
           <Form.Label>Inclusão Automática</Form.Label>
           <Form.Select value={data.inclusion} onChange={e => setData({ ...data, inclusion: e.target.value as IALibraryInclusion })} disabled={isReadOnly}>
@@ -264,15 +278,15 @@ export default function LibraryForm({ record }: { record: any }) {
       </div>
 
       <div className="col-12">
-        {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.MODELO) && (
+        {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.GUIDELINE) && (
           <Form.Group className="mb-3">
-            <Form.Label>{data.kind === IALibraryKind.MODELO ? 'Modelo' : 'Documento'}</Form.Label>
+            <Form.Label>{data.kind === IALibraryKind.GUIDELINE ? 'Modelo' : 'Documento'}</Form.Label>
             <div className="alert alert-secondary mb-1 p-0">
               <Suspense fallback={null}>
                 <EditorComp markdown={data.content_markdown || ''} onChange={(text) => setData({ ...data, content_markdown: text })} readOnly={isReadOnly} showPdfUpload={true} />
               </Suspense>
             </div>
-            {isModel && unclosed && (
+            {isGuideline && unclosed && (
               <div className="alert alert-danger mt-2">
                 Marcação não fechada: <strong>{unclosed.kind}</strong> na linha <strong>{unclosed.lineNumber}</strong> - <span className="template-error" dangerouslySetInnerHTML={{ __html: unclosed.lineContent }} />
               </div>
@@ -301,29 +315,7 @@ export default function LibraryForm({ record }: { record: any }) {
         )}
       </div>
       <div className="col-12">
-        {isModel && (
-          <Form.Group className="mb-3">
-            <Form.Label>Tipo de Modelo</Form.Label>
-            <Form.Select value={data.model_subtype || ''} onChange={e => setData({ ...data, model_subtype: (e.target.value || null) as IAModelSubtype | null })} disabled={isReadOnly}>
-              <option value="">Selecione</option>
-              {Object.entries(IAModelSubtypeLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        )}
-
         <div className="row">
-          {isModel && !isReadOnly && (
-            <Button variant="light" onClick={async () => {
-              // ensure saved before opening modal
-              const id = await ensureSavedBeforeExamples()
-              if (id) setShowExamples(true)
-            }}>Acrescentar Exemplos</Button>
-          )}
-          {isModel && examples.length > 0 && !isReadOnly && (
-            <Button variant="secondary" disabled={runningAI} onClick={generateFromExamples}>Gerar modelo a partir dos exemplos</Button>
-          )}
           <div className="col">
             <Button variant="outline-secondary" onClick={() => router.replace('/library')}>Cancelar</Button>
             {data.id && data.is_mine && (<Button variant="outline-danger" className="ms-2" disabled={pending} onClick={async () => {
@@ -354,6 +346,26 @@ export default function LibraryForm({ record }: { record: any }) {
             )}
           </div>
           <div className="col text-end">
+            {isGuideline && examples.length > 0 && !isReadOnly && (
+              <Button
+                variant="outline-primary"
+                className="me-2"
+                disabled={runningAI}
+                onClick={generateFromExamples}
+              >Gerar manual a partir dos exemplos</Button>
+            )}
+
+            {isGuideline && !isReadOnly && (
+              <Button
+                variant="outline-primary"
+                disabled={pending || !data.title || data.title.trim() === ''}
+                className="me-2"
+                onClick={async () => {
+                  // ensure saved before opening modal
+                  const id = await ensureSavedBeforeExamples()
+                  if (id) setShowExamples(true)
+                }}>Acrescentar Exemplos</Button>
+            )}
             {!isReadOnly && !data.id && (
               <Button
                 variant="outline-primary"
@@ -377,7 +389,7 @@ export default function LibraryForm({ record }: { record: any }) {
         </div>
       </div>
 
-      {data.id && (
+      {data.id && !isGuideline && (
         <div className="col-12 mt-4">
           <LibraryAttachments libraryId={data.id} />
         </div>
@@ -405,7 +417,7 @@ export default function LibraryForm({ record }: { record: any }) {
                     <td className="text-end">
                       {!isReadOnly && (
                         <>
-                          <Button size="sm" variant="light" className="me-2" onClick={() => openSelectPiece(ex.process_number)}>Selecionar peça</Button>
+                          <Button size="sm" variant="outline-primary" className="me-2" onClick={() => openSelectPiece(ex.process_number)}>Selecionar peça</Button>
                           <Button size="sm" variant="outline-danger" onClick={() => removeExample(ex.process_number)}>Excluir</Button>
                         </>
                       )}
