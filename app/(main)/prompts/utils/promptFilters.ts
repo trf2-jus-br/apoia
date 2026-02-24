@@ -57,20 +57,24 @@ export function getPromptsSidekick(
     }
 
     for (const p of prompts) {
+        delete p.is_auto_hidden
+        
         if (p.kind?.startsWith('^')) {
             const tipoDeSintese = TipoDeSinteseMap[p.kind.substring(1)]
             if (tipoDeSintese && tipoDeSintese.context) {
                 const hInstance = isVisible(instance, tipoDeSintese.context?.instance)
                 // console.log('Prompt', p.name, 'instance visibility:', hInstance)
                 const hAction = isVisible(action, tipoDeSintese.context?.action)
-                p.is_hidden = calcHidden(hInstance, hAction)
+                if (p.is_hidden === undefined)
+                    p.is_hidden = p.is_favorite ? false : calcHidden(hInstance, hAction)
             }
         }
-        if (p.is_favorite) p.is_hidden = false
+        if (p.is_hidden === undefined)
+            if (p.is_favorite) p.is_hidden = false
 
         if (!p.is_hidden) {
-            if (p.kind === '^CHAT' && chatIsCurrentPrompt) p.is_hidden = true
-            if (p.kind === '^CHAT_STANDALONE' && numeroDoProcesso) p.is_hidden = true
+            if (p.kind === '^CHAT' && chatIsCurrentPrompt) p.is_auto_hidden = true
+            if (p.kind === '^CHAT_STANDALONE' && numeroDoProcesso) p.is_auto_hidden = true
         }
     }
 
