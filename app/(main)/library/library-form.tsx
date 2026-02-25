@@ -11,6 +11,7 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
 import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
 import { useRouter } from 'next/navigation'
+import { getInternalPrompt } from '@/lib/ai/prompt'
 
 export default function LibraryForm({ record }: { record: any }) {
   const [data, setData] = useState<any>({ ...record })
@@ -210,8 +211,7 @@ export default function LibraryForm({ record }: { record: any }) {
   const generateFromExamples = async () => {
     setRunningAI(true)
     try {
-      const defRes = await fetch('/api/v1/internal-prompt/template-a-partir-de-exemplos')
-      const definition = await defRes.json()
+      const definition = getInternalPrompt('template-a-partir-de-exemplos')
       setPromptDefinition(definition)
       setShowAI(true)
     } finally {

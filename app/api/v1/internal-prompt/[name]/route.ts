@@ -1,6 +1,7 @@
 import { getInternalPrompt } from '@/lib/ai/prompt'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { BadRequestError, NotFoundError, withErrorHandler } from '@/lib/utils/api-error'
+import { slugify } from '@/lib/utils/utils'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60
@@ -65,7 +66,7 @@ async function GET_HANDLER(_req: Request, context: any): Promise<Response> { // 
     const name = params?.name
     if (!name) throw new BadRequestError('Missing prompt name')
     try {
-        const internalPrompt: PromptDefinitionType = getInternalPrompt(name)
+        const internalPrompt: PromptDefinitionType = getInternalPrompt(slugify(name)?.replace(/-/g, '_'))
         return new Response(JSON.stringify(internalPrompt, null, 2), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },

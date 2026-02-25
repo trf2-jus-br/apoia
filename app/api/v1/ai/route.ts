@@ -50,8 +50,12 @@ async function getPromptDefinition(kind: string, promptSlug?: string, promptId?:
         }
     } else if (kind && promptSlug) {
         const prompts = await PromptDao.retrievePromptsByKindAndSlug(kind, promptSlug)
-        if (prompts.length === 0)
+        if (prompts.length === 0) {
+            if (getInternalPrompt(kind)) {
+                return getInternalPrompt(kind)
+            }
             throw new Error(`Prompt not found: ${kind}/${promptSlug}`)
+        }
         let found = prompts.find(p => p.is_official)
         if (!found)
             found = prompts[0]

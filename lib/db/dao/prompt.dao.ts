@@ -422,12 +422,7 @@ export class PromptDao {
     static async retrievePromptsByKindAndSlug(kind: string, slug: string): Promise<mysqlTypes.IAPrompt[]> {
         if (!knex) return [] as any
         const result = await knex('ia_prompt as p')
-            .select<mysqlTypes.IAPrompt[]>('p.*', 's.score')
-            .leftJoin('ia_prompt_stats as s', function () {
-                this.on('p.kind', '=', 's.kind')
-                    .andOn('p.model_id', '=', 's.model_id')
-                    .andOn('p.id', '=', 's.prompt_id');
-            })
+            .select<mysqlTypes.IAPrompt[]>('p.*')
             .where('p.kind', kind)
             .andWhere('p.slug', slug)
             .orderBy('p.created_at', 'desc');

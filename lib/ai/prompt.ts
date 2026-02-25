@@ -262,6 +262,7 @@ import linguagem_simples from '@/prompts/linguagem-simples.md'
 import relatorio_de_apelacao_e_triagem from '@/prompts/relatorio-de-apelacao-e-triagem.md'
 import degravacao from '@/prompts/degravacao.md'
 import template_a_partir_de_modelo from '@/prompts/template-a-partir-de-modelo.md'
+import template_a_partir_de_exemplos from '@/prompts/template-a-partir-de-exemplos.md'
 import pedidos_viabilidade_recurso from '@/prompts/admissibilidade-de-recurso/pedidos-viabilidade-recurso.md'
 import juizo_viabilidade_recurso from '@/prompts/admissibilidade-de-recurso/juizo-viabilidade-recurso.md'
 import decisao_viabilidade_recurso_extraordinario from '@/prompts/admissibilidade-de-recurso/decisao-viabilidade-recurso-extraordinario.md'
@@ -310,6 +311,7 @@ export const internalPrompts = {
     relatorio_de_apelacao_e_triagem: promptDefinitionFromMarkdown('relatorio_de_apelacao_e_triagem', relatorio_de_apelacao_e_triagem),
     degravacao: promptDefinitionFromMarkdown('degravacao', degravacao),
     template_a_partir_de_modelo: promptDefinitionFromMarkdown('template_a_partir_de_modelo', template_a_partir_de_modelo),
+    template_a_partir_de_exemplos: promptDefinitionFromMarkdown('template_a_partir_de_exemplos', template_a_partir_de_exemplos),
     pedidos_viabilidade_recurso: promptDefinitionFromMarkdown('pedidos_viabilidade_recurso', pedidos_viabilidade_recurso),
     juizo_viabilidade_recurso: promptDefinitionFromMarkdown('juizo_viabilidade_recurso', juizo_viabilidade_recurso),
     decisao_viabilidade_recurso_extraordinario: promptDefinitionFromMarkdown('decisao_viabilidade_recurso_extraordinario', decisao_viabilidade_recurso_extraordinario),
