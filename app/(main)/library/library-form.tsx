@@ -212,7 +212,7 @@ export default function LibraryForm({ record }: { record: any }) {
   const generateFromExamples = async () => {
     setRunningAI(true)
     try {
-      const definition = getInternalPrompt('template-a-partir-de-exemplos')
+      const definition = getInternalPrompt('guideline-a-partir-de-exemplos')
       setPromptDefinition(definition)
       setShowAI(true)
     } finally {
@@ -445,11 +445,11 @@ export default function LibraryForm({ record }: { record: any }) {
                     numeroDoProcesso: '',
                     descr: ex.piece_title || `Exemplo ${idx + 1}`,
                     slug: `exemplo-${idx + 1}`,
-                    texto: ex.content_markdown ? `<despacho-decisao>\n${ex.content_markdown}\n</despacho-decisao>` : '',
+                    texto: ex.content_markdown || '',
                     sigilo: '0',
                   }))
                 }}
-                config={{ prompt_slug: 'template-a-partir-de-exemplos' }}
+                config={{ prompt_slug: 'guideline-a-partir-de-exemplos' }}
                 dossierCode={''}
                 onReady={(content) => {
                   setData((d: any) => ({ ...d, content_markdown: content?.raw || '' }))

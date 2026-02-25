@@ -15,6 +15,7 @@ import {
     BlockTypeSelect,
     DiffSourceToggleWrapper,
     diffSourcePlugin,
+    codeMirrorPlugin,
 } from "@mdxeditor/editor";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy, faFilePdf } from "@fortawesome/free-solid-svg-icons";
@@ -376,6 +377,9 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, onChange, readOnly, show
                                 </DiffSourceToggleWrapper>
                             </>
                         ),
+                    }),
+                    codeMirrorPlugin({
+                        codeBlockLanguages: { "": "text", "Markdown": "markdown" }
                     }),
                 ]}
             />
