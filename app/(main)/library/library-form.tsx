@@ -27,6 +27,7 @@ export default function LibraryForm({ record }: { record: any }) {
   const [promptDefinition, setPromptDefinition] = useState<any>(null)
   const [selecting, setSelecting] = useState<{ pn: string, pieces: any[] } | null>(null)
   const [selectedPieceId, setSelectedPieceId] = useState<string>('')
+  const [editorKey, setEditorKey] = useState(0)
   const isGuideline = data.kind === IALibraryKind.GUIDELINE
   const isReadOnly = data.id && !data.is_mine
   const router = useRouter()
@@ -247,7 +248,7 @@ export default function LibraryForm({ record }: { record: any }) {
       {isGuideline && (
         <div className="col-2">
           <Form.Group className="mb-3">
-            <Form.Label>Tipo de Modelo</Form.Label>
+            <Form.Label>Tipo de Manual</Form.Label>
             <Form.Select value={data.model_subtype || ''} onChange={e => setData({ ...data, model_subtype: (e.target.value || null) as IAModelSubtype | null })} disabled={isReadOnly}>
               <option value="">Selecione</option>
               {Object.entries(IAModelSubtypeLabels).map(([value, label]) => (
@@ -280,10 +281,10 @@ export default function LibraryForm({ record }: { record: any }) {
       <div className="col-12">
         {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.GUIDELINE) && (
           <Form.Group className="mb-3">
-            <Form.Label>{data.kind === IALibraryKind.GUIDELINE ? 'Modelo' : 'Documento'}</Form.Label>
+            <Form.Label>{data.kind === IALibraryKind.GUIDELINE ? 'Manual' : 'Documento'}</Form.Label>
             <div className="alert alert-secondary mb-1 p-0">
               <Suspense fallback={null}>
-                <EditorComp markdown={data.content_markdown || ''} onChange={(text) => setData({ ...data, content_markdown: text })} readOnly={isReadOnly} showPdfUpload={true} />
+                <EditorComp key={editorKey} markdown={data.content_markdown || ''} onChange={(text) => setData({ ...data, content_markdown: text })} readOnly={isReadOnly} showPdfUpload={true} />
               </Suspense>
             </div>
             {isGuideline && unclosed && (
@@ -352,7 +353,7 @@ export default function LibraryForm({ record }: { record: any }) {
                 className="me-2"
                 disabled={runningAI}
                 onClick={generateFromExamples}
-              >Gerar manual a partir dos exemplos</Button>
+              >Gerar Manual com IA</Button>
             )}
 
             {isGuideline && !isReadOnly && (
@@ -430,31 +431,37 @@ export default function LibraryForm({ record }: { record: any }) {
         )
       }
 
-      {
-        showAI && promptDefinition && (
-          <div className="col-12 mt-3">
-            <div className="alert alert-info">Gerando modelo a partir dos exemplos...</div>
-            <AiContent
-              definition={promptDefinition}
-              data={{
-                textos: examples.map((ex, idx) => ({
-                  numeroDoProcesso: '',
-                  descr: ex.piece_title || `Exemplo ${idx + 1}`,
-                  slug: `exemplo-${idx + 1}`,
-                  texto: ex.content_markdown ? `<despacho-decisao>\n${ex.content_markdown}\n</despacho-decisao>` : '',
-                  sigilo: '0',
-                }))
-              }}
-              config={{ prompt_slug: 'template-a-partir-de-exemplos' }}
-              dossierCode={''}
-              onReady={(content) => {
-                setData((d: any) => ({ ...d, content_markdown: content?.raw || '' }))
-                setShowAI(false)
-              }}
-            />
-          </div>
-        )
-      }
+      <Modal show={showAI && !!promptDefinition} onHide={() => setShowAI(false)} size="xl">
+        <Modal.Header closeButton>
+          <Modal.Title>Gerar manual a partir dos exemplos</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {showAI && promptDefinition && (
+            <>
+              <AiContent
+                definition={promptDefinition}
+                data={{
+                  textos: examples.map((ex, idx) => ({
+                    numeroDoProcesso: '',
+                    descr: ex.piece_title || `Exemplo ${idx + 1}`,
+                    slug: `exemplo-${idx + 1}`,
+                    texto: ex.content_markdown ? `<despacho-decisao>\n${ex.content_markdown}\n</despacho-decisao>` : '',
+                    sigilo: '0',
+                  }))
+                }}
+                config={{ prompt_slug: 'template-a-partir-de-exemplos' }}
+                dossierCode={''}
+                onReady={(content) => {
+                  setData((d: any) => ({ ...d, content_markdown: content?.raw || '' }))
+                  setEditorKey(k => k + 1)
+                  setShowAI(false)
+                }}
+              />
+              <p className="text-muted mt-2">Aguarde enquanto o manual é gerado. Quando concluído, será automaticamente transferido para o formulário.</p>
+            </>
+          )}
+        </Modal.Body>
+      </Modal>
 
       <Modal show={!!selecting} onHide={() => setSelecting(null)}>
         <Modal.Header closeButton>
