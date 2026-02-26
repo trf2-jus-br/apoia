@@ -115,6 +115,7 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
         { id: 'ENCAMINHAR_PARA_RETRATACAO', name: 'Encaminhar para Retratação' }, // tema
         { id: 'ADMITIR', name: 'Admitir' },
         { id: 'INADIMITIR', name: 'Inadmitir' }, // motivoDaInadimissao
+        { id: 'RECURSO_PREJUDICADO', name: 'Recurso Prejudicado' },
         { id: 'DESCONSIDERAR', name: 'Desconsiderar' },
     ]
 
@@ -132,7 +133,10 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
         { id: 'CLAUSULA_CONTRATUAL', name: 'Súmula 5/STJ (Cláusula Contratual)' },
         { id: 'FUNDAMENTO_CONST_INFRACONST', name: 'Súmula 126/STJ (Fundamento Const/Infraconst)' },
         { id: 'ATOS_NORMATIVOS_INFRALEGAIS', name: 'Atos Normativos Infralegais' },
+        { id: 'FALTA_DE_COTEJO_ANALITICO', name: 'Falta de Cotejo Analítico' },
     ]
+    if (nextRequest?.promptSlug === 'decisao_viabilidade_recurso_especial')
+        motivoDaInadimissao.push({ id: 'MATERIA_DE_INDOLE_CONSTITUCIONAL', name: 'Matéria de Índole Constitucional' })
 
     // pedidos com tema.id mas sem tema.questao, obter o tema completo via busca semântica pela id
     useEffect(() => {
