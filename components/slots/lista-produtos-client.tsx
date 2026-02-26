@@ -114,7 +114,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
                 </Row>}
             </article>
         }
-    } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction) {
+    } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction && !sidekick) {
         return <article key={idx}>
             <AiTitle request={request} />
             <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />
