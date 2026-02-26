@@ -5,8 +5,9 @@ resources:
   - ../../base
   - configmaps.yml 
   - ingress.yml
+  - hpa.yml
 
-replicas:
-  - name: apoia
-    count: 2
+#replicas:
+#  - name: apoia
+#    count: 2
 
