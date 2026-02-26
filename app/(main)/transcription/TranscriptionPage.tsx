@@ -5,7 +5,6 @@ import AiContent from '@/components/ai-content'
 import AudioConversionProgress from '@/components/audio-conversion-progress'
 import { Button, Alert } from 'react-bootstrap'
 import { getInternalPrompt } from '@/lib/ai/prompt'
-import { VisualizationEnum } from '@/lib/ui/preprocess'
 import { FileTypeEnum } from '@/lib/ai/model-types'
 import { checkModelSupportsAudioVideoSync } from '@/lib/ai/model-validation'
 import {
