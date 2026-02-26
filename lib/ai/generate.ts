@@ -130,6 +130,8 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const cookiesList = await (cookies());
     const anonymize = cookiesList.get('anonymize')?.value === 'true'
     data.textos = data.textos.map((texto: TextoType) => {
+        if (texto.texto?.startsWith('data:') && texto.texto.includes(';base64,')) 
+            return texto
         if (anonymize || assertAnonimizacaoAutomatica(texto.sigilo)) {
             devLog(`Anonymizing piece ${texto.id} (${texto.descr}) with confidentiality level ${texto.sigilo}`)
             return { ...texto, texto: anonymizeText(texto.texto).text }
