@@ -12,6 +12,7 @@ import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclus
 import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
 import { useRouter } from 'next/navigation'
 import { getInternalPrompt } from '@/lib/ai/prompt'
+import ProcessTextarea from '@/components/ProcessTextarea'
 
 export default function LibraryForm({ record }: { record: any }) {
   const [data, setData] = useState<any>({ ...record })
@@ -47,7 +48,7 @@ export default function LibraryForm({ record }: { record: any }) {
     return isGuideline ? findUnclosedMarking(data.content_markdown || '') : null
   }, [isGuideline, data.content_markdown])
 
-  const save = async (stayOnPage = false) => {
+  const save = async (stayOnPage = false, callback?: () => void) => {
     if (!data.title || data.title.trim() === '') {
       alert('O título é obrigatório')
       return
@@ -110,7 +111,7 @@ export default function LibraryForm({ record }: { record: any }) {
         // If staying on page, update state with new id
         if (stayOnPage) {
           const j = await res.json()
-          setData((d: any) => ({ ...d, id: j.id }))
+          setData((d: any) => ({ ...d, id: j.id, is_mine: true }))
           return
         }
       }
@@ -120,62 +121,15 @@ export default function LibraryForm({ record }: { record: any }) {
       }
     } finally {
       setPending(false)
-    }
-  }
-
-  const ensureSavedBeforeExamples = async () => {
-    // If item doesn't exist yet, save it first then return the new id
-    if (data.id) return data.id
-    setPending(true)
-    try {
-      let res: Response
-      if (data.kind === IALibraryKind.ARQUIVO) {
-        if (!file) {
-          setFileError('Selecione um arquivo para enviar')
-          return null
-        }
-        if (file.size > 10 * 1024 * 1024) {
-          setFileError('Arquivo maior que 10MB')
-          return null
-        }
-        const form = new FormData()
-        form.append('kind', data.kind)
-        form.append('title', data.title || '')
-        form.append('file', file)
-        res = await fetch('/api/v1/library', { method: 'POST', body: form })
-      } else {
-        res = await fetch('/api/v1/library', {
-          method: 'POST', body: JSON.stringify({
-            kind: data.kind,
-            title: data.title,
-            content_markdown: data.content_markdown,
-            content_type: data.content_type,
-            model_subtype: data.model_subtype,
-            inclusion: data.inclusion,
-            context: data.context,
-          })
-        })
-      }
-      const j = await res.json()
-      if (res.ok) {
-        // instead of redirect, keep on page and update state
-        setData((d: any) => ({ ...d, id: j.id }))
-        return j.id as number
-      }
-      return null
-    } finally {
-      setPending(false)
+      if (callback) callback()
     }
   }
 
   const addExamples = async () => {
-    // Ensure exists
-    const id = await ensureSavedBeforeExamples()
-    if (!id) return
     setPending(true)
     try {
-      await fetch(`/api/v1/library/${id}/examples`, { method: 'POST', body: JSON.stringify({ processNumbers: csv, pieceType: data.model_subtype === 'PRIMEIRO_DESPACHO' ? 'DESPACHO_DECISAO' : data.model_subtype || undefined }) })
-      const list = await fetch(`/api/v1/library/${id}/examples`)
+      await fetch(`/api/v1/library/${data.id}/examples`, { method: 'POST', body: JSON.stringify({ processNumbers: csv, pieceType: data.model_subtype === 'PRIMEIRO_DESPACHO' ? 'DESPACHO_DECISAO' : data.model_subtype || undefined }) })
+      const list = await fetch(`/api/v1/library/${data.id}/examples`)
       const j = await list.json()
       setExamples(j.items || [])
       setShowExamples(false)
@@ -356,25 +310,21 @@ export default function LibraryForm({ record }: { record: any }) {
               >Gerar Manual com IA</Button>
             )}
 
-            {isGuideline && !isReadOnly && (
+            {isGuideline && !isReadOnly && data.id && (
               <Button
                 variant="outline-primary"
-                disabled={pending || !data.title || data.title.trim() === ''}
+                disabled={pending || !data.title || data.title.trim() === '' || (data.kind === IALibraryKind.GUIDELINE && !data.model_subtype)}
                 className="me-2"
-                onClick={async () => {
-                  // ensure saved before opening modal
-                  const id = await ensureSavedBeforeExamples()
-                  if (id) setShowExamples(true)
-                }}>Acrescentar Exemplos</Button>
+                onClick={async () => { setShowExamples(true) }}>Acrescentar Exemplos</Button>
             )}
             {!isReadOnly && !data.id && (
               <Button
                 variant="outline-primary"
-                disabled={pending || !data.title || data.title.trim() === ''}
-                onClick={() => save(true)}
+                disabled={pending || !data.title || data.title.trim() === '' || (data.kind === IALibraryKind.GUIDELINE && !data.model_subtype)}
+                onClick={() => save(true, () => setShowExamples(true))}
                 className="me-2"
               >
-                Incluir Anexos
+                Incluir {isGuideline ? 'Exemplos' : 'Anexos'}
               </Button>
             )}
             {!isReadOnly && (
@@ -491,7 +441,7 @@ export default function LibraryForm({ record }: { record: any }) {
         <Modal.Body>
           <Form.Group>
             <Form.Label>Números de processos (separados por vírgula)</Form.Label>
-            <Form.Control as="textarea" rows={3} value={csv} onChange={e => setCsv(e.target.value)} />
+            <ProcessTextarea rows={3} value={csv} onChange={e => setCsv(e)} />
           </Form.Group>
           <div className="text-muted small mt-2">Itens já existentes serão ignorados.</div>
         </Modal.Body>
