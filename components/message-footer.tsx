@@ -58,6 +58,8 @@ export default function MessageFooter({ message }: { message: UIMessage }) {
     const usage = finish?.usage
     const dollarValue = finish?.usage?.dollarValue
 
+    if (!dollarValue) return undefined
+
     // Provide a single-line footer string early return to populate the existing p
     const parts: string[] = []
     if ((usage as any)?.cachedInputTokens != null) parts.push(`cached ${usage.cachedInputTokens}`)
