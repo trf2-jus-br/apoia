@@ -729,7 +729,7 @@ describe('highlightCitationsLongestMatch', () => {
       // "Afronta aos artigos" NÃO deve ser marcado como nao-citacao
       // (não está entre duas citações, está no início)
       expect(result).not.toContain('<span class="nao-citacao">Afronta aos artigos</span>');
-      
+
       // A citação deve existir
       expect(result).toContain('<span class="citacao"');
       expect(result).toContain('116, II, e 117, I, do CTN');
@@ -752,11 +752,11 @@ describe('highlightCitationsLongestMatch', () => {
 
       // "Ofensa aos artigos 1º e 2º" não deve ser nao-citacao (está no início)
       expect(result).not.toContain('<span class="nao-citacao">Ofensa aos artigos 1º e 2º</span>');
-      
+
       // " artigo " é apenas 1 palavra entre duas citações, mas em contexto de lista
       // Se for marcado, deve ser por estar realmente entre citações
       // O problema é que pode estar marcando incorretamente
-      
+
       // As citações devem existir
       expect(result).toContain('da Lei nº 7.689/88 e ao');
       expect(result).toContain('12 da Lei nº 9.430/96');
@@ -776,7 +776,7 @@ describe('highlightCitationsLongestMatch', () => {
 
       // Não deve haver nao-citacao (só há 1 citação, não há "entre citações")
       expect(result).not.toContain('class="nao-citacao"');
-      
+
       // A citação deve existir
       expect(result).toContain('<span class="citacao"');
       expect(result).toContain('respectivas Declarações de Compensação');
@@ -806,7 +806,7 @@ describe('highlightCitationsLongestMatch', () => {
       expect(result).not.toContain('<span class="nao-citacao">Afronta aos artigos</span>');
       expect(result).not.toContain('<span class="nao-citacao">Ofensa aos artigos 1º e 2º</span>');
       expect(result).not.toContain('<span class="nao-citacao">Impossibilidade de mensuração do indébito, que consolidou o entendimento sobre qual ICMS deve</span>');
-      
+
       // As citações devem existir
       expect(result).toContain('de que o fato gerador do IRPJ e da CSLL');
       expect(result).toContain('116, II, e 117, I, do CTN');
@@ -831,7 +831,7 @@ describe('highlightCitationsLongestMatch', () => {
           <page number="15">o retorno dos autos ao Tribunal de origem</page>
         </acordao>
       `;
-      
+
       const generatedHtml = `
         <div><p>Pedido 1: Conhecer e dar provimento ao recurso especial para reformar o acórdão recorrido, reconhecendo o direito da recorrente de submeter à tributação pelo IRPJ e pela CSLL o indébito tributário reconhecido judicialmente apenas no momento da transmissão das respectivas Declarações de Compensação (PER/DCOMP).</p>
         <p>Argumentos:</p>
@@ -850,7 +850,7 @@ describe('highlightCitationsLongestMatch', () => {
       // Principais verificações: textos no início dos itens NÃO devem ser nao-citacao
       expect(result).not.toContain('<span class="nao-citacao" title="Trecho destacado para indicar que não é uma citação, mas está entre citações">Afronta aos artigos </span>');
       expect(result).not.toContain('<span class="nao-citacao" title="Trecho destacado para indicar que não é uma citação, mas está entre citações">Ofensa aos artigos 1º e 2º </span>');
-      
+
       // Verificar que as citações existem
       expect(result).toContain('respectivas Declarações de Compensação (PER/DCOMP)');
       expect(result).toContain('de que o fato gerador do IRPJ e da CSLL');
@@ -862,5 +862,47 @@ describe('highlightCitationsLongestMatch', () => {
     });
 
   });
+
+  describe('Isolamento de bugs envolvendo uso de aspas', () => {
+
+    test('caso de aspas duplas', () => {
+      const sourceHtml = `
+        <acordao event="74, 2º Grau" label="ACOR1">
+          <page number="1">com fulcro no art. 105, inciso III, alínea "a" da Constituição Federal, para a reforma do r.acórdão recorrido.</page>
+        </acordao>
+      `;
+
+      const generatedHtml = `
+        <div><p>com fulcro no art. 105, inciso III, alínea &quot;a&quot; da Constituição Federal, para a reforma do r. acórdão recorrido
+        .</p></div>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      console.log('Resultado do teste de aspas duplas:', result);
+
+      // Principais verificações: textos no início dos itens NÃO devem ser nao-citacao
+      expect(result).not.toContain('<span class="nao-citacao"');
+    });
+
+    test('caso de aspas simples', () => {
+      const sourceHtml = `
+        <acordao event="74, 2º Grau" label="ACOR1">
+          <page number="1">com fulcro no art. 105, inciso III, alínea 'a' da Constituição Federal, para a reforma do r.acórdão recorrido.</page>
+        </acordao>
+      `;
+
+      const generatedHtml = `
+        <div><p>O Sindicato impetrante não possui legitimidade ativa para defesa de interesses de servidores vinculados à área de saúde. Conforme cópia do cadastro da entidade sindical no Ministério do Trabalho à fl. 69, e-STJ ele possui representação apenas do grupo de trabalhadores, na classe de servidores públicos, da categoria &#39;Trabalhador na Previdência Social&#39;.</p></div>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      console.log('Resultado do teste de aspas simples:', result);
+
+      // Principais verificações: textos no início dos itens NÃO devem ser nao-citacao
+      expect(result).not.toContain('<span class="nao-citacao"');
+    });
+  })
 
 });

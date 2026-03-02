@@ -3,7 +3,34 @@
 // ============================================================================
 
 import { Token, SourceContext, ProcessTagResult } from './types';
-import { FIXED_METADATA_TAGS, BLOCK_TAGS, TOKEN_REGEX } from './config';
+import { FIXED_METADATA_TAGS, BLOCK_TAGS, TOKEN_REGEX, HTML_ENTITY_MAP, PUNCT_CHARS, WORD_CHARS } from './config';
+
+// ============================================================================
+// DECODIFICAÇÃO DE ENTIDADES HTML
+// ============================================================================
+
+/**
+ * Decodifica uma entidade HTML para seu caractere correspondente.
+ * Suporta entidades nomeadas comuns e entidades numéricas (decimal e hex).
+ * @example decodeHtmlEntity('&quot;') → '"'
+ * @example decodeHtmlEntity('&#39;') → "'"
+ * @example decodeHtmlEntity('&#x27;') → "'"
+ */
+export function decodeHtmlEntity(entity: string): string {
+    const lower = entity.toLowerCase();
+    if (HTML_ENTITY_MAP[lower]) return HTML_ENTITY_MAP[lower];
+
+    // Entidade numérica hexadecimal: &#xNN;
+    if (lower.startsWith('&#x')) {
+        return String.fromCharCode(parseInt(entity.slice(3, -1), 16));
+    }
+    // Entidade numérica decimal: &#NN;
+    if (lower.startsWith('&#')) {
+        return String.fromCharCode(parseInt(entity.slice(2, -1), 10));
+    }
+
+    return entity; // Entidade desconhecida, retorna como está
+}
 
 // ============================================================================
 // PARSING DE TAGS HTML
@@ -161,7 +188,7 @@ export function tokenizeWithContext(html: string, extractMetadata: boolean = tru
     let match;
     while ((match = TOKEN_REGEX.exec(html)) !== null) {
         const fullMatch = match[0];
-        const { tag, word, punct, space } = match.groups!;
+        const { tag, word, punct, space, entity } = match.groups!;
 
         if (tag) {
             const processed = processTagToken(
@@ -197,6 +224,34 @@ export function tokenizeWithContext(html: string, extractMetadata: boolean = tru
                 startsAfterBlockTag: justSawBlockTag
             });
             justSawBlockTag = false;
+        } else if (entity) {
+            // Entidade HTML: decodifica e classifica pelo caractere resultante
+            const decoded = decodeHtmlEntity(fullMatch);
+
+            if (PUNCT_CHARS.test(decoded)) {
+                tokens.push({
+                    type: 'PUNCTUATION',
+                    content: fullMatch,
+                    normalized: decoded,
+                    context: { ...currentCtx },
+                    startsAfterBlockTag: justSawBlockTag
+                });
+                justSawBlockTag = false;
+            } else if (WORD_CHARS.test(decoded)) {
+                tokens.push({
+                    type: 'WORD',
+                    content: fullMatch,
+                    normalized: decoded.toLowerCase(),
+                    context: { ...currentCtx },
+                    startsAfterBlockTag: justSawBlockTag
+                });
+                justSawBlockTag = false;
+            } else if (/\s/.test(decoded)) {
+                tokens.push({ type: 'WHITESPACE', content: fullMatch });
+            } else {
+                // Símbolo ou caractere especial — preserva como não-significativo
+                tokens.push({ type: 'TAG', content: fullMatch });
+            }
         } else if (space) {
             tokens.push({ type: 'WHITESPACE', content: fullMatch });
         } else {

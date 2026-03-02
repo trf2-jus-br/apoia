@@ -44,9 +44,28 @@ export const BLOCK_TAGS = new Set([
  * - word: Palavras (incluindo acentos e hífens)
  * - punct: Pontuação comum
  * - space: Espaços em branco
+ * - entity: Entidades HTML (&quot; &amp; &#123; &#xAB; etc)
  * - other: Outros caracteres
  */
-export const TOKEN_REGEX = /(?<tag><[^>]+>)|(?<word>[\w\u00C0-\u00FF-]+)|(?<punct>[.,;?!§%\/\(\)"']+)|(?<space>\s+)|(?<other>[^<>\w\s.,;?!§%-]+)/g;
+export const TOKEN_REGEX = /(?<tag><[^>]+>)|(?<word>[\w\u00C0-\u00FF-]+)|(?<punct>[.,;?!§%\/\(\)"']+)|(?<space>\s+)|(?<entity>&(?:[a-zA-Z]+|#\d+|#x[0-9a-fA-F]+);)|(?<other>[^<>\w\s.,;?!§%-]+)/g;
+
+/**
+ * Mapa de entidades HTML comuns para seus caracteres decodificados.
+ */
+export const HTML_ENTITY_MAP: Record<string, string> = {
+    '&quot;': '"',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&apos;': "'",
+    '&nbsp;': ' ',
+};
+
+/**
+ * Regex para classificar o caractere decodificado de uma entidade HTML.
+ */
+export const PUNCT_CHARS = /^[.,;?!§%\/\(\)"']+$/;
+export const WORD_CHARS = /^[\w\u00C0-\u00FF-]+$/;
 
 /**
  * Valores padrão para o algoritmo
