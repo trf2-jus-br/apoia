@@ -259,6 +259,7 @@ import prev_bi_analise_de_laudo from '@/prompts/prev-bi-analise-de-laudo.md'
 import prev_bi_sentenca_laudo_favoravel from '@/prompts/prev-bi-sentenca-laudo-favoravel.md'
 import prev_bi_sentenca_laudo_desfavoravel from '@/prompts/prev-bi-sentenca-laudo-desfavoravel.md'
 import linguagem_simples from '@/prompts/linguagem-simples.md'
+import relatorio_civel_primeira_inst from '@/prompts/relatorio-civel-primeira-inst.md'
 import relatorio_de_apelacao_e_triagem from '@/prompts/relatorio-de-apelacao-e-triagem.md'
 import degravacao from '@/prompts/degravacao.md'
 import template_a_partir_de_modelo from '@/prompts/template-a-partir-de-modelo.md'
@@ -307,6 +308,7 @@ export const internalPrompts = {
     prev_bi_sentenca_laudo_favoravel: promptDefinitionFromMarkdown('prev_bi_sentenca_laudo_favoravel', prev_bi_sentenca_laudo_favoravel),
     prev_bi_sentenca_laudo_desfavoravel: promptDefinitionFromMarkdown('prev_bi_sentenca_laudo_desfavoravel', prev_bi_sentenca_laudo_desfavoravel),
     linguagem_simples: promptDefinitionFromMarkdown('linguagem_simples', linguagem_simples),
+    relatorio_civel_primeira_inst: promptDefinitionFromMarkdown('relatorio_civel_primeira_inst', relatorio_civel_primeira_inst),
     relatorio_de_apelacao_e_triagem: promptDefinitionFromMarkdown('relatorio_de_apelacao_e_triagem', relatorio_de_apelacao_e_triagem),
     degravacao: promptDefinitionFromMarkdown('degravacao', degravacao),
     template_a_partir_de_modelo: promptDefinitionFromMarkdown('template_a_partir_de_modelo', template_a_partir_de_modelo),

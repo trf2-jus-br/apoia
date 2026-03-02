@@ -43,6 +43,45 @@ export const spinner = (s: string, complete: boolean): string => {
     return s
 }
 
+const preprocessPromptMessages = (text: string, promptMessages): string => {
+    let resultText = text
+
+    if (promptMessages) {
+        let a: string[] = []
+        for (const m of promptMessages) {
+            const header = m.role === 'system'
+                ? '---\\# SYSTEM PROMPT'
+                : m.role === 'user'
+                    ? '---\\# PROMPT'
+                    : `---\\# ROLE: ${m.role}`
+            let text = ''
+            if (typeof m.content === 'string') {
+                text = m.content
+            } else if (Array.isArray(m.content)) {
+                for (const part of m.content) {
+                    if (part.type === 'text') {
+                        text += part.text
+                    } else if (part.type === 'object') {
+                        text += JSON.stringify(part.object, null, 2)
+                    } else if (part.type === 'file') {
+                        text += `file: ${part.filename} (${part.mediaType})`
+                    }
+                }
+            }
+            const formatted = `${header}\n\n${text}\n\n`
+            a.push(formatted)
+        }
+        let promptAsHtml = a.join('')
+        promptAsHtml = promptAsHtml.replace(/^\s+/gm, '')
+        promptAsHtml = preprocess(promptAsHtml, { kind: '' }, { textos: [] }, true).text
+        resultText = highlightCitationsLongestMatch(promptAsHtml, resultText)
+    }
+
+    return resultText
+}
+
+
+
 
 export default function AiContent(params: { definition: PromptDefinitionType, data: PromptDataType, options?: PromptOptionsType, config?: PromptConfigType, visualization?: VisualizationEnum, dossierCode: string, diffSource?: string, onBusy?: () => void, onReady?: (content: ContentType) => void, dadosDoProcesso?: DadosDoProcessoType }) {
     const [current, setCurrent] = useState('')
@@ -275,45 +314,13 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     // Memoizar o processamento custoso das mensagens do prompt
     const processedText = useMemo(() => {
         let resultText = preprocessed.text
-
         // For text edited visualization, highlight citations in the prompt messages
         if (complete && (!visualizationId || visualizationId === VisualizationEnum.TEXT_EDITED)) {
             const promptMessages = (currentMessage?.metadata as any)?.messages
-            if (promptMessages) {
-                let a: string[] = []
-                for (const m of promptMessages) {
-                    const header = m.role === 'system'
-                        ? '---\\# SYSTEM PROMPT'
-                        : m.role === 'user'
-                            ? '---\\# PROMPT'
-                            : `---\\# ROLE: ${m.role}`
-                    let text = ''
-                    if (typeof m.content === 'string') {
-                        text = m.content
-                    } else if (Array.isArray(m.content)) {
-                        for (const part of m.content) {
-                            if (part.type === 'text') {
-                                text += part.text
-                            } else if (part.type === 'object') {
-                                text += JSON.stringify(part.object, null, 2)
-                            } else if (part.type === 'file') {
-                                text += `file: ${part.filename} (${part.mediaType})`
-                            }
-                        }
-                    }
-                    const formatted = `${header}\n\n${text}\n\n`
-                    a.push(formatted)
-                }
-                let promptAsHtml = a.join('')
-                promptAsHtml = promptAsHtml.replace(/^\s+/gm, '')
-                promptAsHtml = preprocess(promptAsHtml, { kind: '' }, { textos: [] }, true).text
-                resultText = highlightCitationsLongestMatch(promptAsHtml, resultText)
-            }
+            resultText = preprocessPromptMessages(resultText, promptMessages)
         }
-
         if (params.dadosDoProcesso)
             resultText = addLinkToPieces(resultText, params.data.textos || [], params.dadosDoProcesso)
-
         return resultText
     }, [complete, visualizationId, currentMessage?.metadata, preprocessed.text])
 

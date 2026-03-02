@@ -25,7 +25,7 @@ async function GET_HANDLER(req: Request, { params }: { params: Promise<{ baseId:
 
     // Buscar todas as versões do prompt
     const versions = await knex('ia_prompt')
-        .select('id', 'base_id', 'name', 'created_at', 'created_by', 'is_latest', 'share', 'kind')
+        .select('id', 'base_id', 'name', 'slug', 'created_at', 'created_by', 'is_latest', 'share', 'kind')
         .where({ base_id })
         .orderBy('created_at', 'desc')
 

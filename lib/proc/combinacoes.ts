@@ -76,6 +76,7 @@ export enum P {
     PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
     PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
     PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
+    RELATORIO_CIVEL_PRIMEIRA_INST = 'Relatório Cível para 1ª Instância',
     RELATORIO_DE_APELACAO_E_TRIAGEM = 'Relatório de Apelação e Triagem',
     LINHA_DO_TEMPO_FATICA = 'Linha do Tempo Fática',
 }
@@ -123,6 +124,7 @@ export const ProdutosValidos = {
     [P.PREV_BI_ANALISE_DE_LAUDO]: { titulo: P.PREV_BI_ANALISE_DE_LAUDO, prompt: 'prev-bi-analise-de-laudo', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
     [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
+    [P.RELATORIO_CIVEL_PRIMEIRA_INST]: { titulo: P.RELATORIO_CIVEL_PRIMEIRA_INST, prompt: 'relatorio-civel-para-primeira-instancia', plugins: [] },
     [P.RELATORIO_DE_APELACAO_E_TRIAGEM]: { titulo: P.RELATORIO_DE_APELACAO_E_TRIAGEM, prompt: 'relatorio-de-apelacao-e-triagem', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
     [P.LINHA_DO_TEMPO_FATICA]: { titulo: P.LINHA_DO_TEMPO_FATICA, prompt: 'linha-do-tempo-fatica', plugins: [] },
 }
@@ -479,9 +481,19 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Resumos e triagem',
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.RESUMO, P.CHAT],
-        context: { action: 'processo_selecionar' }
     },
-
+    
+    // RELATORIO_CIVEL_PRIMEIRA_INST: {
+    //     status: StatusDeLancamento.PUBLICO,
+    //     relatorioDeAcervo: true,
+    //     sort: 1,
+    //     nome: 'Relatório Cível para 1ª Instância',
+    //     author: 'Caroline Tauk/JFRJ',
+    //     padroes: [...padroesConhecimento, padraoConhecimentoForcado],
+    //     produtos: [P.RELATORIO_CIVEL_PRIMEIRA_INST, P.CHAT],
+    //     instance: [Instance.PRIMEIRO_GRAU.name],
+    //     context: { action: 'processo_selecionar', instance: Instance.PRIMEIRO_GRAU.name }
+    // },
     RELATORIO_DE_APELACAO_E_TRIAGEM: {
         status: StatusDeLancamento.PUBLICO,
         relatorioDeAcervo: true,

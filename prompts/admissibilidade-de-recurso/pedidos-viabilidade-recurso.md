@@ -12,111 +12,55 @@ Escreva de modo CONCISO, mas completo e abrangente, sem redundância
 
 Você receberá os textos de peças processuais recursais (Recurso Extraordinário ou Recurso Especial) e deverá identificar os pedidos realizados pelo recorrente que são objeto da análise de admissibilidade.
 
-## Formato da Resposta
+## CRITICAL RULES (LEIA COM ATENÇÃO)
+1. **Fatos vs. Direito:** Se o texto diz "Conforme o artigo 186 do CC...", IGNORE. Se o texto diz "No dia 10/05, o réu negativou o nome...", EXTRAIA.
+2. **Datas Relativas:** Se o texto diz "dois dias depois" ou "na semana seguinte", tente inferir a data baseada no evento anterior. Se não for possível determinar a data exata, use o campo "Lo_Data_Inferida " como TRUE.
+3. **Verificabilidade (Grounding):** Para cada evento, você DEVE extrair o trecho exato (verbatim) do texto original que fundamenta aquele fato. Sem isso, a extração é inválida.
+4. **Formatação de Data:** Sempre converta datas DD/MM/YYYY. Se a data for parcial use XX no lugar do dia ou do mês (ex: "em janeiro de 2023"), use "XX/01/2023".
+5. **Entidades:** Identifique quem realizou a ação (Autor, Réu, Juízo, Terceiro).
 
-Sua resposta será no formato JSON e deve observar alguns campos padronizados conforme listagens abaixo:
+## Preenchimento do JSON de Resposta
 
-Opções para "proximoPrompt":
-- DECISAO_ADMISSIBILIDADE_RECURSO_EXTRAORDINARIO
-- DECISAO_ADMISSIBILIDADE_RECURSO_ESPECIAL
+### proximoPrompt
+- Se for um Recurso Extraordinário, preencha com "DECISAO_ADMISSIBILIDADE_RECURSO_EXTRAORDINARIO". Se for um Recurso Especial, preencha com "DECISAO_ADMISSIBILIDADE_RECURSO_ESPECIAL".
 
-Opções para "pedidoDeEfeitoSuspensivo":
-- NAO
-- SIM (Utilize esta opção apenas se houver pedido expresso de atribuição de efeito suspensivo ou tutela provisória recursal para obstar a execução imediata do acórdão recorrido).
+### Pedidos[] - Lista de Pedidos
+Para cada pedido identificado, preencha os campos seguintes.
 
-Para cada pedido identificado, preencha os seguintes campos:
-- "texto": Descreva de forma concisa o pedido formulado no recurso (ex.: "Conhecer e dar provimento ao recurso para reformar a decisão recorrida").
-- "pedidoDeEfeitoSuspensivo": Indique se há pedido de atribuição de efeito suspensivo ao recurso (SIM ou NAO).
-- "argumentos": Liste os fundamentos jurídicos apresentados para embasar o pedido, preenchendo o campo "texto" com uma descrição concisa de cada argumento.
+#### Tx_Texto - Texto do Pedido
+- Descreva de forma concisa o pedido formulado no recurso (ex.: "Conhecer e dar provimento ao recurso para reformar a decisão recorrida").
 
-Sua resposta deve sempre ser formatada em JSON, conforme o padrão abaixo:
+#### Tx_Trecho_Comprobatorio - Trecho Comprobatório
+- Cópia exata do trecho do texto onde o pedido está formulado.
 
-```json
-{
-  "proximoPrompt": "DECISAO_ADMISSIBILIDADE_RECURSO_EXTRAORDINARIO ou DECISAO_ADMISSIBILIDADE_RECURSO_ESPECIAL",
-  "pedidos": [{
-    "texto": "Informe o texto conciso que descreve o pedido de mérito recursal",
-    "pedidoDeEfeitoSuspensivo": "SIM ou NAO"
-    "argumentos": [{
-        "texto": "Descreva os principais fundamentos jurídicos apresentados para embasar o pedido",
-    }]
-  }]
-}
-```
+#### Lo_PedidoDeEfeitoSuspensivo
+- Indique se há pedido de atribuição de efeito suspensivo ao recurso.
 
-Sua resposta deve ser um JSON válido. Comece sua resposta com o caractere "{".
+##### Argumentos[] - Lista de Argumentos
+Para cada fundamento jurídico apresentado para embasar o pedido, preencha os campos seguintes.
 
+###### Tx_Texto - Texto do Argumento
+- Descrição concisa do argumento.
+
+###### Tx_Trecho_Comprobatorio - Trecho Comprobatório
+- Cópia exata do trecho do texto onde o argumento está formulado.
 ## Tarefa Principal
 
 Identifique os pedidos realizados na peça recursal abaixo:
 
 {{textos}}
 
-# JSON SCHEMA
-{
-    "type": "object",
-    "properties": {
-        "proximoPrompt": {
-            "type": "string",
-            "enum": [
-                "DECISAO_ADMISSIBILIDADE_RECURSO_EXTRAORDINARIO",
-                "DECISAO_ADMISSIBILIDADE_RECURSO_ESPECIAL"
-            ]
-        },
-        "pedidos": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "texto": {
-                        "type": "string",
-                        "description": "Descrição concisa do pedido formulado no recurso."
-                    },
-                    "pedidoDeEfeitoSuspensivo": {
-                        "type": "string",
-                        "enum": [
-                            "SIM",
-                            "NAO"
-                        ],
-                        "description": "Indica se houve pedido de efeito suspensivo ao recurso."
-                    },
-                    "argumentos": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "texto": {
-                                    "type": "string",
-                                    "description": "Descrição concisa do argumento que embasa o pedido formulado no recurso."
-                                }
-                            },
-                            "required": [
-                                "texto"
-                            ],
-                            "additionalProperties": false
-                        }
-                    }
-                },
-                "required": [
-                    "texto",
-                    "pedidoDeEfeitoSuspensivo",
-                    "argumentos"
-                ],
-                "additionalProperties": false
-            }
-        }
-    },
-    "required": [
-        "proximoPrompt",
-        "pedidos"
-    ],
-    "additionalProperties": false
-}
 
 # FORMAT
-{% for d in pedidos %}{% set outerIndex = loop.index %}**Pedido {{loop.index}}:** {% if d.pedidoDeEfeitoSuspensivo === 'SIM' %}[C/ EFEITO SUSPENSIVO] {% endif %}{{ d.texto }}
+{% for d in Pedidos %}{% set outerIndex = loop.index %}**Pedido {= loop.index =}:** {% if d.Lo_PedidoDeEfeitoSuspensivo %}[C/ EFEITO SUSPENSIVO] {% endif %}{= d.Tx_Texto =}
 
-Argumentos:{% for a in d.argumentos %}
-{{loop.index}}. {{ a.texto }}{% endfor %}
+> {= d.Tx_Trecho_Comprobatorio =}
+
+Argumentos:{% for a in d.Argumentos %}
+{= loop.index =}. {= a.Tx_Texto =}
+
+> {= a.Tx_Trecho_Comprobatorio =}
+
+{% endfor %}
     
 {% endfor %}

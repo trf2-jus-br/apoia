@@ -5,10 +5,11 @@ import * as Sentry from '@sentry/nextjs';
  * A standardized error response format for the API.
  * @param message The error message.
  * @param status The HTTP status code.
+ * @param stack Optional stack trace to include in the response body.
  * @returns A NextResponse object with a standardized error body.
  */
-export function apiErrorResponse(message: string, status: number) {
-    return NextResponse.json({ errormsg: message }, { status });
+export function apiErrorResponse(message: string, status: number, stack?: string) {
+    return NextResponse.json({ errormsg: message, ...(stack ? { stack } : {}) }, { status });
 }
 
 /**
@@ -107,7 +108,7 @@ export function withErrorHandler(handler: ApiHandler): ApiHandler {
             Sentry.captureException(error);
 
             // if (error instanceof ApiError) {
-            return apiErrorResponse(error.message, error.status || 500);
+            return apiErrorResponse(error.message, error.status || 500, error.stack);
             // }
             // console.error('Unexpected API error:', error);
             // return apiErrorResponse('Internal server error', 500);

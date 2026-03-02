@@ -34,6 +34,3 @@ Familiarize-se com esta estrutura, pois você precisará preenchê-la com as inf
 - Informações faltantes:
   - Caso não encontre alguma informação nos documentos fornecidos, deixe o campo em branco.
   - Nunca invente informações. Use apenas as que estiverem disponíveis nos documentos fornecidos.
-
-
-## Instruções para o Preenchimento do JSON de Resposta

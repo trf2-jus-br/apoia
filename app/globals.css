@@ -282,9 +282,17 @@
     div.ai-content blockquote {
         font-size: 80%;
         margin-bottom: 0.5rem;
+        margin-left: 4rem;
         padding: 0.5rem 0.5rem 0 0.5rem;
         padding-bottom: 0.1rem;
-        border-left: 5px solid #f7f7f7;
+    }
+
+    blockquote {
+        border-left: 4px solid #ffffffa0;
+        font-size: 80%;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 0.5rem 0 4rem;
+        padding-bottom: 0.1rem;
     }
 
     div.ai-content ul {
@@ -491,14 +499,6 @@
         border-color: #f8f9fa;
         text-decoration: none;
         outline: none;
-    }
-
-    blockquote {
-        border-left: 4px solid #dee2e6;
-        padding-left: 8rem;
-        color: #6c757d;
-        font-size: 80%;
-        margin-bottom: 1rem;
     }
 
     .prompt-star:hover {

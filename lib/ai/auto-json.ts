@@ -2,6 +2,7 @@ import { removeAccents } from "../utils/utils"
 import auto_json from './auto-json.md'
 
 export const INFORMATION_EXTRACTION_TITLE = '## Instruções para o Preenchimento do JSON de Resposta'
+export const INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE = '## Preenchimento do JSON de Resposta'
 
 // Tipo para representar as variáveis do prompt
 export type PromptVariableType = {
@@ -21,7 +22,7 @@ export const isInformationExtractionPrompt = (prompt: string): boolean => {
 
 // Função para extrair a estrutura de variáveis do markdown
 export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType[] | undefined => {
-    const jsonInstructionsRegex = new RegExp(`^${INFORMATION_EXTRACTION_TITLE}\\s*$`, 'gms')
+    const jsonInstructionsRegex = new RegExp(`^(?:${INFORMATION_EXTRACTION_TITLE}|${INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE})\\s*$`, 'gms')
     const parts = md.split(jsonInstructionsRegex)
     if (parts.length < 2) return undefined
 
@@ -299,6 +300,6 @@ function fixVariableName(name: string) {
 
 // Função para corrigir o prompt, substituindo o título de instruções pelo JSON auto-gerado
 export function fixPromptForAutoJson(prompt: string): string {
-    const titleRegex = new RegExp(`^${INFORMATION_EXTRACTION_TITLE}\\s*$`, 'gms')
-    return prompt.replace(titleRegex, auto_json)
+    const titleRegex = new RegExp(`^(${INFORMATION_EXTRACTION_TITLE}|${INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE})\\s*$`, 'gms')
+    return prompt.replace(titleRegex, auto_json + '\n\n' + '$1\n\n')
 }
