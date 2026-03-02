@@ -28,7 +28,9 @@ Clique [aqui](https://docs.google.com/presentation/d/1XTmGNOI3O3yaBOEXa5A3ViVHlC
 
 ## Configuração
 
-A Apoia requer que diversas variáveis de ambiente sejam informadas. No ambiente de desenvolvimento, isso pode ser feito criando um arquivo na raiz do projeto chamado `.env.local`.
+A Apoia requer que diversas variáveis de ambiente sejam informadas. 
+
+No ambiente de desenvolvimento, isso pode ser feito criando um arquivo na raiz do projeto chamado `.env.local`.
 
 Primeiro, indique quais são os sistemas aos quais deseja conectar a Apoia, depois, para cada sistema, informe o endereço do WSDL e do Endpoint do MNI:
 
