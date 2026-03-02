@@ -6,33 +6,36 @@ import { IAPrompt } from '@/lib/db/mysql-types'
 import { assertApiUser } from '@/lib/user'
 import { preprocessTemplate } from '@/lib/ai/template'
 import { createUIMessageStream, createUIMessageStreamResponse, StreamTextResult, ToolSet, UIMessage } from 'ai'
-import { ApiError, UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
+import { ApiError, Trace, UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 import { getTools } from '@/lib/ai/tools'
 
 export const maxDuration = 60
 
 /**
- * JSON.stringify protegido contra referências circulares.
- * Substitui referências circulares por "[Circular]".
+ * JSON.stringify protegido contra referências circulares e profundidade excessiva.
+ * Substitui referências circulares por "[Circular]" e limita profundidade.
  */
 function safeStringify(obj: any, space?: number): string {
-    const seen = new WeakSet()
-    return JSON.stringify(obj, (key, value) => {
-        if (typeof value === 'object' && value !== null) {
-            if (seen.has(value)) {
-                return '[Circular]'
+    const MAX_DEPTH = 10
+    try {
+        const seen = new WeakSet()
+        let depth = 0
+        return JSON.stringify(obj, function (key, value) {
+            // Controla profundidade
+            if (typeof value === 'object' && value !== null) {
+                if (depth >= MAX_DEPTH) return '[MaxDepth]'
+                if (seen.has(value)) return '[Circular]'
+                seen.add(value)
+                depth++
             }
-            seen.add(value)
-        }
-        // Converte funções e promessas para representação legível
-        if (typeof value === 'function') {
-            return '[Function]'
-        }
-        if (value instanceof Promise) {
-            return '[Promise]'
-        }
-        return value
-    }, space)
+            if (typeof value === 'function') return '[Function]'
+            if (value instanceof Promise) return '[Promise]'
+            if (typeof value === 'object' && value !== null && typeof value.getReader === 'function') return '[Stream]'
+            return value
+        }, space)
+    } catch (e: any) {
+        return `[safeStringify failed: ${e.message}]`
+    }
 }
 
 async function getPromptDefinition(kind: string, promptSlug?: string, promptId?: number): Promise<PromptDefinitionType> {
@@ -150,13 +153,16 @@ async function getPromptDefinition(kind: string, promptSlug?: string, promptId?:
  *       405:
  *         description: Erro durante a execução do prompt ou comunicação com o provedor.
  */
-async function POST_HANDLER(request: Request) {
+async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
+    trace.step('start')
     const { searchParams } = new URL(request.url)
     const messagesOnly = searchParams.get('messagesOnly') === 'true'
 
+    trace.step('assertApiUser')
     const pUser = assertApiUser()
     const user = await pUser
 
+    trace.step('prepareUserFields')
     // Update user details
     const userFields = user.corporativo?.length ? {
         name: user.corporativo?.[0]?.nom_usuario || null,
@@ -168,8 +174,11 @@ async function POST_HANDLER(request: Request) {
         court_name: user.corporativo?.[0]?.dsc_tribunal_pai || null,
         state_abbreviation: user.corporativo?.[0]?.sig_uf || null,
     } : undefined
+
+    trace.step('assertIAUserId')
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name, userFields)
 
+    trace.step('parseBody')
     const body = await request.json()
     const kind: string = body.kind
     const promptSlug: string | undefined = body.promptSlug
@@ -185,6 +194,7 @@ async function POST_HANDLER(request: Request) {
     const dossierCode = body.dossierCode
     const documentId = body.documentId
 
+    trace.step(`getPromptDefinition:${kind}`)
     const definition = await getPromptDefinition(kind, promptSlug, promptId)
     const data: any = body.data
     const options: PromptOptionsType = {
@@ -196,9 +206,11 @@ async function POST_HANDLER(request: Request) {
         cacheControl: body.cacheControl,
     }
 
+    trace.step('buildDefinitionWithOptions')
     const definitionWithOptions = promptDefinitionFromDefinitionAndOptions(definition, options)
 
     if (definitionWithOptions.template) {
+        trace.step('preprocessTemplate')
         definitionWithOptions.template = preprocessTemplate(definitionWithOptions.template)
     }
 
@@ -208,14 +220,22 @@ async function POST_HANDLER(request: Request) {
     if (body.extra)
         definitionWithOptions.prompt += '\n\n' + body.extra
 
+    trace.step('getTools')
+    const tools = await getTools(pUser)
+
+    trace.step('streamContent')
     const executionResults: PromptExecutionResultsType = { messagesOnly }
-    const ret = await streamContent(definitionWithOptions, data, executionResults, { dossierCode }, await getTools(pUser))
+    const ret = await streamContent(definitionWithOptions, data, executionResults, { dossierCode }, tools)
+
+    trace.step(`streamContent:done:cached=${!!ret.cached}:textStream=${!!ret.textStream}:objectStream=${!!ret.objectStream}:messages=${!!ret.messages}`)
 
     if (ret.messages && messagesOnly) {
+        trace.step('return:messagesOnly')
         return new Response(ret.messages, { status: 200 })
     }
 
     if (ret.cached) {
+        trace.step('return:cached')
         const stream = createUIMessageStream<UIMessage>({
             execute: async ({ writer }) => {
                 writer.write({ type: 'start', messageId: crypto.randomUUID() });
@@ -239,6 +259,7 @@ async function POST_HANDLER(request: Request) {
     }
 
     if (ret.textStream && searchParams.get('uiMessageStream') === 'true') {
+        trace.step('return:uiMessageStream')
         const uiMessageStream = ((await ret.textStream) as StreamTextResult<ToolSet, any>).toUIMessageStream({ sendFinish: false })
         const stream = createUIMessageStream<UIMessage>({
             execute: async ({ writer }) => {
@@ -255,6 +276,7 @@ async function POST_HANDLER(request: Request) {
     }
 
     if (ret.textStream || ret.objectStream) {
+        trace.step('return:rawStream')
         const result = ret.textStream ? await ret.textStream : ret.objectStream ? await ret.objectStream : null
         const reader: ReadableStreamDefaultReader = (result as any).fullStream.getReader()
         const { value, done } = await reader.read()
@@ -288,6 +310,7 @@ async function POST_HANDLER(request: Request) {
                 pump()
             },
         })
+
         return new Response(feederStream, {
             status: 200,
             headers: {
@@ -296,7 +319,11 @@ async function POST_HANDLER(request: Request) {
         })
     }
 
-    throw new ApiError(`Resposta inválida do provedor de IA (${safeStringify(ret)})`, 500)
+    trace.step('error:build ret JSON')
+    const retJson = safeStringify(ret)
+
+    trace.step('error:invalidResponse')
+    throw new ApiError(`Resposta inválida do provedor de IA (${retJson})`, 500)
 }
 
 export const POST = withErrorHandler(POST_HANDLER as any)

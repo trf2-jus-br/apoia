@@ -6,10 +6,15 @@ import * as Sentry from '@sentry/nextjs';
  * @param message The error message.
  * @param status The HTTP status code.
  * @param stack Optional stack trace to include in the response body.
+ * @param trace Optional array of completed step labels for debugging.
  * @returns A NextResponse object with a standardized error body.
  */
-export function apiErrorResponse(message: string, status: number, stack?: string) {
-    return NextResponse.json({ errormsg: message, ...(stack ? { stack } : {}) }, { status });
+export function apiErrorResponse(message: string, status: number, stack?: string, trace?: string[]) {
+    return NextResponse.json({
+        errormsg: message,
+        ...(stack ? { stack } : {}),
+        ...(trace?.length ? { trace } : {}),
+    }, { status });
 }
 
 /**
@@ -90,25 +95,39 @@ export class OutOfQuotaError extends SilentError {
     }
 }
 
+/**
+ * Helper para rastrear progresso de execucao dentro de um handler.
+ * Cada chamada a step() registra um checkpoint.
+ * Em caso de erro, a lista de steps completados e incluida na resposta.
+ */
+export class Trace {
+    public steps: string[] = []
+    step(label: string) {
+        this.steps.push(label)
+    }
+}
+
 // A type for API handlers to ensure consistency.
 // Note: 'props' is 'any' to accommodate different route parameter structures.
 type ApiHandler = (req: NextRequest, props: any) => Promise<NextResponse>;
+type TracedApiHandler = (req: NextRequest, props: any, trace: Trace) => Promise<NextResponse>;
 
 /**
  * A higher-order function to wrap API route handlers with standardized error handling.
  * @param handler The API route handler function to wrap.
  * @returns A new handler function with built-in try-catch logic.
  */
-export function withErrorHandler(handler: ApiHandler): ApiHandler {
+export function withErrorHandler(handler: ApiHandler | TracedApiHandler): ApiHandler {
     return async (req: NextRequest, props: any) => {
+        const trace = new Trace()
         try {
-            return await handler(req, props);
+            return await (handler as TracedApiHandler)(req, props, trace);
         } catch (error: any) {
             // Capture without fixed route tag; request URL already present in scope
             Sentry.captureException(error);
 
             // if (error instanceof ApiError) {
-            return apiErrorResponse(error.message, error.status || 500, error.stack);
+            return apiErrorResponse(error.message, error.status || 500, error.stack, trace.steps);
             // }
             // console.error('Unexpected API error:', error);
             // return apiErrorResponse('Internal server error', 500);
