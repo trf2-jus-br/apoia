@@ -905,4 +905,46 @@ describe('highlightCitationsLongestMatch', () => {
     });
   })
 
+  describe('Isolamento de bugs envolvendo erro na formatação de <strong> ou <em>', () => {
+
+    test('tags <strong> ao redor de texto não-citado não devem ser deslocadas para o span de citação', () => {
+      const sourceHtml = `
+        <relatorio event="17, 2º Grau" label="REL1">
+          <page number="1">a sentença julgou procedente o pedido para condenar a parte ré ao pagamento das diferenças oriundas do crédito</page>
+        </relatorio>
+      `;
+
+      // "Pedido 1" está em <strong> mas NÃO é citação; a citação começa depois
+      const generatedHtml = `
+        <p><strong>Pedido 1</strong>: a sentença julgou precedente o pedido para condenar a parte ré ao pagamento das diferenças oriundas do crédito.</p>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      // A tag <strong> deve permanecer ao redor de "Pedido 1", não ser movida para dentro do span de citação
+      expect(result).toContain('<strong>Pedido 1</strong>');
+      // Não deve gerar HTML quebrado como "<strong>" sem "</strong>" correspondente dentro do mesmo contexto
+      expect(result).not.toMatch(/<span class="citacao"[^>]*><strong>/);
+    });
+
+    test('tags <strong> dentro de texto citado devem ser preservadas normalmente', () => {
+      const sourceHtml = `
+        <relatorio event="17, 2º Grau" label="REL1">
+          <page number="1">a sentença julgou procedente o pedido para condenar a parte ré ao pagamento das diferenças</page>
+        </relatorio>
+      `;
+
+      // Aqui o <strong> está DENTRO do trecho citado
+      const generatedHtml = `
+        <p>a sentença julgou precedente o <strong>pedido</strong> para condenar a parte ré ao pagamento das diferenças.</p>
+      `;
+
+      const result = highlightCitationsLongestMatch(sourceHtml, generatedHtml, 8, 5);
+
+      // O <strong> deve estar preservado dentro do span de citação
+      expect(result).toContain('<strong>pedido</strong>');
+      expect(result).toContain('<span class="citacao"');
+    });
+  })
+
 });

@@ -112,24 +112,37 @@ export function flushNonCitationBuffer(
  * 
  * Isso resolve o problema de tags como <b> no início da frase ficarem
  * fora do span de citação.
+ * 
+ * IMPORTANTE: Só extrai se o buffer NÃO contiver tokens significativos
+ * (WORD/PUNCTUATION) após as tags inline. Se contiver, as tags estão
+ * envolvendo conteúdo não-citado (ex: <strong>Pedido 1</strong>) e
+ * extraí-las quebraria o HTML (a abertura ficaria no span de citação
+ * e o fechamento ficaria fora).
  */
 function extractLeadingInlineTags(state: HtmlBuilderState): Token[] {
-    const inlineTags: Token[] = [];
-    
-    // Extrai tags inline consecutivas do início do buffer
-    while (state.nonCitationBuffer.length > 0) {
-        const first = state.nonCitationBuffer[0];
-        
-        // Se for uma tag inline, extrai
-        if (first.type === 'TAG' && !isBlockTag(first.content)) {
-            inlineTags.push(state.nonCitationBuffer.shift()!);
+    // Primeiro: conta quantas tags inline consecutivas há no início
+    let leadingTagCount = 0;
+    for (let i = 0; i < state.nonCitationBuffer.length; i++) {
+        const t = state.nonCitationBuffer[i];
+        if (t.type === 'TAG' && !isBlockTag(t.content)) {
+            leadingTagCount++;
         } else {
-            // Se não for tag inline, para de extrair
             break;
         }
     }
     
-    return inlineTags;
+    if (leadingTagCount === 0) return [];
+    
+    // Verifica se há tokens significativos APÓS as tags inline no buffer
+    const hasSignificantAfter = state.nonCitationBuffer.slice(leadingTagCount).some(
+        t => t.type === 'WORD' || t.type === 'PUNCTUATION'
+    );
+    
+    // Se há conteúdo significativo depois, as tags envolvem texto não-citado — não extrair
+    if (hasSignificantAfter) return [];
+    
+    // Caso seguro: só tags inline (e possivelmente whitespace) no buffer — extrair
+    return state.nonCitationBuffer.splice(0, leadingTagCount);
 }
 
 /**

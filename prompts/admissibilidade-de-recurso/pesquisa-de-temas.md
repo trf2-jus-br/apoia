@@ -28,12 +28,12 @@ Faça uma análise detalhada das informações retornadas pela ferramenta getSem
 Sua resposta deverá ser concisa e estruturada. Para cada pedido listado, apresente as seguintes informações:
 - Em um parágrafo, repita o texto do pedido conforme listado no documento. Inicie com "**Pedido [índice do pedido começando por 1]**: " seguido do texto do pedido.
 - Liste as teses jurídicas e súmulas vinculantes identificadas pela pesquisa e que possuem aplicação direta ao caso em questão. Não liste resultados menos relevantes. Para cada tese ou súmula, escreva um parágrafo contendo as seguintes informações:
-  - Indique se é um Tema de Repercussão Geral ou um Recurso Especial Repetitivo e qual é o número. Exemplo: "*Tema de Repercussão Geral Nº 123*" ou "*Recurso Especial Repetitivo Nº 456*".
+  - Indique se é um Tema de Repercussão Geral ou um Recurso Especial Repetitivo e qual é o número. Exemplo: "**Tema de Repercussão Geral Nº 123**" ou "**Recurso Especial Repetitivo Nº 456**".
   - Forneça o número ou código da tese ou súmula. Deve ser incluído entre parênteses após a indicação do tipo. Exemplo: (ID: stf-rg-123) ou (ID: stj-rr-456).
-  - Um exemplo de início de parágrafo juntando a identificação e a numeração: "*Tema de Repercussão Geral Nº 123* (ID: stf-rg-123). ...".
+  - Um exemplo de início de parágrafo juntando a identificação e a numeração: "**Tema de Repercussão Geral Nº 123** (ID: stf-rg-123). ...".
   - Apresente um breve resumo do conteúdo e relevância da tese ou súmula em relação ao pedido e ao caso em questão.
   - Explique como a tese ou súmula pode ser aplicada para fundamentar a viabilidade ou inviabilidade do recurso (suspensão, retratação, negação de prosseguimento, etc.).
 
-No final, acrescente um parágrafo conclusivo resumindo a importância das teses e súmulas encontradas para a viabilidade ou inviabilidade do recurso como um todo.
+No final, acrescente o título "**Conclusão**" seguido de uma quebra de parágrafo e um parágrafo conclusivo resumindo a importância das teses e súmulas encontradas para a viabilidade ou inviabilidade do recurso como um todo. Neste último parágrafo, destaque em negrito os pontos mais relevantes.
 
 Comece sua resposta diretamente com "**Pedido 1**: ...", sem introduções ou explicações adicionais.
