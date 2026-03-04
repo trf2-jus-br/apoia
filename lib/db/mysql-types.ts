@@ -14,6 +14,8 @@ export type IAGenerated = {
     reasoning_tokens?: number | null
     approximate_cost?: number | null
     prompt_id?: number | null
+    execution_id?: string | null
+    aggregator_prompt_id?: number | null
 }
 
 export type IASystem = {
@@ -36,6 +38,8 @@ export type IAGeneration = {
     reasoning_tokens?: number | null
     approximate_cost?: number | null
     prompt_id?: number | null
+    execution_id?: string | null
+    aggregator_prompt_id?: number | null
 }
 
 export type AIBatchIdAndEnumId = {
@@ -111,6 +115,7 @@ export type IADocument = {
 export type IAPrompt = {
     id: number
     base_id: number | null
+    uuid: string
     kind: string
     created_by: number | null
     name: string
@@ -119,6 +124,12 @@ export type IAPrompt = {
     testset_id: number | null
     share?: string
     is_official?: boolean
+    library?: string | null
+    library_version?: string | null
+    workflow?: {
+        predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
+        successors?: { uuid: string; optional?: boolean; condition?: string }[]
+    } | null
     content: {
         author?: string
 
@@ -176,6 +187,7 @@ export type IAPromptToInsert = {
 export type IAPromptList = {
     id: number
     base_id: number | null
+    uuid: string
     kind: string
     created_by: number | null
     name: string
@@ -183,6 +195,12 @@ export type IAPromptList = {
     model_id: number,
     testset_id: number | null
     share?: string
+    library?: string | null
+    library_version?: string | null
+    workflow?: {
+        predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
+        successors?: { uuid: string; optional?: boolean; condition?: string }[]
+    } | null
     content: {
         author?: string
 
@@ -216,6 +234,7 @@ export type IAPromptList = {
 export type IAPromptRating = {
     id: number
     prompt_base_id: number
+    prompt_uuid?: string | null
     user_id: number
     stars: number
     created_at: Date
@@ -230,6 +249,7 @@ export type IAPromptRatingToInsert = {
 
 export type IAPromptRatingStats = {
     prompt_base_id: number
+    prompt_uuid?: string | null
     voter_count: number
     avg_laplace: number
     wilson_score: number

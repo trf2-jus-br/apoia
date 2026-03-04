@@ -27,6 +27,7 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
             prompt = {
                 id: 0,
                 base_id: 0,
+                uuid: '',
                 created_by: user.id,
                 model_id: null,
                 testset_id: null,
