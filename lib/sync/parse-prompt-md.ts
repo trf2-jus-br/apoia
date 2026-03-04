@@ -5,7 +5,7 @@
  * lib/ai/prompt.ts, but additionally extracts the uuid from the METADATA section.
  */
 import yamlps from 'js-yaml'
-import { ParsedPrompt } from './types'
+import { ParsedPrompt, WorkflowRef } from './types'
 
 /**
  * Regex that splits a prompt .md into its sections.
@@ -52,6 +52,10 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
         return null
     }
 
+    // Parse workflow predecessors/successors from METADATA
+    const predecessors = parseWorkflowRefs(metadata.predecessors)
+    const successors = parseWorkflowRefs(metadata.successors)
+
     return {
         uuid,
         slug,
@@ -63,5 +67,34 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
         template: parts.template || null,
         metadata,
         relativePath,
+        ...(predecessors.length > 0 ? { predecessors } : {}),
+        ...(successors.length > 0 ? { successors } : {}),
     }
+}
+
+/**
+ * Parse a YAML array of workflow references into WorkflowRef objects.
+ * Supports two formats:
+ *   - path: chat              (simple path reference)
+ *   - uuid: abc-123           (direct UUID reference)
+ *   - path: chat              (with optional: true, condition: ...)
+ */
+function parseWorkflowRefs(raw: any): WorkflowRef[] {
+    if (!Array.isArray(raw)) return []
+
+    return raw.map((item: any) => {
+        if (typeof item === 'string') {
+            // Short form: just a path string
+            return { path: item } as WorkflowRef
+        }
+        if (typeof item === 'object' && item !== null) {
+            const ref: WorkflowRef = {}
+            if (item.path) ref.path = String(item.path)
+            if (item.uuid) ref.uuid = String(item.uuid)
+            if (item.optional) ref.optional = true
+            if (item.condition) ref.condition = String(item.condition)
+            return ref
+        }
+        return null
+    }).filter(Boolean) as WorkflowRef[]
 }

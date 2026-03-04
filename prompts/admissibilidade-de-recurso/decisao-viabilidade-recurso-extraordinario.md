@@ -1,6 +1,10 @@
 # METADATA
 
 uuid: f7e3b1a2-5c4d-4e6f-8a9b-0c1d2e3f4a5b
+predecessors:
+  - path: juizo-viabilidade-recurso
+successors:
+  - path: chat
 
 # SYSTEM PROMPT
 

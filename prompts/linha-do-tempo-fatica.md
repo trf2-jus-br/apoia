@@ -2,6 +2,8 @@
 
 uuid: c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f
 author: Renato Crivano/TRF2
+successors:
+  - path: chat
 
 
 # SYSTEM PROMPT

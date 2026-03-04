@@ -27,27 +27,35 @@ export interface ParsedPrompt {
     metadata: Record<string, any>
     /** Relative path of the source file within the library */
     relativePath: string
+    /** Workflow predecessors as declared in METADATA (path-based, unresolved) */
+    predecessors?: WorkflowRef[]
+    /** Workflow successors as declared in METADATA (path-based, unresolved) */
+    successors?: WorkflowRef[]
 }
 
-/** A parsed workflow from a .yaml file */
-export interface ParsedWorkflow {
-    uuid: string
-    name: string
-    slug: string
-    target?: string
-    scope?: string[]
-    instance?: string[]
-    matter?: string[]
-    predecessors: WorkflowStep[]
-    successors: WorkflowStep[]
-    /** If this workflow also has a .md with matching uuid, it has its own prompt content */
-    hasOwnPrompt?: boolean
+/** A workflow step reference as declared in METADATA (before UUID resolution) */
+export interface WorkflowRef {
+    /** Path reference to another prompt (slug or relative path, e.g., 'chat') */
+    path?: string
+    /** Direct UUID reference (for github: provider or cross-library refs) */
+    uuid?: string
+    /** Whether this step is optional */
+    optional?: boolean
+    /** Condition expression for conditional steps */
+    condition?: string
 }
 
-export interface WorkflowStep {
+/** A resolved workflow step (after path -> UUID resolution), ready for database storage */
+export interface WorkflowStepResolved {
     uuid: string
     optional?: boolean
     condition?: string
+}
+
+/** Resolved workflow for a prompt, stored in ia_prompt.workflow column */
+export interface WorkflowResolved {
+    predecessors?: WorkflowStepResolved[]
+    successors?: WorkflowStepResolved[]
 }
 
 /** Result of reading a library source */
@@ -56,10 +64,8 @@ export interface LibraryContents {
     library: string
     /** Version identifier (commit SHA for github, content hash for local) */
     version: string
-    /** Parsed prompt definitions from .md files */
+    /** Parsed prompt definitions from .md files (may include workflow refs) */
     prompts: ParsedPrompt[]
-    /** Parsed workflow definitions from .yaml files */
-    workflows: ParsedWorkflow[]
 }
 
 /** Interface that all library providers must implement */

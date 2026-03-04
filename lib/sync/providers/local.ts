@@ -7,7 +7,7 @@
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { LibraryProvider, LibraryContents, ParsedPrompt, ParsedWorkflow } from '../types'
+import { LibraryProvider, LibraryContents, ParsedPrompt } from '../types'
 import { parsePromptMarkdown } from '../parse-prompt-md'
 
 export class LocalProvider implements LibraryProvider {
@@ -25,7 +25,6 @@ export class LocalProvider implements LibraryProvider {
 
     async read(): Promise<LibraryContents> {
         const prompts: ParsedPrompt[] = []
-        const workflows: ParsedWorkflow[] = []
 
         // Read all .md files recursively
         const mdFiles = this.findFiles(this.dirPath, '.md')
@@ -42,14 +41,10 @@ export class LocalProvider implements LibraryProvider {
         // Compute a content hash as version identifier
         const contentHash = this.computeContentHash(prompts)
 
-        // TODO: In F3+, read workflow .yaml files from a workflows/ subdirectory
-        // const yamlFiles = this.findFiles(path.join(this.dirPath, 'workflows'), '.yaml')
-
         return {
             library: this.library,
             version: contentHash,
             prompts,
-            workflows,
         }
     }
 

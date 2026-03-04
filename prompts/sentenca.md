@@ -1,6 +1,10 @@
 # METADATA
 
 uuid: 5b3d1c81-7a5b-453b-ad26-67b9936603da
+predecessors:
+  - path: pedidos-fundamentacoes-e-dispositivos
+successors:
+  - path: chat
 
 # SYSTEM PROMPT
 

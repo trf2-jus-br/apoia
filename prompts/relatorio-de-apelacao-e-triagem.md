@@ -1,6 +1,8 @@
 # METADATA
 
 uuid: ee53509d-777b-4a88-8277-ebf240ba04da
+successors:
+  - path: chat
 
 # SYSTEM PROMPT
 

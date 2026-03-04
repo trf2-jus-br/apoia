@@ -2,6 +2,8 @@
 
 uuid: cd044383-6e15-4569-8275-33ecb843927f
 author: Caroline Tauk/JFRJ
+successors:
+  - path: chat
 
 # PROMPT
 

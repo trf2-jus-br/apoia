@@ -12,7 +12,7 @@
 import knex from '../db/knex'
 import { getId } from '../db/dao/utils'
 import { slugify } from '../utils/utils'
-import { LibraryProvider, ParsedPrompt, SyncResult } from './types'
+import { LibraryProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
 import devLog from '../utils/log'
 
 /**
@@ -49,6 +49,79 @@ function contentHasChanged(dbContent: Record<string, any>, newContent: Record<st
 }
 
 /**
+ * Compare two workflow objects to determine if the workflow definition has changed.
+ */
+function workflowHasChanged(dbWorkflow: any, newWorkflow: WorkflowResolved | null): boolean {
+    const dbJson = dbWorkflow ? (typeof dbWorkflow === 'string' ? dbWorkflow : JSON.stringify(dbWorkflow)) : null
+    const newJson = newWorkflow ? JSON.stringify(newWorkflow) : null
+    return dbJson !== newJson
+}
+
+/**
+ * Build a slug->UUID lookup index from all parsed prompts.
+ * Used to resolve `path:` references in workflow definitions.
+ */
+function buildSlugIndex(prompts: ParsedPrompt[]): Map<string, string> {
+    const index = new Map<string, string>()
+    for (const p of prompts) {
+        index.set(p.slug, p.uuid)
+        // Also index by relative path without extension (for subdirectory prompts)
+        const pathWithoutExt = p.relativePath.replace(/\.md$/, '')
+        if (pathWithoutExt !== p.slug) {
+            index.set(pathWithoutExt, p.uuid)
+        }
+    }
+    return index
+}
+
+/**
+ * Resolve a WorkflowRef (path or uuid) to a resolved step with UUID.
+ * Returns null if the reference cannot be resolved.
+ */
+function resolveWorkflowRef(ref: WorkflowRef, slugIndex: Map<string, string>): WorkflowStepResolved | null {
+    let uuid: string | undefined
+
+    if (ref.uuid) {
+        uuid = ref.uuid
+    } else if (ref.path) {
+        uuid = slugIndex.get(ref.path)
+    }
+
+    if (!uuid) return null
+
+    const step: WorkflowStepResolved = { uuid }
+    if (ref.optional) step.optional = true
+    if (ref.condition) step.condition = ref.condition
+    return step
+}
+
+/**
+ * Resolve all workflow references in a parsed prompt to UUIDs.
+ * Returns the resolved workflow object, or null if the prompt has no workflow.
+ */
+function resolveWorkflow(parsed: ParsedPrompt, slugIndex: Map<string, string>): WorkflowResolved | null {
+    if (!parsed.predecessors?.length && !parsed.successors?.length) return null
+
+    const workflow: WorkflowResolved = {}
+
+    if (parsed.predecessors?.length) {
+        const resolved = parsed.predecessors
+            .map(ref => resolveWorkflowRef(ref, slugIndex))
+            .filter(Boolean) as WorkflowStepResolved[]
+        if (resolved.length > 0) workflow.predecessors = resolved
+    }
+
+    if (parsed.successors?.length) {
+        const resolved = parsed.successors
+            .map(ref => resolveWorkflowRef(ref, slugIndex))
+            .filter(Boolean) as WorkflowStepResolved[]
+        if (resolved.length > 0) workflow.successors = resolved
+    }
+
+    return (workflow.predecessors || workflow.successors) ? workflow : null
+}
+
+/**
  * Synchronize prompts from a single library provider into the database.
  * 
  * @param provider - The library provider to read prompts from
@@ -69,6 +142,9 @@ export async function syncLibrary(provider: LibraryProvider): Promise<SyncResult
         errors: [],
     }
 
+    // Build slug->UUID index for resolving path: references
+    const slugIndex = buildSlugIndex(contents.prompts)
+
     // Collect UUIDs that are present in the source
     const sourceUuids = new Set<string>()
 
@@ -76,7 +152,8 @@ export async function syncLibrary(provider: LibraryProvider): Promise<SyncResult
         sourceUuids.add(parsed.uuid)
 
         try {
-            await syncSinglePrompt(parsed, contents.library, contents.version, result)
+            const resolvedWorkflow = resolveWorkflow(parsed, slugIndex)
+            await syncSinglePrompt(parsed, contents.library, contents.version, resolvedWorkflow, result)
         } catch (err: any) {
             result.errors.push(`Error syncing ${parsed.slug} (${parsed.uuid}): ${err.message}`)
         }
@@ -102,6 +179,7 @@ async function syncSinglePrompt(
     parsed: ParsedPrompt,
     library: string,
     libraryVersion: string,
+    resolvedWorkflow: WorkflowResolved | null,
     result: SyncResult
 ): Promise<void> {
     // Find existing record with this uuid and is_latest=1
@@ -112,6 +190,7 @@ async function syncSinglePrompt(
 
     const newContent = buildContentJson(parsed)
     const slug = slugify(parsed.name) || parsed.slug
+    const workflowJson = resolvedWorkflow ? JSON.stringify(resolvedWorkflow) : null
 
     if (!existing) {
         // INSERT new prompt
@@ -125,6 +204,7 @@ async function syncSinglePrompt(
             share: 'PADRAO',
             library,
             library_version: libraryVersion,
+            workflow: workflowJson,
         }).returning('id')
         const id = getId(returned)
         // Set base_id = id for new prompts (self-referential)
@@ -139,7 +219,9 @@ async function syncSinglePrompt(
             dbContent = existing.content
         }
 
-        if (contentHasChanged(dbContent, newContent)) {
+        const changed = contentHasChanged(dbContent, newContent) || workflowHasChanged(existing.workflow, resolvedWorkflow)
+
+        if (changed) {
             // Create new version: set old is_latest=0, insert new row with same base_id
             await knex!('ia_prompt').update({ is_latest: 0 }).where({ id: existing.id })
 
@@ -154,6 +236,7 @@ async function syncSinglePrompt(
                 share: existing.share || 'PADRAO',
                 library,
                 library_version: libraryVersion,
+                workflow: workflowJson,
             }).returning('id')
             result.updated++
         } else {

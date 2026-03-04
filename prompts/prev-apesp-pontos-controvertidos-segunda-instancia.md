@@ -1,6 +1,10 @@
 # METADATA
 
 uuid: b01fed52-428c-47b1-aa7b-228be3b63ba4
+successors:
+  - path: pedidos-fundamentacoes-e-dispositivos
+  - path: voto
+  - path: chat
 
 # SYSTEM PROMPT
 - Você é um assistente de IA especializado em extrair informações de documentos e estruturá-las em formato JSON.

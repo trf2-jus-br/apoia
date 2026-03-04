@@ -1,2 +1,2 @@
 export { syncLibrary, syncLocalPrompts } from './sync-engine'
-export type { ParsedPrompt, ParsedWorkflow, LibraryContents, LibraryProvider, SyncResult } from './types'
+export type { ParsedPrompt, WorkflowRef, WorkflowResolved, LibraryContents, LibraryProvider, SyncResult } from './types'
