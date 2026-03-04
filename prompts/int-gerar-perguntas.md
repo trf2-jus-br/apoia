@@ -1,3 +1,9 @@
+# METADATA
+
+uuid: a9b50caa-89e6-46f7-933e-0abc09f8433a
+
+# PROMPT
+
 ### **Instruções Gerais:**
 
 Você receberá um **Texto de Referência** e deverá seguir os passos abaixo:

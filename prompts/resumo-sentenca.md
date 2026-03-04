@@ -1,3 +1,7 @@
+# METADATA
+
+uuid: 76a11167-e83c-4779-ac1d-cc0c18c84a87
+
 # SYSTEM PROMPT
 
 Você conhece profundamente o direito brasileiro e está completamente atualizado juridicamente. 

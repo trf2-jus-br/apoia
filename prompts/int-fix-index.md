@@ -1,3 +1,7 @@
+# METADATA
+
+uuid: c5e88d82-4c7d-43a1-8f6d-5cfde8abe294
+
 # SYSTEM PROMPT
 
 Escreva de modo CONCISO, mas completo e abrangente, sem redundância

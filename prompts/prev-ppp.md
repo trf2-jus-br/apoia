@@ -1,3 +1,7 @@
+# METADATA
+
+uuid: 0d5dfcc0-01d9-42f5-8f02-9f50c051d0df
+
 # PROMPT
 
 Você é um assistente de IA especializado em extrair informações de documentos e estruturá-las em formato JSON. Sua tarefa é analisar o conteúdo de múltiplos documentos e produzir um JSON longo e complexo com informações extraídas desses documentos. Siga as instruções abaixo cuidadosamente para completar esta tarefa.

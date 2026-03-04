@@ -1,3 +1,7 @@
+# METADATA
+
+uuid: 7dc47a4a-8d4c-468b-9c6f-32d7df4c9cf3
+
 # SYSTEM PROMPT
 
 PERSONIFICAÇÃO

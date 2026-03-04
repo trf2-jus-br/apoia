@@ -1,3 +1,7 @@
+# METADATA
+
+uuid: acfa3a3c-fc1f-4952-ac6b-0e2766c5c1e5
+
 # PROMPT
 
 Por favor, analise o texto da petição inicial e dos documentos anexos fornecids e atribua uma nota de 1 a 5 para cada um dos critérios abaixo, onde:
