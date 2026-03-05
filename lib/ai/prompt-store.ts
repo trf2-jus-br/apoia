@@ -22,7 +22,7 @@ function dbRecordToDefinition(record: IAPrompt): PromptDefinitionType {
     return {
         kind: record.slug || record.category || '',
         name: record.name || undefined,
-        isLibrary: !!record.library,
+        isSeeded: !!record.origin,
         systemPrompt: content?.system_prompt || undefined,
         prompt: content?.prompt || undefined,
         jsonSchema: content?.json_schema || undefined,
@@ -49,11 +49,11 @@ function dbRecordToDefinition(record: IAPrompt): PromptDefinitionType {
 export async function getPromptDefinition(slug: string): Promise<PromptDefinitionType> {
     if (!knex) throw new Error('Database not available')
 
-    // Try to find library prompt by slug
+    // Try to find origin prompt by slug
     let record = await knex('ia_prompt')
         .select('*')
         .where({ slug, is_latest: 1 })
-        .whereNotNull('library')
+        .whereNotNull('origin')
         .first() as IAPrompt | undefined
 
     // Fallback: try with underscore variant
@@ -62,7 +62,7 @@ export async function getPromptDefinition(slug: string): Promise<PromptDefinitio
         record = await knex('ia_prompt')
             .select('*')
             .where({ slug: slugUnderscore, is_latest: 1 })
-            .whereNotNull('library')
+            .whereNotNull('origin')
             .first() as IAPrompt | undefined
     }
 
@@ -71,7 +71,7 @@ export async function getPromptDefinition(slug: string): Promise<PromptDefinitio
         record = await knex('ia_prompt')
             .select('*')
             .where({ slug: 'resumo-peca', is_latest: 1 })
-            .whereNotNull('library')
+            .whereNotNull('origin')
             .first() as IAPrompt | undefined
     }
 
@@ -105,7 +105,7 @@ export async function getPromptDefinitionByUuid(uuid: string): Promise<PromptDef
 
 /**
  * Resolve a prompt definition from a user-created prompt (by ia_prompt.id).
- * Used for prompts created via the UI (library IS NULL).
+ * Used for prompts created via the UI (origin IS NULL).
  * 
  * @param id - The ia_prompt.id
  * @returns The prompt definition with dbId, or throws if not found
@@ -126,15 +126,15 @@ export async function getPromptDefinitionById(id: number): Promise<PromptDefinit
 }
 
 /**
- * Get all library prompt slugs (for listing/UI).
- * Returns unique slugs from prompts where library IS NOT NULL and is_latest = 1.
+ * Get all seeded prompt slugs (for listing/UI).
+ * Returns unique slugs from prompts where origin IS NOT NULL and is_latest = 1.
  */
 export async function getLibraryPromptSlugs(): Promise<string[]> {
     if (!knex) return []
 
     const records = await knex('ia_prompt')
         .select('slug')
-        .whereNotNull('library')
+        .whereNotNull('origin')
         .where({ is_latest: 1 })
 
     return records
@@ -156,7 +156,7 @@ export async function getAggregatorByKind(slug: string): Promise<IAPrompt | null
     const record = await knex('ia_prompt')
         .select('*')
         .where({ slug, is_latest: 1 })
-        .whereNotNull('library')
+        .whereNotNull('origin')
         .first() as IAPrompt | undefined
 
     if (!record) return null
@@ -191,7 +191,7 @@ export async function getFirstProductSlug(slug: string): Promise<string | null> 
 }
 
 /**
- * Get all aggregator records (library-sourced, kind starts with ^, is_latest=1).
+ * Get all aggregator records (origin-sourced, is_latest=1).
  * Returns full IAPrompt records with parsed content and workflow.
  */
 export async function getAllAggregators(): Promise<IAPrompt[]> {
@@ -199,7 +199,7 @@ export async function getAllAggregators(): Promise<IAPrompt[]> {
 
     const records = await knex('ia_prompt')
         .select('*')
-        .whereNotNull('library')
+        .whereNotNull('origin')
         .where({ is_latest: 1 })
         .orderBy('id') as IAPrompt[]
 

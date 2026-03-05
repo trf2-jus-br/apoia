@@ -7,7 +7,7 @@ import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
 
-type SynthesisTypeOption = { id: string, nome: string, relatorioDeAcervo?: boolean }
+type SynthesisTypeOption = { id: string, nome: string, batchReport?: boolean }
 
 export default function NewBatchPage(props: { favorites: any[], synthesisTypes: SynthesisTypeOption[] }) {
   const [name, setName] = useState('')
@@ -21,7 +21,7 @@ export default function NewBatchPage(props: { favorites: any[], synthesisTypes: 
 
   useEffect(() => {
     const base = props.synthesisTypes
-      .filter(t => t.relatorioDeAcervo)
+      .filter(t => t.batchReport)
       .map(t => ({ value: t.id, label: t.nome }))
     const favs = props.favorites.map((f: any) => ({ value: String(f.base_id), label: `[Favorito] ${f.name}` }))
     setTipos([...base, ...favs])

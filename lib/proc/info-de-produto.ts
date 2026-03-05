@@ -24,7 +24,7 @@ export async function getTiposDeSinteseValido(): Promise<TipoDeSinteseValido[]> 
             sort: typeof content?.sort === 'number' ? content.sort : 999,
             padroes,
             status,
-            relatorioDeAcervo: !!content?.relatorio_de_acervo,
+            batchReport: !!content?.batch_report,
         })
     }
 

@@ -258,7 +258,7 @@ describe('LocalProvider', () => {
         const provider = new LocalProvider('local:./prompts')
         const contents = await provider.read()
 
-        expect(contents.library).toBe('local:./prompts')
+        expect(contents.origin).toBe('local:./prompts')
         expect(contents.version).toBeTruthy()
         expect(contents.version.length).toBe(16) // hex hash substring
         expect(contents.prompts.length).toBeGreaterThanOrEqual(40)

@@ -5,7 +5,7 @@ name: Relatorio de Processo Coletivo ou Criminal
 sort: 9
 status: publico
 piece_strategy: TODAS
-relatorio_de_acervo: true
+batch_report: true
 successors:
   - path: relatorio-de-processo-coletivo-ou-criminal
   - path: chat

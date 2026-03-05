@@ -5,7 +5,7 @@ name: Resumos e triagem
 sort: 1
 status: publico
 piece_strategy: MAIS_RELEVANTES
-relatorio_de_acervo: true
+batch_report: true
 successors:
   - path: resumo
   - path: chat

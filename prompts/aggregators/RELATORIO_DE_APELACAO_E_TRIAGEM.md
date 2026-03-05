@@ -5,7 +5,7 @@ name: Relatorio de Apelacao e Triagem
 sort: 1
 status: publico
 piece_strategy: APELACAO_E_TRIAGEM
-relatorio_de_acervo: true
+batch_report: true
 context:
   action: processo_selecionar
   instance: SEGUNDO_GRAU

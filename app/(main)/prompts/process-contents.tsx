@@ -53,7 +53,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const [loadingPiecesProgress, setLoadingPiecesProgress] = useState(-1)
     const [requests, setRequests] = useState<GeneratedContent[]>([])
     const [readyToStartAI, setReadyToStartAI] = useState(false)
-    const [choosingPieces, setChoosingPieces] = useState(!(sidekick && prompt?.slug === 'chat' && !!prompt?.library))
+    const [choosingPieces, setChoosingPieces] = useState(!(sidekick && prompt?.slug === 'chat' && !!prompt?.origin))
     const [choosingLibrary, setChoosingLibrary] = useState(false)
     const searchParams = useSearchParams()
     const isBetaTester = document.cookie.includes('beta-tester=2') || null
@@ -68,7 +68,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
 
     const chooseSelectedPieces = (allPieces: PecaType[], pieceStrategy: string, pieceDescr: string[]) => {
         // If it's an internal seeded prompt, prefer piece_strategy from DB content
-        if (prompt.library) {
+        if (prompt.origin) {
             const dbPieceStrategy = prompt.content?.piece_strategy
             const strategyName = dbPieceStrategy || pieceStrategy
             if (strategyName) {
@@ -129,7 +129,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     }
 
     useEffect(() => {
-        if (prompt?.slug === 'chat' && prompt?.library) return
+        if (prompt?.slug === 'chat' && prompt?.origin) return
         setReadyToStartAI(false)
         setChoosingPieces(true)
     }, [prompt])

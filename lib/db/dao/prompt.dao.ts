@@ -41,13 +41,13 @@ export class PromptDao {
         return result > 0
     }
 
-    // Retrieve all latest library prompts for overlaying map info
+    // Retrieve all latest seeded prompts for overlaying map info
     static async retrieveLatestSeededPrompts(): Promise<mysqlTypes.IAPrompt[]> {
         if (!knex) return [] as any
         const result = await knex('ia_prompt')
             .select<mysqlTypes.IAPrompt[]>('*')
             .where('is_latest', 1)
-            .whereNotNull('library')
+            .whereNotNull('origin')
         for (const record of result) this.hydratatePromptContent(record.content)
         return result
     }

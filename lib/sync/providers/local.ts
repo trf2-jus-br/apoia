@@ -7,23 +7,23 @@
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { LibraryProvider, LibraryContents, ParsedPrompt } from '../types'
+import { OriginProvider, OriginContents, ParsedPrompt } from '../types'
 import { parsePromptMarkdown } from '../parse-prompt-md'
 
-export class LocalProvider implements LibraryProvider {
+export class LocalProvider implements OriginProvider {
     /** Absolute path to the directory containing .md files */
     private dirPath: string
-    /** Library identifier (e.g., 'local:./prompts') */
-    private library: string
+    /** Origin identifier (e.g., 'local:./prompts') */
+    private origin: string
 
-    constructor(library: string) {
-        this.library = library
-        // Extract fs path from library URI: 'local:./prompts' -> './prompts'
-        const fsPath = library.replace(/^local:/, '')
+    constructor(origin: string) {
+        this.origin = origin
+        // Extract fs path from origin URI: 'local:./prompts' -> './prompts'
+        const fsPath = origin.replace(/^local:/, '')
         this.dirPath = path.resolve(process.cwd(), fsPath)
     }
 
-    async read(): Promise<LibraryContents> {
+    async read(): Promise<OriginContents> {
         const prompts: ParsedPrompt[] = []
 
         // Read all .md files recursively
@@ -42,7 +42,7 @@ export class LocalProvider implements LibraryProvider {
         const contentHash = this.computeContentHash(prompts)
 
         return {
-            library: this.library,
+            origin: this.origin,
             version: contentHash,
             prompts,
         }

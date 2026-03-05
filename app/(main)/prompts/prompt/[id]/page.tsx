@@ -16,11 +16,11 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
     const isModerator = await isUserModerator(user)
     let prompt = await PromptDao.retrieveLatestPromptByBaseId(params.id)
 
-    if (prompt?.library) {
+    if (prompt?.origin) {
         let def = null
         let name = prompt.name
 
-        // Use workflow successors from DB (library-synced aggregator)
+        // Use workflow successors from DB (origin-synced aggregator)
         if (prompt.content?.workflow?.successors?.length) {
             for (const step of prompt.content.workflow.successors) {
                 const candidate = await getPromptDefinitionByUuid(step.uuid).catch(() => null)

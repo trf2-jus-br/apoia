@@ -124,8 +124,8 @@ export type IAPrompt = {
     testset_id: number | null
     share?: string
     is_official?: boolean
-    library?: string | null
-    library_version?: string | null
+    origin?: string | null
+    origin_version?: string | null
     content: {
         author?: string
 
@@ -144,7 +144,7 @@ export type IAPrompt = {
         status?: string
         context?: Record<string, any>
         grupo?: Record<string, any>
-        relatorio_de_acervo?: boolean
+        batch_report?: boolean
         plugins?: string[]
 
         // Workflow (predecessors/successors), moved from separate column
@@ -205,8 +205,8 @@ export type IAPromptList = {
     model_id: number,
     testset_id: number | null
     share?: string
-    library?: string | null
-    library_version?: string | null
+    origin?: string | null
+    origin_version?: string | null
     content: {
         author?: string
 
@@ -225,7 +225,7 @@ export type IAPromptList = {
         status?: string
         context?: Record<string, any>
         grupo?: Record<string, any>
-        relatorio_de_acervo?: boolean
+        batch_report?: boolean
         plugins?: string[]
 
         // Workflow (predecessors/successors)

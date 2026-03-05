@@ -92,7 +92,7 @@ export type GrupoDeSinteseEnum = keyof typeof GrupoDeSinteseMap
 //     produtos: (P | ProdutoCompleto)[],
 //     sort: number,
 //     status: StatusDeLancamento,
-//     relatorioDeAcervo?: boolean,
+//     batchReport?: boolean,
 //     // Optional UI filter hints; if omitted, defaults to all
 //     scope?: string[],
 //     instance?: string[],
@@ -393,7 +393,7 @@ export interface TipoDeSinteseValido {
     sort?: number,
     padroes?: MatchOperator[][],
     status: StatusDeLancamento,
-    relatorioDeAcervo?: boolean,
+    batchReport?: boolean,
 }
 
 

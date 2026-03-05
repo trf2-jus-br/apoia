@@ -8,15 +8,15 @@ import { Instance, Matter, Scope, Share, StatusDeLancamento } from './proc/proce
  * Builds a lookup map of aggregator prompts (kind starts with ^).
  * Library-sourced prompts from the sync engine are the source of truth.
  * Non-library seed records are kept for backward compatibility but
- * library records are preferred when both exist for the same kind.
+ * origin-sourced records are preferred when both exist for the same kind.
  */
 async function syncInternalPrompts(basePrompts: IAPromptList[]): Promise<Map<string, IAPromptList>> {
     const baseBySlug = new Map<string, IAPromptList>()
     for (const p of basePrompts) {
-        if (p.library) {
-            // Prefer library-sourced records over old seeds
+        if (p.origin) {
+            // Prefer origin-sourced records over old seeds
             const existing = baseBySlug.get(p.slug)
-            if (!existing || (p.library && !existing.library)) {
+            if (!existing || (p.origin && !existing.origin)) {
                 baseBySlug.set(p.slug, p)
             }
         }
@@ -90,7 +90,7 @@ export async function fixPromptList(basePrompts: IAPromptList[], showChatPadrao 
     const seededOverlay = await buildVisiblePrompts(syncedPrompts, isBetaTester, showChatPadrao)
     
     // Step 3: Combine with non-seeded prompts and sort
-    const nonSeeded = basePrompts.filter(p => !p.library)
+    const nonSeeded = basePrompts.filter(p => !p.origin)
     const prompts: IAPromptList[] = [...nonSeeded, ...seededOverlay]
 
     prompts.sort((a, b) => {

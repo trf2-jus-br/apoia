@@ -20,9 +20,9 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
  * Uses workflow successors from DB.
  */
 const resolveFirstProductDefinition = async (prompt: IAPrompt): Promise<PromptDefinitionType | null> => {
-    if (!prompt.library) return null
+    if (!prompt.origin) return null
 
-    // Use workflow successors from DB (library-synced aggregator)
+    // Use workflow successors from DB (origin-synced aggregator)
     if (prompt.content?.workflow?.successors?.length) {
         for (const step of prompt.content.workflow.successors) {
             const def = await resolvePromptDefinitionByUuid(step.uuid).catch(() => null)
@@ -56,7 +56,7 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
 
     useEffect(() => {
         if (!prompt) return
-        if (prompt.library) {
+        if (prompt.origin) {
             resolveFirstProductDefinition(prompt).then(def => {
                 if (def) setDefinition(def)
             })

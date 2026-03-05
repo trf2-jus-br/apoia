@@ -58,25 +58,25 @@ export interface WorkflowResolved {
     successors?: WorkflowStepResolved[]
 }
 
-/** Result of reading a library source */
-export interface LibraryContents {
-    /** Identifier of the library (e.g., 'local:./prompts', 'github:cnj-ia/prompts-core') */
-    library: string
+/** Result of reading an origin source */
+export interface OriginContents {
+    /** Identifier of the origin (e.g., 'local:./prompts', 'github:cnj-ia/prompts-core') */
+    origin: string
     /** Version identifier (commit SHA for github, content hash for local) */
     version: string
     /** Parsed prompt definitions from .md files (may include workflow refs) */
     prompts: ParsedPrompt[]
 }
 
-/** Interface that all library providers must implement */
-export interface LibraryProvider {
-    /** Read all prompts and workflows from this library source */
-    read(): Promise<LibraryContents>
+/** Interface that all origin providers must implement */
+export interface OriginProvider {
+    /** Read all prompts and workflows from this origin source */
+    read(): Promise<OriginContents>
 }
 
 /** Result of a sync operation for logging/reporting */
 export interface SyncResult {
-    library: string
+    origin: string
     added: number
     updated: number
     deactivated: number

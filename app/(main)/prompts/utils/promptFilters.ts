@@ -36,9 +36,9 @@ export function getPromptsSidekick(
     instance: string | null,
     action: string | null
 ): IAPromptList[] {
-    const chatIsCurrentPrompt = selectedPrompt?.slug === 'chat' && !!selectedPrompt?.library
+    const chatIsCurrentPrompt = selectedPrompt?.slug === 'chat' && !!selectedPrompt?.origin
 
-    const chat = prompts.find((p) => p.slug === 'chat' && !!p.library)
+    const chat = prompts.find((p) => p.slug === 'chat' && !!p.origin)
     if (chat) chat.name = 'Chat com Peças Selecionadas'
 
     const isVisible = (v: string, contextV: string | string[]) => {
@@ -58,7 +58,7 @@ export function getPromptsSidekick(
     for (const p of prompts) {
         p.is_auto_hidden = true
         
-        if (p.library) {
+        if (p.origin) {
             const context = p.content?.context
             if (context) {
                 const hInstance = isVisible(instance, context?.instance)
@@ -69,18 +69,18 @@ export function getPromptsSidekick(
         if (p.is_favorite) p.is_auto_hidden = false
 
         if (!p.is_auto_hidden) {
-            if (p.slug === 'chat' && !!p.library && chatIsCurrentPrompt) p.is_auto_hidden = true
-            if (p.slug === 'CHAT_STANDALONE' && !!p.library && numeroDoProcesso) p.is_auto_hidden = true
+            if (p.slug === 'chat' && !!p.origin && chatIsCurrentPrompt) p.is_auto_hidden = true
+            if (p.slug === 'CHAT_STANDALONE' && !!p.origin && numeroDoProcesso) p.is_auto_hidden = true
         }
     }
 
     const list = [...prompts]
 
     list.sort((a, b) => {
-        if (a.slug === 'CHAT_STANDALONE' && !!a.library && (b.slug !== 'CHAT_STANDALONE' || !b.library)) return -1
-        if ((a.slug !== 'CHAT_STANDALONE' || !a.library) && b.slug === 'CHAT_STANDALONE' && !!b.library) return 1
-        if (a.slug === 'chat' && !!a.library && (b.slug !== 'chat' || !b.library)) return -1
-        if ((a.slug !== 'chat' || !a.library) && b.slug === 'chat' && !!b.library) return 1
+        if (a.slug === 'CHAT_STANDALONE' && !!a.origin && (b.slug !== 'CHAT_STANDALONE' || !b.origin)) return -1
+        if ((a.slug !== 'CHAT_STANDALONE' || !a.origin) && b.slug === 'CHAT_STANDALONE' && !!b.origin) return 1
+        if (a.slug === 'chat' && !!a.origin && (b.slug !== 'chat' || !b.origin)) return -1
+        if ((a.slug !== 'chat' || !a.origin) && b.slug === 'chat' && !!b.origin) return 1
         if (a.is_favorite && !b.is_favorite) return 1
         if (!a.is_favorite && b.is_favorite) return -1
         if (a.name < b.name) return -1
@@ -105,6 +105,6 @@ export function findPromptFromParam(prompts: IAPromptList[], param: string): IAP
         const n = parseInt(param)
         return prompts.find(pr => pr.base_id === n) || null
     } else {
-        return prompts.find(pr => !!pr.library && pr.slug === param) || null
+        return prompts.find(pr => !!pr.origin && pr.slug === param) || null
     }
 }

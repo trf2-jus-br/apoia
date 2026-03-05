@@ -2,7 +2,7 @@
  * Sync Engine - Synchronizes prompts from library providers into the ia_prompt database table.
  * 
  * The sync engine:
- * 1. Reads prompts from a LibraryProvider (local filesystem or future github)
+ * 1. Reads prompts from an OriginProvider (local filesystem or future github)
  * 2. For each prompt, checks if a record with that uuid exists (is_latest=1)
  * 3. If not found: inserts a new record
  * 4. If found but content changed: creates a new version (set old is_latest=0, insert new)
@@ -12,7 +12,7 @@
 import knex from '../db/knex'
 import { getId } from '../db/dao/utils'
 import { slugify } from '../utils/utils'
-import { LibraryProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
+import { OriginProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
 import { LocalProvider } from './providers/local'
 import devLog from '../utils/log'
 
@@ -38,7 +38,7 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
         ...(parsed.metadata?.piece_strategy ? { piece_strategy: parsed.metadata.piece_strategy } : {}),
         ...(parsed.metadata?.context ? { context: parsed.metadata.context } : {}),
         ...(parsed.metadata?.grupo ? { grupo: parsed.metadata.grupo } : {}),
-        ...(parsed.metadata?.relatorio_de_acervo != null ? { relatorio_de_acervo: parsed.metadata.relatorio_de_acervo } : {}),
+        ...(parsed.metadata?.batch_report != null ? { batch_report: parsed.metadata.batch_report } : {}),
         ...(parsed.metadata?.plugins ? { plugins: parsed.metadata.plugins } : {}),
     }
 }
@@ -50,7 +50,7 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
 function contentHasChanged(dbContent: Record<string, any>, newContent: Record<string, any>): boolean {
     const keys = ['system_prompt', 'prompt', 'json_schema', 'format', 'template',
         'author', 'target', 'scope', 'instance', 'matter',
-        'sort', 'status', 'piece_strategy', 'context', 'grupo', 'relatorio_de_acervo', 'plugins',
+        'sort', 'status', 'piece_strategy', 'context', 'grupo', 'batch_report', 'plugins',
         'workflow']
     for (const key of keys) {
         const dbVal = dbContent?.[key] ?? null
@@ -129,19 +129,19 @@ function resolveWorkflow(parsed: ParsedPrompt, slugIndex: Map<string, string>): 
 }
 
 /**
- * Synchronize prompts from a single library provider into the database.
+ * Synchronize prompts from a single origin provider into the database.
  * 
- * @param provider - The library provider to read prompts from
+ * @param provider - The origin provider to read prompts from
  * @returns A SyncResult with counts of added/updated/deactivated/unchanged prompts
  */
-export async function syncLibrary(provider: LibraryProvider): Promise<SyncResult> {
+export async function syncOrigin(provider: OriginProvider): Promise<SyncResult> {
     if (!knex) {
-        return { library: 'unknown', added: 0, updated: 0, deactivated: 0, unchanged: 0, errors: ['Database not available'] }
+        return { origin: 'unknown', added: 0, updated: 0, deactivated: 0, unchanged: 0, errors: ['Database not available'] }
     }
 
     const contents = await provider.read()
     const result: SyncResult = {
-        library: contents.library,
+        origin: contents.origin,
         added: 0,
         updated: 0,
         deactivated: 0,
@@ -160,21 +160,21 @@ export async function syncLibrary(provider: LibraryProvider): Promise<SyncResult
 
         try {
             const resolvedWorkflow = resolveWorkflow(parsed, slugIndex)
-            await syncSinglePrompt(parsed, contents.library, contents.version, resolvedWorkflow, result)
+            await syncSinglePrompt(parsed, contents.origin, contents.version, resolvedWorkflow, result)
         } catch (err: any) {
             result.errors.push(`Error syncing ${parsed.slug} (${parsed.uuid}): ${err.message}`)
         }
     }
 
-    // Deactivate prompts from this library that are no longer in the source
+    // Deactivate prompts from this origin that are no longer in the source
     try {
-        const deactivated = await deactivateRemovedPrompts(contents.library, sourceUuids)
+        const deactivated = await deactivateRemovedPrompts(contents.origin, sourceUuids)
         result.deactivated = deactivated
     } catch (err: any) {
         result.errors.push(`Error deactivating removed prompts: ${err.message}`)
     }
 
-    devLog(`[sync-engine] Library "${contents.library}" synced: +${result.added} ~${result.updated} -${result.deactivated} =${result.unchanged}${result.errors.length ? ` (${result.errors.length} errors)` : ''}`)
+    devLog(`[sync-engine] Origin "${contents.origin}" synced: +${result.added} ~${result.updated} -${result.deactivated} =${result.unchanged}${result.errors.length ? ` (${result.errors.length} errors)` : ''}`)
 
     return result
 }
@@ -184,8 +184,8 @@ export async function syncLibrary(provider: LibraryProvider): Promise<SyncResult
  */
 async function syncSinglePrompt(
     parsed: ParsedPrompt,
-    library: string,
-    libraryVersion: string,
+    origin: string,
+    originVersion: string,
     resolvedWorkflow: WorkflowResolved | null,
     result: SyncResult
 ): Promise<void> {
@@ -205,7 +205,7 @@ async function syncSinglePrompt(
             .first()
         if (latestInactive) {
             // Reactivate the most recent version
-            await knex!('ia_prompt').update({ is_latest: 1, library, library_version: libraryVersion }).where({ id: latestInactive.id })
+            await knex!('ia_prompt').update({ is_latest: 1, origin, origin_version: originVersion }).where({ id: latestInactive.id })
             existing = { ...latestInactive, is_latest: 1 }
             devLog(`[sync-engine] Reactivated orphan prompt ${parsed.slug} (id=${latestInactive.id})`)
         }
@@ -230,8 +230,8 @@ async function syncSinglePrompt(
             content: contentJson,
             is_latest: 1,
             share: 'PADRAO',
-            library,
-            library_version: libraryVersion,
+            origin,
+            origin_version: originVersion,
         }).returning('id')
         const id = getId(returned)
         // Set base_id = id for new prompts (self-referential)
@@ -261,14 +261,14 @@ async function syncSinglePrompt(
                 content: contentJson,
                 is_latest: 1,
                 share: existing.share || 'PADRAO',
-                library,
-                library_version: libraryVersion,
+                origin,
+                origin_version: originVersion,
             }).returning('id')
             result.updated++
         } else {
-            // Content unchanged - update library_version if different
-            if (existing.library_version !== libraryVersion) {
-                await knex!('ia_prompt').update({ library_version: libraryVersion }).where({ id: existing.id })
+            // Content unchanged - update origin_version if different
+            if (existing.origin_version !== originVersion) {
+                await knex!('ia_prompt').update({ origin_version: originVersion }).where({ id: existing.id })
             }
             result.unchanged++
         }
@@ -276,17 +276,17 @@ async function syncSinglePrompt(
 }
 
 /**
- * Deactivate (set is_latest=0) prompts from a given library that are no longer in the source.
- * Only affects prompts that have the same library value and is_latest=1.
+ * Deactivate (set is_latest=0) prompts from a given origin that are no longer in the source.
+ * Only affects prompts that have the same origin value and is_latest=1.
  */
-async function deactivateRemovedPrompts(library: string, activeUuids: Set<string>): Promise<number> {
+async function deactivateRemovedPrompts(origin: string, activeUuids: Set<string>): Promise<number> {
     if (!knex) return 0
     if (activeUuids.size === 0) return 0
 
-    // Find all active prompts from this library
+    // Find all active prompts from this origin
     const activeDbPrompts = await knex('ia_prompt')
         .select('id', 'uuid')
-        .where({ library, is_latest: 1 })
+        .where({ origin, is_latest: 1 })
 
     let count = 0
     for (const dbPrompt of activeDbPrompts) {
@@ -305,5 +305,5 @@ async function deactivateRemovedPrompts(library: string, activeUuids: Set<string
  */
 export async function syncLocalPrompts(): Promise<SyncResult> {
     const provider = new LocalProvider('local:./prompts')
-    return syncLibrary(provider)
+    return syncOrigin(provider)
 }
