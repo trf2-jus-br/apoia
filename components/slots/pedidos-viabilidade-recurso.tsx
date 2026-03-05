@@ -1,8 +1,8 @@
 'use client'
 
 import AiContent from "@/components/ai-content"
-import { getInternalPrompt } from "@/lib/ai/prompt"
-import { ContentType, GeneratedContent } from "@/lib/ai/prompt-types"
+import { resolvePromptDefinition } from "@/lib/ai/prompt-actions"
+import { ContentType, GeneratedContent, PromptDefinitionType } from "@/lib/ai/prompt-types"
 import { PangeaResultadoItem, PangeaSearchRawResponse } from "@/lib/ai/tools-pangea"
 import { P } from "@/lib/proc/combinacoes"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
@@ -62,8 +62,8 @@ interface SemanticSearchResponse {
 }
 import { calcMd5 } from "@/lib/utils/hash"
 import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
-import { useEffect } from "react"
-import { Button } from "react-bootstrap"
+import { useEffect, useState } from "react"
+import { Button, Spinner } from "react-bootstrap"
 
 // Tipos de dispositivo que requerem seleção de tema
 const DISPOSITIVOS_COM_TEMA = ['SUSPENDER', 'NEGAR_SEGUIMENTO', 'ENCAMINHAR_PARA_RETRATACAO']
@@ -108,6 +108,16 @@ interface PedidosViabilidadeRecursoProps {
 }
 
 export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossierCode, onBusy, onReady, dadosDoProcesso }: PedidosViabilidadeRecursoProps) => {
+    const [resolvedDef, setResolvedDef] = useState<PromptDefinitionType | null>(null)
+    const pedidosAnalisados = Frm.get('pedidosAnalisados')
+    const slug = nextRequest.produto === P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO ? 'decisao-viabilidade-recurso-extraordinario' : 'decisao-viabilidade-recurso-especial'
+
+    useEffect(() => {
+        if (pedidosAnalisados) {
+            resolvePromptDefinition(slug).then(setResolvedDef)
+        }
+    }, [pedidosAnalisados, slug])
+
     const tiposDeDispositivo = [
         { id: '', name: '' },
         { id: 'SUSPENDER', name: 'Suspender' }, // tema
@@ -178,13 +188,12 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
         buscarTemasCompletos()
     }, [Frm, pedidos])
 
-    const pedidosAnalisados = Frm.get('pedidosAnalisados')
     if (pedidosAnalisados) {
+        if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
         const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         const data = { ...request.data }
         data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0', event: '-', label: 'Informação extraída do formulário preenchido pelo usuário' }]
-        const prompt = getInternalPrompt(nextRequest.produto === P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO ? 'decisao-viabilidade-recurso-extraordinario' : 'decisao-viabilidade-recurso-especial')
-        const aiContentKey = `prompt: ${prompt}, data: ${calcMd5(data)}}`
+        const aiContentKey = `prompt: ${slug}, data: ${calcMd5(data)}}`
 
         return <>
             <h2>{maiusculasEMinusculas(request.title)}</h2>
@@ -211,7 +220,7 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
                 </div>
             </div>
             <h2>{nextRequest.produto === P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO ? 'Decisão de Viabilidade de Recurso Extraordinário' : 'Decisão de Viabilidade de Recurso Especial'}</h2>
-            <AiContent definition={prompt} data={data} key={aiContentKey} dossierCode={dossierCode} onBusy={onBusy} onReady={onReady} dadosDoProcesso={dadosDoProcesso} />
+            <AiContent definition={resolvedDef} data={data} key={aiContentKey} dossierCode={dossierCode} onBusy={onBusy} onReady={onReady} dadosDoProcesso={dadosDoProcesso} />
         </>
     }
 

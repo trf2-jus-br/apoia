@@ -5,13 +5,14 @@ import { SystemDao, DossierDao, DocumentDao } from '../db/dao'
 import { inferirCategoriaDaPeca } from '../category'
 import { obterConteudoDaPeca, obterDocumentoGravado } from './piece'
 import { isNivelDeSigiloPermitido } from './sigilo'
-import { selecionarPecasPorPadraoComFase, T, TipoDeSinteseEnum, TipoDeSinteseMap, SelecionarPecasResultado } from './combinacoes'
+import { selecionarPecasPorPadraoComFase, T, TipoDeSinteseEnum, TipoDeSinteseMap, PieceStrategy, SelecionarPecasResultado } from './combinacoes'
 import { TiposDeSinteseValido } from './info-de-produto'
 import { getInterop, Interop } from '../interop/interop'
 import { DadosDoProcessoType, PecaType, StatusDeLancamento, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
 import { UserType } from '../user'
 import devLog from '../utils/log'
 import * as Sentry from '@sentry/nextjs'
+import { getAggregatorByKind } from '../ai/prompt-store'
 
 const selecionarPecas = (pecas: PecaType[], descricoes: string[]) => {
     const pecasRelevantes = pecas.filter(p => descricoes.includes(p.descr))
@@ -236,8 +237,22 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         if (kind) {
             tipoDeSinteseSelecionado = kind
             const pecasAcessiveis = pecas.filter(p => isNivelDeSigiloPermitido(user, p.sigilo))
-            selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, TipoDeSinteseMap[kind].padroes)
-            pecasSelecionadas = selecao.pecas
+
+            // Try to get piece_strategy from aggregator DB record first
+            let padroes = null
+            const aggregator = await getAggregatorByKind(`^${kind}`).catch(() => null)
+            const pieceStrategyName = aggregator?.content?.piece_strategy
+            if (pieceStrategyName) {
+                const strategy = PieceStrategy[pieceStrategyName]
+                if (strategy?.pattern) padroes = strategy.pattern
+            }
+            // Fallback to TipoDeSinteseMap
+            if (!padroes) padroes = TipoDeSinteseMap[kind]?.padroes
+
+            if (padroes) {
+                selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, padroes)
+                pecasSelecionadas = selecao.pecas
+            }
         }
         if (!tipoDeSinteseSelecionado) tipoDeSinteseSelecionado = 'RESUMOS'
 

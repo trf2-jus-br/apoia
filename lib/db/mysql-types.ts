@@ -143,6 +143,14 @@ export type IAPrompt = {
         piece_descr?: string[]
         summary?: string
 
+        // Aggregator metadata (from sync engine, stored in content JSON)
+        sort?: number
+        status?: string
+        context?: Record<string, any>
+        grupo?: Record<string, any>
+        relatorio_de_acervo?: boolean
+        plugins?: string[]
+
         system_prompt: string | null
         prompt: string | null
         json_schema: string | null
@@ -213,6 +221,14 @@ export type IAPromptList = {
         piece_strategy?: string
         piece_descr?: string[]
         summary?: string
+
+        // Aggregator metadata (from sync engine, stored in content JSON)
+        sort?: number
+        status?: string
+        context?: Record<string, any>
+        grupo?: Record<string, any>
+        relatorio_de_acervo?: boolean
+        plugins?: string[]
 
         system_prompt: string | null
         prompt: string | null

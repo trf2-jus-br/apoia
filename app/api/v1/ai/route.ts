@@ -1,6 +1,7 @@
 import { streamContent } from '../../../../lib/ai/generate'
 import { PromptDefinitionType, PromptExecutionResultsType, PromptOptionsType } from '@/lib/ai/prompt-types'
-import { getInternalPrompt, promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
+import { promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
+import { getPromptDefinition as getPromptDefinitionFromStore } from '@/lib/ai/prompt-store'
 import { PromptDao, UserDao } from '@/lib/db/dao'
 import { IAPrompt } from '@/lib/db/mysql-types'
 import { assertApiUser } from '@/lib/user'
@@ -38,7 +39,7 @@ function safeStringify(obj: any, space?: number): string {
     }
 }
 
-async function getPromptDefinition(kind: string, promptSlug?: string, promptId?: number): Promise<PromptDefinitionType> {
+async function resolveApiPrompt(kind: string, promptSlug?: string, promptId?: number): Promise<PromptDefinitionType> {
     let prompt: IAPrompt | undefined = undefined
     if (promptId) {
         prompt = await PromptDao.retrievePromptById(promptId)
@@ -47,7 +48,7 @@ async function getPromptDefinition(kind: string, promptSlug?: string, promptId?:
         if (!prompt.kind)
             prompt.kind = `prompt-${prompt.id}`
         if (prompt.content.template && (!prompt.content.prompt || !prompt.content.system_prompt)) {
-            const promptTemplate = getInternalPrompt('template')
+            const promptTemplate = await getPromptDefinitionFromStore('template')
             if (!prompt.content.prompt) prompt.content.prompt = promptTemplate.prompt
             if (!prompt.content.system_prompt) prompt.content.system_prompt = promptTemplate.systemPrompt
         }
@@ -70,7 +71,8 @@ async function getPromptDefinition(kind: string, promptSlug?: string, promptId?:
             jsonSchema: prompt.content.json_schema || undefined,
             format: prompt.content.format || undefined,
             template: prompt.content.template || undefined,
-        } : getInternalPrompt(kind)
+            dbId: prompt.id,
+        } : await getPromptDefinitionFromStore(kind)
 
     return definition
 }
@@ -194,8 +196,8 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
     const dossierCode = body.dossierCode
     const documentId = body.documentId
 
-    trace.step(`getPromptDefinition:${kind}`)
-    const definition = await getPromptDefinition(kind, promptSlug, promptId)
+    trace.step(`resolveApiPrompt:${kind}`)
+    const definition = await resolveApiPrompt(kind, promptSlug, promptId)
     const data: any = body.data
     const options: PromptOptionsType = {
         overrideSystemPrompt: body.overrideSystemPrompt,

@@ -1,9 +1,9 @@
 import { generateContent } from "./ai/generate"
-import { getInternalPrompt } from "./ai/prompt"
+import { getPromptDefinition } from "./ai/prompt-store"
 import { PromptDataType } from "./ai/prompt-types"
 
 export async function inferirCategoriaDaPeca(dossier_id: number, id: number | undefined, conteudo: string, anteriores: string[]): Promise<string> {
-    const definition = getInternalPrompt('int-identificar-categoria-de-peca')
+    const definition = await getPromptDefinition('int-identificar-categoria-de-peca')
     const data: PromptDataType = { textos: [
         { numeroDoProcesso: String(dossier_id || ''), descr: 'CÓDIGOS DOS TIPOS DOCUMENTAIS ANTERIORES', slug: 'anteriores', texto: '- ' + anteriores.join('\n- '), sigilo: '0' },
         { numeroDoProcesso: String(dossier_id || ''), descr: 'TEXTO', slug: 'texto', texto: conteudo, sigilo: '0' }

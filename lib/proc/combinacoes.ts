@@ -753,10 +753,15 @@ const PieceStrategyArray = [
     { id: 1, name: 'MAIS_RELEVANTES', descr: 'Peças mais relevantes', pattern: padroesBasicos },
     { id: 1, name: 'MAIS_RELEVANTES_PRIMEIRA_INSTANCIA', descr: 'Peças mais relevantes para 1ª Instância', pattern: [...padroesConhecimento, padraoConhecimentoForcado] },
     { id: 1, name: 'MAIS_RELEVANTES_SEGUNDA_INSTANCIA', descr: 'Peças mais relevantes para 2ª Instância', pattern: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado] },
-    { id: 2, name: 'PETICAO_INICIAL', descr: 'Petição inicial', pattern: TipoDeSinteseMap.PEDIDOS.padroes },
-    { id: 2, name: 'PETICAO_INICIAL_E_ANEXOS', descr: 'Petição inicial e anexos', pattern: TipoDeSinteseMap.LITIGANCIA_PREDATORIA.padroes },
+    { id: 1, name: 'APELACAO_E_TRIAGEM', descr: 'Apelação e triagem', pattern: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento] },
+    { id: 1, name: 'CONHECIMENTO', descr: 'Fase de conhecimento', pattern: padroesConhecimento },
+    { id: 1, name: 'VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Viabilidade de recurso extraordinário', pattern: [padraoViabilidadeDeRecursoExtraordinario] },
+    { id: 1, name: 'VIABILIDADE_RECURSO_ESPECIAL', descr: 'Viabilidade de recurso especial', pattern: [padraoViabilidadeDeRecursoEspecial] },
+    { id: 2, name: 'PETICAO_INICIAL', descr: 'Petição inicial', pattern: [[ANY(), EXACT(T.PETICAO_INICIAL), ANY()]] },
+    { id: 2, name: 'PETICAO_INICIAL_E_ANEXOS', descr: 'Petição inicial e anexos', pattern: [[ANY(), EXACT(T.PETICAO_INICIAL, true), ANY()]] },
+    { id: 2, name: 'PPP', descr: 'Perfil Profissiográfico Previdenciário', pattern: [[ANY({ capture: [T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO], greedy: true })]] },
     { id: 3, name: 'TIPOS_ESPECIFICOS', descr: 'Peças de tipos específicos', pattern: undefined },
-    { id: 3, name: 'TODAS', descr: 'Todas', pattern: TipoDeSinteseMap.INDICE.padroes },
+    { id: 3, name: 'TODAS', descr: 'Todas', pattern: [[ANY({ capture: [] })]] },
 ]
 export type PieceStrategyValueType = EnumOfObjectsValueType & { descr: string, pattern: MatchOperator[][] | undefined }
 export type PieceStrategyType = { [key: string]: PieceStrategyValueType }

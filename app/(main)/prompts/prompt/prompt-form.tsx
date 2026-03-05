@@ -18,8 +18,7 @@ import { PieceDescr, PieceStrategy } from '@/lib/proc/combinacoes'
 import { findUnclosedMarking } from '@/lib/ai/template'
 import dynamic from 'next/dynamic'
 import AiContent from '@/components/ai-content'
-import { getInternalPrompt } from '@/lib/ai/prompt'
-import { PromptConfigType } from '@/lib/ai/prompt-types'
+import { PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { VisualizationEnum } from '@/lib/ui/preprocess'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
@@ -138,7 +137,7 @@ export default function PromptForm(props) {
                         {showAiContent && importText && (<>
                             <label>Convertendo modelo para o padrão da Apoia</label>
                             <AiContent
-                                definition={getInternalPrompt('template-a-partir-de-modelo')}
+                                definition={props.templateDefinition}
                                 data={{ textos: [{ numeroDoProcesso: '', descr: 'Modelo', slug: 'modelo', texto: importText, sigilo: '0' }] }}
                                 config={{} as PromptConfigType}
                                 visualization={VisualizationEnum.TEXT_EDITED}

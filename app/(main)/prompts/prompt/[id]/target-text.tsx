@@ -7,7 +7,6 @@ import { P } from '@/lib/proc/combinacoes'
 import { Button, Container } from 'react-bootstrap'
 import PromptConfig from '@/components/prompt-config'
 import { PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'
-import { getInternalPrompt } from '@/lib/ai/prompt'
 import { slugify } from '@/lib/utils/utils'
 import { IAPrompt } from '@/lib/db/mysql-types'
 

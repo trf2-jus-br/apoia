@@ -1,4 +1,4 @@
-import { getInternalPrompt } from '@/lib/ai/prompt'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { BadRequestError, NotFoundError, withErrorHandler } from '@/lib/utils/api-error'
 
@@ -65,7 +65,7 @@ async function GET_HANDLER(_req: Request, context: any): Promise<Response> { // 
     const name = params?.name
     if (!name) throw new BadRequestError('Missing prompt name')
     try {
-        const internalPrompt: PromptDefinitionType = getInternalPrompt(name)
+        const internalPrompt: PromptDefinitionType = await getPromptDefinition(name)
         return new Response(JSON.stringify(internalPrompt, null, 2), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },

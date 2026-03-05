@@ -13,7 +13,9 @@ import knex from '../db/knex'
 import { getId } from '../db/dao/utils'
 import { slugify } from '../utils/utils'
 import { LibraryProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
+import { LocalProvider } from './providers/local'
 import devLog from '../utils/log'
+import { canonicalize } from 'json-canonicalize'
 
 /**
  * Build the `content` JSON column value from a ParsedPrompt.
@@ -31,6 +33,14 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
         scope: parsed.metadata?.scope || null,
         instance: parsed.metadata?.instance || null,
         matter: parsed.metadata?.matter || null,
+        // Aggregator / display metadata
+        ...(parsed.metadata?.sort != null ? { sort: parsed.metadata.sort } : {}),
+        ...(parsed.metadata?.status ? { status: parsed.metadata.status } : {}),
+        ...(parsed.metadata?.piece_strategy ? { piece_strategy: parsed.metadata.piece_strategy } : {}),
+        ...(parsed.metadata?.context ? { context: parsed.metadata.context } : {}),
+        ...(parsed.metadata?.grupo ? { grupo: parsed.metadata.grupo } : {}),
+        ...(parsed.metadata?.relatorio_de_acervo != null ? { relatorio_de_acervo: parsed.metadata.relatorio_de_acervo } : {}),
+        ...(parsed.metadata?.plugins ? { plugins: parsed.metadata.plugins } : {}),
     }
 }
 
@@ -39,11 +49,18 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
  * Only compares the fields that come from the .md file (not DB-only fields).
  */
 function contentHasChanged(dbContent: Record<string, any>, newContent: Record<string, any>): boolean {
-    const keys = ['system_prompt', 'prompt', 'json_schema', 'format', 'template']
+    const keys = ['system_prompt', 'prompt', 'json_schema', 'format', 'template',
+        'author', 'target', 'scope', 'instance', 'matter',
+        'sort', 'status', 'piece_strategy', 'context', 'grupo', 'relatorio_de_acervo', 'plugins']
     for (const key of keys) {
-        const dbVal = (dbContent?.[key] ?? null) || null
-        const newVal = (newContent?.[key] ?? null) || null
-        if (dbVal !== newVal) return true
+        const dbVal = dbContent?.[key] ?? null
+        const newVal = newContent?.[key] ?? null
+        // For objects/arrays, compare as JSON
+        if (typeof dbVal === 'object' || typeof newVal === 'object') {
+            if (JSON.stringify(dbVal) !== JSON.stringify(newVal)) return true
+        } else {
+            if ((dbVal || null) !== (newVal || null)) return true
+        }
     }
     return false
 }
@@ -52,9 +69,13 @@ function contentHasChanged(dbContent: Record<string, any>, newContent: Record<st
  * Compare two workflow objects to determine if the workflow definition has changed.
  */
 function workflowHasChanged(dbWorkflow: any, newWorkflow: WorkflowResolved | null): boolean {
-    const dbJson = dbWorkflow ? (typeof dbWorkflow === 'string' ? dbWorkflow : JSON.stringify(dbWorkflow)) : null
-    const newJson = newWorkflow ? JSON.stringify(newWorkflow) : null
-    return dbJson !== newJson
+    const dbJson = dbWorkflow ? (typeof dbWorkflow === 'string' ? dbWorkflow : canonicalize(dbWorkflow)) : null
+    const newJson = newWorkflow ? canonicalize(newWorkflow) : null
+    const different = dbJson !== newJson
+    if (different) {
+        devLog(`[sync-engine] Workflow changed: db=${dbJson} new=${newJson}`)
+    }
+    return different
 }
 
 /**
@@ -183,10 +204,26 @@ async function syncSinglePrompt(
     result: SyncResult
 ): Promise<void> {
     // Find existing record with this uuid and is_latest=1
-    const existing = await knex!('ia_prompt')
+    let existing = await knex!('ia_prompt')
         .select('*')
         .where({ uuid: parsed.uuid, is_latest: 1 })
         .first()
+
+    // If no active record found, check for any record with this uuid (data recovery)
+    // This handles the case where all versions got is_latest=0 (e.g. from a previous bug)
+    if (!existing) {
+        const latestInactive = await knex!('ia_prompt')
+            .select('*')
+            .where({ uuid: parsed.uuid })
+            .orderBy('id', 'desc')
+            .first()
+        if (latestInactive) {
+            // Reactivate the most recent version
+            await knex!('ia_prompt').update({ is_latest: 1, library, library_version: libraryVersion }).where({ id: latestInactive.id })
+            existing = { ...latestInactive, is_latest: 1 }
+            devLog(`[sync-engine] Reactivated orphan prompt ${parsed.slug} (id=${latestInactive.id})`)
+        }
+    }
 
     const newContent = buildContentJson(parsed)
     const slug = slugify(parsed.name) || parsed.slug
@@ -278,7 +315,6 @@ async function deactivateRemovedPrompts(library: string, activeUuids: Set<string
  * This is the main entry point called during application startup.
  */
 export async function syncLocalPrompts(): Promise<SyncResult> {
-    const { LocalProvider } = await import('./providers/local')
     const provider = new LocalProvider('local:./prompts')
     return syncLibrary(provider)
 }

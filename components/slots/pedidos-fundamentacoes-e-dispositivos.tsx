@@ -1,14 +1,15 @@
 'use client'
 
+import { useEffect, useState } from "react"
 import AiContent from "@/components/ai-content"
-import { getInternalPrompt } from "@/lib/ai/prompt"
-import { ContentType, GeneratedContent } from "@/lib/ai/prompt-types"
+import { resolvePromptDefinition } from "@/lib/ai/prompt-actions"
+import { ContentType, GeneratedContent, PromptDefinitionType } from "@/lib/ai/prompt-types"
 import { P } from "@/lib/proc/combinacoes"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { FormHelper } from "@/lib/ui/form-support"
 import { calcMd5 } from "@/lib/utils/hash"
 import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
-import { Button } from "react-bootstrap"
+import { Button, Spinner } from "react-bootstrap"
 
 interface PedidosFundamentacoesEDispositivosProps {
     pedidos: { proximoPrompt: string; pedidos: any[] };
@@ -22,6 +23,16 @@ interface PedidosFundamentacoesEDispositivosProps {
 }
 
 export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextRequest, Frm, dossierCode, onBusy, onReady, dadosDoProcesso }: PedidosFundamentacoesEDispositivosProps) => {
+    const [resolvedDef, setResolvedDef] = useState<PromptDefinitionType | null>(null)
+    const pedidosAnalisados = Frm.get('pedidosAnalisados')
+    const slug = nextRequest.produto === P.VOTO ? 'voto' : 'sentenca'
+
+    useEffect(() => {
+        if (pedidosAnalisados) {
+            resolvePromptDefinition(slug).then(setResolvedDef)
+        }
+    }, [pedidosAnalisados, slug])
+
     const tiposDeLiminar = [
         { id: 'NAO', name: 'Não' },
         { id: 'SIM', name: 'Sim' },
@@ -49,15 +60,11 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
         { id: 'DESCONSIDERAR', name: 'Desconsiderar' },
     ]
 
-    const pedidosAnalisados = Frm.get('pedidosAnalisados')
     if (pedidosAnalisados) {
-        // const pedidos = [...Frm.get('pedidos')].filter(p => p.dispositivo).map(p => ({ ...p, fundamentacoes: [...p.fundamentacoes.filter(f => f.selecionada).map(f => f.texto)] }))
-        // const proximoPrompt = Frm.get('pedidos').proximoPrompt || 'SENTENCA'
+        if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
         const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         const data = { ...request.data }
         data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0' }]
-
-        const prompt = getInternalPrompt(nextRequest.produto === P.VOTO ? 'voto' : 'sentenca')
 
         const aiContentKey = `prompt: 'sentenca', data: ${calcMd5(data)}}`
 
@@ -90,7 +97,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
                 </div>
             </div>
             <h2>{nextRequest.produto === P.VOTO ? 'Voto' : 'Sentença'}</h2>
-            <AiContent definition={prompt} data={data} key={aiContentKey} dossierCode={dossierCode} onBusy={onBusy} onReady={onReady} dadosDoProcesso={dadosDoProcesso} />
+            <AiContent definition={resolvedDef} data={data} key={aiContentKey} dossierCode={dossierCode} onBusy={onBusy} onReady={onReady} dadosDoProcesso={dadosDoProcesso} />
         </>
     }
 

@@ -5,6 +5,7 @@ import { assertCurrentUser } from '@/lib/user'
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { Instance, Matter, Scope } from '@/lib/proc/process-types'
 import { PublicError } from '@/lib/utils/public-error'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 
 export default async function New(
     props: { params: Promise<{ kind: string }>, searchParams: Promise<{ copyFrom: string, template: string, import: string }> }
@@ -43,6 +44,6 @@ export default async function New(
 
     return (<Container fluid={false}>
         <h1 className="mt-5 mb-3">Novo</h1>
-        <PromptForm record={record} template={!!searchParams.template} importMode={searchParams.import === 'true'} />
+        <PromptForm record={record} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
     </Container>)
 }

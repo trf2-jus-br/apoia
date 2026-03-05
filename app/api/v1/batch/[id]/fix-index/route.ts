@@ -2,7 +2,7 @@ import { getCurrentUser, assertApiUser } from '@/lib/user'
 import { EnumDao, BatchDao } from '@/lib/db/dao'
 import { Plugin } from '@/lib/proc/combinacoes'
 import { PromptDataType } from '@/lib/ai/prompt-types'
-import { getInternalPrompt } from '@/lib/ai/prompt'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { generateContent } from '@/lib/ai/generate'
 import { UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 
@@ -45,7 +45,7 @@ async function POST_HANDLER(_req: Request, props: { params: Promise<{ id: string
       }]
     }
 
-    const resp = await generateContent(getInternalPrompt('int-fix-index'), data)
+    const resp = await generateContent(await getPromptDefinition('int-fix-index'), data)
 
     const suggestion = JSON.parse(resp.generation)
 

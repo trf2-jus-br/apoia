@@ -6,7 +6,7 @@ import { PromptDao } from '@/lib/db/dao'
 import { Container, Spinner } from 'react-bootstrap'
 import PromptInfoContents from './prompt-info-contents'
 import { assertCurrentUser, isUserModerator } from '@/lib/user'
-import { getInternalPrompt } from '@/lib/ai/prompt'
+import { getPromptDefinition, getPromptDefinitionByUuid, getFirstProductSlug } from '@/lib/ai/prompt-store'
 import { slugify } from '@/lib/utils/utils'
 import { P, ProdutosValidos, TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 
@@ -18,10 +18,31 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
     let prompt = await PromptDao.retrieveLatestPromptByBaseId(params.id)
 
     if (prompt?.kind?.startsWith('^')) {
-        const tipoDeSintese = TipoDeSinteseMap[prompt.kind.substring(1)]
-        const p = tipoDeSintese?.produtos?.find(pr => pr != P.RESUMOS && pr != P.CHAT)
-        const k = ProdutosValidos[p as P].prompt
-        const def = getInternalPrompt(k)
+        let def = null
+        let name = prompt.name
+
+        // Prefer workflow successors from DB (library-synced aggregator)
+        if (prompt.workflow?.successors?.length) {
+            for (const step of prompt.workflow.successors) {
+                const candidate = await getPromptDefinitionByUuid(step.uuid).catch(() => null)
+                if (!candidate) continue
+                if (candidate.kind === 'chat' || candidate.kind === 'chat-standalone') continue
+                def = candidate
+                break
+            }
+        }
+
+        // Fallback: TipoDeSinteseMap
+        if (!def) {
+            const tipoDeSintese = TipoDeSinteseMap[prompt.kind.substring(1)]
+            name = tipoDeSintese?.nome || name
+            const p = tipoDeSintese?.produtos?.find(pr => pr != P.RESUMOS && pr != P.CHAT)
+            if (p) {
+                const k = ProdutosValidos[p as P]?.prompt
+                if (k) def = await getPromptDefinition(k).catch(() => null)
+            }
+        }
+
         if (def) {
             // Convert PromptDefinitionType to IAPrompt content structure
             prompt = {
@@ -34,7 +55,7 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
                 is_latest: 1,
                 created_at: null,
                 kind: def.kind,
-                name: tipoDeSintese?.nome || def.kind,
+                name: name,
                 slug: slugify(def.kind),
                 content: {
                     system_prompt: def.systemPrompt ?? null,

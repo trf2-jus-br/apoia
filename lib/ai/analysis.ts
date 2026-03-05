@@ -1,4 +1,5 @@
-import { getInternalPrompt, getPiecesWithContent } from '@/lib/ai/prompt'
+import { getPiecesWithContent } from '@/lib/ai/prompt'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from '@/lib/ai/prompt-types'
 import { CargaDeConteudoEnum, obterDadosDoProcesso } from '@/lib/proc/process'
 import { assertCurrentUser } from '@/lib/user'
@@ -27,7 +28,7 @@ export async function summarize(dossierNumber: string, pieceNumber: string): Pro
     const pecasComConteudo = await getPiecesWithContent(dadosDoProcesso, dossierNumber)
     const peca = pecasComConteudo[0]
 
-    const definition: PromptDefinitionType = getInternalPrompt(`resumo-${peca.slug}`)
+    const definition: PromptDefinitionType = await getPromptDefinition(`resumo-${peca.slug}`)
 
     const data: PromptDataType = { textos: [{ numeroDoProcesso: peca.numeroDoProcesso, descr: peca.descr, slug: peca.slug, pTexto: peca.pTexto, sigilo: peca.sigilo }] }
     const infoDeProduto: InfoDeProduto = { produto: P.RESUMO_PECA, titulo: peca.descr, dados: [peca.descr as T], prompt: definition.kind, plugins: [] }
@@ -44,7 +45,7 @@ export async function summarize(dossierNumber: string, pieceNumber: string): Pro
     return { dossierData: dadosDoProcesso, generatedContent: req }
 }
 
-export function buildRequestsForAnalysis(dossierNumber: string, produtos: InfoDeProduto[], pecasComConteudo: TextoType[]): GeneratedContent[] {
+export async function buildRequestsForAnalysis(dossierNumber: string, produtos: InfoDeProduto[], pecasComConteudo: TextoType[]): Promise<GeneratedContent[]> {
     const requests: GeneratedContent[] = []
 
     // Add product IARequests
@@ -66,7 +67,7 @@ export function buildRequestsForAnalysis(dossierNumber: string, produtos: InfoDe
         // Add resume for each piece
         if (produtoSimples === P.RESUMOS) {
             for (const peca of data.textos) {
-                const definition = getInternalPrompt(`resumo-${peca.slug}`)
+                const definition = await getPromptDefinition(`resumo-${peca.slug}`)
                 const data: PromptDataType = { textos: [peca] }
                 requests.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${dossierNumber}/piece/${peca.id}/binary`, data, title: peca.descr, produto: produto.produto, promptSlug: definition.kind, internalPrompt: definition })
             }
@@ -75,7 +76,7 @@ export function buildRequestsForAnalysis(dossierNumber: string, produtos: InfoDe
 
         const produtoValido = ProdutosValidos[produtoSimples]
 
-        const definition = getInternalPrompt(produtoValido.prompt)
+        const definition = await getPromptDefinition(produtoValido.prompt)
         if (!definition) continue
 
         // const infoDeProduto = { ...produto }
@@ -150,7 +151,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
         let requests: GeneratedContent[]
         if (isNumericKind) {
-            requests = buildRequests(promptFromDB, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas).filter(r => r && r.promptSlug !== 'chat')
+            requests = (await buildRequests(promptFromDB, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas)).filter(r => r && r.promptSlug !== 'chat')
 
             // Acrescenta o Plugins conforme o conteúdo do prompt
             for (const req of requests) {
@@ -166,7 +167,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
                 }
             }
         } else {
-            requests = buildRequestsForAnalysis(dossierNumber, produtos.filter(p => p !== P.CHAT).map(p => infoDeProduto(p)), pecasComConteudo)
+            requests = await buildRequestsForAnalysis(dossierNumber, produtos.filter(p => p !== P.CHAT).map(p => infoDeProduto(p)), pecasComConteudo)
         }
 
 

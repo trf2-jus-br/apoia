@@ -3,13 +3,13 @@
 import dynamic from 'next/dynamic'
 import { Suspense, use, useEffect, useState } from 'react'
 import AiContent from '@/components/ai-content'
-import { Button, Col, Row } from 'react-bootstrap'
+import { Button, Col, Row, Spinner } from 'react-bootstrap'
 import { ContentType, PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { slugify } from '@/lib/utils/utils'
 import { IAPrompt } from '@/lib/db/mysql-types'
 import { VisualizationEnum } from '@/lib/ui/preprocess'
 import Print from '@/components/slots/print'
-import { getInternalPrompt, promptExecuteBuilder } from '@/lib/ai/prompt'
+import { resolvePromptDefinition, resolvePromptDefinitionByUuid, serverPromptExecuteBuilder } from '@/lib/ai/prompt-actions'
 import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 import { infoDeProduto } from '@/lib/proc/info-de-produto'
 import { sendApproveMessageToParent } from '@/lib/utils/messaging-helper'
@@ -17,14 +17,36 @@ import { usePromptContext } from './context/PromptContext'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
-const buildDefinition = (prompt: IAPrompt): PromptDefinitionType => {
-    if (prompt.kind?.startsWith('^')) {
-        const key = prompt.kind.substring(1)
-        const def = TipoDeSinteseMap[key]
-        const produtos = def.produtos.map(p => infoDeProduto(p))
-        return getInternalPrompt(produtos[0].prompt)
+/**
+ * Get the first non-chat product prompt definition for an internal synthesis type.
+ * Prefers workflow successors from DB, falls back to TipoDeSinteseMap.
+ */
+const resolveFirstProductDefinition = async (prompt: IAPrompt): Promise<PromptDefinitionType | null> => {
+    if (!prompt.kind?.startsWith('^')) return null
+
+    // Prefer workflow successors from DB (library-synced aggregator)
+    if (prompt.workflow?.successors?.length) {
+        for (const step of prompt.workflow.successors) {
+            const def = await resolvePromptDefinitionByUuid(step.uuid).catch(() => null)
+            if (!def) continue
+            if (def.kind === 'chat' || def.kind === 'chat-standalone') continue
+            return def
+        }
     }
 
+    // Fallback: TipoDeSinteseMap
+    const key = prompt.kind.substring(1)
+    const mapDef = TipoDeSinteseMap[key]
+    if (mapDef) {
+        const produtos = mapDef.produtos.map(p => infoDeProduto(p))
+        if (produtos.length > 0) {
+            return resolvePromptDefinition(produtos[0].prompt)
+        }
+    }
+    return null
+}
+
+const buildStaticDefinition = (prompt: IAPrompt): PromptDefinitionType => {
     return {
         kind: `prompt-${prompt.id}`,
         prompt: prompt.content.prompt,
@@ -41,8 +63,21 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
     const [hidden, setHidden] = useState(!source)
     const [promptConfig, setPromptConfig] = useState({} as PromptConfigType)
     const [content, setContent] = useState<ContentType>()
+    const [definition, setDefinition] = useState<PromptDefinitionType | null>(null)
+
+    useEffect(() => {
+        if (!prompt) return
+        if (prompt.kind?.startsWith('^')) {
+            resolveFirstProductDefinition(prompt).then(def => {
+                if (def) setDefinition(def)
+            })
+        } else {
+            setDefinition(buildStaticDefinition(prompt))
+        }
+    }, [prompt])
 
     if (!prompt) return null
+    if (!definition) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
 
     const textChanged = (text) => {
         setMarkdown(text)
@@ -56,10 +91,6 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
             setHidden(false)
     }, [source])
 
-    const definition: PromptDefinitionType = buildDefinition(prompt)
-
-    const textoDescr = prompt.content.editor_label || 'Texto'
-
     const handleReady = (content: ContentType) => {
         setContent(content)
         if (sinkFromURL === 'to-parent-automatic') {
@@ -67,18 +98,17 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
         }
     }
 
-    const PromptParaCopiar = () => {
-        if (!prompt || !markdown) return ''
-        const exec = promptExecuteBuilder(definition, { textos: [{ numeroDoProcesso: '', descr: prompt.content?.editor_label || 'Texto', slug: slugify(prompt.content?.editor_label || 'texto'), texto: markdown, sigilo: '0' }] })
-        const s: string = exec?.message.map(m => m.role === 'system' ? `# PROMPT DE SISTEMA\n\n${m.content}\n\n# PROMPT` : m.content).join('\n\n')
-        if (s)
-            navigator.clipboard.writeText(s)
+    const textoDescr = prompt.content.editor_label || 'Texto'
 
-        return <>
-            <p className="alert alert-warning text-center mt-3">Prompt copiado para a área de transferência, já com o conteúdo do texto informado acima!</p>
-            <h2>{prompt.name}</h2>
-            <textarea name="prompt" className="form-control" rows={10}>{s}</textarea>
-        </>
+    const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
+    const handleCopyPrompt = async () => {
+        if (!prompt || !markdown || !definition) return
+        const exec = await serverPromptExecuteBuilder(definition, { textos: [{ numeroDoProcesso: '', descr: prompt.content?.editor_label || 'Texto', slug: slugify(prompt.content?.editor_label || 'texto'), texto: markdown, sigilo: '0' }] })
+        const s: string = exec?.message.map(m => m.role === 'system' ? `# PROMPT DE SISTEMA\n\n${m.content}\n\n# PROMPT` : m.content).join('\n\n')
+        if (s) {
+            navigator.clipboard.writeText(s)
+            setCopiedPrompt(s)
+        }
     }
 
     return (
@@ -115,7 +145,14 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
                             {/* <Col><Print numeroDoProcesso={slugify(prompt.name)} /></Col> */}
                         </Row>
                     </>
-                    : <PromptParaCopiar></PromptParaCopiar>
+                    : <>
+                        <Button className="mt-3" onClick={handleCopyPrompt}>Copiar Prompt</Button>
+                        {copiedPrompt && <>
+                            <p className="alert alert-warning text-center mt-3">Prompt copiado para a area de transferencia, ja com o conteudo do texto informado acima!</p>
+                            <h2>{prompt.name}</h2>
+                            <textarea name="prompt" className="form-control" rows={10} defaultValue={copiedPrompt} />
+                        </>}
+                    </>
                 }
             </div>}
         </div>

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import AiContent from '@/components/ai-content'
 import { Button, Toast } from 'react-bootstrap'
 import PromptConfig from '@/components/prompt-config'
-import { PromptConfigType, TextoType } from '@/lib/ai/prompt-types'
-import { getInternalPrompt, getPiecesWithContent } from '@/lib/ai/prompt'
+import { PromptConfigType, PromptDefinitionType, TextoType } from '@/lib/ai/prompt-types'
+import { getPiecesWithContent } from '@/lib/ai/prompt-client'
 import fetcher from '@/lib/utils/fetcher'
 import { formatBrazilianDate, slugify } from '@/lib/utils/utils'
 import { DadosDoProcessoType, PecaType } from '@/lib/proc/process-types'
@@ -39,10 +39,12 @@ const fixOutrosNumerosDeProcessos = (outrosNumerosDeProcessos: string, numeroDoP
     return Array.from(numerosUnicosDeProcessos).join(', ')
 }
 
-export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?: string, hasApiKey: boolean, model?: string }) {
+export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?: string, hasApiKey: boolean, model?: string, litiganciaDefinition: PromptDefinitionType, chatDefinition: PromptDefinitionType }) {
     const NAVIGATE_TO_PROCESS_URL = params.NAVIGATE_TO_PROCESS_URL
     const hasApiKey = params.hasApiKey
     const model = params.model
+    const litiganciaDefinition = params.litiganciaDefinition
+    const chatDefinition = params.chatDefinition
     const [outrosNumerosDeProcessos, setOutrosNumerosDeProcessos] = useState('')
     const [numeroDoProcesso, setNumeroDoProcesso] = useState('')
     const [hidden, setHidden] = useState(true)
@@ -368,11 +370,11 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
             {!hidden && processoPrincipal && textos && hasApiKey && <>
                 <h2 className="mt-3">Análise Qualitativa</h2>
                 <AiContent key={numeroDoProcesso + outrosNumerosDeProcessos}
-                    definition={getInternalPrompt('litigancia-predatoria')}
+                    definition={litiganciaDefinition}
                     data={{ textos }}
                     options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined} />
 
-                <Chat definition={getInternalPrompt('chat')} data={{ textos }} key={calcMd5({ textos })} model={model} />
+                <Chat definition={chatDefinition} data={{ textos }} key={calcMd5({ textos })} model={model} />
             </>}
             <Toast onClose={() => setToast('')} show={!!toast} delay={3000} bg="danger" autohide key={toast} style={{ position: 'fixed', top: 10, right: 10 }}>
                 <Toast.Header>

@@ -6,6 +6,7 @@ import { Button, Form, Modal, Table } from 'react-bootstrap'
 import AiContent from '@/components/ai-content'
 import { findUnclosedMarking } from '@/lib/ai/template'
 import LibraryAttachments from '@/components/library-attachments'
+import { deleteLibraryAction } from '@/app/(main)/library/actions'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
@@ -330,7 +331,6 @@ export default function LibraryForm({ record }: { record: any }) {
               if (confirm('Tem certeza que deseja excluir este item?')) {
                 setPending(true)
                 try {
-                  const { deleteLibraryAction } = await import('@/app/(main)/library/actions')
                   const formData = new FormData()
                   formData.set('id', String(data.id))
                   await deleteLibraryAction(formData)

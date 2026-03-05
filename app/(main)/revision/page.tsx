@@ -1,11 +1,13 @@
 import { Container } from 'react-bootstrap'
 import ReviewPage from './ReviewPage'
 import { assertModel } from '@/lib/ai/model-server'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 
 export default async function Revison() {
     await assertModel()
+    const definition = await getPromptDefinition('refinamento')
     
     return (<Container fluid={false}>
-        <ReviewPage />
+        <ReviewPage definition={definition} />
     </Container>)
 }

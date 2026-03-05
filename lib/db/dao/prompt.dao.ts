@@ -245,7 +245,7 @@ export class PromptDao {
 
     static async retrieveOfficialPromptsIdsAndNamesByKind(kind: string): Promise<{ id: number, name: string }[]> {
         if (!knex) return []
-        const rows = await knex('ia_prompt').select('id', 'name').where({ kind, is_latest: true, official: true }).orderBy('name')
+        const rows = await knex('ia_prompt').select('id', 'name').where({ kind, is_latest: 1, official: 1 }).orderBy('name')
         return rows
     }
 

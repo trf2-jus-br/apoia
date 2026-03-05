@@ -7,7 +7,8 @@ import { ProgressType } from '@/lib/progress'
 import { TestDao, TestsetDao, PromptDao, ModelDao } from '@/lib/db/dao'
 import { slugify } from '@/lib/utils/utils'
 import { ATTEMPTS, buildTest, preprocessQuestion } from '../../../../../../lib/ai/test/test-config'
-import { getInternalPrompt, promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
+import { promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { assertApiUser, getCurrentUser } from '@/lib/user'
 import { UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 import { devLog, isDev } from '@/lib/utils/log'
@@ -110,7 +111,7 @@ const execute = async (testsetId: number, promptId: number, modelId: number, con
         overrideModel: testsetModel.name
       }
       removeEmptyKeys(options2)
-      const definition2 = promptDefinitionFromDefinitionAndOptions(getInternalPrompt('int-testar'), options2)
+      const definition2 = promptDefinitionFromDefinitionAndOptions(await getPromptDefinition('int-testar'), options2)
 
       const resultStream2 = await streamContent(definition2, data2)
       const stream2 = resultStream2.textStream ? await resultStream2.textStream : resultStream2.objectStream ? await resultStream2.objectStream : resultStream2.cached ? resultStream2.cached : undefined

@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { Container, Spinner } from 'react-bootstrap'
 import Chat from '@/components/slots/chat'
-import { getInternalPrompt } from '@/lib/ai/prompt'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { PromptDataType } from '@/lib/ai/prompt-types'
 import { faFileLines, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faSackDollar, faUsers, faGavel } from '@fortawesome/free-solid-svg-icons'
@@ -25,7 +25,7 @@ export default async function Home() {
     await assertModel()
     const model = await getSelectedModelName()
 
-    const definition = getInternalPrompt('chat-standalone')
+    const definition = await getPromptDefinition('chat-standalone')
     const data: PromptDataType = {
         textos: []
     }

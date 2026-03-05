@@ -48,14 +48,15 @@ async function saveToCache(data: IAGeneration): Promise<number | undefined> {
     return inserted.id
 }
 
-async function saveLog(user: UserType, additionalInformation: PromptAdditionalInformationType, model: string, usage, sha256: string, kind: string, text: string, attempt: number, messages: ModelMessage[], calculedUsage: ModelUsageResult): Promise<number> {
+async function saveLog(user: UserType, additionalInformation: PromptAdditionalInformationType, model: string, usage, sha256: string, kind: string, text: string, attempt: number, messages: ModelMessage[], calculedUsage: ModelUsageResult, prompt_id?: number | null): Promise<number> {
     const system_id = await SystemDao.assertSystemId(await assertSystemCode(user))
     const dossier_id = additionalInformation?.dossierCode ? (await DossierDao.assertIADossierId(additionalInformation.dossierCode, system_id, undefined, undefined)) : null
     const generationId = await saveToCache({
         sha256, model, prompt: kind, generation: text, attempt: attempt || null,
         prompt_payload: JSON.stringify(messages), dossier_id, document_id: null,
         cached_input_tokens: usage.cachedInputTokens || 0, input_tokens: usage.inputTokens || 0, output_tokens: usage.outputTokens || 0, reasoning_tokens: usage.reasoningTokens || 0,
-        approximate_cost: calculedUsage.approximate_cost
+        approximate_cost: calculedUsage.approximate_cost,
+        prompt_id: prompt_id ?? null
     })
     return generationId
 }
@@ -145,7 +146,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     data.textos = clipPieces(modelPreSelected, data.textos)
 
     const libraryPrompt = await getLibraryDocumentsForPrompt(data.documentosDaBiblioteca)
-    const exec = promptExecuteBuilder(definition, data, libraryPrompt)
+    const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
     const messages = exec.message
     const structuredOutputs = exec.params?.structuredOutputs
 
@@ -178,10 +179,10 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     // writeResponseToFile(definition, messages, "antes de executar")
     // if (1 == 1) throw new Error('Interrupted')
 
-    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, additionalInformation, results, attempt, apiKeyFromEnv, tools)
+    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, additionalInformation, results, attempt, apiKeyFromEnv, tools, definition?.dbId)
 }
 
-export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>):
+export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>, prompt_id?: number | null):
     Promise<PromptReturnType> {
     const pUser = assertCurrentUser()
     const user = await pUser
@@ -228,7 +229,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             if (apiKeyFromEnv)
                 writeUsage(usage, model, user_id, court_id, modelUsage)
             if (cacheControl !== false) {
-                const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, processedMessagesLog, modelUsage)
+                const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, processedMessagesLog, modelUsage, prompt_id)
                 if (results) results.generationId = generationId
             }
             writeResponseToFile(kind, processedMessagesLog, text)
@@ -355,7 +356,7 @@ export async function evaluate(definition: PromptDefinitionType, data: PromptDat
     const { model } = await getModel()
     await waitForTexts(data)
     const libraryPrompt = await getLibraryDocumentsForPrompt(data.documentosDaBiblioteca)
-    const exec = promptExecuteBuilder(definition, data, libraryPrompt)
+    const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
     const messages = exec.message
     const sha256 = calcSha256(messages)
 

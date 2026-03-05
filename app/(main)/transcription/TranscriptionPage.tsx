@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import AiContent from '@/components/ai-content'
 import AudioConversionProgress from '@/components/audio-conversion-progress'
 import { Button, Alert } from 'react-bootstrap'
-import { getInternalPrompt } from '@/lib/ai/prompt'
 import { FileTypeEnum } from '@/lib/ai/model-types'
+import { PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { checkModelSupportsAudioVideoSync } from '@/lib/ai/model-validation'
 import {
     extractAudioToMp3,
@@ -35,7 +35,7 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 // Cache de conversões de áudio/vídeo para MP3 16kHz mono
 const audioConversionCache = new Map<string, AudioExtractionResult>()
 
-export default function TranscriptionPage({ model }: { model: string }) {
+export default function TranscriptionPage({ model, degravacaoDefinition, chatDefinition }: { model: string, degravacaoDefinition: PromptDefinitionType, chatDefinition: PromptDefinitionType }) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [fileDataUrl, setFileDataUrl] = useState<string | null>(null)
     const [fileError, setFileError] = useState<string | null>(null)
@@ -389,7 +389,7 @@ export default function TranscriptionPage({ model }: { model: string }) {
                     <>
                         <h2 className="mt-3">Transcrição</h2>
                         <AiContent
-                            definition={getInternalPrompt('degravacao')}
+                            definition={degravacaoDefinition}
                             data={{
                                 textos: [{
                                     numeroDoProcesso: '',
@@ -410,7 +410,7 @@ export default function TranscriptionPage({ model }: { model: string }) {
 
             {contentRaw && (<>
                 <Chat
-                    definition={getInternalPrompt('chat')}
+                    definition={chatDefinition}
                     model={model}
                     data={{
                         textos: [{

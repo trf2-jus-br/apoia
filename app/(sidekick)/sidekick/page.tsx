@@ -2,7 +2,7 @@
 
 import { unstable_noStore as noStore } from 'next/cache'
 import { Container } from 'react-bootstrap'
-import { getInternalPrompt } from '@/lib/ai/prompt'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { PromptDataType } from '@/lib/ai/prompt-types'
 import { assertCurrentUser, isUserCorporativo } from '@/lib/user'
 import { assertModel, getSelectedModelName } from '@/lib/ai/model-server'
@@ -25,7 +25,7 @@ export default async function Home({ searchParams }) {
     await assertModel()
     const model = await getSelectedModelName()
 
-    const definition = getInternalPrompt('chat-standalone')
+    const definition = await getPromptDefinition('chat-standalone')
     const data: PromptDataType = {
         textos: []
     }

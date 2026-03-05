@@ -4,7 +4,7 @@ import { IALibrary, IALibraryInclusion, IAPrompt } from "@/lib/db/mysql-types";
 import { PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
 import { ReactNode, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PieceStrategy, selecionarPecasPorPadraoComFase, T, TipoDeSinteseMap } from "@/lib/proc/combinacoes";
+import { PieceStrategy, selecionarPecasPorPadraoComFase, T } from "@/lib/proc/combinacoes";
 import { GeneratedContent } from "@/lib/ai/prompt-types";
 import { ProgressBar } from "react-bootstrap";
 import Print from "@/components/slots/print";
@@ -16,7 +16,7 @@ import { ListaDeProdutos } from "@/components/slots/lista-produtos-client";
 import { PromptParaCopiar } from "./prompt-to-copy";
 import { buildFooterFromPieces } from "@/lib/utils/footer";
 import { formatDateTime } from "@/lib/utils/date";
-import { buildRequests } from "@/lib/ai/build-requests";
+import { serverBuildRequests } from "@/lib/ai/prompt-actions";
 import { usePromptContext } from "./context/PromptContext";
 import Listen from "@/components/slots/listen";
 
@@ -67,14 +67,17 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     }
 
     const chooseSelectedPieces = (allPieces: PecaType[], pieceStrategy: string, pieceDescr: string[]) => {
-        // If it's an internal seeded prompt, prefer map padroes
+        // If it's an internal seeded prompt, prefer piece_strategy from DB content
         if (prompt.kind?.startsWith('^')) {
-            const key = prompt.kind.substring(1)
-            const def = TipoDeSinteseMap[key]
-            if (def) {
-                const pecasAcessiveis = allPieces.filter(p => isNivelDeSigiloPermitidoClient(maxConfidentialityLevel, p.sigilo))
-                const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, def.padroes)
-                return selecao.pecas || []
+            const dbPieceStrategy = prompt.content?.piece_strategy
+            const strategyName = dbPieceStrategy || pieceStrategy
+            if (strategyName) {
+                const strategy = PieceStrategy[strategyName]
+                if (strategy?.pattern) {
+                    const pecasAcessiveis = allPieces.filter(p => isNivelDeSigiloPermitidoClient(maxConfidentialityLevel, p.sigilo))
+                    const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, strategy.pattern)
+                    return selecao.pecas || []
+                }
             }
         }
         const pattern = PieceStrategy[pieceStrategy].pattern
@@ -116,7 +119,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         }
         setPieceContent(contents)
         setLoadingPiecesProgress(-1)
-        setRequests(buildRequests(prompt, selectedLibraryDocuments?.map(d => d.id.toString()), dadosDoProcesso.numeroDoProcesso, selectedPieces, contents))
+        setRequests(await serverBuildRequests(prompt, selectedLibraryDocuments?.map(d => d.id.toString()), dadosDoProcesso.numeroDoProcesso, selectedPieces, contents))
         if (prompt.name === 'Chat') setChoosingPieces(false)
     }
 

@@ -1,5 +1,5 @@
 import ErrorMessage from "@/components/error-message"
-import { getPiecesWithContent, waitForTexts } from "@/lib/ai/prompt"
+import { getPiecesWithContent, waitForTexts } from "@/lib/ai/prompt-client"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 
 const ErrorMsg =  ({ dadosDoProcesso }: { dadosDoProcesso: DadosDoProcessoType }) => {

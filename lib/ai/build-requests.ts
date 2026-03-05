@@ -1,42 +1,96 @@
 import { IAPrompt } from "../db/mysql-types"
 import { InfoDeProduto, P, TipoDeSinteseMap } from "../proc/combinacoes"
-import { infoDeProduto } from "../proc/info-de-produto"
+import { infoDeProduto, slugToInfoDeProduto } from "../proc/info-de-produto"
 import { PecaType } from "../proc/process-types"
 import { slugify } from "../utils/utils"
-import { getInternalPrompt } from "./prompt"
+import devLog from "../utils/log"
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "./prompt-types"
+import { getPromptDefinition, getPromptDefinitionByUuid } from "./prompt-store"
 
-export const buildRequests = (prompt: IAPrompt, documentosDaBiblioteca: string[] | undefined, numeroDoProcesso: string, selectedPieces: PecaType[], contents?: { [key: number]: string }): GeneratedContent[] => {
+/**
+ * Build requests from an aggregator's workflow successors (DB-driven).
+ * Each successor UUID is resolved to a prompt definition.
+ */
+async function buildRequestsFromWorkflow(
+    successors: { uuid: string; optional?: boolean; condition?: string }[],
+    pecasComConteudo: TextoType[],
+    numeroDoProcesso: string,
+    documentosDaBiblioteca: string[] | undefined,
+): Promise<GeneratedContent[]> {
+    const requestArray: GeneratedContent[] = []
+
+    for (const step of successors) {
+        const def = await getPromptDefinitionByUuid(step.uuid).catch(e => {
+            devLog(`[build-requests] Could not resolve successor UUID ${step.uuid}: ${e.message}`)
+            return null
+        })
+        if (!def) continue
+
+        // Reverse-lookup slug → P enum + title + plugins for backward compatibility
+        const ip = slugToInfoDeProduto(def.kind)
+
+        // Skip RESUMOS fan-out for now (handled separately when needed)
+        if (ip?.produto === P.RESUMOS) continue
+
+        const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
+        requestArray.push({
+            documentCode: null,
+            documentDescr: null,
+            data,
+            title: ip?.titulo || def.kind,
+            produto: ip?.produto || def.kind as any,
+            promptSlug: def.kind,
+            internalPrompt: def,
+            plugins: ip?.plugins,
+        })
+    }
+
+    return requestArray
+}
+
+export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: string[] | undefined, numeroDoProcesso: string, selectedPieces: PecaType[], contents?: { [key: number]: string }): Promise<GeneratedContent[]> => {
     const requestArray: GeneratedContent[] = []
     const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: peca.conteudo || contents?.[peca.id], sigilo: peca.sigilo }))
-    let produtos: InfoDeProduto[] = []
-    // Internal seeded prompt: use map products
+
+    // Internal seeded prompt: use workflow successors from DB, fall back to TipoDeSinteseMap
     if (prompt.kind?.startsWith('^')) {
         const key = prompt.kind.substring(1)
-        const def = TipoDeSinteseMap[key]
-        if (def) {
-            produtos = def.produtos.map(p => infoDeProduto(p))
-        }
-        // If products list is defined via TipoDeSinteseMap, append them (avoids double-adding chat if not desired later)
-        for (const ip of produtos) {
-            if (ip.produto === P.RESUMOS) {
-                // Add resume for each piece
-                for (const peca of pecasComConteudo) {
-                    const definition = getInternalPrompt(`resumo-${peca.slug}`)
-                    const data: PromptDataType = { textos: [peca], documentosDaBiblioteca }
-                    requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: ip.produto, promptSlug: definition.kind, internalPrompt: definition })
+
+        // Prefer DB workflow successors (from aggregator .md files synced by sync engine)
+        if (prompt.workflow?.successors?.length) {
+            const workflowRequests = await buildRequestsFromWorkflow(
+                prompt.workflow.successors,
+                pecasComConteudo,
+                numeroDoProcesso,
+                documentosDaBiblioteca,
+            )
+            requestArray.push(...workflowRequests)
+        } else {
+            // Fallback to TipoDeSinteseMap for old seed records without workflow
+            const def = TipoDeSinteseMap[key]
+            if (def) {
+                const produtos = def.produtos.map(p => infoDeProduto(p))
+                for (const ip of produtos) {
+                    if (ip.produto === P.RESUMOS) {
+                        // Add resume for each piece
+                        for (const peca of pecasComConteudo) {
+                            const definition = await getPromptDefinition(`resumo-${peca.slug}`)
+                            const data: PromptDataType = { textos: [peca], documentosDaBiblioteca }
+                            requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: ip.produto, promptSlug: definition.kind, internalPrompt: definition })
+                        }
+                        continue
+                    }
+                    const def = await getPromptDefinition(ip.prompt)
+                    if (!def) continue
+                    const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
+                    requestArray.push({ documentCode: null, documentDescr: null, data, title: ip.titulo, produto: ip.produto, promptSlug: def.kind, internalPrompt: def })
                 }
-                continue
             }
-            const def = getInternalPrompt(ip.prompt)
-            if (!def) continue
-            const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
-            requestArray.push({ documentCode: null, documentDescr: null, data, title: ip.titulo, produto: ip.produto, promptSlug: def.kind, internalPrompt: def })
         }
     } else {
         if (prompt.content.summary === 'SIM') {
             for (const peca of pecasComConteudo) {
-                const definition = getInternalPrompt(`resumo-${peca.slug}`)
+                const definition = await getPromptDefinition(`resumo-${peca.slug}`)
                 const data: PromptDataType = {
                     numeroDoProcesso,
                     textos: [peca],
@@ -53,6 +107,7 @@ export const buildRequests = (prompt: IAPrompt, documentosDaBiblioteca: string[]
             format: prompt.content.format,
             template: prompt.content.template,
             cacheControl: true,
+            dbId: prompt.id,
         }
         const req: GeneratedContent = {
             documentCode: null,
@@ -72,7 +127,7 @@ export const buildRequests = (prompt: IAPrompt, documentosDaBiblioteca: string[]
 
         // Basic chat as last item
         if (!prompt?.name?.toLowerCase().startsWith('chat ')) {
-            const definition2 = getInternalPrompt(`chat`)
+            const definition2 = await getPromptDefinition(`chat`)
             const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
             requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: P.CHAT, promptSlug: definition2.kind, internalPrompt: definition2 })
         }

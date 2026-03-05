@@ -28,6 +28,10 @@ export type PromptDefinitionType = {
     model?: string
     cacheControl?: boolean | number
     metadata?: PromptDefinitionMetadataType
+    /** Database id of the ia_prompt record (set when resolved from DB) */
+    dbId?: number
+    /** UUID of the prompt (portable identity across environments) */
+    uuid?: string
 }
 
 export type PromptDefinitionMetadataType = {

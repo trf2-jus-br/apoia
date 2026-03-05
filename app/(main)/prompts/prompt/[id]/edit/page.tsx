@@ -3,6 +3,7 @@ import PromptForm from '../../prompt-form'
 import { PromptDao, UserDao } from '@/lib/db/dao'
 import { assertCurrentUserCorporativo, isUserModerator } from '@/lib/user';
 import { PublicError } from '@/lib/utils/public-error';
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 
 export default async function Edit(props: { params: Promise<{ id: number }> }) {
     try {
@@ -25,7 +26,7 @@ export default async function Edit(props: { params: Promise<{ id: number }> }) {
         return (<Container fluid={false}>
             <h1 className="mt-5 mb-3">Edição de Prompt</h1>
             {editingAsModerator && <div className="alert alert-warning">Você está editando este prompt como moderador. As alterações serão salvas mas o autor original será mantido.</div>}
-            <PromptForm record={record} />
+            <PromptForm record={record} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
         </Container>)
     } catch (e: any) {
         return (<Container fluid={false}>

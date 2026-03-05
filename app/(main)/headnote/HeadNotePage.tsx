@@ -6,12 +6,11 @@ import AiContent from '@/components/ai-content'
 import { P } from '@/lib/proc/combinacoes'
 import { Button, Container } from 'react-bootstrap'
 import PromptConfig from '@/components/prompt-config'
-import { PromptConfigType } from '@/lib/ai/prompt-types'
-import { getInternalPrompt } from '@/lib/ai/prompt'
+import { PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
-export default function Revison() {
+export default function Revison({ definition }: { definition: PromptDefinitionType }) {
     const [markdown, setMarkdown] = useState('')
     const [orgaoJulgador, setOrgaoJulgador] = useState('')
     const [hidden, setHidden] = useState(true)
@@ -55,7 +54,7 @@ export default function Revison() {
             {!hidden && markdown && <>
                 <h2 className="mt-3">Ementa</h2>
                 <AiContent
-                    definition={getInternalPrompt('ementa')}
+                    definition={definition}
                     // data={{ textos: [{ descr: 'EXTRATO DE ATA', slug: 'extrato-de-ata', texto: `ÓRGÃO JULGADOR: ${orgaoJulgador}\nTIPO DE DECISÁO: UNÂMINE` }, { descr: 'Voto', slug: 'voto', texto: markdown }] }}
                     data={{ textos: [{ numeroDoProcesso: '', descr: 'Voto', slug: 'voto', texto: markdown, sigilo: '0' }] }}
                     options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined} />

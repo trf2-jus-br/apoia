@@ -4,14 +4,13 @@ import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
 import AiContent from '@/components/ai-content'
 import { Button } from 'react-bootstrap'
-import { getInternalPrompt } from '@/lib/ai/prompt'
+import { PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'
 import PromptConfig from '@/components/prompt-config'
-import { PromptConfigType } from '@/lib/ai/prompt-types'
 import { VisualizationEnum } from '@/lib/ui/preprocess'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
-export default function Simplification() {
+export default function Simplification({ definition }: { definition: PromptDefinitionType }) {
     const [markdown, setMarkdown] = useState('')
     const [hidden, setHidden] = useState(true)
     const [promptConfig, setPromptConfig] = useState({} as PromptConfigType)
@@ -52,7 +51,7 @@ export default function Simplification() {
                     infoDeProduto={{ produto: P.REVISAO, dados: [], titulo: 'Revisão', prompt: 'revisao', plugins: [] }}
                     textos={[{ descr: 'Texto', slug: 'texto', texto: markdown }]} /> */}
                 <h2 className="mt-3">Liguagem Simples</h2>
-                <AiContent definition={getInternalPrompt('linguagem-simples')} data={{ textos: [{ numeroDoProcesso: '', descr: 'Texto', slug: 'texto', texto: markdown, sigilo: '0' }] }} config={promptConfig} visualization={VisualizationEnum.TEXT_EDITED} dossierCode={undefined} />
+                <AiContent definition={definition} data={{ textos: [{ numeroDoProcesso: '', descr: 'Texto', slug: 'texto', texto: markdown, sigilo: '0' }] }} config={promptConfig} visualization={VisualizationEnum.TEXT_EDITED} dossierCode={undefined} />
             </>}
         </>
     )
