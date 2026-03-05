@@ -21,6 +21,7 @@ function dbRecordToDefinition(record: IAPrompt): PromptDefinitionType {
 
     return {
         kind: record.kind?.startsWith('^') ? record.kind.substring(1) : record.kind,
+        name: record.name || undefined,
         systemPrompt: content?.system_prompt || undefined,
         prompt: content?.prompt || undefined,
         jsonSchema: content?.json_schema || undefined,

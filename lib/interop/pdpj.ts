@@ -7,7 +7,7 @@ import { envString, envStringPrefixed } from '../utils/env'
 import { tua } from '../proc/tua'
 import { InteropProcessoType } from './interop-types'
 import { mapPdpjToSimplified, PdpjInput } from './pdpj-mapping'
-import { P, T } from '../proc/combinacoes'
+import { T } from '../proc/combinacoes'
 import { serviceMonitor } from './pdpjServiceMonitor'
 import { CannotAccessPieceTextError, CannotAccessProcessMetadataError, InvalidProcessNumberError, SilentError } from '../utils/api-error'
 

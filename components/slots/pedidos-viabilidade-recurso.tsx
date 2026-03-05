@@ -4,7 +4,6 @@ import AiContent from "@/components/ai-content"
 import { resolvePromptDefinition } from "@/lib/ai/prompt-actions"
 import { ContentType, GeneratedContent, PromptDefinitionType } from "@/lib/ai/prompt-types"
 import { PangeaResultadoItem, PangeaSearchRawResponse } from "@/lib/ai/tools-pangea"
-import { P } from "@/lib/proc/combinacoes"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { FormHelper } from "@/lib/ui/form-support"
 
@@ -110,7 +109,7 @@ interface PedidosViabilidadeRecursoProps {
 export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossierCode, onBusy, onReady, dadosDoProcesso }: PedidosViabilidadeRecursoProps) => {
     const [resolvedDef, setResolvedDef] = useState<PromptDefinitionType | null>(null)
     const pedidosAnalisados = Frm.get('pedidosAnalisados')
-    const slug = nextRequest.produto === P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO ? 'decisao-viabilidade-recurso-extraordinario' : 'decisao-viabilidade-recurso-especial'
+    const slug = nextRequest.promptSlug
 
     useEffect(() => {
         if (pedidosAnalisados) {
@@ -219,7 +218,7 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
                     </Button>
                 </div>
             </div>
-            <h2>{nextRequest.produto === P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO ? 'Decisão de Viabilidade de Recurso Extraordinário' : 'Decisão de Viabilidade de Recurso Especial'}</h2>
+            <h2>{nextRequest.title}</h2>
             <AiContent definition={resolvedDef} data={data} key={aiContentKey} dossierCode={dossierCode} onBusy={onBusy} onReady={onReady} dadosDoProcesso={dadosDoProcesso} />
         </>
     }
@@ -337,7 +336,7 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
                         onClick={() => Frm.set('pedidosAnalisados', true)}
                         disabled={!!disabledReason}
                     >
-                        Gerar {nextRequest.produto === P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO ? 'Decisão' : 'Decisão'}
+                        Gerar Decisão
                     </Button>
                 </div>
             </div>

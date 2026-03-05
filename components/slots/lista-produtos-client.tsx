@@ -7,7 +7,6 @@ import { calcMd5 } from '@/lib/utils/hash'
 import { ContentType, GeneratedContent, PromptDataType, TextoType } from '@/lib/ai/prompt-types'
 import AiContent from '@/components/ai-content'
 import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support'
-import { P } from '@/lib/proc/combinacoes'
 import Chat from './chat'
 import { DadosDoProcessoType } from '@/lib/proc/process-types'
 import AiTitle from '@/components/ai-title'
@@ -35,7 +34,7 @@ const onReady = (Frm: FormHelper, requests: GeneratedContent[], idx: number, con
     Frm.set(`generated[${idx}]`, content)
 
     // Frm.set(`flow.ready[${idx}]`, content)
-    if ((requests[idx].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS || requests[idx].produto === P.JUIZO_VIABILIDADE_RECURSO) && content.json) {
+    if ((requests[idx].promptSlug === 'pedidos-fundamentacoes-e-dispositivos' || requests[idx].promptSlug === 'juizo-viabilidade-recurso') && content.json) {
         Frm.set('pedidos', content.json)
     }
     if (content.json && isInformationExtractionPrompt(requests[idx].internalPrompt?.prompt)) {
@@ -49,7 +48,7 @@ function textosAnteriores(Frm: FormHelper, requests: GeneratedContent[], idx: nu
     let i = 0
     for (const r of requests) {
         if (i >= idx) break
-        if (r.produto === P.CHAT) break
+        if (r.promptSlug === 'chat') break
         const content = Frm.get(`generated[${i}]`)
         if (!content) break
         textos.push({ numeroDoProcesso: r?.data?.numeroDoProcesso || '', slug: slugify(r.title), descr: r.title, texto: content?.json ? content.formatted : content.raw, sigilo: '0' })
@@ -93,9 +92,9 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
     }
     const information_extraction = Frm.get(informationExtractionVariableName)
     const pedidos = Frm.get('pedidos')
-    if (request.produto === P.PEDIDOS && pedidos) {
+    if (request.promptSlug === 'pedidos-de-peticao-inicial' && pedidos) {
         return <Pedidos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
-    } else if (request.produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) {
+    } else if (request.promptSlug === 'pedidos-fundamentacoes-e-dispositivos') {
         if (pedidos) {
             return <article key={idx}>
                 <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
@@ -104,7 +103,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
                 </Row>}
             </article>
         }
-    } else if (request.produto === P.JUIZO_VIABILIDADE_RECURSO) {
+    } else if (request.promptSlug === 'juizo-viabilidade-recurso') {
         console.log('requestSlot.PEDIDOS_VIABILIDADE_RECURSO', { request, pedidos })
         if (pedidos) {
             return <article key={idx}>
@@ -119,7 +118,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
             <AiTitle request={request} />
             <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />
         </article>
-    } else if (request.produto === P.CHAT || request?.title.toLowerCase().startsWith('chat ')) {
+    } else if (request.promptSlug === 'chat' || request?.title.toLowerCase().startsWith('chat ')) {
         if (previousArePending(Frm, requests, idx)) return null
         return <Chat definition={request.internalPrompt} data={requestComTextosAnteriores.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
     }
@@ -152,8 +151,8 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
 
     const ctrls = []
     for (let idx = 0; idx < requests.length; idx++) {
-        if (idx > 0 && requests[idx - 1].produto === P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS) continue
-        if (idx > 0 && requests[idx - 1].produto === P.JUIZO_VIABILIDADE_RECURSO) continue
+        if (idx > 0 && requests[idx - 1].promptSlug === 'pedidos-fundamentacoes-e-dispositivos') continue
+        if (idx > 0 && requests[idx - 1].promptSlug === 'juizo-viabilidade-recurso') continue
         if (previousArePending(Frm, requests, idx)) break
         const ctrl = requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model, sidekick, promptButtons, sinkFromURL, sinkButtonText, sourcePayload, dadosDoProcesso)
         if (ctrl === null) break

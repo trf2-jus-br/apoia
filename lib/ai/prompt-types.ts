@@ -1,6 +1,6 @@
 import { ModelMessage } from "ai";
 import { IAGenerated } from "../db/mysql-types";
-import { P, Plugin, T } from "../proc/combinacoes";
+import { Plugin, T } from "../proc/combinacoes";
 import { PecaConteudoType } from "../proc/process-types";
 
 // A ideia aqui é que existe uma definição de prompt (PromptDefinitionType) que pode vir do banco de dados ou 
@@ -20,6 +20,7 @@ import { PecaConteudoType } from "../proc/process-types";
 //
 export type PromptDefinitionType = {
     kind: string
+    name?: string
     systemPrompt?: string
     prompt?: string
     jsonSchema?: string
@@ -113,9 +114,8 @@ export type GeneratedContent = {
     documentLocation?: string, // local onde a peça está armazenada
     documentLink?: string, // tipo da peça no Eproc
 
-    // infoDeProduto: InfoDeProduto
     title: string,
-    produto: P,
+    produto: string,
     promptSlug: string,
     internalPrompt: PromptDefinitionType,
     data: PromptDataType,

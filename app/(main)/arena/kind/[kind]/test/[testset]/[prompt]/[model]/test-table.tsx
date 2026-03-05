@@ -8,7 +8,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { OverlayTrigger, Popover } from "react-bootstrap";
 import { format } from "@/lib/ai/format";
 import { preprocess, VisualizationEnum } from "@/lib/ui/preprocess";
-import { InfoDeProduto } from "@/lib/proc/combinacoes";
 import { PromptDefinitionType } from "@/lib/ai/prompt-types";
 import React from "react";
 

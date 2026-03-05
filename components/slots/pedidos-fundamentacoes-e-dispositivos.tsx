@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import AiContent from "@/components/ai-content"
 import { resolvePromptDefinition } from "@/lib/ai/prompt-actions"
 import { ContentType, GeneratedContent, PromptDefinitionType } from "@/lib/ai/prompt-types"
-import { P } from "@/lib/proc/combinacoes"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { FormHelper } from "@/lib/ui/form-support"
 import { calcMd5 } from "@/lib/utils/hash"
@@ -25,7 +24,7 @@ interface PedidosFundamentacoesEDispositivosProps {
 export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextRequest, Frm, dossierCode, onBusy, onReady, dadosDoProcesso }: PedidosFundamentacoesEDispositivosProps) => {
     const [resolvedDef, setResolvedDef] = useState<PromptDefinitionType | null>(null)
     const pedidosAnalisados = Frm.get('pedidosAnalisados')
-    const slug = nextRequest.produto === P.VOTO ? 'voto' : 'sentenca'
+    const slug = nextRequest.promptSlug
 
     useEffect(() => {
         if (pedidosAnalisados) {
@@ -96,7 +95,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
                     </Button>
                 </div>
             </div>
-            <h2>{nextRequest.produto === P.VOTO ? 'Voto' : 'Sentença'}</h2>
+            <h2>{nextRequest.title}</h2>
             <AiContent definition={resolvedDef} data={data} key={aiContentKey} dossierCode={dossierCode} onBusy={onBusy} onReady={onReady} dadosDoProcesso={dadosDoProcesso} />
         </>
     }
@@ -137,7 +136,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
             <div className="row h-print mb-3">
                 <div className="col">
                     <Button className="float-end" variant="primary" onClick={() => Frm.set('pedidosAnalisados', true)} disabled={Frm.get('pedidos')?.pedidos?.some(p => !p.dispositivo)}>
-                        Gerar {nextRequest.produto === P.VOTO ? 'Voto' : 'Sentença'}
+                        Gerar {nextRequest.title}
                     </Button>
                 </div>
             </div>

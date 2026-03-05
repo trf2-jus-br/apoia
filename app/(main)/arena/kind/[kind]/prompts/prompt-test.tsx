@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import AiContent from '@/components/ai-content'
-import { InfoDeProduto, P } from '@/lib/proc/combinacoes'
 import { Button, Form } from 'react-bootstrap'
 import { IATestset } from '@/lib/db/mysql-types'
 import { slugify } from '@/lib/utils/utils'
@@ -16,17 +15,10 @@ export default function PromptTest(params: {
 }) {
     const parsedTests = params.testset.content.tests.map((test, idx) => {
         const titulo = test.name
-        const infoDeProduto: InfoDeProduto = {
-            "produto": P[slugify(params.testset.kind).replace('-', "_").toUpperCase()],
-            "dados": [],
-            "titulo": titulo,
-            "prompt": params.testset.kind,
-            "plugins": []
-        }
         const textos = test.texts.map(t => ({ numeroDoProcesso: '', descr: t.name, slug: slugify(t.name), texto: t.value, sigilo: '1' }))
         const result = test.expected
         const file = idx.toString()
-        return { file, titulo, infoDeProduto, textos, result }
+        return { file, titulo, textos, result }
     })
 
     const [file, setFile] = useState("0")
@@ -67,7 +59,7 @@ export default function PromptTest(params: {
                 </div>
             </div>
             {!hidden && !refresh && <>
-                <h2 className="mt-3">{test.infoDeProduto.titulo}</h2>
+                <h2 className="mt-3">{test.titulo}</h2>
                 <AiContent
                     definition={{ kind: params.testset.kind, prompt: '' }}
                     data={{ textos: test.textos }}

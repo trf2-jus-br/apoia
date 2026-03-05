@@ -43,44 +43,6 @@ export enum T {
     ATESTADO_DE_PERMANENCIA = 'ATESTADO DE PERMANÊNCIA',
 }
 
-export enum P {
-    RESUMOS = 'Resumos',
-    RESUMO_PECA = 'Resumo de Peça',
-    ANALISE = 'Análise',
-    ANALISE_TR = 'Análise para Turma Recursal',
-    ANALISE_COMPLETA = 'Análise Completa',
-    RESUMO = 'Resumo',
-    RELATORIO = 'Relatório',
-    EMENTA = 'Ementa',
-    ACORDAO = 'Acórdão',
-    REVISAO = 'Revisão',
-    REFINAMENTO = 'Refinamento',
-    PEDIDOS = 'Pedidos',
-    PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS = 'Pedidos, Fundamentações e Dispositivos',
-    SENTENCA = 'Sentença',
-    VOTO = 'Voto',
-    PEDIDOS_DO_RECURSO_E_ARGUMENTOS = 'Pedidos do Recurso e Argumentos',
-    PESQUISA_DE_TEMAS = 'Pesquisa de Temas',
-    JUIZO_VIABILIDADE_RECURSO = 'Juízo de Viabilidade de Recurso',
-    DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO = 'Decisão de Viabilidade de Recurso Extraordinário',
-    DECISAO_VIABILIDADE_RECURSO_ESPECIAL = 'Decisão de Viabilidade de Recurso Especial',
-    INDICE = 'Índice',
-    LITIGANCIA_PREDATORIA = 'Litigância Predatória',
-    CHAT = 'Chat',
-    CHAT_STANDALONE = 'Chat Padrão',
-    RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL = 'Relatório de Processo Coletivo ou Criminal',
-    MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS = 'Minuta de Despacho de Acordo 9 dias',
-    PREV_PPP = 'Perfil Profissiográfico Previdenciário - PPP',
-    PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA = 'Relatório de Aposentadoria Especial - Primeira Instância',
-    PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA = 'Relatório de Aposentadoria Especial - Segunda Instância',
-    PREV_BI_ANALISE_DE_LAUDO = 'Análise de Laudo Pericial BI',
-    PREV_BI_SENTENCA_LAUDO_FAVORAVEL = 'Sentença BI (Laudo Favorável)',
-    PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL = 'Sentença BI (Laudo Desfavorável)',
-    RELATORIO_CIVEL_PRIMEIRA_INST = 'Relatório Cível para 1ª Instância',
-    RELATORIO_DE_APELACAO_E_TRIAGEM = 'Relatório de Apelação e Triagem',
-    LINHA_DO_TEMPO_FATICA = 'Linha do Tempo Fática',
-}
-
 export enum Plugin {
     TRIAGEM = 'Triagem',
     NORMAS = 'Normas',
@@ -88,52 +50,6 @@ export enum Plugin {
     TRIAGEM_JSON = 'Triagem JSON',
     NORMAS_JSON = 'Normas JSON',
     PALAVRAS_CHAVE_JSON = 'Palavras-Chave JSON',
-}
-
-export interface ProdutoValido { titulo: string, prompt: string, plugins: Plugin[] }
-
-export const ProdutosValidos = {
-    [P.RESUMO_PECA]: { titulo: P.RESUMO_PECA, prompt: 'resumo_peca', plugins: [] },
-    [P.RESUMOS]: { titulo: P.RESUMOS, prompt: 'resumos', plugins: [] },
-    [P.ANALISE_TR]: { titulo: P.ANALISE_TR, prompt: 'analise-tr', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
-    [P.ANALISE]: { titulo: P.ANALISE, prompt: 'analise', plugins: [] },
-    [P.ANALISE_COMPLETA]: { titulo: P.ANALISE_COMPLETA, prompt: 'analise-completa', plugins: [] },
-    [P.RELATORIO]: { titulo: P.RELATORIO, prompt: 'relatorio', plugins: [] },
-    [P.RESUMO]: { titulo: P.RESUMO, prompt: 'resumo', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
-    [P.ACORDAO]: { titulo: P.ACORDAO, prompt: 'acordao', plugins: [] },
-    [P.REVISAO]: { titulo: P.REVISAO, prompt: 'revisao', plugins: [] },
-    [P.REFINAMENTO]: { titulo: P.REFINAMENTO, prompt: 'refinamento', plugins: [] },
-    [P.PEDIDOS]: { titulo: P.PEDIDOS, prompt: 'pedidos-de-peticao-inicial', plugins: [] },
-    [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS]: { titulo: P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, prompt: 'pedidos-fundamentacoes-e-dispositivos', plugins: [] },
-    [P.SENTENCA]: { titulo: P.SENTENCA, prompt: 'sentenca', plugins: [] },
-    [P.VOTO]: { titulo: P.VOTO, prompt: 'voto', plugins: [] },
-    [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS]: { titulo: P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, prompt: 'pedidos-viabilidade-recurso', plugins: [] },
-    [P.PESQUISA_DE_TEMAS]: { titulo: P.PESQUISA_DE_TEMAS, prompt: 'pesquisa-de-temas', plugins: [] },
-    [P.JUIZO_VIABILIDADE_RECURSO]: { titulo: P.JUIZO_VIABILIDADE_RECURSO, prompt: 'juizo-viabilidade-recurso', plugins: [] },
-    [P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO]: { titulo: P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO, prompt: 'decisao-viabilidade-recurso-extraordinario', plugins: [] },
-    [P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL]: { titulo: P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, prompt: 'decisao-viabilidade-recurso-especial', plugins: [] },
-    [P.INDICE]: { titulo: P.INDICE, prompt: 'indice', plugins: [] },
-    [P.LITIGANCIA_PREDATORIA]: { titulo: P.LITIGANCIA_PREDATORIA, prompt: 'litigancia-predatoria', plugins: [] },
-    [P.CHAT]: { titulo: P.CHAT, prompt: 'chat', plugins: [] },
-    [P.CHAT_STANDALONE]: { titulo: P.CHAT_STANDALONE, prompt: 'chat-standalone', plugins: [] },
-    [P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL]: { titulo: P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL, prompt: 'relatorio-de-processo-coletivo-ou-criminal', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
-    [P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS]: { titulo: P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS, prompt: 'minuta-de-despacho-de-acordo-9-dias', plugins: [] },
-    [P.PREV_PPP]: { titulo: P.PREV_PPP, prompt: 'prev-ppp', plugins: [] },
-    [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, prompt: 'prev-apesp-pontos-controvertidos-primeira-instancia', plugins: [] },
-    [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA]: { titulo: P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, prompt: 'prev-apesp-pontos-controvertidos-segunda-instancia', plugins: [] },
-    [P.PREV_BI_ANALISE_DE_LAUDO]: { titulo: P.PREV_BI_ANALISE_DE_LAUDO, prompt: 'prev-bi-analise-de-laudo', plugins: [] },
-    [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, prompt: 'prev-bi-sentenca-laudo-favoravel', plugins: [] },
-    [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL]: { titulo: P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, prompt: 'prev-bi-sentenca-laudo-desfavoravel', plugins: [] },
-    [P.RELATORIO_CIVEL_PRIMEIRA_INST]: { titulo: P.RELATORIO_CIVEL_PRIMEIRA_INST, prompt: 'relatorio-civel-para-primeira-instancia', plugins: [] },
-    [P.RELATORIO_DE_APELACAO_E_TRIAGEM]: { titulo: P.RELATORIO_DE_APELACAO_E_TRIAGEM, prompt: 'relatorio-de-apelacao-e-triagem', plugins: [Plugin.TRIAGEM, Plugin.NORMAS, Plugin.PALAVRAS_CHAVE] },
-    [P.LINHA_DO_TEMPO_FATICA]: { titulo: P.LINHA_DO_TEMPO_FATICA, prompt: 'linha-do-tempo-fatica', plugins: [] },
-}
-
-export interface ProdutoCompleto { produto: P, dados: T[] }
-
-export const PC = (p: P, d?: T | T[]): ProdutoCompleto => {
-    if (Array.isArray(d)) return { produto: p, dados: d }
-    return { produto: p, dados: d ? [d as T] : [] }
 }
 
 // Grupos de Síntese - agrupam tipos de síntese relacionados
@@ -478,14 +394,6 @@ export interface TipoDeSinteseValido {
     padroes?: MatchOperator[][],
     status: StatusDeLancamento,
     relatorioDeAcervo?: boolean,
-}
-
-export interface InfoDeProduto {
-    produto: P,
-    dados: T[],
-    titulo: string,
-    prompt: string,
-    plugins: Plugin[]
 }
 
 

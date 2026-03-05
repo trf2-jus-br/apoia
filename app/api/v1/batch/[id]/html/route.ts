@@ -1,5 +1,5 @@
 import { BatchDao, EnumDao } from "@/lib/db/dao"
-import { Plugin, P, InfoDeProduto } from "@/lib/proc/combinacoes"
+import { Plugin } from "@/lib/proc/combinacoes"
 import { formatBrazilianDate, maiusculasEMinusculas, slugify } from "@/lib/utils/utils"
 import { preprocess } from "@/lib/ui/preprocess"
 import { fixText } from "@/lib/fix"
@@ -280,7 +280,7 @@ async function GET_HANDLER(req: NextRequest, props: { params: Promise<{ id: stri
             const generations = await BatchDao.retrieveGenerationByBatchDossierId(item.batch_dossier_id)
             for (const g of generations) {
                 let text = g.generation
-                if (g.descr === P.RESUMO) {
+                if (g.descr === 'Resumo') {
                     text = fixText(text, enumMap)
                 }
 

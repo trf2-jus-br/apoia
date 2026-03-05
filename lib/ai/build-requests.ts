@@ -1,6 +1,4 @@
 import { IAPrompt } from "../db/mysql-types"
-import { P } from "../proc/combinacoes"
-import { slugToInfoDeProduto } from "../proc/info-de-produto"
 import { PecaType } from "../proc/process-types"
 import { slugify } from "../utils/utils"
 import devLog from "../utils/log"
@@ -26,22 +24,18 @@ async function buildRequestsFromWorkflow(
         })
         if (!def) continue
 
-        // Reverse-lookup slug → P enum + title + plugins for backward compatibility
-        const ip = slugToInfoDeProduto(def.kind)
-
-        // Skip RESUMOS fan-out for now (handled separately when needed)
-        if (ip?.produto === P.RESUMOS) continue
+        // Skip RESUMOS fan-out (handled separately when needed)
+        if (def.kind === 'resumos') continue
 
         const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
         requestArray.push({
             documentCode: null,
             documentDescr: null,
             data,
-            title: ip?.titulo || def.kind,
-            produto: ip?.produto || def.kind as any,
+            title: def.name || def.kind,
+            produto: def.kind,
             promptSlug: def.kind,
             internalPrompt: def,
-            plugins: ip?.plugins,
         })
     }
 
@@ -75,7 +69,7 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
                     textos: [peca],
                     documentosDaBiblioteca
                 }
-                requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: P.RESUMO_PECA, promptSlug: definition.kind, internalPrompt: definition })
+                requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: definition.kind, promptSlug: definition.kind, internalPrompt: definition })
             }
         }
         const definition: PromptDefinitionType = {
@@ -96,7 +90,7 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
                 textos: pecasComConteudo,
                 documentosDaBiblioteca
             },
-            produto: P.RESUMO,
+            produto: slugify(prompt.name),
             promptSlug: slugify(prompt.name),
             internalPrompt: definition,
             title: prompt.name,
@@ -108,7 +102,7 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
         if (!prompt?.name?.toLowerCase().startsWith('chat ')) {
             const definition2 = await getPromptDefinition(`chat`)
             const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
-            requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: P.CHAT, promptSlug: definition2.kind, internalPrompt: definition2 })
+            requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: 'chat', promptSlug: definition2.kind, internalPrompt: definition2 })
         }
     }
 

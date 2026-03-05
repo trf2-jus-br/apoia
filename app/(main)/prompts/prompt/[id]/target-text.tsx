@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
 import AiContent from '@/components/ai-content'
-import { P } from '@/lib/proc/combinacoes'
 import { Button, Container } from 'react-bootstrap'
 import PromptConfig from '@/components/prompt-config'
 import { PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'

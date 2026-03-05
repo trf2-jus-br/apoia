@@ -3,12 +3,11 @@ import { getPromptDefinition, getAggregatorByKind } from '@/lib/ai/prompt-store'
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from '@/lib/ai/prompt-types'
 import { CargaDeConteudoEnum, obterDadosDoProcesso } from '@/lib/proc/process'
 import { assertCurrentUser } from '@/lib/user'
-import { T, P, ProdutosValidos, Plugin, ProdutoCompleto, InfoDeProduto, PieceStrategy, selecionarPecasPorPadraoComFase } from '@/lib/proc/combinacoes'
+import { T, Plugin, PieceStrategy, selecionarPecasPorPadraoComFase } from '@/lib/proc/combinacoes'
 import { IAGenerated, IAPrompt } from '@/lib/db/mysql-types'
 import { PromptDao, SystemDao, BatchDao, DossierDao, DocumentDao, EnumDao } from '@/lib/db/dao'
 import { getTriagem, getNormas, getPalavrasChave } from '@/lib/fix'
 import { generateContent } from '@/lib/ai/generate'
-import { infoDeProduto } from '../proc/info-de-produto'
 import { DadosDoProcessoType, identificarSituacaoDaPeca } from '../proc/process-types'
 import { buildFooter } from '../utils/footer'
 import { clipPieces } from './clip-pieces'
@@ -31,9 +30,8 @@ export async function summarize(dossierNumber: string, pieceNumber: string): Pro
     const definition: PromptDefinitionType = await getPromptDefinition(`resumo-${peca.slug}`)
 
     const data: PromptDataType = { textos: [{ numeroDoProcesso: peca.numeroDoProcesso, descr: peca.descr, slug: peca.slug, pTexto: peca.pTexto, sigilo: peca.sigilo }] }
-    const infoDeProduto: InfoDeProduto = { produto: P.RESUMO_PECA, titulo: peca.descr, dados: [peca.descr as T], prompt: definition.kind, plugins: [] }
     const req: GeneratedContent = {
-        documentCode: peca.id || null, documentDescr: peca.descr, data, title: peca.descr, produto: infoDeProduto.produto, promptSlug: definition.kind, internalPrompt: definition
+        documentCode: peca.id || null, documentDescr: peca.descr, data, title: peca.descr, produto: definition.kind, promptSlug: definition.kind, internalPrompt: definition
     }
 
     // Retrieve from cache or generate
@@ -43,47 +41,6 @@ export async function summarize(dossierNumber: string, pieceNumber: string): Pro
     req.id = result.id
 
     return { dossierData: dadosDoProcesso, generatedContent: req }
-}
-
-export async function buildRequestsForAnalysis(dossierNumber: string, produtos: InfoDeProduto[], pecasComConteudo: TextoType[]): Promise<GeneratedContent[]> {
-    const requests: GeneratedContent[] = []
-
-    // Add product IARequests
-    for (const produto of produtos) {
-        let data: PromptDataType = { numeroDoProcesso: dossierNumber, textos: pecasComConteudo }
-
-        let produtoSimples: P | undefined = undefined
-        // if produto is complex filter data.textos
-        if (typeof produto === 'object') {
-            const complex = produto as any as ProdutoCompleto
-            const tipos = Array.isArray(complex.dados) ? complex.dados : [complex.dados]
-            if (tipos.length !== 0)
-                data.textos = data.textos.filter(peca => tipos.includes(peca.descr as T))
-            produtoSimples = complex.produto
-        } else {
-            produtoSimples = produto
-        }
-
-        // Add resume for each piece
-        if (produtoSimples === P.RESUMOS) {
-            for (const peca of data.textos) {
-                const definition = await getPromptDefinition(`resumo-${peca.slug}`)
-                const data: PromptDataType = { textos: [peca] }
-                requests.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${dossierNumber}/piece/${peca.id}/binary`, data, title: peca.descr, produto: produto.produto, promptSlug: definition.kind, internalPrompt: definition })
-            }
-            continue
-        }
-
-        const produtoValido = ProdutosValidos[produtoSimples]
-
-        const definition = await getPromptDefinition(produtoValido.prompt)
-        if (!definition) continue
-
-        // const infoDeProduto = { ...produto }
-
-        requests.push({ documentCode: null, documentDescr: null, data, produto: produtoSimples, promptSlug: definition.kind, internalPrompt: definition, title: produtoValido.titulo, plugins: produtoValido.plugins })
-    }
-    return requests
 }
 
 export async function analyze(batchName: string | undefined, dossierNumber: string, kind: string | number | undefined, complete: boolean): Promise<{ dossierData: any, generatedContent: GeneratedContent[] }> {
@@ -151,20 +108,6 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
         let requests: GeneratedContent[]
         if (isNumericKind) {
             requests = (await buildRequests(promptFromDB, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas)).filter(r => r && r.promptSlug !== 'chat')
-
-            // Acrescenta o Plugins conforme o conteúdo do prompt
-            for (const req of requests) {
-                if (!req.plugins) req.plugins = []
-                if (req.internalPrompt?.prompt?.includes('# Triagem')) {
-                    if (!req.plugins.includes(Plugin.TRIAGEM)) req.plugins.push(Plugin.TRIAGEM)
-                }
-                if (req.internalPrompt?.prompt?.includes('# Normas/Jurisprudência Invocadas')) {
-                    if (!req.plugins.includes(Plugin.NORMAS)) req.plugins.push(Plugin.NORMAS)
-                }
-                if (req.internalPrompt?.prompt?.includes('# Palavras-Chave')) {
-                    if (!req.plugins.includes(Plugin.PALAVRAS_CHAVE)) req.plugins.push(Plugin.PALAVRAS_CHAVE)
-                }
-            }
         } else {
             // Load aggregator prompt from DB for the detected synthesis type
             const aggRecord = await getAggregatorByKind(`^${dadosDoProcesso.tipoDeSintese}`)
@@ -172,6 +115,20 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
                 requests = (await buildRequests(aggRecord, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas)).filter(r => r && r.promptSlug !== 'chat')
             } else {
                 requests = []
+            }
+        }
+
+        // Auto-detect plugins from prompt content markers
+        for (const req of requests) {
+            if (!req.plugins) req.plugins = []
+            if (req.internalPrompt?.prompt?.includes('# Triagem')) {
+                if (!req.plugins.includes(Plugin.TRIAGEM)) req.plugins.push(Plugin.TRIAGEM)
+            }
+            if (req.internalPrompt?.prompt?.includes('# Normas/Jurisprudência Invocadas')) {
+                if (!req.plugins.includes(Plugin.NORMAS)) req.plugins.push(Plugin.NORMAS)
+            }
+            if (req.internalPrompt?.prompt?.includes('# Palavras-Chave')) {
+                if (!req.plugins.includes(Plugin.PALAVRAS_CHAVE)) req.plugins.push(Plugin.PALAVRAS_CHAVE)
             }
         }
 
