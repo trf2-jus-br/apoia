@@ -1,7 +1,7 @@
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
 import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
-import { PecaType, StatusDeLancamento } from "./process-types"
+import { PecaType } from "./process-types"
 
 // Enum com os tipos de peças
 export enum T {
@@ -392,7 +392,7 @@ export interface TipoDeSinteseValido {
     nome: string,
     sort?: number,
     padroes?: MatchOperator[][],
-    status: StatusDeLancamento,
+    share: string,
     batchReport?: boolean,
 }
 

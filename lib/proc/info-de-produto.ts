@@ -1,5 +1,4 @@
 import { PieceStrategy, TipoDeSinteseValido } from "./combinacoes"
-import { StatusDeLancamento } from "./process-types"
 import { getAllAggregators } from "../ai/prompt-store"
 
 /**
@@ -16,14 +15,13 @@ export async function getTiposDeSinteseValido(): Promise<TipoDeSinteseValido[]> 
         const content = agg.content
         const strategyName = content?.piece_strategy
         const padroes = strategyName ? PieceStrategy[strategyName]?.pattern : undefined
-        const status = content?.status === 'publico' ? StatusDeLancamento.PUBLICO : StatusDeLancamento.EM_DESENVOLVIMENTO
 
         tipos.push({
             id: key,
             nome: agg.name || key,
             sort: typeof content?.sort === 'number' ? content.sort : 999,
             padroes,
-            status,
+            share: (agg as any).share || 'PADRAO',
             batchReport: !!content?.batch_report,
         })
     }

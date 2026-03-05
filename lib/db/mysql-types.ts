@@ -141,7 +141,6 @@ export type IAPrompt = {
 
         // Aggregator metadata (from sync engine, stored in content JSON)
         sort?: number
-        status?: string
         context?: Record<string, any>
         grupo?: Record<string, any>
         batch_report?: boolean
@@ -149,8 +148,8 @@ export type IAPrompt = {
 
         // Workflow (predecessors/successors), moved from separate column
         workflow?: {
-            predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
-            successors?: { uuid: string; optional?: boolean; condition?: string }[]
+            predecessors?: { uuid: string; name?: string; optional?: boolean; condition?: string }[]
+            successors?: { uuid: string; name?: string; optional?: boolean; condition?: string }[]
         } | null
 
         system_prompt: string | null
@@ -191,6 +190,16 @@ export type IAPromptToInsert = {
         piece_strategy?: string
         piece_descr?: string
         summary?: string
+
+        sort?: number
+        batch_report?: boolean
+        plugins?: string[]
+
+        // Workflow (predecessors/successors)
+        workflow?: {
+            predecessors?: { uuid: string; name?: string; optional?: boolean; condition?: string }[]
+            successors?: { uuid: string; name?: string; optional?: boolean; condition?: string }[]
+        } | null
     }
 }
 
@@ -222,7 +231,6 @@ export type IAPromptList = {
 
         // Aggregator metadata (from sync engine, stored in content JSON)
         sort?: number
-        status?: string
         context?: Record<string, any>
         grupo?: Record<string, any>
         batch_report?: boolean
@@ -230,8 +238,8 @@ export type IAPromptList = {
 
         // Workflow (predecessors/successors)
         workflow?: {
-            predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
-            successors?: { uuid: string; optional?: boolean; condition?: string }[]
+            predecessors?: { uuid: string; name?: string; optional?: boolean; condition?: string }[]
+            successors?: { uuid: string; name?: string; optional?: boolean; condition?: string }[]
         } | null
 
         system_prompt: string | null

@@ -23,10 +23,12 @@ export default async function Edit(props: { params: Promise<{ id: number }> }) {
                 throw new PublicError('Você não tem permissão para editar este prompt.')
         }
 
+        const allPrompts = await PromptDao.retrievePromptNamesAndUuids()
+
         return (<Container fluid={false}>
             <h1 className="mt-5 mb-3">Edição de Prompt</h1>
             {editingAsModerator && <div className="alert alert-warning">Você está editando este prompt como moderador. As alterações serão salvas mas o autor original será mantido.</div>}
-            <PromptForm record={record} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
+            <PromptForm record={record} allPrompts={allPrompts} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
         </Container>)
     } catch (e: any) {
         return (<Container fluid={false}>

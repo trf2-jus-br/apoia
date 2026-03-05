@@ -1,6 +1,6 @@
 'use server'
 
-import { FormState, fromErrorToFormState } from '@/lib/ui/form-support'
+import { FormState, fromErrorToFormState } from '@/lib/ui/form-state'
 import { PromptDao } from '@/lib/db/dao'
 import test from 'node:test'
 import z, { ZodError } from 'zod'
@@ -31,6 +31,23 @@ const promptSchema = z.object({
         piece_strategy: z.string().nullable().optional(),
         piece_descr: z.string().array().nullable().optional(),
         summary: z.string().nullable().optional(),
+
+        sort: numericString(z.number()).nullable().optional(),
+        batch_report: z.boolean().nullable().optional(),
+        plugins: z.string().array().nullable().optional(),
+
+        workflow: z.object({
+            predecessors: z.array(z.object({
+                uuid: z.string(),
+                name: z.string().optional(),
+                optional: z.boolean().optional(),
+            })).optional(),
+            successors: z.array(z.object({
+                uuid: z.string(),
+                name: z.string().optional(),
+                optional: z.boolean().optional(),
+            })).optional(),
+        }).nullable().optional(),
 
         system_prompt: z.string().nullable().optional(),
         prompt: z.string().nullable().optional(),

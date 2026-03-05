@@ -34,7 +34,6 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
         matter: parsed.metadata?.matter || null,
         // Aggregator / display metadata
         ...(parsed.metadata?.sort != null ? { sort: parsed.metadata.sort } : {}),
-        ...(parsed.metadata?.status ? { status: parsed.metadata.status } : {}),
         ...(parsed.metadata?.piece_strategy ? { piece_strategy: parsed.metadata.piece_strategy } : {}),
         ...(parsed.metadata?.context ? { context: parsed.metadata.context } : {}),
         ...(parsed.metadata?.grupo ? { grupo: parsed.metadata.grupo } : {}),
@@ -50,7 +49,7 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
 function contentHasChanged(dbContent: Record<string, any>, newContent: Record<string, any>): boolean {
     const keys = ['system_prompt', 'prompt', 'json_schema', 'format', 'template',
         'author', 'target', 'scope', 'instance', 'matter',
-        'sort', 'status', 'piece_strategy', 'context', 'grupo', 'batch_report', 'plugins',
+        'sort', 'piece_strategy', 'context', 'grupo', 'batch_report', 'plugins',
         'workflow']
     for (const key of keys) {
         const dbVal = dbContent?.[key] ?? null
@@ -81,11 +80,20 @@ function buildSlugIndex(prompts: ParsedPrompt[]): Map<string, string> {
     return index
 }
 
+/** Build a UUID->name lookup index from all parsed prompts. */
+function buildNameIndex(prompts: ParsedPrompt[]): Map<string, string> {
+    const index = new Map<string, string>()
+    for (const p of prompts) {
+        index.set(p.uuid, p.name)
+    }
+    return index
+}
+
 /**
  * Resolve a WorkflowRef (path or uuid) to a resolved step with UUID.
  * Returns null if the reference cannot be resolved.
  */
-function resolveWorkflowRef(ref: WorkflowRef, slugIndex: Map<string, string>): WorkflowStepResolved | null {
+function resolveWorkflowRef(ref: WorkflowRef, slugIndex: Map<string, string>, nameIndex: Map<string, string>): WorkflowStepResolved | null {
     let uuid: string | undefined
 
     if (ref.uuid) {
@@ -97,6 +105,8 @@ function resolveWorkflowRef(ref: WorkflowRef, slugIndex: Map<string, string>): W
     if (!uuid) return null
 
     const step: WorkflowStepResolved = { uuid }
+    const name = nameIndex.get(uuid)
+    if (name) step.name = name
     if (ref.optional) step.optional = true
     if (ref.condition) step.condition = ref.condition
     return step
@@ -106,21 +116,21 @@ function resolveWorkflowRef(ref: WorkflowRef, slugIndex: Map<string, string>): W
  * Resolve all workflow references in a parsed prompt to UUIDs.
  * Returns the resolved workflow object, or null if the prompt has no workflow.
  */
-function resolveWorkflow(parsed: ParsedPrompt, slugIndex: Map<string, string>): WorkflowResolved | null {
+function resolveWorkflow(parsed: ParsedPrompt, slugIndex: Map<string, string>, nameIndex: Map<string, string>): WorkflowResolved | null {
     if (!parsed.predecessors?.length && !parsed.successors?.length) return null
 
     const workflow: WorkflowResolved = {}
 
     if (parsed.predecessors?.length) {
         const resolved = parsed.predecessors
-            .map(ref => resolveWorkflowRef(ref, slugIndex))
+            .map(ref => resolveWorkflowRef(ref, slugIndex, nameIndex))
             .filter(Boolean) as WorkflowStepResolved[]
         if (resolved.length > 0) workflow.predecessors = resolved
     }
 
     if (parsed.successors?.length) {
         const resolved = parsed.successors
-            .map(ref => resolveWorkflowRef(ref, slugIndex))
+            .map(ref => resolveWorkflowRef(ref, slugIndex, nameIndex))
             .filter(Boolean) as WorkflowStepResolved[]
         if (resolved.length > 0) workflow.successors = resolved
     }
@@ -151,6 +161,8 @@ export async function syncOrigin(provider: OriginProvider): Promise<SyncResult> 
 
     // Build slug->UUID index for resolving path: references
     const slugIndex = buildSlugIndex(contents.prompts)
+    // Build UUID->name index for populating name in workflow steps
+    const nameIndex = buildNameIndex(contents.prompts)
 
     // Collect UUIDs that are present in the source
     const sourceUuids = new Set<string>()
@@ -159,7 +171,7 @@ export async function syncOrigin(provider: OriginProvider): Promise<SyncResult> 
         sourceUuids.add(parsed.uuid)
 
         try {
-            const resolvedWorkflow = resolveWorkflow(parsed, slugIndex)
+            const resolvedWorkflow = resolveWorkflow(parsed, slugIndex, nameIndex)
             await syncSinglePrompt(parsed, contents.origin, contents.version, resolvedWorkflow, result)
         } catch (err: any) {
             result.errors.push(`Error syncing ${parsed.slug} (${parsed.uuid}): ${err.message}`)
@@ -229,7 +241,7 @@ async function syncSinglePrompt(
             slug,
             content: contentJson,
             is_latest: 1,
-            share: 'PADRAO',
+            share: parsed.metadata?.share || 'PADRAO',
             origin,
             origin_version: originVersion,
         }).returning('id')
@@ -247,8 +259,10 @@ async function syncSinglePrompt(
         }
 
         const changed = contentHasChanged(dbContent, newContent)
+        const newShare = parsed.metadata?.share || existing.share || 'PADRAO'
+        const shareChanged = existing.share !== newShare
 
-        if (changed) {
+        if (changed || shareChanged) {
             // Create new version: set old is_latest=0, insert new row with same base_id
             await knex!('ia_prompt').update({ is_latest: 0 }).where({ id: existing.id })
 
@@ -260,7 +274,7 @@ async function syncSinglePrompt(
                 slug,
                 content: contentJson,
                 is_latest: 1,
-                share: existing.share || 'PADRAO',
+                share: parsed.metadata?.share || existing.share || 'PADRAO',
                 origin,
                 origin_version: originVersion,
             }).returning('id')

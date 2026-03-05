@@ -42,8 +42,10 @@ export default async function New(
         record.base_id = undefined
     }
 
+    const allPrompts = await PromptDao.retrievePromptNamesAndUuids()
+
     return (<Container fluid={false}>
         <h1 className="mt-5 mb-3">Novo</h1>
-        <PromptForm record={record} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
+        <PromptForm record={record} allPrompts={allPrompts} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
     </Container>)
 }

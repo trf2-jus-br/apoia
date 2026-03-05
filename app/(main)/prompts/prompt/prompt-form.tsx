@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAdd, faRemove } from '@fortawesome/free-solid-svg-icons'
 import { enumSorted } from '@/lib/ai/model-types'
 import { Instance, Matter, Scope, Target } from '@/lib/proc/process-types'
-import { PieceDescr, PieceStrategy } from '@/lib/proc/combinacoes'
+import { PieceDescr, PieceStrategy, Plugin } from '@/lib/proc/combinacoes'
 import { findUnclosedMarking } from '@/lib/ai/template'
 import dynamic from 'next/dynamic'
 import AiContent from '@/components/ai-content'
@@ -83,7 +83,21 @@ export default function PromptForm(props) {
 
         async function handleSave() {
             setPending(true)
-            const result = await save(data)
+            // Clean up workflow: remove entries with empty uuid, nullify if both lists are empty
+            const saveData = cloneDeep(data)
+            if (saveData.content?.workflow) {
+                const preds = (saveData.content.workflow.predecessors || []).filter(p => p.uuid)
+                const succs = (saveData.content.workflow.successors || []).filter(s => s.uuid)
+                if (preds.length === 0 && succs.length === 0) {
+                    delete saveData.content.workflow
+                } else {
+                    saveData.content.workflow = {
+                        ...(preds.length > 0 ? { predecessors: preds } : {}),
+                        ...(succs.length > 0 ? { successors: succs } : {}),
+                    }
+                }
+            }
+            const result = await save(saveData)
             setFormState(result as any)
             setPending(false)
         }
@@ -109,7 +123,8 @@ export default function PromptForm(props) {
         const pieceStrategyOptions = enumSorted(PieceStrategy).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceDescrOptions = enumSorted(PieceDescr).map(e => ({ id: e.value.name, name: e.value.descr }))
         const summaryOptions = [{ id: 'NAO', name: 'Não' }, { id: 'SIM', name: 'Sim' }]
-        const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }]
+        const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'BETA_TESTE', name: 'Beta Teste' }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }]
+        const pluginOptions = Object.entries(Plugin).map(([key, value]) => ({ id: key, name: value }))
 
         if (data?.share === 'EM_ANALISE') {
             data.share = 'PUBLICO'
@@ -161,6 +176,75 @@ export default function PromptForm(props) {
                     <Frm.MultiSelect label="Tipos de Peças" name="content.piece_descr" options={pieceDescrOptions} width={2} visible={Target.PROCESSO.name === data.content.target && PieceStrategy.TIPOS_ESPECIFICOS.name === data.content.piece_strategy} />
                     <Frm.Select label="Resumir Selecionadas" name="content.summary" options={summaryOptions} width={2} visible={Target.PROCESSO.name === data.content.target} />
                     <Frm.Select label="Compartilhamento" name="share" options={shareOptions} width={2} />
+                    <Frm.Input label="Ordem" name="content.sort" width={1} />
+                    <Frm.Checkbox label="Lote" name="content.batch_report" width={1} />
+                    <Frm.MultiSelect label="Plugins" name="content.plugins" options={pluginOptions} width={3} />
+
+                    {/* Workflow: Predecessors and Successors */}
+                    {props.allPrompts && props.allPrompts.length > 0 && (
+                        <div className="col col-12 mt-3 mb-3">
+                            <div className="row">
+                                <div className="col col-6">
+                                    <label className="form-label fw-bold">Predecessores</label>
+                                    {(data.content?.workflow?.predecessors || []).map((pred, idx) => (
+                                        <div key={idx} className="d-flex align-items-center mb-1 gap-2">
+                                            <Form.Select size="sm" value={pred.uuid || ''} onChange={(e) => {
+                                                const newPreds = [...(data.content.workflow?.predecessors || [])]
+                                                const selectedName = props.allPrompts.find(p => p.uuid === e.target.value)?.name || ''
+                                                newPreds[idx] = { ...newPreds[idx], uuid: e.target.value, name: selectedName }
+                                                setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, predecessors: newPreds } } })
+                                            }}>
+                                                <option value="">Selecione...</option>
+                                                {props.allPrompts.map(p => <option key={p.uuid} value={p.uuid}>{p.name}</option>)}
+                                            </Form.Select>
+                                            <Form.Check type="checkbox" label="Opcional" checked={pred.optional || false} onChange={(e) => {
+                                                const newPreds = [...(data.content.workflow?.predecessors || [])]
+                                                newPreds[idx] = { ...newPreds[idx], optional: e.target.checked }
+                                                setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, predecessors: newPreds } } })
+                                            }} className="text-nowrap" />
+                                            <Button variant="light" size="sm" onClick={() => {
+                                                const newPreds = (data.content.workflow?.predecessors || []).filter((_, i) => i !== idx)
+                                                setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, predecessors: newPreds.length > 0 ? newPreds : undefined } } })
+                                            }}><FontAwesomeIcon icon={faRemove} /></Button>
+                                        </div>
+                                    ))}
+                                    <Button variant="light" size="sm" className="mt-1" onClick={() => {
+                                        const newPreds = [...(data.content?.workflow?.predecessors || []), { uuid: '', optional: false }]
+                                        setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, predecessors: newPreds } } })
+                                    }}><FontAwesomeIcon icon={faAdd} /> Predecessor</Button>
+                                </div>
+                                <div className="col col-6">
+                                    <label className="form-label fw-bold">Sucessores</label>
+                                    {(data.content?.workflow?.successors || []).map((succ, idx) => (
+                                        <div key={idx} className="d-flex align-items-center mb-1 gap-2">
+                                            <Form.Select size="sm" value={succ.uuid || ''} onChange={(e) => {
+                                                const newSuccs = [...(data.content.workflow?.successors || [])]
+                                                const selectedName = props.allPrompts.find(p => p.uuid === e.target.value)?.name || ''
+                                                newSuccs[idx] = { ...newSuccs[idx], uuid: e.target.value, name: selectedName }
+                                                setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, successors: newSuccs } } })
+                                            }}>
+                                                <option value="">Selecione...</option>
+                                                {props.allPrompts.map(p => <option key={p.uuid} value={p.uuid}>{p.name}</option>)}
+                                            </Form.Select>
+                                            <Form.Check type="checkbox" label="Opcional" checked={succ.optional || false} onChange={(e) => {
+                                                const newSuccs = [...(data.content.workflow?.successors || [])]
+                                                newSuccs[idx] = { ...newSuccs[idx], optional: e.target.checked }
+                                                setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, successors: newSuccs } } })
+                                            }} className="text-nowrap" />
+                                            <Button variant="light" size="sm" onClick={() => {
+                                                const newSuccs = (data.content.workflow?.successors || []).filter((_, i) => i !== idx)
+                                                setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, successors: newSuccs.length > 0 ? newSuccs : undefined } } })
+                                            }}><FontAwesomeIcon icon={faRemove} /></Button>
+                                        </div>
+                                    ))}
+                                    <Button variant="light" size="sm" className="mt-1" onClick={() => {
+                                        const newSuccs = [...(data.content?.workflow?.successors || []), { uuid: '', optional: false }]
+                                        setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, successors: newSuccs } } })
+                                    }}><FontAwesomeIcon icon={faAdd} /> Sucessor</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className='col col-12'>
                         {showAdvancedOptions &&

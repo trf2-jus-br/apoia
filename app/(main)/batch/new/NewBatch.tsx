@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { Container, Form, Button, Alert } from 'react-bootstrap'
 import Fetcher from '@/lib/utils/fetcher'
-import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
 

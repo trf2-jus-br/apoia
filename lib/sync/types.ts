@@ -48,6 +48,7 @@ export interface WorkflowRef {
 /** A resolved workflow step (after path -> UUID resolution), ready for database storage */
 export interface WorkflowStepResolved {
     uuid: string
+    name?: string
     optional?: boolean
     condition?: string
 }

@@ -58,12 +58,20 @@ export class PromptDao {
         const user = await assertCurrentUser()
         const isModerator = await isUserModerator(user)
         const created_by_or_current_user = isModerator && created_by ? created_by : (await UserDao.getCurrentUserId())
+
+        // Resolve uuid: reuse from existing version when editing, generate new for new prompts
+        let uuid: string
         if (data.base_id) {
+            const existing = await knex('ia_prompt').select('uuid').where({ base_id: data.base_id }).first()
+            uuid = existing?.uuid || crypto.randomUUID()
             await knex('ia_prompt').update({ is_latest: 0 }).where({ base_id: data.base_id })
+        } else {
+            uuid = crypto.randomUUID()
         }
+
         this.dehydratatePromptContent(data.content)
         const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({
-            base_id: base_id,
+            base_id: base_id, uuid,
             category, name, slug, model_id, testset_id, content: JSON.stringify(content), created_by: created_by_or_current_user, is_latest: 1, share
         }).returning('id')
         const id = getId(result)
@@ -393,6 +401,7 @@ export class PromptDao {
                 this.where('ia_prompt.created_by', user_id)
                     .orWhere('ia_prompt.share', 'PADRAO')
                     .orWhere('ia_prompt.share', 'PUBLICO')
+                    .orWhere('ia_prompt.share', 'BETA_TESTE')
                     .orWhere(function () {
                         if (moderator) {
                             this.orWhere('ia_prompt.share', 'EM_ANALISE')
@@ -435,5 +444,14 @@ export class PromptDao {
         if (!result || result.length === 0) return []
         const records = result.map((record: any) => ({ ...record }))
         return records
+    }
+
+    static async retrievePromptNamesAndUuids(): Promise<{ uuid: string; name: string }[]> {
+        if (!knex) return []
+        const result = await knex('ia_prompt')
+            .select('uuid', 'name')
+            .where('is_latest', 1)
+            .orderBy('name')
+        return result
     }
 }

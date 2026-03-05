@@ -8,7 +8,7 @@ import { isNivelDeSigiloPermitido } from './sigilo'
 import { selecionarPecasPorPadraoComFase, T, PieceStrategy, SelecionarPecasResultado } from './combinacoes'
 import { getTiposDeSinteseValido } from './info-de-produto'
 import { getInterop, Interop } from '../interop/interop'
-import { DadosDoProcessoType, PecaType, StatusDeLancamento, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
+import { DadosDoProcessoType, PecaType, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
 import { UserType } from '../user'
 import devLog from '../utils/log'
 import * as Sentry from '@sentry/nextjs'
@@ -88,7 +88,6 @@ export type ObterDadosDoProcessoType = {
     kind?: string
     pieces?: string[]
     conteudoDasPecasSelecionadas?: CargaDeConteudoEnum
-    statusDeSintese?: StatusDeLancamento
 }
 
 export const getInteropFromUser = async (user: UserType): Promise<Interop> => {
@@ -107,7 +106,7 @@ export const getSystemIdAndDossierId = async (user: UserType, numeroDoProcesso: 
     return { system_id, dossier_id }
 }
 
-export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, identificarPecas, completo, kind, pieces, conteudoDasPecasSelecionadas = CargaDeConteudoEnum.ASSINCRONO, statusDeSintese = StatusDeLancamento.PUBLICO }: ObterDadosDoProcessoType): Promise<DadosDoProcessoType> => {
+export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, identificarPecas, completo, kind, pieces, conteudoDasPecasSelecionadas = CargaDeConteudoEnum.ASSINCRONO }: ObterDadosDoProcessoType): Promise<DadosDoProcessoType> => {
     let pecas: PecaType[] = []
     let errorMsg = undefined
     try {
@@ -220,7 +219,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         let tipoDeSinteseSelecionado: string | null = null
 
         // Localiza um tipo de síntese válido
-        const tipos = (await getTiposDeSinteseValido()).filter(t => t.status <= statusDeSintese)
+        const tipos = (await getTiposDeSinteseValido()).filter(t => t.share === 'PADRAO' || t.share === 'PUBLICO')
         for (const tipoDeSintese of tipos) {
             const pecasAcessiveis = pecas.filter(p => isNivelDeSigiloPermitido(user, p.sigilo))
             selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, tipoDeSintese.padroes)

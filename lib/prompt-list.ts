@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { PromptDao } from './db/dao'
 import { IAPromptList } from './db/mysql-types'
-import { Instance, Matter, Scope, Share, StatusDeLancamento } from './proc/process-types'
+import { Instance, Matter, Scope, Share } from './proc/process-types'
 
 /**
  * Synchronizes internal prompts in database.
@@ -27,8 +27,9 @@ async function syncInternalPrompts(basePrompts: IAPromptList[]): Promise<Map<str
 
 /**
  * Builds list of visible prompts from aggregator records in the database.
- * All metadata (status, author, target, scope, instance, matter, grupo)
+ * All metadata (author, target, scope, instance, matter, grupo)
  * comes from the DB content fields populated by the sync engine.
+ * Visibility is controlled by the DB share column (set from .md metadata by sync engine).
  */
 async function buildVisiblePrompts(
     baseBySlug: Map<string, IAPromptList>, 
@@ -41,12 +42,8 @@ async function buildVisiblePrompts(
         // Skip CHAT_STANDALONE if not showing chat padrão
         if (!showChatPadrao && slug === 'CHAT_STANDALONE') continue
         
-        // Determine status from DB metadata
-        const dbStatus = base.content?.status
-        const status = dbStatus === 'publico' ? StatusDeLancamento.PUBLICO : StatusDeLancamento.EM_DESENVOLVIMENTO
-        
-        // Skip development features for non-beta testers
-        if (status === StatusDeLancamento.EM_DESENVOLVIMENTO && !isBetaTester) continue
+        // Skip BETA_TESTE prompts for non-beta testers unless favorited
+        if (base.share === 'BETA_TESTE' && !isBetaTester && !((base as any).is_favorite)) continue
 
         const over: IAPromptList = {
             ...base,
@@ -59,7 +56,6 @@ async function buildVisiblePrompts(
                 instance: base.content?.instance?.length ? base.content.instance : Object.keys(Instance),
                 matter: base.content?.matter?.length ? base.content.matter : Object.keys(Matter),
             },
-            share: status === StatusDeLancamento.EM_DESENVOLVIMENTO ? Share.NAO_LISTADO.name : Share.PADRAO.name,
             // Defaults when coming from `seed` (not in base list)
             is_internal: true,
             is_mine: false,
@@ -91,6 +87,7 @@ export async function fixPromptList(basePrompts: IAPromptList[], showChatPadrao 
     
     // Step 3: Combine with non-seeded prompts and sort
     const nonSeeded = basePrompts.filter(p => !p.origin)
+        .filter(p => p.share !== 'BETA_TESTE' || isBetaTester || (p as any).is_favorite)
     const prompts: IAPromptList[] = [...nonSeeded, ...seededOverlay]
 
     prompts.sort((a, b) => {

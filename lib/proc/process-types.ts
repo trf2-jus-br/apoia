@@ -119,8 +119,9 @@ const ShareArray = [
     { id: 1, name: 'PADRAO', descr: 'Padrão' },
     { id: 2, name: 'PUBLICO', descr: 'Público' },
     { id: 3, name: 'EM_ANALISE', descr: 'Público (em análise)' },
-    { id: 4, name: 'NAO_LISTADO', descr: 'Não Listado' },
-    { id: 5, name: 'PRIVADO', descr: 'Privado' },
+    { id: 4, name: 'BETA_TESTE', descr: 'Beta Teste' },
+    { id: 5, name: 'NAO_LISTADO', descr: 'Não Listado' },
+    { id: 6, name: 'PRIVADO', descr: 'Privado' },
 ]
 export type ShareValueType = EnumOfObjectsValueType & { name: string, descr: string }
 
