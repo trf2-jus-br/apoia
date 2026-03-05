@@ -8,7 +8,6 @@ import Fetcher from '@/lib/utils/fetcher'
 import { useConfirm } from '@/components/confirm/ConfirmationProvider'
 import CsvNumbersModal from '@/components/modals/CsvNumbersModal'
 import TableRecords from '@/components/table-records'
-import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 import { useRouter } from 'next/navigation'
 import devLog from '@/lib/utils/log'
 
@@ -16,7 +15,7 @@ type Totals = { total: number, pending: number, running: number, ready: number, 
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
 type Job = { id: number, dossier_code: string, status: 'PENDING' | 'RUNNING' | 'READY' | 'ERROR', attempts: number, started_at?: string, finished_at?: string, duration_ms?: number | null, cost_sum?: number | null }
 
-export default function BatchPanelClient({ id, initialSummary, usdBrl, promptName }: { id: string, initialSummary: Summary, usdBrl?: number | null, promptName?: string | null }) {
+export default function BatchPanelClient({ id, initialSummary, usdBrl, promptName, tipoNome }: { id: string, initialSummary: Summary, usdBrl?: number | null, promptName?: string | null, tipoNome?: string | null }) {
   const [summary, setSummary] = useState<Summary>(initialSummary)
   const [jobs, setJobs] = useState<Job[]>([])
   const [err, setErr] = useState<string>('')
@@ -279,7 +278,7 @@ export default function BatchPanelClient({ id, initialSummary, usdBrl, promptNam
         <div className="me-auto">
           <h1 className="mb-1">{summary?.name || 'Relatório'}</h1>
           <div className="text-muted small">
-            {summary?.tipo_de_sintese ? `Tipo: ${TipoDeSinteseMap[summary.tipo_de_sintese]?.nome || summary.tipo_de_sintese}` : ''}
+            {summary?.tipo_de_sintese ? `Tipo: ${tipoNome || summary.tipo_de_sintese}` : ''}
             {promptName ? `Prompt: ${promptName}` : ''}
             {summary?.tipo_de_sintese || promptName ? ' • ' : ''}
             {`Completo: ${summary?.complete ? 'Sim' : 'Não'}`}

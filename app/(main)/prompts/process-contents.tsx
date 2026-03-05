@@ -80,7 +80,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                 }
             }
         }
-        const pattern = PieceStrategy[pieceStrategy].pattern
+        const pattern = PieceStrategy[pieceStrategy]?.pattern
         if (pattern) {
             const pecasAcessiveis = allPieces.filter(p => isNivelDeSigiloPermitidoClient(maxConfidentialityLevel, p.sigilo))
             const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, pattern)

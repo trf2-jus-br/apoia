@@ -2,7 +2,6 @@ import { EnumOfObjectsValueType } from "../ai/model-types"
 import { IADocument } from "../db/mysql-types"
 import { InteropProcessoType } from "../interop/interop-types"
 import { slugify } from "../utils/utils"
-import { P, ProdutoCompleto, TipoDeSinteseEnum } from "./combinacoes"
 
 export type PecaConteudoType = {
     conteudo: string
@@ -33,8 +32,7 @@ export type DadosDoProcessoType = {
     pecas: PecaType[]
     pecasSelecionadas?: PecaType[]
     sigilo?: string
-    tipoDeSintese?: TipoDeSinteseEnum
-    produtos?: (P | ProdutoCompleto)[]
+    tipoDeSintese?: string
     ajuizamento?: Date
     codigoDaClasse?: number
     classe?: string

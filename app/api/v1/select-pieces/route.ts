@@ -1,4 +1,5 @@
-import { TipoDeSinteseMap, selecionarPecasPorPadraoComFase } from '@/lib/proc/combinacoes';
+import { PieceStrategy, selecionarPecasPorPadraoComFase } from '@/lib/proc/combinacoes';
+import { getAggregatorByKind } from '@/lib/ai/prompt-store';
 import { PecaType } from '@/lib/proc/process-types';
 import { BadRequestError, withErrorHandler } from '@/lib/utils/api-error';
 
@@ -63,10 +64,19 @@ export const maxDuration = 60
 async function POST_HANDLER(req: Request) {
   const body = await req.json();
   const { pieces, kind } = body;
-  if (!pieces || !Array.isArray(pieces) || !kind || !TipoDeSinteseMap[kind]) {
+  if (!pieces || !Array.isArray(pieces) || !kind) {
     throw new BadRequestError('Parâmetros inválidos')
   }
-  const selecao = selecionarPecasPorPadraoComFase(pieces, TipoDeSinteseMap[kind].padroes)
+
+  // Resolve piece patterns from aggregator in DB
+  const aggregator = await getAggregatorByKind(`^${kind}`).catch(() => null)
+  const strategyName = aggregator?.content?.piece_strategy
+  const padroes = strategyName ? PieceStrategy[strategyName]?.pattern : undefined
+  if (!padroes) {
+    throw new BadRequestError(`Tipo de síntese '${kind}' não encontrado ou sem estratégia de peças`)
+  }
+
+  const selecao = selecionarPecasPorPadraoComFase(pieces, padroes)
   const pecasSelecionadas: PecaType[] | null = selecao.pecas
   return Response.json({ status: 'OK', selectedIds: pecasSelecionadas ? pecasSelecionadas.map(p => p.id) : [], faseAtual: selecao.faseAtual, fases: selecao.fases })
 }

@@ -1,7 +1,7 @@
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
 import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
-import { Instance, PecaType, StatusDeLancamento } from "./process-types"
+import { PecaType, StatusDeLancamento } from "./process-types"
 
 // Enum com os tipos de peças
 export enum T {
@@ -157,34 +157,34 @@ export const GrupoDeSinteseMap: Record<string, GrupoDeSinteseType> = {
 
 export type GrupoDeSinteseEnum = keyof typeof GrupoDeSinteseMap
 
-export type ExibitionContextActionType = 'processo_selecionar' | 'minuta_editar'
+// export type ExibitionContextActionType = 'processo_selecionar' | 'minuta_editar'
 
-export type ContextoDeExibicaoType = {
-    action?: ExibitionContextActionType | ExibitionContextActionType[],
-    document?: string | string[],
-    instance?: string | string[],
-    matter?: string | string[],
-    scope?: string | string[],
-}
+// export type ContextoDeExibicaoType = {
+//     action?: ExibitionContextActionType | ExibitionContextActionType[],
+//     document?: string | string[],
+//     instance?: string | string[],
+//     matter?: string | string[],
+//     scope?: string | string[],
+// }
 
-export type TipoDeSinteseType = {
-    nome: string,
-    author?: string,
-    // tipos: T[][],
-    target?: 'PROCESSO' | 'TEXTO' | 'CHAT' | 'REFINAMENTO',
-    padroes?: MatchOperator[][],
-    produtos: (P | ProdutoCompleto)[],
-    sort: number,
-    status: StatusDeLancamento,
-    relatorioDeAcervo?: boolean,
-    // Optional UI filter hints; if omitted, defaults to all
-    scope?: string[],
-    instance?: string[],
-    matter?: string[],
-    // Grupo ao qual este tipo de síntese pertence
-    grupo?: GrupoDeSinteseType,
-    context?: ContextoDeExibicaoType
-}
+// export type TipoDeSinteseType = {
+//     nome: string,
+//     author?: string,
+//     // tipos: T[][],
+//     target?: 'PROCESSO' | 'TEXTO' | 'CHAT' | 'REFINAMENTO',
+//     padroes?: MatchOperator[][],
+//     produtos: (P | ProdutoCompleto)[],
+//     sort: number,
+//     status: StatusDeLancamento,
+//     relatorioDeAcervo?: boolean,
+//     // Optional UI filter hints; if omitted, defaults to all
+//     scope?: string[],
+//     instance?: string[],
+//     matter?: string[],
+//     // Grupo ao qual este tipo de síntese pertence
+//     grupo?: GrupoDeSinteseType,
+//     context?: ContextoDeExibicaoType
+// }
 
 const pecasQueRepresentamContestacao = [
     T.CONTESTACAO,
@@ -471,271 +471,11 @@ const padroesBasicosEForcados = [
     padraoConhecimentoForcado,
 ]
 
-// "inicial contestação sentença, embargos de declaração, sentença, apelação, contrarrazoes de apelação"
-// "agravo, contrarrazoes de agravo"
-export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
-    RESUMOS_TRIAGEM: {
-        status: StatusDeLancamento.PUBLICO,
-        relatorioDeAcervo: true,
-        sort: 1,
-        nome: 'Resumos e triagem',
-        padroes: padroesBasicos,
-        produtos: [P.RESUMOS, P.RESUMO, P.CHAT],
-    },
-    
-    // RELATORIO_CIVEL_PRIMEIRA_INST: {
-    //     status: StatusDeLancamento.PUBLICO,
-    //     relatorioDeAcervo: true,
-    //     sort: 1,
-    //     nome: 'Relatório Cível para 1ª Instância',
-    //     author: 'Caroline Tauk/JFRJ',
-    //     padroes: [...padroesConhecimento, padraoConhecimentoForcado],
-    //     produtos: [P.RELATORIO_CIVEL_PRIMEIRA_INST, P.CHAT],
-    //     instance: [Instance.PRIMEIRO_GRAU.name],
-    //     context: { action: 'processo_selecionar', instance: Instance.PRIMEIRO_GRAU.name }
-    // },
-    RELATORIO_DE_APELACAO_E_TRIAGEM: {
-        status: StatusDeLancamento.PUBLICO,
-        relatorioDeAcervo: true,
-        sort: 1,
-        nome: 'Relatório de Apelação e Triagem',
-        padroes: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento],
-        produtos: [P.RELATORIO_DE_APELACAO_E_TRIAGEM, P.CHAT],
-        context: { action: 'processo_selecionar', instance: Instance.SEGUNDO_GRAU.name }
-    },
-
-    RESUMOS_ANALISE: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 2,
-        nome: 'Resumos e análise',
-        padroes: padroesBasicos,
-        produtos: [P.RESUMOS, P.ANALISE, P.CHAT],
-        context: { action: 'processo_selecionar' }
-    },
-    MINUTA_DE_SENTENCA: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 3,
-        nome: 'Minuta de Sentença',
-        padroes: [...padroesConhecimento, padraoConhecimentoForcado],
-        produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.SENTENCA, P.CHAT],
-        instance: [Instance.PRIMEIRO_GRAU.name],
-        context: { action: 'minuta_editar', instance: Instance.PRIMEIRO_GRAU.name }
-    },
-    MINUTA_DE_VOTO: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 3,
-        nome: 'Minuta de Voto',
-        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
-        produtos: [P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT],
-        instance: [Instance.SEGUNDO_GRAU.name],
-        context: { action: 'minuta_editar', instance: Instance.SEGUNDO_GRAU.name }
-    },
-    DECISAO_DE_VIABILIDADE_DE_RE: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 3,
-        nome: 'Minuta de Decisão de Viabilidade de Recurso Extraordinário',
-        padroes: [padraoViabilidadeDeRecursoExtraordinario],
-        produtos: [P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO, P.CHAT],
-        grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
-    },
-    DECISAO_DE_VIABILIDADE_DE_RESP: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 3,
-        nome: 'Minuta de Decisão de Viabilidade de Recurso Especial',
-        padroes: [padraoViabilidadeDeRecursoEspecial],
-        produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_DE_TEMAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT],
-        grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
-    },
-    RESUMOS: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 4,
-        nome: 'Resumos das principais peças',
-        padroes: padroesBasicos,
-        // tipos: [
-        //     [T.PETICAO_INICIAL],
-        // ],
-        produtos: [P.RESUMOS, P.CHAT]
-    },
-    LITIGANCIA_PREDATORIA: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 5,
-        nome: 'Litigância Predatória',
-        padroes: [
-            [ANY(), EXACT(T.PETICAO_INICIAL, true), ANY()],
-        ],
-        produtos: [PC(P.RESUMOS, [T.PETICAO_INICIAL]), P.LITIGANCIA_PREDATORIA, P.CHAT]
-    },
-    LINHA_DO_TEMPO_FATICA: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 5,
-        nome: 'Linha do Tempo Fática',
-        padroes: [
-            [ANY(), EXACT(T.PETICAO_INICIAL), ANY()],
-        ],
-        produtos: [P.LINHA_DO_TEMPO_FATICA, P.CHAT],
-        context: { action: 'processo_selecionar' }
-    },
-    PEDIDOS: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 6,
-        nome: 'Pedidos',
-        padroes: [
-            [ANY(), EXACT(T.PETICAO_INICIAL), ANY()],
-        ],
-        produtos: [P.RESUMOS, P.PEDIDOS, P.CHAT]
-    },
-    CHAT: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 7,
-        nome: 'Chat',
-        padroes: padroesBasicos,
-        // tipos: [
-        //     [T.PETICAO_INICIAL],
-        // ],
-        produtos: [P.CHAT],
-        context: {}
-    },
-    CHAT_STANDALONE: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 7,
-        nome: 'Chat Padrão',
-        target: 'CHAT',
-        produtos: [P.CHAT_STANDALONE],
-        context: {}
-    },
-
-    INDICE: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 8,
-        nome: 'Índice',
-        padroes: [
-            [ANY({ capture: [] })],
-        ],
-        // tipos: [
-        //     [T.PETICAO_INICIAL],
-        // ],
-        produtos: [P.INDICE, P.CHAT]
-    },
-
-    REL_PROC_COLETIVO_OU_CRIMINAL: {
-        status: StatusDeLancamento.PUBLICO,
-        relatorioDeAcervo: true,
-        sort: 9,
-        nome: 'Relatório de Processo Coletivo ou Criminal',
-        padroes: [
-            [ANY({ capture: [] })],
-        ],
-        produtos: [P.RELATORIO_DE_PROCESSO_COLETIVO_OU_CRIMINAL, P.CHAT]
-    },
-
-    // MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS: {
-    //     status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-    //     sort: 10,
-    //     nome: 'Minuta de Despacho de Acordo 9 dias',
-    //     padroes: [
-    //         [ANY(), EXACT(T.PETICAO_INICIAL), ANY({ capture: [T.FORMULARIO] })],
-    //     ],
-    //     produtos: [P.MINUTA_DE_DESPACHO_DE_ACORDO_9_DIAS, P.CHAT]
-    // },
-
-    RELATORIO_DE_ACERVO: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 1000,
-        nome: 'Relatório de Acervo',
-        padroes: padroesBasicos,
-        produtos: [P.RESUMOS, P.RESUMO]
-    },
-
-    PREV_PPP: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 1000,
-        nome: 'Perfil Profissiográfico Previdenciário - PPP',
-        padroes: [[ANY({ capture: [T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO], greedy: true })]],
-        produtos: [P.PREV_PPP, P.CHAT]
-    },
-
-    PREV_APESP_PRIMEIRA_INSTANCIA: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 1000,
-        nome: 'Relatório de Aposentadoria Especial - Primeira Instância',
-        padroes: [...padroesConhecimento, padraoConhecimentoForcado],
-        produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_PRIMEIRA_INSTANCIA, P.CHAT],
-        instance: [Instance.PRIMEIRO_GRAU.name]
-    },
-
-    PREV_APESP_SEGUNDA_INSTANCIA: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 1000,
-        nome: 'Relatório de Aposentadoria Especial - Segunda Instância',
-        author: 'Caroline Tauk/JFRJ',
-        padroes: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado],
-        produtos: [P.PREV_APESP_PONTOS_CONTROVERTIDOS_SEGUNDA_INSTANCIA, P.PEDIDOS_FUNDAMENTACOES_E_DISPOSITIVOS, P.VOTO, P.CHAT],
-        instance: [Instance.SEGUNDO_GRAU.name]
-    },
-
-    PREV_BI_ANALISE_DE_LAUDO: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 1000,
-        nome: 'Análise de Laudo Pericial BI',
-        padroes: padroesConhecimento,
-        // padroes: [
-        //     [ANY(), ANY({ capture: [T.LAUDO, T.LAUDO_PERICIA] })],
-        // ],
-        produtos: [PC(P.PREV_BI_ANALISE_DE_LAUDO, [T.LAUDO, T.LAUDO_PERICIA]), P.CHAT]
-    },
-
-    SENTENCA_BI_LAUDO_FAVORAVEL: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 1000,
-        nome: 'Sentença BI - Laudo Favorável',
-        padroes: padroesConhecimento,
-        produtos: [P.PREV_BI_SENTENCA_LAUDO_FAVORAVEL, P.CHAT]
-    },
-
-    SENTENCA_BI_LAUDO_DESFAVORAVEL: {
-        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
-        sort: 1000,
-        nome: 'Sentença BI - Laudo Desfavorável',
-        padroes: padroesConhecimento,
-        produtos: [P.PREV_BI_SENTENCA_LAUDO_DESFAVORAVEL, P.CHAT]
-    },
-
-    REFINAMENTO_DE_TEXTO: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 1001,
-        nome: 'Refinamento de Texto',
-        target: 'REFINAMENTO',
-        produtos: [P.REFINAMENTO],
-        context: { action: 'minuta_editar' }
-    },
-
-    REVISAO_DE_TEXTO: {
-        status: StatusDeLancamento.PUBLICO,
-        sort: 1001,
-        nome: 'Revisão Ortográfica',
-        target: 'REFINAMENTO',
-        produtos: [P.REVISAO],
-        context: { action: 'minuta_editar' }
-    }
-
-
-    // RESUMOS_ACORDAO: {
-    //     sort: 4,
-    //     nome: 'Resumos e acórdão',
-    //     tipos: [
-    //         [T.EXTRATO_DE_ATA, T.RELATORIO, T.VOTO],
-    //     ],
-    //     produtos: [P.RESUMOS, PC(P.ACORDAO, [T.EXTRATO_DE_ATA, T.VOTO])]
-    // },
-}
-
-export type TipoDeSinteseEnum = keyof typeof TipoDeSinteseMap;
-
 export interface TipoDeSinteseValido {
-    id: TipoDeSinteseEnum,
+    id: string,
     nome: string,
+    sort?: number,
     padroes?: MatchOperator[][],
-    produtos: InfoDeProduto[],
     status: StatusDeLancamento,
     relatorioDeAcervo?: boolean,
 }

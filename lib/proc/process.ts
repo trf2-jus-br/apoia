@@ -5,8 +5,8 @@ import { SystemDao, DossierDao, DocumentDao } from '../db/dao'
 import { inferirCategoriaDaPeca } from '../category'
 import { obterConteudoDaPeca, obterDocumentoGravado } from './piece'
 import { isNivelDeSigiloPermitido } from './sigilo'
-import { selecionarPecasPorPadraoComFase, T, TipoDeSinteseEnum, TipoDeSinteseMap, PieceStrategy, SelecionarPecasResultado } from './combinacoes'
-import { TiposDeSinteseValido } from './info-de-produto'
+import { selecionarPecasPorPadraoComFase, T, PieceStrategy, SelecionarPecasResultado } from './combinacoes'
+import { getTiposDeSinteseValido } from './info-de-produto'
 import { getInterop, Interop } from '../interop/interop'
 import { DadosDoProcessoType, PecaType, StatusDeLancamento, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
 import { UserType } from '../user'
@@ -85,7 +85,7 @@ export type ObterDadosDoProcessoType = {
     idDaPeca?: string | string[]
     identificarPecas?: boolean
     completo?: boolean
-    kind?: TipoDeSinteseEnum
+    kind?: string
     pieces?: string[]
     conteudoDasPecasSelecionadas?: CargaDeConteudoEnum
     statusDeSintese?: StatusDeLancamento
@@ -217,10 +217,10 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
 
         let selecao: SelecionarPecasResultado = { pecas: null }
         let pecasSelecionadas: PecaType[] | null = null
-        let tipoDeSinteseSelecionado: TipoDeSinteseEnum | null = null
+        let tipoDeSinteseSelecionado: string | null = null
 
         // Localiza um tipo de síntese válido
-        const tipos = TiposDeSinteseValido.filter(t => t.status <= statusDeSintese)
+        const tipos = (await getTiposDeSinteseValido()).filter(t => t.status <= statusDeSintese)
         for (const tipoDeSintese of tipos) {
             const pecasAcessiveis = pecas.filter(p => isNivelDeSigiloPermitido(user, p.sigilo))
             selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, tipoDeSintese.padroes)
@@ -238,7 +238,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
             tipoDeSinteseSelecionado = kind
             const pecasAcessiveis = pecas.filter(p => isNivelDeSigiloPermitido(user, p.sigilo))
 
-            // Try to get piece_strategy from aggregator DB record first
+            // Try to get piece_strategy from aggregator DB record
             let padroes = null
             const aggregator = await getAggregatorByKind(`^${kind}`).catch(() => null)
             const pieceStrategyName = aggregator?.content?.piece_strategy
@@ -246,15 +246,13 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                 const strategy = PieceStrategy[pieceStrategyName]
                 if (strategy?.pattern) padroes = strategy.pattern
             }
-            // Fallback to TipoDeSinteseMap
-            if (!padroes) padroes = TipoDeSinteseMap[kind]?.padroes
 
             if (padroes) {
                 selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, padroes)
                 pecasSelecionadas = selecao.pecas
             }
         }
-        if (!tipoDeSinteseSelecionado) tipoDeSinteseSelecionado = 'RESUMOS'
+        if (!tipoDeSinteseSelecionado) tipoDeSinteseSelecionado = 'RESUMOS_TRIAGEM'
 
         // Se forem especificadas as peças desejadas, substitui a lista de peças selecionadas
         if (pieces) {
@@ -291,8 +289,8 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                 delete peca.pConteudo
             }
         }
-        return { ...dadosDoProcesso, pecasSelecionadas: pecasComConteudo, tipoDeSintese: tipoDeSinteseSelecionado, produtos: TipoDeSinteseMap[tipoDeSinteseSelecionado]?.produtos }
-        // return { ...dadosDoProcesso, pecas: [] as PecaType[], pecasSelecionadas: [] as PecaType[], tipoDeSintese: tipoDeSinteseSelecionado, produtos: TipoDeSinteseMap[tipoDeSinteseSelecionado]?.produtos }
+        return { ...dadosDoProcesso, pecasSelecionadas: pecasComConteudo, tipoDeSintese: tipoDeSinteseSelecionado }
+        // return { ...dadosDoProcesso, pecas: [] as PecaType[], pecasSelecionadas: [] as PecaType[], tipoDeSintese: tipoDeSinteseSelecionado }
     } catch (error) {
         if (error?.message === 'NEXT_REDIRECT') throw error
         Sentry.captureException(error, { tags: { function: 'obterDadosDoProcesso', numeroDoProcesso } })
@@ -322,7 +320,7 @@ export const obterDadosDoProcesso2 = async ({ numeroDoProcesso, pUser, pieces, c
         // const dossier_id = await Dao.assertIADossierId(numeroDoProcesso, system_id, dadosDoProcesso.codigoDaClasse, dadosDoProcesso.ajuizamento)
 
         return { arrayDeDadosDoProcesso: [...dadosDoProcesso] }
-        // return { ...dadosDoProcesso, pecas: [] as PecaType[], pecasSelecionadas: [] as PecaType[], tipoDeSintese: tipoDeSinteseSelecionado, produtos: TipoDeSinteseMap[tipoDeSinteseSelecionado]?.produtos }
+        // return { ...dadosDoProcesso, pecas: [] as PecaType[], pecasSelecionadas: [] as PecaType[], tipoDeSintese: tipoDeSinteseSelecionado }
     } catch (error) {
         if (error?.message === 'NEXT_REDIRECT') throw error
         Sentry.captureException(error, { tags: { function: 'obterDadosDoProcesso2', numeroDoProcesso } })

@@ -2,7 +2,6 @@ import { IAPromptList } from "@/lib/db/mysql-types"
 import { Instance, Matter, Scope } from "@/lib/proc/process-types"
 import { slugify } from "@/lib/utils/utils"
 import { enumSorted } from "@/lib/ai/model-types"
-import { TipoDeSinteseMap } from "@/lib/proc/combinacoes"
 
 export interface PromptFilters {
     scope?: string
@@ -60,11 +59,10 @@ export function getPromptsSidekick(
         p.is_auto_hidden = true
         
         if (p.kind?.startsWith('^')) {
-            const tipoDeSintese = TipoDeSinteseMap[p.kind.substring(1)]
-            if (tipoDeSintese && tipoDeSintese.context) {
-                const hInstance = isVisible(instance, tipoDeSintese.context?.instance)
-                // console.log('Prompt', p.name, 'instance visibility:', hInstance)
-                const hAction = isVisible(action || 'minuta_editar', tipoDeSintese.context?.action)
+            const context = p.content?.context
+            if (context) {
+                const hInstance = isVisible(instance, context?.instance)
+                const hAction = isVisible(action || 'minuta_editar', context?.action)
                 p.is_auto_hidden = calcHidden(hInstance, hAction)
             }
         }

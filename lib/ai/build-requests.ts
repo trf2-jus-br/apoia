@@ -1,6 +1,6 @@
 import { IAPrompt } from "../db/mysql-types"
-import { InfoDeProduto, P, TipoDeSinteseMap } from "../proc/combinacoes"
-import { infoDeProduto, slugToInfoDeProduto } from "../proc/info-de-produto"
+import { P } from "../proc/combinacoes"
+import { slugToInfoDeProduto } from "../proc/info-de-produto"
 import { PecaType } from "../proc/process-types"
 import { slugify } from "../utils/utils"
 import devLog from "../utils/log"
@@ -52,11 +52,11 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
     const requestArray: GeneratedContent[] = []
     const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: peca.conteudo || contents?.[peca.id], sigilo: peca.sigilo }))
 
-    // Internal seeded prompt: use workflow successors from DB, fall back to TipoDeSinteseMap
+    // Internal seeded prompt: use workflow successors from DB
     if (prompt.kind?.startsWith('^')) {
         const key = prompt.kind.substring(1)
 
-        // Prefer DB workflow successors (from aggregator .md files synced by sync engine)
+        // Use DB workflow successors (from aggregator .md files synced by sync engine)
         if (prompt.workflow?.successors?.length) {
             const workflowRequests = await buildRequestsFromWorkflow(
                 prompt.workflow.successors,
@@ -65,27 +65,6 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
                 documentosDaBiblioteca,
             )
             requestArray.push(...workflowRequests)
-        } else {
-            // Fallback to TipoDeSinteseMap for old seed records without workflow
-            const def = TipoDeSinteseMap[key]
-            if (def) {
-                const produtos = def.produtos.map(p => infoDeProduto(p))
-                for (const ip of produtos) {
-                    if (ip.produto === P.RESUMOS) {
-                        // Add resume for each piece
-                        for (const peca of pecasComConteudo) {
-                            const definition = await getPromptDefinition(`resumo-${peca.slug}`)
-                            const data: PromptDataType = { textos: [peca], documentosDaBiblioteca }
-                            requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: ip.produto, promptSlug: definition.kind, internalPrompt: definition })
-                        }
-                        continue
-                    }
-                    const def = await getPromptDefinition(ip.prompt)
-                    if (!def) continue
-                    const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
-                    requestArray.push({ documentCode: null, documentDescr: null, data, title: ip.titulo, produto: ip.produto, promptSlug: def.kind, internalPrompt: def })
-                }
-            }
         }
     } else {
         if (prompt.content.summary === 'SIM') {

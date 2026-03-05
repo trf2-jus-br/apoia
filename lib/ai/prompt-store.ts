@@ -191,3 +191,39 @@ export async function getFirstProductSlug(kind: string): Promise<string | null> 
     }
     return null
 }
+
+/**
+ * Get all aggregator records (library-sourced, kind starts with ^, is_latest=1).
+ * Returns full IAPrompt records with parsed content and workflow.
+ */
+export async function getAllAggregators(): Promise<IAPrompt[]> {
+    if (!knex) return []
+
+    const records = await knex('ia_prompt')
+        .select('*')
+        .where('kind', 'like', '^%')
+        .whereNotNull('library')
+        .where({ is_latest: 1 })
+        .orderBy('id') as IAPrompt[]
+
+    for (const record of records) {
+        if (typeof record.content === 'string') record.content = JSON.parse(record.content)
+        if (typeof record.workflow === 'string') record.workflow = JSON.parse(record.workflow)
+    }
+
+    return records
+}
+
+/**
+ * Get a display-name map for all aggregator synthesis types: key (without ^) → display name.
+ * Used for display in batch pages and other UI components.
+ */
+export async function getAggregatorNameMap(): Promise<Record<string, string>> {
+    const aggregators = await getAllAggregators()
+    const map: Record<string, string> = {}
+    for (const agg of aggregators) {
+        const key = agg.kind.startsWith('^') ? agg.kind.substring(1) : agg.kind
+        map[key] = agg.name || key
+    }
+    return map
+}

@@ -3,6 +3,7 @@ import BatchPanelClient from '@/app/(main)/batch/[id]/BatchPanelClient'
 import { BatchDao, PromptDao } from '@/lib/db/dao'
 import { getSelectedModelParams } from '@/lib/ai/model-server'
 import { redirect } from 'next/navigation'
+import { getAggregatorNameMap } from '@/lib/ai/prompt-store'
 
 export const maxDuration = 60
 
@@ -32,5 +33,7 @@ export default async function BatchPanel(props: { params: Promise<{ id: string }
   const summary = await getSummary(parseInt(id))
   const usdBrl = await fetchDollar()
   const promptName = summary?.prompt_base_id && (await PromptDao.retrieveLatestPromptByBaseId(summary.prompt_base_id))?.name
-  return <BatchPanelClient id={id} initialSummary={summary} usdBrl={usdBrl} promptName={promptName} />
+  const nameMap = summary?.tipo_de_sintese ? await getAggregatorNameMap() : {}
+  const tipoNome = summary?.tipo_de_sintese ? (nameMap[summary.tipo_de_sintese] || null) : null
+  return <BatchPanelClient id={id} initialSummary={summary} usdBrl={usdBrl} promptName={promptName} tipoNome={tipoNome} />
 }

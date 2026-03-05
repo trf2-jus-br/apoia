@@ -13,7 +13,7 @@ import { DocumentMatch, matchDocuments, SimilarityType } from '@/lib/utils/docum
 import Print from '@/components/slots/print'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRefresh } from '@fortawesome/free-solid-svg-icons'
-import { selecionarPecasPorPadraoComFase, TipoDeSinteseMap } from '@/lib/proc/combinacoes'
+import { selecionarPecasPorPadraoComFase, PieceStrategy } from '@/lib/proc/combinacoes'
 import DiffViewer from './diff-viewer'
 import { useRouter } from 'next/navigation'
 import Chat from '@/components/slots/chat'
@@ -107,7 +107,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
             const procJson = (response && typeof response === 'object' && 'arrayDeDadosDoProcesso' in response) ? response as ProcessoResponseType : undefined
             if (procJson?.arrayDeDadosDoProcesso && procJson.arrayDeDadosDoProcesso.length > 0) {
                 for (const dadosDoProc of procJson.arrayDeDadosDoProcesso) {
-                    const selecao = selecionarPecasPorPadraoComFase(dadosDoProc.pecas, TipoDeSinteseMap['LITIGANCIA_PREDATORIA'].padroes)
+                    const selecao = selecionarPecasPorPadraoComFase(dadosDoProc.pecas, PieceStrategy['PETICAO_INICIAL_E_ANEXOS']?.pattern)
                     const pecasSelecionadas = selecao.pecas
                     const peticaoInicialPeca = pecasSelecionadas.find(peca => slugify(peca.descr) === 'peticao-inicial')
                     if (!peticaoInicialPeca)

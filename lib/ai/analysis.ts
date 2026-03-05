@@ -1,5 +1,5 @@
 import { getPiecesWithContent } from '@/lib/ai/prompt'
-import { getPromptDefinition } from '@/lib/ai/prompt-store'
+import { getPromptDefinition, getAggregatorByKind } from '@/lib/ai/prompt-store'
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from '@/lib/ai/prompt-types'
 import { CargaDeConteudoEnum, obterDadosDoProcesso } from '@/lib/proc/process'
 import { assertCurrentUser } from '@/lib/user'
@@ -100,7 +100,6 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
         let dadosDoProcesso: DadosDoProcessoType = await obterDadosDoProcesso({ numeroDoProcesso: dossierNumber, pUser, completo: complete, kind: internalKind, conteudoDasPecasSelecionadas: (isNumericKind && !complete) ? CargaDeConteudoEnum.NAO : CargaDeConteudoEnum.SINCRONO })
         if (dadosDoProcesso.errorMsg) throw new Error(dadosDoProcesso.errorMsg)
         if (!dadosDoProcesso?.tipoDeSintese) throw new Error(`${dossierNumber}: Nenhum tipo de síntese válido`)
-        const produtos = dadosDoProcesso?.produtos
         let promptFromDB: IAPrompt | null = null
 
         // Seleção de peças baseada no prompt do banco
@@ -167,7 +166,13 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
                 }
             }
         } else {
-            requests = await buildRequestsForAnalysis(dossierNumber, produtos.filter(p => p !== P.CHAT).map(p => infoDeProduto(p)), pecasComConteudo)
+            // Load aggregator prompt from DB for the detected synthesis type
+            const aggRecord = await getAggregatorByKind(`^${dadosDoProcesso.tipoDeSintese}`)
+            if (aggRecord) {
+                requests = (await buildRequests(aggRecord, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas)).filter(r => r && r.promptSlug !== 'chat')
+            } else {
+                requests = []
+            }
         }
 
 

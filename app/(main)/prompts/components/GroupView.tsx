@@ -2,7 +2,7 @@
 
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText, Button } from "react-bootstrap"
 import { IAPromptList } from "@/lib/db/mysql-types"
-import { GrupoDeSinteseMap, TipoDeSinteseMap } from "@/lib/proc/combinacoes"
+import { GrupoDeSinteseMap } from "@/lib/proc/combinacoes"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faArrowLeft, faFileAlt } from "@fortawesome/free-solid-svg-icons"
 import { useRouter } from "next/navigation"
@@ -30,9 +30,8 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
     // Filtra os prompts que pertencem a este grupo
     const groupPrompts = prompts.filter(p => {
         if (!p.kind?.startsWith('^')) return false
-        const tipoDeSinteseKey = p.kind.substring(1)
-        const tipoDeSintese = TipoDeSinteseMap[tipoDeSinteseKey]
-        return tipoDeSintese?.grupo?.slug === groupSlug
+        const grupo = p.content?.grupo as any
+        return grupo?.slug === groupSlug
     })
 
     const handleBack = () => {
@@ -55,9 +54,6 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
             ) : (
                 <Row className="g-4">
                     {groupPrompts.map((prompt) => {
-                        const tipoDeSinteseKey = prompt.kind?.substring(1) || ''
-                        const tipoDeSintese = TipoDeSinteseMap[tipoDeSinteseKey]
-                        
                         return (
                             <Col key={prompt.id} md={6} lg={3}>
                                 <Card 
@@ -76,9 +72,9 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
                                         <CardTitle className="h5 mb-3">
                                             <span className="alert-link">{prompt.name}</span>
                                         </CardTitle>
-                                        {tipoDeSintese?.author && (
+                                        {prompt.content?.author && (
                                             <CardText className="text-body-tertiary flex-grow-1 small">
-                                                Autor: {tipoDeSintese.author}
+                                                Autor: {prompt.content.author}
                                             </CardText>
                                         )}
                                     </CardBody>

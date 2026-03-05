@@ -8,7 +8,6 @@ import PromptInfoContents from './prompt-info-contents'
 import { assertCurrentUser, isUserModerator } from '@/lib/user'
 import { getPromptDefinition, getPromptDefinitionByUuid, getFirstProductSlug } from '@/lib/ai/prompt-store'
 import { slugify } from '@/lib/utils/utils'
-import { P, ProdutosValidos, TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 
 export default async function Home(props: { params: Promise<{ id: number }> }) {
     const params = await props.params;
@@ -21,7 +20,7 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
         let def = null
         let name = prompt.name
 
-        // Prefer workflow successors from DB (library-synced aggregator)
+        // Use workflow successors from DB (library-synced aggregator)
         if (prompt.workflow?.successors?.length) {
             for (const step of prompt.workflow.successors) {
                 const candidate = await getPromptDefinitionByUuid(step.uuid).catch(() => null)
@@ -29,17 +28,6 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
                 if (candidate.kind === 'chat' || candidate.kind === 'chat-standalone') continue
                 def = candidate
                 break
-            }
-        }
-
-        // Fallback: TipoDeSinteseMap
-        if (!def) {
-            const tipoDeSintese = TipoDeSinteseMap[prompt.kind.substring(1)]
-            name = tipoDeSintese?.nome || name
-            const p = tipoDeSintese?.produtos?.find(pr => pr != P.RESUMOS && pr != P.CHAT)
-            if (p) {
-                const k = ProdutosValidos[p as P]?.prompt
-                if (k) def = await getPromptDefinition(k).catch(() => null)
             }
         }
 

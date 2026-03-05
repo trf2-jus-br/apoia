@@ -1,5 +1,7 @@
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
-import { InfoDeProduto, P, Plugin, ProdutoCompleto, ProdutosValidos, TipoDeSinteseMap, TipoDeSinteseValido } from "./combinacoes"
+import { InfoDeProduto, P, PieceStrategy, Plugin, ProdutoCompleto, ProdutosValidos, TipoDeSinteseValido } from "./combinacoes"
+import { StatusDeLancamento } from "./process-types"
+import { getAllAggregators } from "../ai/prompt-store"
 
 export const infoDeProduto = (produto: P | ProdutoCompleto): InfoDeProduto => {
     let ip: InfoDeProduto
@@ -39,6 +41,33 @@ export function slugToInfoDeProduto(slug: string): InfoDeProduto | null {
     return null
 }
 
-export const TiposDeSinteseValido: TipoDeSinteseValido[] =
-    Object.keys(TipoDeSinteseMap).map(ts => ({ id: ts, ...TipoDeSinteseMap[ts], produtos: TipoDeSinteseMap[ts].produtos.map(p => infoDeProduto(p)), relatorioDeAcervo: TipoDeSinteseMap[ts].relatorioDeAcervo })).sort((a, b) => a.sort - b.sort)
+/**
+ * Build the list of valid synthesis types dynamically from the database.
+ * Each aggregator .md file synced by the sync engine becomes a TipoDeSinteseValido.
+ * Piece patterns are resolved via PieceStrategy using the aggregator's piece_strategy metadata.
+ */
+export async function getTiposDeSinteseValido(): Promise<TipoDeSinteseValido[]> {
+    const aggregators = await getAllAggregators()
+    const tipos: TipoDeSinteseValido[] = []
+
+    for (const agg of aggregators) {
+        const key = agg.kind.startsWith('^') ? agg.kind.substring(1) : agg.kind
+        const content = agg.content
+        const strategyName = content?.piece_strategy
+        const padroes = strategyName ? PieceStrategy[strategyName]?.pattern : undefined
+        const status = content?.status === 'publico' ? StatusDeLancamento.PUBLICO : StatusDeLancamento.EM_DESENVOLVIMENTO
+
+        tipos.push({
+            id: key,
+            nome: agg.name || key,
+            sort: typeof content?.sort === 'number' ? content.sort : 999,
+            padroes,
+            status,
+            relatorioDeAcervo: !!content?.relatorio_de_acervo,
+        })
+    }
+
+    tipos.sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999))
+    return tipos
+}
 

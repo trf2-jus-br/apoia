@@ -1,6 +1,6 @@
 import { Container } from 'react-bootstrap'
 import Link from 'next/link'
-import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
+import { getAggregatorNameMap } from '@/lib/ai/prompt-store'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPenToSquare } from '@fortawesome/free-regular-svg-icons'
 import { fetchDollar } from './[id]/page'
@@ -16,6 +16,7 @@ export default async function BatchesPage() {
   const usdBrl = await fetchDollar()
   const rows = await BatchDao.listBatchesForUser()
   const { apiKeyFromEnv } = await getSelectedModelParams()
+  const nameMap = await getAggregatorNameMap()
 
   if (apiKeyFromEnv)
     return (<Container className="mt-5">
@@ -71,7 +72,7 @@ export default async function BatchesPage() {
               <td>
                 <Link className="" href={`/batch/${r.id}`}>{r.name || <FontAwesomeIcon icon={faPenToSquare} />}</Link>
               </td>
-              <td>{TipoDeSinteseMap[r.tipo_de_sintese]?.nome || r.tipo_de_sintese || `[Favorito] ${r.prompt_latest_name}`}</td>
+              <td>{nameMap[r.tipo_de_sintese] || r.tipo_de_sintese || `[Favorito] ${r.prompt_latest_name}`}</td>
               <td>{r.complete ? 'Sim' : 'Não'}</td>
               <td>{r.paused ? 'Pausado' : 'Em execução'}</td>
               <td>{r.totals.error}</td>

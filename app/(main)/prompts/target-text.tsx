@@ -10,8 +10,6 @@ import { IAPrompt } from '@/lib/db/mysql-types'
 import { VisualizationEnum } from '@/lib/ui/preprocess'
 import Print from '@/components/slots/print'
 import { resolvePromptDefinition, resolvePromptDefinitionByUuid, serverPromptExecuteBuilder } from '@/lib/ai/prompt-actions'
-import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
-import { infoDeProduto } from '@/lib/proc/info-de-produto'
 import { sendApproveMessageToParent } from '@/lib/utils/messaging-helper'
 import { usePromptContext } from './context/PromptContext'
 
@@ -19,12 +17,12 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
 
 /**
  * Get the first non-chat product prompt definition for an internal synthesis type.
- * Prefers workflow successors from DB, falls back to TipoDeSinteseMap.
+ * Uses workflow successors from DB.
  */
 const resolveFirstProductDefinition = async (prompt: IAPrompt): Promise<PromptDefinitionType | null> => {
     if (!prompt.kind?.startsWith('^')) return null
 
-    // Prefer workflow successors from DB (library-synced aggregator)
+    // Use workflow successors from DB (library-synced aggregator)
     if (prompt.workflow?.successors?.length) {
         for (const step of prompt.workflow.successors) {
             const def = await resolvePromptDefinitionByUuid(step.uuid).catch(() => null)
@@ -34,15 +32,6 @@ const resolveFirstProductDefinition = async (prompt: IAPrompt): Promise<PromptDe
         }
     }
 
-    // Fallback: TipoDeSinteseMap
-    const key = prompt.kind.substring(1)
-    const mapDef = TipoDeSinteseMap[key]
-    if (mapDef) {
-        const produtos = mapDef.produtos.map(p => infoDeProduto(p))
-        if (produtos.length > 0) {
-            return resolvePromptDefinition(produtos[0].prompt)
-        }
-    }
     return null
 }
 

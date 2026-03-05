@@ -6,7 +6,6 @@ import { assertCurrentUser, isUserCorporativo, isUserModerator, UserType } from 
 import { Contents } from './contents'
 import { Container } from 'react-bootstrap'
 import { cookies } from 'next/headers'
-import { TipoDeSinteseMap } from '@/lib/proc/combinacoes'
 import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { IAPromptList } from '@/lib/db/mysql-types'
 import { fixPromptList } from '@/lib/prompt-list'

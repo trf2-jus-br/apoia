@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import { Container, Form, Button, Alert } from 'react-bootstrap'
 import Fetcher from '@/lib/utils/fetcher'
-import { TiposDeSinteseValido } from '@/lib/proc/info-de-produto'
 import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
 
-export default function NewBatchPage(props: { favorites: any[] }) {
+type SynthesisTypeOption = { id: string, nome: string, relatorioDeAcervo?: boolean }
+
+export default function NewBatchPage(props: { favorites: any[], synthesisTypes: SynthesisTypeOption[] }) {
   const [name, setName] = useState('')
   const [tipo, setTipo] = useState('RESUMOS_TRIAGEM')
   const [complete, setComplete] = useState(false)
@@ -19,8 +20,8 @@ export default function NewBatchPage(props: { favorites: any[] }) {
   const [tipos, setTipos] = useState<{ value: string, label: string }[]>([])
 
   useEffect(() => {
-    const base = TiposDeSinteseValido
-      .filter(t => t.status <= StatusDeLancamento.PUBLICO && t.relatorioDeAcervo)
+    const base = props.synthesisTypes
+      .filter(t => t.relatorioDeAcervo)
       .map(t => ({ value: t.id, label: t.nome }))
     const favs = props.favorites.map((f: any) => ({ value: String(f.base_id), label: `[Favorito] ${f.name}` }))
     setTipos([...base, ...favs])
