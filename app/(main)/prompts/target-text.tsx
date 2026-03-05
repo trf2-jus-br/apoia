@@ -20,11 +20,11 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
  * Uses workflow successors from DB.
  */
 const resolveFirstProductDefinition = async (prompt: IAPrompt): Promise<PromptDefinitionType | null> => {
-    if (!prompt.kind?.startsWith('^')) return null
+    if (!prompt.library) return null
 
     // Use workflow successors from DB (library-synced aggregator)
-    if (prompt.workflow?.successors?.length) {
-        for (const step of prompt.workflow.successors) {
+    if (prompt.content?.workflow?.successors?.length) {
+        for (const step of prompt.content.workflow.successors) {
             const def = await resolvePromptDefinitionByUuid(step.uuid).catch(() => null)
             if (!def) continue
             if (def.kind === 'chat' || def.kind === 'chat-standalone') continue
@@ -56,7 +56,7 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
 
     useEffect(() => {
         if (!prompt) return
-        if (prompt.kind?.startsWith('^')) {
+        if (prompt.library) {
             resolveFirstProductDefinition(prompt).then(def => {
                 if (def) setDefinition(def)
             })

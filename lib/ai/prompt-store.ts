@@ -20,8 +20,9 @@ function dbRecordToDefinition(record: IAPrompt): PromptDefinitionType {
     const content = typeof record.content === 'string' ? JSON.parse(record.content) : record.content
 
     return {
-        kind: record.kind?.startsWith('^') ? record.kind.substring(1) : record.kind,
+        kind: record.slug || record.category || '',
         name: record.name || undefined,
+        isLibrary: !!record.library,
         systemPrompt: content?.system_prompt || undefined,
         prompt: content?.prompt || undefined,
         jsonSchema: content?.json_schema || undefined,
@@ -48,20 +49,20 @@ function dbRecordToDefinition(record: IAPrompt): PromptDefinitionType {
 export async function getPromptDefinition(slug: string): Promise<PromptDefinitionType> {
     if (!knex) throw new Error('Database not available')
 
-    // Normalize: hyphens to underscores (internal convention for kind field)
-    let slugUnderscore = slug.replace(/-/g, '_')
-
-    // Try to find library prompt by kind = '^slug'
+    // Try to find library prompt by slug
     let record = await knex('ia_prompt')
         .select('*')
-        .where({ kind: `^${slug}`, is_latest: 1 })
+        .where({ slug, is_latest: 1 })
+        .whereNotNull('library')
         .first() as IAPrompt | undefined
 
     // Fallback: try with underscore variant
+    const slugUnderscore = slug.replace(/-/g, '_')
     if (!record && slugUnderscore !== slug) {
         record = await knex('ia_prompt')
             .select('*')
-            .where({ kind: `^${slugUnderscore}`, is_latest: 1 })
+            .where({ slug: slugUnderscore, is_latest: 1 })
+            .whereNotNull('library')
             .first() as IAPrompt | undefined
     }
 
@@ -69,7 +70,8 @@ export async function getPromptDefinition(slug: string): Promise<PromptDefinitio
     if (!record && slug.startsWith('resumo-')) {
         record = await knex('ia_prompt')
             .select('*')
-            .where({ kind: '^resumo-peca', is_latest: 1 })
+            .where({ slug: 'resumo-peca', is_latest: 1 })
+            .whereNotNull('library')
             .first() as IAPrompt | undefined
     }
 
@@ -131,30 +133,29 @@ export async function getLibraryPromptSlugs(): Promise<string[]> {
     if (!knex) return []
 
     const records = await knex('ia_prompt')
-        .select('kind')
+        .select('slug')
         .whereNotNull('library')
         .where({ is_latest: 1 })
 
     return records
-        .map((r: any) => r.kind as string)
-        .filter((k: string) => k?.startsWith('^'))
-        .map((k: string) => k.substring(1))
+        .map((r: any) => r.slug as string)
+        .filter(Boolean)
 }
 
 /**
- * Get an aggregator prompt record by its kind (e.g., '^MINUTA_DE_SENTENCA').
+ * Get an aggregator prompt record by its slug.
  * Aggregators are library-sourced records with workflow successors and metadata
  * but no system_prompt / prompt content.
  * 
- * @param kind - The kind field including the ^ prefix (e.g., '^MINUTA_DE_SENTENCA')
- * @returns The IAPrompt record with content and workflow, or null if not found
+ * @param slug - The prompt slug (e.g., 'MINUTA_DE_SENTENCA')
+ * @returns The IAPrompt record with content (including workflow), or null if not found
  */
-export async function getAggregatorByKind(kind: string): Promise<IAPrompt | null> {
+export async function getAggregatorByKind(slug: string): Promise<IAPrompt | null> {
     if (!knex) return null
 
     const record = await knex('ia_prompt')
         .select('*')
-        .where({ kind, is_latest: 1 })
+        .where({ slug, is_latest: 1 })
         .whereNotNull('library')
         .first() as IAPrompt | undefined
 
@@ -164,10 +165,6 @@ export async function getAggregatorByKind(kind: string): Promise<IAPrompt | null
     if (typeof record.content === 'string') {
         record.content = JSON.parse(record.content)
     }
-    // Parse workflow if stored as string
-    if (typeof record.workflow === 'string') {
-        record.workflow = JSON.parse(record.workflow)
-    }
 
     return record
 }
@@ -176,14 +173,14 @@ export async function getAggregatorByKind(kind: string): Promise<IAPrompt | null
  * Get the first non-chat successor prompt slug from an aggregator's workflow.
  * Used to determine the "main" prompt for an internal synthesis type.
  * 
- * @param kind - The kind field including the ^ prefix
+ * @param slug - The aggregator slug
  * @returns The slug of the first non-chat successor, or null
  */
-export async function getFirstProductSlug(kind: string): Promise<string | null> {
-    const aggregator = await getAggregatorByKind(kind)
-    if (!aggregator?.workflow?.successors?.length) return null
+export async function getFirstProductSlug(slug: string): Promise<string | null> {
+    const aggregator = await getAggregatorByKind(slug)
+    if (!aggregator?.content?.workflow?.successors?.length) return null
 
-    for (const step of aggregator.workflow.successors) {
+    for (const step of aggregator.content.workflow.successors) {
         const def = await getPromptDefinitionByUuid(step.uuid).catch(() => null)
         if (!def) continue
         // Skip chat prompts — we want the main product prompt
@@ -202,17 +199,18 @@ export async function getAllAggregators(): Promise<IAPrompt[]> {
 
     const records = await knex('ia_prompt')
         .select('*')
-        .where('kind', 'like', '^%')
         .whereNotNull('library')
         .where({ is_latest: 1 })
         .orderBy('id') as IAPrompt[]
 
+    // Filter to only aggregator records (those with workflow in content)
+    const aggregators: IAPrompt[] = []
     for (const record of records) {
         if (typeof record.content === 'string') record.content = JSON.parse(record.content)
-        if (typeof record.workflow === 'string') record.workflow = JSON.parse(record.workflow)
+        if (record.content?.workflow) aggregators.push(record)
     }
 
-    return records
+    return aggregators
 }
 
 /**
@@ -223,7 +221,7 @@ export async function getAggregatorNameMap(): Promise<Record<string, string>> {
     const aggregators = await getAllAggregators()
     const map: Record<string, string> = {}
     for (const agg of aggregators) {
-        const key = agg.kind.startsWith('^') ? agg.kind.substring(1) : agg.kind
+        const key = agg.slug
         map[key] = agg.name || key
     }
     return map

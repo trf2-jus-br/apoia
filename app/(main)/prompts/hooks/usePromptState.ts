@@ -215,8 +215,8 @@ export function usePromptState(
         const params = new URLSearchParams(currentSearchParams.toString())
 
         if (prompt) {
-            if (prompt.kind?.startsWith('^')) {
-                params.set('prompt', slugify(prompt.kind.substring(1)))
+            if (prompt.library) {
+                params.set('prompt', slugify(prompt.slug))
             } else if (prompt.base_id != null) {
                 params.set('prompt', String(prompt.base_id))
             }
@@ -312,7 +312,7 @@ export function usePromptState(
         devLog('*** Sink from URL:', sinkFromURL)
         if (sinkFromURL === SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT || sinkFromURL === SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT_AUTOMATICALLY) return
 
-        if (!["^MINUTA_DE_SENTENCA", "^MINUTA_DE_VOTO", "^REFINAMENTO_DE_TEXTO", "^REVISAO_DE_TEXTO"].includes(prompt?.kind || '')) return
+        if (!prompt?.library || !['MINUTA_DE_SENTENCA', 'MINUTA_DE_VOTO', 'REFINAMENTO_DE_TEXTO', 'REVISAO_DE_TEXTO'].includes(prompt?.slug || '')) return
 
         // // Previne execução dupla em desenvolvimento (React 18 Strict Mode)
         // if (hasRunSink.current) return

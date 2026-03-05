@@ -86,7 +86,7 @@ const execute = async (testsetId: number, promptId: number, modelId: number, con
       const data: any = { textos: test.texts.map(t => ({ descr: t.name, slug: slugify(t.name), texto: t.value })) }
       const date = new Date()
       const definition: PromptDefinitionType = {
-        kind: prompt.kind,
+        kind: prompt.slug || prompt.category || `prompt-${prompt.id}`,
         systemPrompt: prompt.content.system_prompt || '',
         prompt: prompt.content.prompt || '',
         jsonSchema: prompt.content.json_schema || '',

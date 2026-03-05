@@ -29,7 +29,7 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
 
     // Filtra os prompts que pertencem a este grupo
     const groupPrompts = prompts.filter(p => {
-        if (!p.kind?.startsWith('^')) return false
+        if (!p.library) return false
         const grupo = p.content?.grupo as any
         return grupo?.slug === groupSlug
     })

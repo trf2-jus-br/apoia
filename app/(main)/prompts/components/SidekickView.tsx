@@ -53,9 +53,9 @@ export function SidekickView({
         return (
             <div className="d-flex flex-wrap gap-2 justify-content-center">
                 {promptsSidekick && promptsSidekick.length > 0 ? (
-                    promptsSidekick.filter(p => p.is_hidden !== undefined ? !p.is_hidden : p.is_auto_hidden === false).filter(p => p?.kind !== prompt?.kind).map((p, i) => (
+                    promptsSidekick.filter(p => p.is_hidden !== undefined ? !p.is_hidden : p.is_auto_hidden === false).filter(p => p?.slug !== prompt?.slug || p?.library !== prompt?.library).map((p, i) => (
                         <Button
-                            key={p.base_id ?? `${p.kind}-${i}`}
+                            key={p.base_id ?? `${p.slug}-${i}`}
                             onClick={() => setPrompt(p)}
                             variant="light"
                             style={{
@@ -100,7 +100,7 @@ export function SidekickView({
                                             model={model}
                                             sidekick={true}
                                             promptButtons={
-                                                prompt?.kind === '^CHAT' ? (
+                                                prompt?.slug === 'chat' && !!prompt?.library ? (
                                                     <>
                                                         {/* <p className="text-center mt-1x ms-3 me-3">
                                                             Converse sobre o processo, selecione um dos seus prompts favoritos, ou lance a Apoia em uma{' '}
@@ -126,7 +126,7 @@ export function SidekickView({
                         <TargetText key={`${prompt}`} apiKeyProvided={apiKeyProvided} visualization={VisualizationEnum.DIFF} />
                     ) : prompt.content.target === 'CHAT' ? (
                         <Chat
-                            definition={{ ...prompt, kind: slugify(prompt.kind) }}
+                            definition={{ ...prompt, kind: prompt.slug }}
                             data={{ textos: [] }}
                             model={model}
                             withTools={true}

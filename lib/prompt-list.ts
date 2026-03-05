@@ -11,18 +11,18 @@ import { Instance, Matter, Scope, Share, StatusDeLancamento } from './proc/proce
  * library records are preferred when both exist for the same kind.
  */
 async function syncInternalPrompts(basePrompts: IAPromptList[]): Promise<Map<string, IAPromptList>> {
-    const baseByKind = new Map<string, IAPromptList>()
+    const baseBySlug = new Map<string, IAPromptList>()
     for (const p of basePrompts) {
-        if (p.kind?.startsWith('^')) {
+        if (p.library) {
             // Prefer library-sourced records over old seeds
-            const existing = baseByKind.get(p.kind)
+            const existing = baseBySlug.get(p.slug)
             if (!existing || (p.library && !existing.library)) {
-                baseByKind.set(p.kind, p)
+                baseBySlug.set(p.slug, p)
             }
         }
     }
 
-    return baseByKind
+    return baseBySlug
 }
 
 /**
@@ -31,17 +31,15 @@ async function syncInternalPrompts(basePrompts: IAPromptList[]): Promise<Map<str
  * comes from the DB content fields populated by the sync engine.
  */
 async function buildVisiblePrompts(
-    baseByKind: Map<string, IAPromptList>, 
+    baseBySlug: Map<string, IAPromptList>, 
     isBetaTester: boolean, 
     showChatPadrao: boolean
 ): Promise<IAPromptList[]> {
     const seededOverlay: IAPromptList[] = []
     
-    for (const [kind, base] of baseByKind.entries()) {
-        const key = kind.substring(1) // Remove ^ prefix
-        
+    for (const [slug, base] of baseBySlug.entries()) {
         // Skip CHAT_STANDALONE if not showing chat padrão
-        if (!showChatPadrao && key === 'CHAT_STANDALONE') continue
+        if (!showChatPadrao && slug === 'CHAT_STANDALONE') continue
         
         // Determine status from DB metadata
         const dbStatus = base.content?.status
@@ -52,7 +50,7 @@ async function buildVisiblePrompts(
 
         const over: IAPromptList = {
             ...base,
-            name: base.name || key,
+            name: base.name || slug,
             content: {
                 ...base.content,
                 author: base.content?.author || '-',
@@ -92,7 +90,7 @@ export async function fixPromptList(basePrompts: IAPromptList[], showChatPadrao 
     const seededOverlay = await buildVisiblePrompts(syncedPrompts, isBetaTester, showChatPadrao)
     
     // Step 3: Combine with non-seeded prompts and sort
-    const nonSeeded = basePrompts.filter(p => !p.kind?.startsWith('^'))
+    const nonSeeded = basePrompts.filter(p => !p.library)
     const prompts: IAPromptList[] = [...nonSeeded, ...seededOverlay]
 
     prompts.sort((a, b) => {

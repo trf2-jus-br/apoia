@@ -110,7 +110,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
             requests = (await buildRequests(promptFromDB, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas)).filter(r => r && r.promptSlug !== 'chat')
         } else {
             // Load aggregator prompt from DB for the detected synthesis type
-            const aggRecord = await getAggregatorByKind(`^${dadosDoProcesso.tipoDeSintese}`)
+            const aggRecord = await getAggregatorByKind(dadosDoProcesso.tipoDeSintese)
             if (aggRecord) {
                 requests = (await buildRequests(aggRecord, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas)).filter(r => r && r.promptSlug !== 'chat')
             } else {

@@ -12,7 +12,7 @@ export async function getTiposDeSinteseValido(): Promise<TipoDeSinteseValido[]> 
     const tipos: TipoDeSinteseValido[] = []
 
     for (const agg of aggregators) {
-        const key = agg.kind.startsWith('^') ? agg.kind.substring(1) : agg.kind
+        const key = agg.slug
         const content = agg.content
         const strategyName = content?.piece_strategy
         const padroes = strategyName ? PieceStrategy[strategyName]?.pattern : undefined

@@ -16,13 +16,13 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
     const isModerator = await isUserModerator(user)
     let prompt = await PromptDao.retrieveLatestPromptByBaseId(params.id)
 
-    if (prompt?.kind?.startsWith('^')) {
+    if (prompt?.library) {
         let def = null
         let name = prompt.name
 
         // Use workflow successors from DB (library-synced aggregator)
-        if (prompt.workflow?.successors?.length) {
-            for (const step of prompt.workflow.successors) {
+        if (prompt.content?.workflow?.successors?.length) {
+            for (const step of prompt.content.workflow.successors) {
                 const candidate = await getPromptDefinitionByUuid(step.uuid).catch(() => null)
                 if (!candidate) continue
                 if (candidate.kind === 'chat' || candidate.kind === 'chat-standalone') continue
@@ -42,7 +42,7 @@ export default async function Home(props: { params: Promise<{ id: number }> }) {
                 testset_id: null,
                 is_latest: 1,
                 created_at: null,
-                kind: def.kind,
+                category: null,
                 name: name,
                 slug: slugify(def.kind),
                 content: {

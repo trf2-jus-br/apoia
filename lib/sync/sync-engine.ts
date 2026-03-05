@@ -15,7 +15,6 @@ import { slugify } from '../utils/utils'
 import { LibraryProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
 import { LocalProvider } from './providers/local'
 import devLog from '../utils/log'
-import { canonicalize } from 'json-canonicalize'
 
 /**
  * Build the `content` JSON column value from a ParsedPrompt.
@@ -51,11 +50,11 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
 function contentHasChanged(dbContent: Record<string, any>, newContent: Record<string, any>): boolean {
     const keys = ['system_prompt', 'prompt', 'json_schema', 'format', 'template',
         'author', 'target', 'scope', 'instance', 'matter',
-        'sort', 'status', 'piece_strategy', 'context', 'grupo', 'relatorio_de_acervo', 'plugins']
+        'sort', 'status', 'piece_strategy', 'context', 'grupo', 'relatorio_de_acervo', 'plugins',
+        'workflow']
     for (const key of keys) {
         const dbVal = dbContent?.[key] ?? null
         const newVal = newContent?.[key] ?? null
-        // For objects/arrays, compare as JSON
         if (typeof dbVal === 'object' || typeof newVal === 'object') {
             if (JSON.stringify(dbVal) !== JSON.stringify(newVal)) return true
         } else {
@@ -63,19 +62,6 @@ function contentHasChanged(dbContent: Record<string, any>, newContent: Record<st
         }
     }
     return false
-}
-
-/**
- * Compare two workflow objects to determine if the workflow definition has changed.
- */
-function workflowHasChanged(dbWorkflow: any, newWorkflow: WorkflowResolved | null): boolean {
-    const dbJson = dbWorkflow ? (typeof dbWorkflow === 'string' ? dbWorkflow : canonicalize(dbWorkflow)) : null
-    const newJson = newWorkflow ? canonicalize(newWorkflow) : null
-    const different = dbJson !== newJson
-    if (different) {
-        devLog(`[sync-engine] Workflow changed: db=${dbJson} new=${newJson}`)
-    }
-    return different
 }
 
 /**
@@ -226,22 +212,26 @@ async function syncSinglePrompt(
     }
 
     const newContent = buildContentJson(parsed)
+    // Include workflow inside content
+    const resolvedWorkflowObj = resolvedWorkflow || null
+    if (resolvedWorkflowObj) {
+        newContent.workflow = resolvedWorkflowObj
+    }
     const slug = slugify(parsed.name) || parsed.slug
-    const workflowJson = resolvedWorkflow ? JSON.stringify(resolvedWorkflow) : null
+    const contentJson = JSON.stringify(newContent)
 
     if (!existing) {
         // INSERT new prompt
         const [returned] = await knex!('ia_prompt').insert({
             uuid: parsed.uuid,
-            kind: `^${parsed.slug}`,
+            category: null,
             name: parsed.name,
             slug,
-            content: JSON.stringify(newContent),
+            content: contentJson,
             is_latest: 1,
             share: 'PADRAO',
             library,
             library_version: libraryVersion,
-            workflow: workflowJson,
         }).returning('id')
         const id = getId(returned)
         // Set base_id = id for new prompts (self-referential)
@@ -256,7 +246,7 @@ async function syncSinglePrompt(
             dbContent = existing.content
         }
 
-        const changed = contentHasChanged(dbContent, newContent) || workflowHasChanged(existing.workflow, resolvedWorkflow)
+        const changed = contentHasChanged(dbContent, newContent)
 
         if (changed) {
             // Create new version: set old is_latest=0, insert new row with same base_id
@@ -265,15 +255,14 @@ async function syncSinglePrompt(
             const [returned] = await knex!('ia_prompt').insert({
                 uuid: parsed.uuid,
                 base_id: existing.base_id,
-                kind: existing.kind,
+                category: existing.category || null,
                 name: parsed.name,
                 slug,
-                content: JSON.stringify(newContent),
+                content: contentJson,
                 is_latest: 1,
                 share: existing.share || 'PADRAO',
                 library,
                 library_version: libraryVersion,
-                workflow: workflowJson,
             }).returning('id')
             result.updated++
         } else {

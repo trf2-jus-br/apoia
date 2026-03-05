@@ -16,15 +16,15 @@ export default async function Home() {
     await assertCurrentUser()
     await assertModel()
 
-    const records = (await PromptDao.retrieveCountersByPromptKinds()).filter(r => r.kind)
+    const records = (await PromptDao.retrieveCountersByPromptKinds()).filter(r => r.category)
     const librarySlugs = await getLibraryPromptSlugs()
-    const promptKinds = librarySlugs.map(kind => ({ kind, prompts: 0, testsets: 0 }))
+    const promptKinds = librarySlugs.map(category => ({ category, prompts: 0, testsets: 0 }))
     promptKinds.forEach(promptKind => {
-        if (!records.find(r => r.kind === promptKind.kind)) {
+        if (!records.find(r => r.category === promptKind.category)) {
             records.push(promptKind)
         }
     })
-    records.sort((a, b) => a.kind.localeCompare(b.kind))
+    records.sort((a, b) => a.category.localeCompare(b.category))
 
     return (<Container className="mt-5" fluid={false}>
         <h1 className="mb-0">Tipos de Prompts</h1>

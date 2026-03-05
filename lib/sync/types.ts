@@ -52,7 +52,7 @@ export interface WorkflowStepResolved {
     condition?: string
 }
 
-/** Resolved workflow for a prompt, stored in ia_prompt.workflow column */
+/** Resolved workflow for a prompt, stored inside ia_prompt.content.workflow */
 export interface WorkflowResolved {
     predecessors?: WorkflowStepResolved[]
     successors?: WorkflowStepResolved[]

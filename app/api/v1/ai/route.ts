@@ -45,8 +45,8 @@ async function resolveApiPrompt(kind: string, promptSlug?: string, promptId?: nu
         prompt = await PromptDao.retrievePromptById(promptId)
         if (!prompt)
             throw new Error(`Prompt not found: ${promptId}`)
-        if (!prompt.kind)
-            prompt.kind = `prompt-${prompt.id}`
+        if (!prompt.category)
+            prompt.category = `prompt-${prompt.id}`
         if (prompt.content.template && (!prompt.content.prompt || !prompt.content.system_prompt)) {
             const promptTemplate = await getPromptDefinitionFromStore('template')
             if (!prompt.content.prompt) prompt.content.prompt = promptTemplate.prompt
@@ -65,7 +65,7 @@ async function resolveApiPrompt(kind: string, promptSlug?: string, promptId?: nu
 
     const definition: PromptDefinitionType =
         prompt ? {
-            kind: prompt.kind,
+            kind: prompt.slug || prompt.category || `prompt-${prompt.id}`,
             systemPrompt: prompt.content.system_prompt || undefined,
             prompt: prompt.content.prompt || '',
             jsonSchema: prompt.content.json_schema || undefined,

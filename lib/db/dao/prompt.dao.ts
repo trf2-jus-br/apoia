@@ -20,12 +20,12 @@ export class PromptDao {
         if (content?.matter === null) content.matter = Object.keys(Matter)
     }
 
-    static async addInternalPrompt(kind: string): Promise<mysqlTypes.IAPrompt> {
+    static async addInternalPrompt(category: string): Promise<mysqlTypes.IAPrompt> {
         if (!knex) return {} as mysqlTypes.IAPrompt
         const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({
-            kind,
-            name: kind,
-            slug: slugify(kind),
+            category,
+            name: category,
+            slug: slugify(category),
             content: JSON.stringify({ prompt: null }),
             is_latest: 1, share: 'PADRAO'
         }).returning('id')
@@ -35,25 +35,25 @@ export class PromptDao {
         return record
     }
 
-    static async removeInternalPrompt(kind: string): Promise<boolean> {
+    static async removeInternalPrompt(category: string): Promise<boolean> {
         if (!knex) return false
-        const result = await knex('ia_prompt').update({ is_latest: 0 }).where({ kind })
+        const result = await knex('ia_prompt').update({ is_latest: 0 }).where({ category })
         return result > 0
     }
 
-    // Retrieve all latest seeded prompts (kind starting with '^%') for overlaying map info
+    // Retrieve all latest library prompts for overlaying map info
     static async retrieveLatestSeededPrompts(): Promise<mysqlTypes.IAPrompt[]> {
         if (!knex) return [] as any
         const result = await knex('ia_prompt')
             .select<mysqlTypes.IAPrompt[]>('*')
             .where('is_latest', 1)
-            .andWhere('kind', 'like', '^%')
+            .whereNotNull('library')
         for (const record of result) this.hydratatePromptContent(record.content)
         return result
     }
 
     static async insertIAPrompt(conn: any, data: mysqlTypes.IAPromptToInsert): Promise<mysqlTypes.IAPrompt | undefined> {
-        const { base_id, kind, name, model_id, testset_id, share, content, created_by } = data
+        const { base_id, category, name, model_id, testset_id, share, content, created_by } = data
         const slug = slugify(name)
         const user = await assertCurrentUser()
         const isModerator = await isUserModerator(user)
@@ -64,7 +64,7 @@ export class PromptDao {
         this.dehydratatePromptContent(data.content)
         const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({
             base_id: base_id,
-            kind, name, slug, model_id, testset_id, content: JSON.stringify(content), created_by: created_by_or_current_user, is_latest: 1, share
+            category, name, slug, model_id, testset_id, content: JSON.stringify(content), created_by: created_by_or_current_user, is_latest: 1, share
         }).returning('id')
         const id = getId(result)
         if (!data.base_id) {
@@ -82,7 +82,7 @@ export class PromptDao {
         try {
             await trx('ia_prompt').update<mysqlTypes.IAPrompt>({
                 is_official: 0,
-            }).where({ kind: prompt.kind, slug: prompt.slug, id })
+            }).where({ category: prompt.category, slug: prompt.slug, id })
             await trx('ia_prompt').update<mysqlTypes.IAPrompt>({
                 is_official: 1
             }).where({ id })
@@ -144,25 +144,25 @@ export class PromptDao {
         return (rows || []).map(r => ({ base_id: Number((r as any).base_id), name: (r as any).name, target: (r as any).target }))
     }
 
-    static async retrieveCountersByPromptKinds(): Promise<{ kind: string, prompts: number, testsets: number }[]> {
+    static async retrieveCountersByPromptKinds(): Promise<{ category: string, prompts: number, testsets: number }[]> {
         if (!knex) return []
         const sql = knex('ia_prompt as p')
             .select(
-                'k.kind',  // Select 'kind' from the union of both tables
-                knex.raw('COUNT(DISTINCT p.slug) as prompts'),  // Count distinct slugs in ia_prompt
-                knex.raw('COUNT(DISTINCT t.slug) as testsets')  // Count distinct slugs in ia_testset
+                'k.category',
+                knex.raw('COUNT(DISTINCT p.slug) as prompts'),
+                knex.raw('COUNT(DISTINCT t.slug) as testsets')
             )
             .leftJoin(
                 knex
-                    .select('kind')
+                    .select('category')
                     .from('ia_prompt')
                     .union(function () {
-                        this.select('kind').from('ia_testset');
+                        this.select('kind as category').from('ia_testset');
                     })
-                    .as('k'), 'p.kind', '=', 'k.kind'
+                    .as('k'), 'p.category', '=', 'k.category'
             )
-            .leftJoin('ia_testset as t', 't.kind', '=', 'p.kind')
-            .groupBy('k.kind');  // Group by 'kind' from the union
+            .leftJoin('ia_testset as t', 't.kind', '=', 'p.category')
+            .groupBy('k.category');
         const result = await sql
 
         if (!result || result.length === 0) return []
@@ -170,7 +170,7 @@ export class PromptDao {
         return records
     }
 
-    static async retrievePromptsByKind(conn: any, kind: string): Promise<{ slug: string, name: string, versions: number, created_at: Date, modified_at: Date, official_at: Date, created_id: number, modified_id: number, official_id: number }[]> {
+    static async retrievePromptsByKind(conn: any, category: string): Promise<{ slug: string, name: string, versions: number, created_at: Date, modified_at: Date, official_at: Date, created_id: number, modified_id: number, official_id: number }[]> {
         if (!knex) return []
         // Consulta interna que utiliza funções de janela
         const innerQuery = knex('ia_prompt')
@@ -182,7 +182,7 @@ export class PromptDao {
                 knex.raw(`FIRST_VALUE(id) OVER (PARTITION BY slug ORDER BY created_at DESC) AS modified_id`),
                 knex.raw(`FIRST_VALUE(name) OVER (PARTITION BY slug ORDER BY created_at DESC) AS name`)
             ])
-            .where('kind', kind);
+            .where('category', category);
 
         // Definição da CTE t1
         const t1Query = knex
@@ -228,11 +228,11 @@ export class PromptDao {
         return records
     }
 
-    static async retrievePromptsIdsAndNamesByKind(kind: string): Promise<mysqlTypes.SelectableItemWithLatestAndOfficial[]> {
+    static async retrievePromptsIdsAndNamesByKind(category: string): Promise<mysqlTypes.SelectableItemWithLatestAndOfficial[]> {
         if (!knex) return []
         const result = await knex('ia_prompt')
             .select('id', 'name', 'slug', 'created_at', 'is_official')
-            .where('kind', kind)
+            .where('category', category)
             .orderBy('slug')
             .orderBy('created_at', 'desc')
         if (!result || result.length === 0) return []
@@ -243,9 +243,9 @@ export class PromptDao {
         return records
     }
 
-    static async retrieveOfficialPromptsIdsAndNamesByKind(kind: string): Promise<{ id: number, name: string }[]> {
+    static async retrieveOfficialPromptsIdsAndNamesByKind(category: string): Promise<{ id: number, name: string }[]> {
         if (!knex) return []
-        const rows = await knex('ia_prompt').select('id', 'name').where({ kind, is_latest: 1, official: 1 }).orderBy('name')
+        const rows = await knex('ia_prompt').select('id', 'name').where({ category, is_latest: 1, official: 1 }).orderBy('name')
         return rows
     }
 
@@ -419,16 +419,16 @@ export class PromptDao {
         return result
     }
 
-    static async retrievePromptsByKindAndSlug(kind: string, slug: string): Promise<mysqlTypes.IAPrompt[]> {
+    static async retrievePromptsByKindAndSlug(category: string, slug: string): Promise<mysqlTypes.IAPrompt[]> {
         if (!knex) return [] as any
         const result = await knex('ia_prompt as p')
             .select<mysqlTypes.IAPrompt[]>('p.*', 's.score')
             .leftJoin('ia_prompt_stats as s', function () {
-                this.on('p.kind', '=', 's.kind')
+                this.on('p.category', '=', 's.kind')
                     .andOn('p.model_id', '=', 's.model_id')
                     .andOn('p.id', '=', 's.prompt_id');
             })
-            .where('p.kind', kind)
+            .where('p.category', category)
             .andWhere('p.slug', slug)
             .orderBy('p.created_at', 'desc');
 

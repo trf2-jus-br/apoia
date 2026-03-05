@@ -69,7 +69,7 @@ async function POST_HANDLER(req: Request) {
   }
 
   // Resolve piece patterns from aggregator in DB
-  const aggregator = await getAggregatorByKind(`^${kind}`).catch(() => null)
+  const aggregator = await getAggregatorByKind(kind).catch(() => null)
   const strategyName = aggregator?.content?.piece_strategy
   const padroes = strategyName ? PieceStrategy[strategyName]?.pattern : undefined
   if (!padroes) {

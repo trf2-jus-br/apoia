@@ -240,7 +240,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
 
             // Try to get piece_strategy from aggregator DB record
             let padroes = null
-            const aggregator = await getAggregatorByKind(`^${kind}`).catch(() => null)
+            const aggregator = await getAggregatorByKind(kind).catch(() => null)
             const pieceStrategyName = aggregator?.content?.piece_strategy
             if (pieceStrategyName) {
                 const strategy = PieceStrategy[pieceStrategyName]

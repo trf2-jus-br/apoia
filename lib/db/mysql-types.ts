@@ -116,7 +116,7 @@ export type IAPrompt = {
     id: number
     base_id: number | null
     uuid: string
-    kind: string
+    category?: string | null
     created_by: number | null
     name: string
     slug: string
@@ -126,10 +126,6 @@ export type IAPrompt = {
     is_official?: boolean
     library?: string | null
     library_version?: string | null
-    workflow?: {
-        predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
-        successors?: { uuid: string; optional?: boolean; condition?: string }[]
-    } | null
     content: {
         author?: string
 
@@ -151,6 +147,12 @@ export type IAPrompt = {
         relatorio_de_acervo?: boolean
         plugins?: string[]
 
+        // Workflow (predecessors/successors), moved from separate column
+        workflow?: {
+            predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
+            successors?: { uuid: string; optional?: boolean; condition?: string }[]
+        } | null
+
         system_prompt: string | null
         prompt: string | null
         json_schema: string | null
@@ -164,7 +166,7 @@ export type IAPrompt = {
 
 export type IAPromptToInsert = {
     base_id?: number
-    kind?: string
+    category?: string | null
     name: string
     model_id: number
     testset_id: number | null
@@ -196,7 +198,7 @@ export type IAPromptList = {
     id: number
     base_id: number | null
     uuid: string
-    kind: string
+    category?: string | null
     created_by: number | null
     name: string
     slug: string
@@ -205,10 +207,6 @@ export type IAPromptList = {
     share?: string
     library?: string | null
     library_version?: string | null
-    workflow?: {
-        predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
-        successors?: { uuid: string; optional?: boolean; condition?: string }[]
-    } | null
     content: {
         author?: string
 
@@ -229,6 +227,12 @@ export type IAPromptList = {
         grupo?: Record<string, any>
         relatorio_de_acervo?: boolean
         plugins?: string[]
+
+        // Workflow (predecessors/successors)
+        workflow?: {
+            predecessors?: { uuid: string; optional?: boolean; condition?: string }[]
+            successors?: { uuid: string; optional?: boolean; condition?: string }[]
+        } | null
 
         system_prompt: string | null
         prompt: string | null

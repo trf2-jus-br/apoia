@@ -47,13 +47,11 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
     const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: peca.conteudo || contents?.[peca.id], sigilo: peca.sigilo }))
 
     // Internal seeded prompt: use workflow successors from DB
-    if (prompt.kind?.startsWith('^')) {
-        const key = prompt.kind.substring(1)
-
+    if (prompt.library) {
         // Use DB workflow successors (from aggregator .md files synced by sync engine)
-        if (prompt.workflow?.successors?.length) {
+        if (prompt.content?.workflow?.successors?.length) {
             const workflowRequests = await buildRequestsFromWorkflow(
-                prompt.workflow.successors,
+                prompt.content.workflow.successors,
                 pecasComConteudo,
                 numeroDoProcesso,
                 documentosDaBiblioteca,

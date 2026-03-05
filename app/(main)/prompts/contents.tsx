@@ -116,7 +116,7 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
 
     const resetPrompt = () => {
         // setPrompt(null)
-        setPrompt(prompts.find(p => p.kind === '^CHAT') || null)
+        setPrompt(prompts.find(p => p.slug === 'chat' && !!p.library) || null)
         setSource(null)
         setSourcePayload(null)
         replacePiecesParam(null)
@@ -128,7 +128,7 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
     const resetToHome = () => {
         setNumeroDoProcesso(null)
         setNumber('')
-        setPrompt(prompts.find(p => p.kind === '^CHAT_STANDALONE') || null)
+        setPrompt(prompts.find(p => p.slug === 'CHAT_STANDALONE' && !!p.library) || null)
         setSource(null)
         setSourcePayload(null)
         replacePiecesParam(null)

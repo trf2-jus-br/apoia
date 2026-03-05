@@ -21,6 +21,7 @@ import { PecaConteudoType } from "../proc/process-types";
 export type PromptDefinitionType = {
     kind: string
     name?: string
+    isLibrary?: boolean
     systemPrompt?: string
     prompt?: string
     jsonSchema?: string
