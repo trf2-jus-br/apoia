@@ -16,14 +16,15 @@ export default async function Edit(props: { params: Promise<{ id: number }> }) {
 
         let editingAsModerator = false
         const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
+        const isModerator = await isUserModerator(user)
         if (record.created_by !== user_id) {
-            if (await isUserModerator(user))
+            if (isModerator)
                 editingAsModerator = true
             else
                 throw new PublicError('Você não tem permissão para editar este prompt.')
         }
 
-        const allPrompts = await PromptDao.retrievePromptNamesAndUuids()
+        const allPrompts = await PromptDao.retrievePromptNamesAndUuids(user_id, isModerator)
 
         return (<Container fluid={false}>
             <h1 className="mt-5 mb-3">Edição de Prompt</h1>

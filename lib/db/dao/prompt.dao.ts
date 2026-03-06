@@ -397,6 +397,7 @@ export class PromptDao {
                 knex.raw('(SELECT COUNT(*) FROM ia_favorite as f WHERE f.prompt_id = ia_prompt.base_id) as favorite_count')
             )
             .where('ia_prompt.is_latest', 1)
+            .andWhere('ia_prompt.name', 'not like', '^%')
             .andWhere(function () {
                 this.where('ia_prompt.created_by', user_id)
                     .orWhere('ia_prompt.share', 'PADRAO')
@@ -446,11 +447,23 @@ export class PromptDao {
         return records
     }
 
-    static async retrievePromptNamesAndUuids(): Promise<{ uuid: string; name: string }[]> {
+    static async retrievePromptNamesAndUuids(user_id: number, moderator?: boolean): Promise<{ uuid: string; name: string }[]> {
         if (!knex) return []
         const result = await knex('ia_prompt')
             .select('uuid', 'name')
             .where('is_latest', 1)
+            .andWhere('name', 'not like', '^%')
+            .andWhere(function () {
+                this.where('ia_prompt.created_by', user_id)
+                    .orWhere('ia_prompt.share', 'PADRAO')
+                    .orWhere('ia_prompt.share', 'PUBLICO')
+                    .orWhere('ia_prompt.share', 'BETA_TESTE')
+                    .orWhere(function () {
+                        if (moderator) {
+                            this.orWhere('ia_prompt.share', 'EM_ANALISE')
+                        }
+                    })
+            })
             .orderBy('name')
         return result
     }

@@ -1,7 +1,7 @@
 import { Container } from 'react-bootstrap'
 import PromptForm from '../prompt-form'
-import { PromptDao } from '@/lib/db/dao'
-import { assertCurrentUser } from '@/lib/user'
+import { PromptDao, UserDao } from '@/lib/db/dao'
+import { assertCurrentUser, isUserModerator } from '@/lib/user'
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { Instance, Matter, Scope } from '@/lib/proc/process-types'
 import { PublicError } from '@/lib/utils/public-error'
@@ -42,7 +42,9 @@ export default async function New(
         record.base_id = undefined
     }
 
-    const allPrompts = await PromptDao.retrievePromptNamesAndUuids()
+    const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
+    const isModerator = await isUserModerator(user)
+    const allPrompts = await PromptDao.retrievePromptNamesAndUuids(user_id, isModerator)
 
     return (<Container fluid={false}>
         <h1 className="mt-5 mb-3">Novo</h1>
