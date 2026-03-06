@@ -15,6 +15,7 @@ import { slugify } from '../utils/utils'
 import { OriginProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
 import { LocalProvider } from './providers/local'
 import devLog from '../utils/log'
+import { canonicalize } from 'json-canonicalize'
 
 /**
  * Build the `content` JSON column value from a ParsedPrompt.
@@ -47,6 +48,7 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
  * Only compares the fields that come from the .md file (not DB-only fields).
  */
 function contentHasChanged(dbContent: Record<string, any>, newContent: Record<string, any>): boolean {
+    return JSON.stringify(canonicalize(dbContent)) !== JSON.stringify(canonicalize(newContent))
     const keys = ['system_prompt', 'prompt', 'json_schema', 'format', 'template',
         'author', 'target', 'scope', 'instance', 'matter',
         'sort', 'piece_strategy', 'context', 'grupo', 'batch_report', 'plugins',
@@ -201,6 +203,11 @@ async function syncSinglePrompt(
     resolvedWorkflow: WorkflowResolved | null,
     result: SyncResult
 ): Promise<void> {
+
+    // if (parsed.slug === 'sentenca') {
+    //     devLog(`[sync-engine] Syncing prompt with slug "sentenca" and UUID ${parsed.uuid}. Resolved workflow: ${JSON.stringify(resolvedWorkflow)}`)
+    // }  
+
     // Find existing record with this uuid and is_latest=1
     let existing = await knex!('ia_prompt')
         .select('*')
@@ -261,8 +268,10 @@ async function syncSinglePrompt(
         const changed = contentHasChanged(dbContent, newContent)
         const newShare = parsed.metadata?.share || existing.share || 'PADRAO'
         const shareChanged = existing.share !== newShare
+        const nameChanged = existing.name !== parsed.name
+        const slugChanged = existing.slug !== slug
 
-        if (changed || shareChanged) {
+        if (changed || shareChanged || nameChanged || slugChanged) {
             // Create new version: set old is_latest=0, insert new row with same base_id
             await knex!('ia_prompt').update({ is_latest: 0 }).where({ id: existing.id })
 

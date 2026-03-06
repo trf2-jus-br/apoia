@@ -1,8 +1,13 @@
 # METADATA
 
 uuid: cf0c8ba9-ecad-41bd-8cf1-4554c0f18467
+name: Sentenca BI - Laudo Favoravel
+sort: 1000
+share: BETA_TESTE
+piece_strategy: CONHECIMENTO
 successors:
   - path: chat
+
 
 # PROMPT
 

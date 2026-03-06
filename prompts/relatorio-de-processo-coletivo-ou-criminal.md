@@ -1,6 +1,10 @@
 # METADATA
 
 uuid: e2196de6-a040-4df3-a26c-6b143241aa5c
+name: Relatorio de Processo Coletivo ou Criminal
+sort: 9
+piece_strategy: TODAS
+batch_report: true
 successors:
   - path: chat
 

@@ -1,6 +1,10 @@
 # METADATA
 
 uuid: b4933430-e568-4e21-9b43-155de55c8209
+name: Resumos e triagem
+sort: 1
+piece_strategy: MAIS_RELEVANTES
+batch_report: true
 successors:
   - path: chat
 

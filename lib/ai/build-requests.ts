@@ -46,30 +46,28 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
     const requestArray: GeneratedContent[] = []
     const pecasComConteudo: TextoType[] = selectedPieces.map(peca => ({ id: peca.id, numeroDoProcesso: peca.numeroDoProcesso, event: peca.numeroDoEvento, idOrigem: peca.idOrigem, label: peca.rotulo, descr: peca.descr, slug: slugify(peca.descr), texto: peca.conteudo || contents?.[peca.id], sigilo: peca.sigilo }))
 
-    // Internal seeded prompt: use workflow successors from DB
-    if (prompt.origin) {
-        // Use DB workflow successors (from aggregator .md files synced by sync engine)
-        if (prompt.content?.workflow?.successors?.length) {
-            const workflowRequests = await buildRequestsFromWorkflow(
-                prompt.content.workflow.successors,
-                pecasComConteudo,
+    if (prompt.content.summary === 'SIM') {
+        for (const peca of pecasComConteudo) {
+            const definition = await getPromptDefinition(`resumo-${peca.slug}`)
+            const data: PromptDataType = {
                 numeroDoProcesso,
-                documentosDaBiblioteca,
-            )
-            requestArray.push(...workflowRequests)
-        }
-    } else {
-        if (prompt.content.summary === 'SIM') {
-            for (const peca of pecasComConteudo) {
-                const definition = await getPromptDefinition(`resumo-${peca.slug}`)
-                const data: PromptDataType = {
-                    numeroDoProcesso,
-                    textos: [peca],
-                    documentosDaBiblioteca
-                }
-                requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: definition.kind, promptSlug: definition.kind, internalPrompt: definition })
+                textos: [peca],
+                documentosDaBiblioteca
             }
+            requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: definition.kind, promptSlug: definition.kind, internalPrompt: definition })
         }
+    }
+    if (prompt.content?.workflow?.predecessors?.length) {
+        const workflowRequests = await buildRequestsFromWorkflow(
+            prompt.content.workflow.predecessors,
+            pecasComConteudo,
+            numeroDoProcesso,
+            documentosDaBiblioteca,
+        )
+        requestArray.push(...workflowRequests)
+    }
+
+    if (prompt?.content?.system_prompt || prompt?.content?.prompt) {
         const definition: PromptDefinitionType = {
             kind: `prompt-${prompt.id}`,
             prompt: prompt.content.prompt,
@@ -95,13 +93,23 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
             plugins: []
         }
         requestArray.push(req)
+    }
 
-        // Basic chat as last item
-        if (!prompt?.name?.toLowerCase().startsWith('chat ')) {
-            const definition2 = await getPromptDefinition(`chat`)
-            const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
-            requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: 'chat', promptSlug: definition2.kind, internalPrompt: definition2 })
-        }
+    if (prompt.content?.workflow?.successors?.length) {
+        const workflowRequests = await buildRequestsFromWorkflow(
+            prompt.content.workflow.successors,
+            pecasComConteudo,
+            numeroDoProcesso,
+            documentosDaBiblioteca,
+        )
+        requestArray.push(...workflowRequests)
+    }
+
+    // Basic chat as last item
+    if (!prompt?.name?.toLowerCase().startsWith('chat ') && !requestArray.some(r => r.produto.startsWith('chat'))) {
+        const definition2 = await getPromptDefinition(`chat`)
+        const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
+        requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: 'chat', promptSlug: definition2.kind, internalPrompt: definition2 })
     }
 
     return requestArray

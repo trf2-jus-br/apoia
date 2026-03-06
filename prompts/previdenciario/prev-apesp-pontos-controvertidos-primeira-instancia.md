@@ -1,7 +1,10 @@
 # METADATA
 
 uuid: cd044383-6e15-4569-8275-33ecb843927f
-author: Caroline Tauk/JFRJ
+name: Relatório de Aposentadoria Especial - Primeira Instância
+sort: 1000
+piece_strategy: MAIS_RELEVANTES_PRIMEIRA_INSTANCIA
+instance: [PRIMEIRO_GRAU]
 successors:
   - path: chat
 

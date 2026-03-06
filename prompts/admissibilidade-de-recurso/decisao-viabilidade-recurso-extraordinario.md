@@ -1,6 +1,13 @@
 # METADATA
 
 uuid: f7e3b1a2-5c4d-4e6f-8a9b-0c1d2e3f4a5b
+name: Minuta de Decisao de Viabilidade de Recurso Extraordinario
+sort: 3
+share: BETA_TESTE
+piece_strategy: VIABILIDADE_RECURSO_EXTRAORDINARIO
+grupo:
+  slug: decisao-de-viabilidade
+  titulo: Admissibilidade de Recursos
 predecessors:
   - path: juizo-viabilidade-recurso
 successors:

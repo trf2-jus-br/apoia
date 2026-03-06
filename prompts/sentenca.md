@@ -1,6 +1,13 @@
 # METADATA
 
 uuid: 5b3d1c81-7a5b-453b-ad26-67b9936603da
+name: Sentença
+piece_strategy: MAIS_RELEVANTES_PRIMEIRA_INSTANCIA
+instance: [PRIMEIRO_GRAU]
+context:
+  action: minuta_editar
+  instance: PRIMEIRO_GRAU
+sort: 3
 predecessors:
   - path: pedidos-fundamentacoes-e-dispositivos
 successors:

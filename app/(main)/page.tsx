@@ -40,14 +40,14 @@ export default async function HomePage() {
             icon: faGavel,
             title: "Sentença",
             description: "Minute sentenças informando fundamentação e dispositivo",
-            href: "/prompts?prompt=minuta-de-sentenca",
+            href: "/prompts?prompt=sentenca",
             color: "text-brown"
         },
         {
             icon: faGavel,
             title: "Voto",
             description: "Minute votos informando fundamentação e dispositivo",
-            href: "/prompts?prompt=minuta-de-voto",
+            href: "/prompts?prompt=voto",
             color: "text-brown"
         },
         {

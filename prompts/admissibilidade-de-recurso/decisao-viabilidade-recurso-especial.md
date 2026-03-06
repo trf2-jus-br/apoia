@@ -1,6 +1,13 @@
 # METADATA
 
 uuid: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+name: Minuta de Decisao de Viabilidade de Recurso Especial
+sort: 3
+share: BETA_TESTE
+piece_strategy: VIABILIDADE_RECURSO_ESPECIAL
+grupo:
+  slug: decisao-de-viabilidade
+  titulo: Admissibilidade de Recursos
 predecessors:
   - path: pedidos-viabilidade-recurso
   - path: pesquisa-de-temas
