@@ -1,13 +1,15 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import AiContent from '@/components/ai-content'
 import { P } from '@/lib/proc/combinacoes'
 import { Button, Container } from 'react-bootstrap'
 import PromptConfig from '@/components/prompt-config'
-import { PromptConfigType } from '@/lib/ai/prompt-types'
+import { PromptConfigType, PromptDataType } from '@/lib/ai/prompt-types'
 import { getInternalPrompt } from '@/lib/ai/prompt'
+import Chat from '@/components/slots/chat'
+import { getSelectedModelName } from '@/lib/ai/model-server'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
@@ -16,6 +18,20 @@ export default function Revison() {
     const [orgaoJulgador, setOrgaoJulgador] = useState('')
     const [hidden, setHidden] = useState(true)
     const [promptConfig, setPromptConfig] = useState({} as PromptConfigType)
+    const [model, setModel] = useState('')
+
+    useEffect(() => {
+        const fetchModel = async () => {
+            const selectedModel = await getSelectedModelName()
+            setModel(selectedModel)
+        }
+        fetchModel()
+    }, [])
+
+    const definition = getInternalPrompt('chat-standalone')
+    const data: PromptDataType = {
+        textos: []
+    }
 
     const textChanged = (text) => {
         setMarkdown(text)
@@ -60,6 +76,9 @@ export default function Revison() {
                     data={{ textos: [{ numeroDoProcesso: '', descr: 'Voto', slug: 'voto', texto: markdown, sigilo: '0' }] }}
                     options={{ cacheControl: true }} config={promptConfig} dossierCode={undefined} />
             </>}
+            <div className="mt-5">
+                <Chat definition={definition} data={data} model={model} withTools={true} />
+            </div>
         </div>
     )
 }
