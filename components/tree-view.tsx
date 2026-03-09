@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronRight, faChevronDown, faSquare, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 
@@ -30,6 +30,20 @@ interface TreeNodeComponentProps {
   checkedNodes?: (string | number)[];
   renderLabel?: (node: TreeNode) => React.ReactNode;
 }
+
+const labelCollator = new Intl.Collator('pt-BR', {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+const sortTreeByLabel = (nodes: TreeNode[]): TreeNode[] => {
+  return [...nodes]
+    .sort((a, b) => labelCollator.compare(String(a.label ?? ''), String(b.label ?? '')))
+    .map((node) => ({
+      ...node,
+      children: node.children ? sortTreeByLabel(node.children) : node.children,
+    }));
+};
 
 const TreeNodeComponent: React.FC<TreeNodeComponentProps> = ({ node, level, onNodeClick, onCheckboxChange, onCheckboxChangeBulk, checkedNodes = [], renderLabel }) => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -182,7 +196,12 @@ export const TreeView: React.FC<TreeViewProps> = ({
   className = '',
   renderLabel,
 }) => {
-  if (!data || data.length === 0) {
+  const sortedData = useMemo(() => sortTreeByLabel(data || []), [data]);
+
+  console.log('Rendering TreeView with data:', data);
+
+  
+  if (!sortedData || sortedData.length === 0) {
     return (
       <div className={`tree-view ${className}`}>
         <p className="text-muted">Nenhum item para exibir</p>
@@ -192,7 +211,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
 
   return (
     <div className={`tree-view ${className}`}>
-      {data.map((node) => (
+      {sortedData.map((node) => (
         <TreeNodeComponent
           key={node.id}
           node={node}
