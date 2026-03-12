@@ -52,8 +52,8 @@ export default async function HomePage() {
         },
         {
             icon: faBalanceScale,
-            title: "Admissibilidade de Recursos",
-            description: "Analise a viabilidade de recursos extraordinários e especiais",
+            title: "Vice PresidentIA",
+            description: "Módulo para Vice-Presidências na APOIA",
             href: "/prompts?group=decisao-de-viabilidade",
             color: "text-library",
             betaOnly: true

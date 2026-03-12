@@ -148,8 +148,8 @@ export interface GrupoDeSinteseType {
 export const GrupoDeSinteseMap: Record<string, GrupoDeSinteseType> = {
     DECISAO_DE_VIABILIDADE: {
         slug: 'decisao-de-viabilidade',
-        titulo: 'Admissibilidade de Recursos',
-        descricao: 'Ferramentas para análise de viabilidade de recursos extraordinários e especiais',
+        titulo: 'Vice PresidentIA',
+        descricao: 'Módulo para Vice-Presidências na APOIA',
         icone: 'faBalanceScale',
         cor: 'text-info'
     },
@@ -568,7 +568,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         nome: 'Agravo Interno',
         padroes: [padraoAgravoInterno],
         produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_DE_TEMAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT],
-        // grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
+        grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
     },
     RESUMOS: {
         status: StatusDeLancamento.PUBLICO,
