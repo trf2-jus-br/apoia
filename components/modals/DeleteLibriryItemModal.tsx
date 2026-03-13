@@ -2,7 +2,7 @@ import { Button } from "react-bootstrap";
 import Modal from "react-bootstrap/esm/Modal";
 
 
-export function DeleteLibraryItemModal({ show, title, onClose, onConfirm }: { show: boolean, title: string, onClose: () => void, onConfirm: () => void }) {
+export function DeleteLibraryItemModal({ show, onClose, onConfirm }: { show: boolean, onClose: () => void, onConfirm: () => void }) {
   return (
     <Modal show={show} onHide={onClose}>
         <Modal.Header closeButton>

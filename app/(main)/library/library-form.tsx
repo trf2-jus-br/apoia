@@ -350,7 +350,6 @@ export default function LibraryForm({ record }: { record: any }) {
           )}
           <DeleteLibraryItemModal 
             show={showDeleteModal} 
-            title="Tem certeza que deseja excluir este item?" 
             onClose={() => setShowDeleteModal(false)} 
             onConfirm={handleConfirmDelete} 
           />
