@@ -209,6 +209,9 @@ async function GET_HANDLER(req: NextRequest, props: { params: Promise<{ id: stri
         triageItems = [triageItems[filterIndexRaw - 1]]
         suppressIndex = true
     }
+    if(triageItems.length === 0) {
+        suppressIndex = true
+    }
 
     // Build dynamic title for printing (browser uses document.title as suggested filename)
     const printTitle = (() => {
