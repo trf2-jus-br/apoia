@@ -11,6 +11,7 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
 import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
 import { useRouter } from 'next/navigation'
+import { DeleteLibraryItemModal } from '@/components/modals/DeleteLibriryItemModal'
 
 export default function LibraryForm({ record }: { record: any }) {
   const [data, setData] = useState<any>({ ...record })
@@ -26,6 +27,8 @@ export default function LibraryForm({ record }: { record: any }) {
   const [promptDefinition, setPromptDefinition] = useState<any>(null)
   const [selecting, setSelecting] = useState<{ pn: string, pieces: any[] } | null>(null)
   const [selectedPieceId, setSelectedPieceId] = useState<string>('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null)
   const isModel = data.kind === IALibraryKind.MODELO
   const isReadOnly = data.id && !data.is_mine
   const router = useRouter()
@@ -219,6 +222,22 @@ export default function LibraryForm({ record }: { record: any }) {
     }
   }
 
+  const handleConfirmDelete = async () => {
+    setPending(true)
+    try {
+      const { deleteLibraryAction } = await import('@/app/(main)/library/actions')
+      const formData = new FormData()
+      formData.set('id', String(data.id))
+      await deleteLibraryAction(formData)
+      router.push('/library')
+    } catch (error) {
+      console.error('Erro ao excluir:', error)
+      alert('Erro ao excluir o item')
+    } finally {
+      setPending(false)
+    }
+  }
+
   return (
     <div className="row">
       {isReadOnly && (
@@ -326,25 +345,15 @@ export default function LibraryForm({ record }: { record: any }) {
           )}
           <div className="col">
             <Button variant="outline-secondary" onClick={() => router.replace('/library')}>Cancelar</Button>
-            {data.id && data.is_mine && (<Button variant="outline-danger" className="ms-2" disabled={pending} onClick={async () => {
-              if (confirm('Tem certeza que deseja excluir este item?')) {
-                setPending(true)
-                try {
-                  const { deleteLibraryAction } = await import('@/app/(main)/library/actions')
-                  const formData = new FormData()
-                  formData.set('id', String(data.id))
-                  await deleteLibraryAction(formData)
-                  router.push('/library')
-                } catch (error) {
-                  console.error('Erro ao excluir:', error)
-                  alert('Erro ao excluir o item')
-                } finally {
-                  setPending(false)
-                }
-              }
-            }
-            }>Excluir</Button>
-            )}
+            {data.id && data.is_mine && (
+              <Button variant="outline-danger" className="ms-2" disabled={pending} onClick={() => setShowDeleteModal(true)}>Excluir</Button>
+          )}
+          <DeleteLibraryItemModal 
+            show={showDeleteModal} 
+            title="Tem certeza que deseja excluir este item?" 
+            onClose={() => setShowDeleteModal(false)} 
+            onConfirm={handleConfirmDelete} 
+          />
             {data.id && !data.is_mine && (
               <Button variant="outline-danger" className="ms-2" disabled={pending} onClick={async () => {
                 if (confirm('Deseja remover este item da sua biblioteca?')) {
