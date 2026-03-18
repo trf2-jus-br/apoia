@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
+import { Suspense, useEffect, useRef, useState, useMemo } from 'react'
 import { trackAIStart, trackAIComplete, trackAIError } from '@/lib/utils/ga'
 import EvaluationModal from './ai-evaluation'
 import { evaluate } from '../lib/ai/generate'
@@ -22,6 +23,8 @@ import { formatHtmlToEprocStandard } from '@/lib/utils/messaging-helper'
 import { highlightCitationsLongestMatch } from '@/lib/n-grams'
 import { addLinkToPieces } from '@/lib/ui/link-to-piece'
 import { DadosDoProcessoType } from '@/lib/proc/process-types'
+
+const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
 export const getColor = (text, errormsg) => {
     let color = 'info'
@@ -87,6 +90,8 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const [current, setCurrent] = useState('')
     const [complete, setComplete] = useState(false)
     const [errormsg, setErrormsg] = useState('')
+    const [isEditing, setIsEditing] = useState(false)
+    const [editableMarkdown, setEditableMarkdown] = useState('')
     const [show, setShow] = useState(false)
     const [evaluated, setEvaluated] = useState(false)
     const [visualizationId, setVisualizationId] = useState<number>(params.visualization)
@@ -95,6 +100,11 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const [copySuccess, setCopySuccess] = useState(false)
     const initialized = useRef(false)
     const contentRef = useRef<HTMLDivElement>(null);
+
+    const extractEditableMarkdown = (message: UIMessage, fallbackText: string): string => {
+        const textPart = message?.parts?.find((part: any) => part?.type === 'text' && typeof part?.text === 'string') as any
+        return fallbackText || textPart?.text || ''
+    }
 
     const reportError = (err: any, payload: any) => {
         if (err && typeof err === 'object' && 'message' in err && (err as Error).message === 'NEXT_REDIRECT') throw err
@@ -140,9 +150,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const handleShow = () => setShow(true)
 
     const handleCopy = () => {
-        console.log('Copying content to clipboard...')
         const prep = preprocess(processedText, params.definition, params.data, complete)
-        console.log('Preprocessed for copy:', prep)
         const html = formatHtmlToEprocStandard(prep.text)
         const markdown = html2md(prep.text)
         if (navigator.clipboard && navigator.clipboard.write) {
@@ -292,11 +300,30 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         setErrormsg('')
         setComplete(false)
         setEvaluated(false)
+        setIsEditing(false)
+        setEditableMarkdown('')
         try {
             fetchStream()
         } catch (e) {
             setErrormsg(e.message)
         }
+    }
+
+    const startEditing = () => {
+        const markdown = extractEditableMarkdown(currentMessage, current)
+        if (!markdown) return
+        setEditableMarkdown(markdown)
+        setIsEditing(true)
+    }
+
+    const cancelEditing = () => {
+        setEditableMarkdown('')
+        setIsEditing(false)
+    }
+
+    const saveEditing = () => {
+        setCurrent(editableMarkdown)
+        setIsEditing(false)
     }
 
     useEffect(() => {
@@ -308,6 +335,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     }, [])
 
     const color = getColor(current, errormsg)
+    const hasEditableMarkdown = Boolean(extractEditableMarkdown(currentMessage, current))
 
     let preprocessed = preprocess(current, params.definition, params.data, complete, visualizationId, params.diffSource)
 
@@ -355,24 +383,45 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                 <div className={`alert alert-${color} ai-content mb-0`}>
                     {color === 'warning' && <h1 className="mt-0">Rascunho</h1>}
                     {(complete || errormsg) && (
-                        <>
-                            <button className="btn btn-sm btn-transparent float-end d-print-none" onClick={() => { setCurrent(''); run() }}>
-                                <FontAwesomeIcon icon={faPenToSquare} />
-                            </button>
-                            <button
-                                className={`btn btn-sm btn-transparent float-end d-print-none }`}
-                                onClick={() => { handleCopy() }}
+                        <div className="d-flex justify-content-end gap-1 mb-2 d-print-none" style={{ position: 'relative', zIndex: 2 }}>
+                            {!isEditing && <button
+                                type="button"
+                                className="btn btn-sm btn-transparent"
+                                onClick={startEditing}
+                                disabled={!hasEditableMarkdown}
+                                title={!hasEditableMarkdown ? 'Sem texto disponível para edição' : 'Editar conteúdo'}
+                                style={{ cursor: 'pointer' }}
                             >
-                                <FontAwesomeIcon icon={copySuccess ? faCheck : faCopy} />
-                            </button>
-                            {evaluated
-                                ? <button className="btn btn-sm btn-transparent float-end d-print-none" onClick={() => { setCurrent(''); run() }}><FontAwesomeIcon icon={faRefresh} /></button>
-                                : <button className="btn btn-sm btn-transparent float-end d-print-none" onClick={() => { handleShow() }}><FontAwesomeIcon icon={faThumbsDown} /></button>}
-                        </>
+                                <FontAwesomeIcon icon={faPenToSquare} />
+                            </button>}
+                            {!isEditing &&
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-transparent"
+                                    onClick={() => { handleCopy() }}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <FontAwesomeIcon icon={copySuccess ? faCheck : faCopy} />
+                                </button>
+                            }
+                            {!isEditing && (evaluated
+                                ? <button type="button" className="btn btn-sm btn-transparent" style={{ cursor: 'pointer' }} onClick={() => { setCurrent(''); run() }}><FontAwesomeIcon icon={faRefresh} /></button>
+                                : <button type="button" className="btn btn-sm btn-transparent" style={{ cursor: 'pointer' }} onClick={() => { handleShow() }}><FontAwesomeIcon icon={faThumbsDown} /></button>)}
+                        </div>
                     )}
                     {errormsg
                         ? <ErrorMessage message={errormsg} />
-                        : <div ref={contentRef} onCopy={handleCopySelected} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
+                        : isEditing
+                            ? <Suspense fallback={null}>
+                                <EditorComp markdown={editableMarkdown} onChange={setEditableMarkdown} />
+                            </Suspense>
+                            : <div ref={contentRef} onCopy={handleCopySelected} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
+                    {isEditing &&
+                                <div className='mt-2 gap-2 d-flex justify-content-end'>
+                                    <button type="button" className="btn btn-sm btn-success" style={{ cursor: 'pointer' }} onClick={saveEditing}>Salvar</button>
+                                    <button type="button" className="btn btn-sm btn-outline-secondary" style={{ cursor: 'pointer' }} onClick={cancelEditing}>Cancelar</button>
+                                </div>
+                            }
                     <EvaluationModal show={show} onClose={handleClose} />
                 </div>
                 {complete && <MessageFooter message={currentMessage} />}
