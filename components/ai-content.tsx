@@ -101,6 +101,8 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const initialized = useRef(false)
     const contentRef = useRef<HTMLDivElement>(null);
 
+    const isMinutaDeVotoRoute = typeof window !== 'undefined' && window.location.href.includes('?prompt=minuta-de-voto')
+
     const extractEditableMarkdown = (message: UIMessage, fallbackText: string): string => {
         const textPart = message?.parts?.find((part: any) => part?.type === 'text' && typeof part?.text === 'string') as any
         return fallbackText || textPart?.text || ''
@@ -384,7 +386,8 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     {color === 'warning' && <h1 className="mt-0">Rascunho</h1>}
                     {(complete || errormsg) && (
                         <div className="d-flex justify-content-end gap-1 mb-2 d-print-none" style={{ position: 'relative', zIndex: 2 }}>
-                            {!isEditing && <button
+                            {!isEditing && isMinutaDeVotoRoute && 
+                            <button
                                 type="button"
                                 className="btn btn-sm btn-transparent"
                                 onClick={startEditing}
@@ -394,7 +397,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                             >
                                 <FontAwesomeIcon icon={faPenToSquare} />
                             </button>}
-                            {!isEditing &&
+                            {!isEditing && 
                                 <button
                                     type="button"
                                     className="btn btn-sm btn-transparent"
@@ -416,7 +419,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                                 <EditorComp markdown={editableMarkdown} onChange={setEditableMarkdown} />
                             </Suspense>
                             : <div ref={contentRef} onCopy={handleCopySelected} dangerouslySetInnerHTML={{ __html: spinner(processedText, complete) }} />}
-                    {isEditing &&
+                    {isEditing && isMinutaDeVotoRoute &&
                                 <div className='mt-2 gap-2 d-flex justify-content-end'>
                                     <button type="button" className="btn btn-sm btn-success" style={{ cursor: 'pointer' }} onClick={saveEditing}>Salvar</button>
                                     <button type="button" className="btn btn-sm btn-outline-secondary" style={{ cursor: 'pointer' }} onClick={cancelEditing}>Cancelar</button>
