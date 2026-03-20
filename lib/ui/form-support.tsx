@@ -5,8 +5,8 @@ import ReactTextareaAutosize from 'react-textarea-autosize'
 import { z, ZodTypeAny, ZodError } from 'zod';
 import _ from 'lodash'
 import { Dispatch, useState, useCallback, useRef, useEffect } from 'react';
-// import dynamic from 'next/dynamic'
-import Editor from '../../components/EditorComponent';
+import dynamic from 'next/dynamic'
+// import Editor from '../../components/EditorComponent';
 
 type FieldErrorProps = {
     formState: FormState
@@ -394,7 +394,7 @@ export class FormHelper {
     }
 
     public Markdown = ({ label, name, width, maxRows, explanation }: { label: string, name: string, width?: number | string, maxRows?: number, explanation?: string }) => {
-        // const EditorComp = dynamic(() => import('../../components/EditorComponent'), { ssr: false })
+        const Editor = dynamic(() => import('../../components/EditorComponent'), { ssr: false })
 
         return (
             <Form.Group className={this.colClass(width)} controlId={name}>
