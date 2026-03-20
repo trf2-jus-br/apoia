@@ -24,6 +24,54 @@ type AvailableModelsResponse = {
     availableModels?: string[]
 }
 
+type PrefsCookie = {
+    model?: string
+    env?: Record<string, string>
+}
+
+function getCookieValue(name: string): string | undefined {
+    if (typeof document === 'undefined') return undefined
+
+    const prefix = `${name}=`
+    const parts = document.cookie.split(';')
+    for (const part of parts) {
+        const cookie = part.trim()
+        if (cookie.startsWith(prefix)) {
+            return cookie.slice(prefix.length)
+        }
+    }
+
+    return undefined
+}
+
+function readPrefsCookie(): PrefsCookie {
+    try {
+        const cookieValue = getCookieValue('prefs')
+        if (!cookieValue) return { env: {} }
+
+        const decoded = atob(cookieValue)
+        const parsed = JSON.parse(decoded) as PrefsCookie
+        return {
+            model: parsed?.model,
+            env: parsed?.env || {},
+        }
+    } catch {
+        return { env: {} }
+    }
+}
+
+function persistSelectedModel(model: string) {
+    const prefs = readPrefsCookie()
+    const updatedPrefs: PrefsCookie = {
+        ...prefs,
+        model,
+        env: prefs.env || {},
+    }
+
+    const cookie = btoa(JSON.stringify(updatedPrefs))
+    document.cookie = `prefs=${cookie}; path=/;`
+}
+
 export function getAvailableApiKeys(params?: {
     env?: Record<string, string | undefined>
     availableApiKeys?: string[]
@@ -87,11 +135,17 @@ export function AiModelSelect({
     }, [availableApiKeys, availableModels, statusDeLancamento])
 
     const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
-        setValue(event.target.value)
+        const selectedModel = event.target.value
+        setValue(selectedModel)
+        persistSelectedModel(selectedModel)
     }
 
     return (
-        <Form.Group className="d-flex flex-column flex-md-row gap-2" controlId={name} style={{ minWidth: '300px' }}>
+        <Form.Group 
+            className="d-flex flex-column flex-md-row gap-2" 
+            controlId={name} 
+            style={{ minWidth: '300px', height: 'min-content', marginBottom: 'auto', marginTop: 'auto' }}
+        >
             <Form.Label style={{ whiteSpace: 'nowrap', marginTop: 'auto', marginBottom: 'auto' }}>{label}</Form.Label>
             <Form.Select name={name} value={value} onChange={handleChange}>
                 <option value="">{placeholder}</option>
