@@ -16,6 +16,7 @@ import { slugify } from '@/lib/utils/utils'
 import Print from '@/components/slots/print'
 import { formatBytes, formatDuration } from '@/lib/audio/audio-utils'
 import Chat from '@/components/slots/chat'
+import { AiModelSelect } from '@/components/AiModelSelect'
 
 // Formatos de áudio e vídeo suportados
 const SUPPORTED_AUDIO_VIDEO_TYPES = [
@@ -235,7 +236,10 @@ export default function TranscriptionPage({ model }: { model: string }) {
 
     return (
         <div id="printDiv">
-            <h2 className="mt-3">Degravação de Áudio/Vídeo</h2>
+            <div className='d-flex flex-column justify-content-between mt-3 flex-md-row'>
+                <h2>Degravação de Áudio/Vídeo</h2>
+                <AiModelSelect />
+            </div>
 
             {/* Verificação de suporte do modelo */}
             {model && !modelSupportsFiles && (
