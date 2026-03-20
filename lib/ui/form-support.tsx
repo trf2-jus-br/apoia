@@ -352,7 +352,13 @@ export class FormHelper {
         return (
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
-                <Form.Control name={name} type="text" value={this.get(name)} onChange={e => { this.set(name, e.target.value); validator && validator(e.target.value, name) }} placeholder="" key={name} />
+                <Form.Control 
+                    name={name} 
+                    type="text" 
+                    value={this.get(name) ?? ''} 
+                    onChange={e => { this.set(name, e.target.value); validator && validator(e.target.value, name) }} 
+                    placeholder="" 
+                    key={name} />
                 <FieldError formState={this.formState} name={name} />
                 {explanation && <Form.Text className="text-body-tertiary">{explanation}</Form.Text>}
             </Form.Group>
