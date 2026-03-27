@@ -318,6 +318,22 @@ export const padraoViabilidadeDeRecursoEspecial = [
     }),
 ]
 
+export const padraoAgravoInterno = [
+    ANY(),
+    ANY({
+        capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE('Agravo Interno'),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.AGRAVO_INTERNO),
+    ANY({
+        capture: [T.CONTRARRAZOES_AO_RECURSO_ESPECIAL], greedy: true, except: pecasQueFinalizamFases
+    }),
+]
+
 export const padraoAgravoAberta = [
     ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
     EXACT(T.DESPACHO_DECISAO),
@@ -545,6 +561,14 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         padroes: [padraoViabilidadeDeRecursoEspecial],
         produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_DE_TEMAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT],
         grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
+    },
+    AGRAVO_INTERNO: {
+        status: StatusDeLancamento.EM_DESENVOLVIMENTO,
+        sort: 3,
+        nome: 'Agravo Interno',
+        padroes: [padraoAgravoInterno],
+        produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_DE_TEMAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT],
+        // grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
     },
     RESUMOS: {
         status: StatusDeLancamento.PUBLICO,
