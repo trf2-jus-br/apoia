@@ -4,6 +4,7 @@ uuid: b0502fa1-0e6f-4c9b-87f5-cc0d57280b19
 name: Chat
 sort: 7
 piece_strategy: MAIS_RELEVANTES
+target: CHAT
 context: {}
 
 # SYSTEM PROMPT

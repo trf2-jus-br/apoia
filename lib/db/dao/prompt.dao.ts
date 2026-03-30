@@ -406,6 +406,7 @@ export class PromptDao {
                     .orWhere(function () {
                         if (moderator) {
                             this.orWhere('ia_prompt.share', 'EM_ANALISE')
+                            this.orWhere('ia_prompt.share', 'INTERNO')
                         }
                     })
                     .orWhere(function () {
@@ -461,6 +462,7 @@ export class PromptDao {
                     .orWhere(function () {
                         if (moderator) {
                             this.orWhere('ia_prompt.share', 'EM_ANALISE')
+                            this.orWhere('ia_prompt.share', 'INTERNO')
                         }
                     })
             })

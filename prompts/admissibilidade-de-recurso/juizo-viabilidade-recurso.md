@@ -1,6 +1,14 @@
 # METADATA
 
 uuid: 64182d4d-da22-4135-8150-3379386db58a
+name: Juízo de Viabilidade de Recurso
+sort: 3
+share: BETA_TESTE
+piece_strategy: VIABILIDADE_RECURSO_ESPECIAL
+grupo:
+  slug: decisao-de-viabilidade
+  titulo: Admissibilidade de Recursos
+
 
 # SYSTEM PROMPT
 

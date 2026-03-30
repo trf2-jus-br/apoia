@@ -39,7 +39,7 @@
 - `uuid` identifica o prompt de forma estável entre versões; preservar ao editar (buscar do registro existente via `base_id`)
 - `is_latest = 1` marca a versão corrente; versões anteriores têm `is_latest = 0`
 - `origin` indica de onde veio o prompt sincronizado (ex: `local:./prompts`, `github:...`); `NULL` = criado pelo usuário
-- `share` controla visibilidade: PADRAO, PUBLICO, BETA_TESTE, EM_ANALISE, NAO_LISTADO, PRIVADO
+- `share` controla visibilidade: PADRAO, PUBLICO, BETA_TESTE, EM_ANALISE, NAO_LISTADO, PRIVADO, INTERNO
 - Prompts com nome começando com `^` são internos/sistema e devem ser ocultos nas listagens de usuário (filtro `name NOT LIKE '^%'`)
 - `category` (antigo `kind`) é nullable e atualmente setado como NULL
 
