@@ -35,7 +35,7 @@ Para cada pedido identificado, preencha os campos seguintes.
 - Descreva de forma concisa o pedido formulado no recurso (ex.: "Conhecer e dar provimento ao recurso para reformar a decisão recorrida").
 
 #### Tx_Trecho_Comprobatorio - Trecho Comprobatório
-- Cópia exata do trecho do texto onde o pedido está formulado.
+- Cópia do trecho do texto onde o pedido está formulado. Atenção, o texto comprobatório normalmente vem com indicações incorretas de quebras de linha. Leia o texto e entenda onde deve haver quebra de parágrafo e marque apenas as quebras de parágrafo com \n\n. As demais quebras de linha devem ser omitidas.
 
 #### Lo_PedidoDeEfeitoSuspensivo
 - Indique se há pedido de atribuição de efeito suspensivo ao recurso.
@@ -47,7 +47,8 @@ Para cada fundamento jurídico apresentado para embasar o pedido, preencha os ca
 - Descrição concisa do argumento.
 
 ###### Tx_Trecho_Comprobatorio - Trecho Comprobatório
-- Cópia exata do trecho do texto onde o argumento está formulado.
+- Cópia do trecho do texto onde o argumento está formulado. Atenção, o texto comprobatório normalmente vem com indicações incorretas de quebras de linha. Leia o texto e entenda onde deve haver quebra de parágrafo e marque apenas as quebras de parágrafo com \n\n. As demais quebras de linha devem ser omitidas.
+
 ## Tarefa Principal
 
 Identifique os pedidos realizados na peça recursal abaixo:
@@ -58,12 +59,12 @@ Identifique os pedidos realizados na peça recursal abaixo:
 # FORMAT
 {% for d in Pedidos %}{% set outerIndex = loop.index %}**Pedido {= loop.index =}:** {% if d.Lo_PedidoDeEfeitoSuspensivo %}[C/ EFEITO SUSPENSIVO] {% endif %}{= d.Tx_Texto =}
 
-> {= d.Tx_Trecho_Comprobatorio =}
+> {= d.Tx_Trecho_Comprobatorio | blockquoteLines =}
 
 Argumentos:{% for a in d.Argumentos %}
 {= loop.index =}. {= a.Tx_Texto =}
 
-> {= a.Tx_Trecho_Comprobatorio =}
+> {= a.Tx_Trecho_Comprobatorio | blockquoteLines =}
 
 {% endfor %}
     
