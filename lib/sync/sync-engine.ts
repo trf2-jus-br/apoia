@@ -236,7 +236,7 @@ async function syncSinglePrompt(
     if (resolvedWorkflowObj) {
         newContent.workflow = resolvedWorkflowObj
     }
-    const slug = slugify(parsed.name) || parsed.slug
+    const slug = parsed.slug || slugify(parsed.name)
     const contentJson = JSON.stringify(newContent)
 
     if (!existing) {

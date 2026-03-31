@@ -17,7 +17,7 @@ export type PromptVariableType = {
 
 export const isInformationExtractionPrompt = (prompt: string): boolean => {
     if (!prompt) return false
-    return prompt.includes(INFORMATION_EXTRACTION_TITLE)
+    return prompt.includes(INFORMATION_EXTRACTION_TITLE) && !prompt.includes(INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE)
 }
 
 // Função para extrair a estrutura de variáveis do markdown

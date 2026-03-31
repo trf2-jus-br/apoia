@@ -29,7 +29,7 @@ Você receberá, também, um documento marcado como <pedidos-do-recurso-e-argume
 Você receberá, também, um documento marcado como <pesquisa-de-temas> que contém a análise de viabilidade jurídica do recurso com base em teses e súmulas vinculantes. Você deverá trascrever os dados dessa análise nos campos apropriados da resposta.
 
 
-## FIELDS
+## FIELDS READONLY
 
 ### proximoPrompt - Próximo Prompt
 - Se for um Recurso Extraordinário (matéria constitucional/STF), preencha com "DECISAO_ADMISSIBILIDADE_RECURSO_EXTRAORDINARIO".

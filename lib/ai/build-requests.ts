@@ -86,8 +86,8 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
                 textos: pecasComConteudo,
                 documentosDaBiblioteca
             },
-            produto: slugify(prompt.name),
-            promptSlug: slugify(prompt.name),
+            produto: prompt.slug || slugify(prompt.name),
+            promptSlug: prompt.slug || slugify(prompt.name),
             internalPrompt: definition,
             title: prompt.name,
             plugins: []
