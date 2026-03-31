@@ -23,7 +23,7 @@ Leia atentamente o JSON abaixo. Ele contém uma lista de códigos de assunto, de
 - Atenção: agrupe apenas assuntos que representam exatamente o mesmo tema.
 - Caso existam assuntos com quantidades muito pequenas de processos, você pode agrupá-los em um principal mais genérico, ou até mesmo criar um principal chamado "Outros".
 
-## Instruções para o Preenchimento do JSON de Resposta
+## FIELDS
 
 ### Principais[]
 - Liste os assuntos principais que você identificou.

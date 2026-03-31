@@ -26,7 +26,7 @@ Comece lendo atentamente o conteúdo dos documentos fornecidos. Estes documentos
 - Se houver outros laudos do INSS, serão considerados laudos complementares.
 - Os laudos complementares devem ser incluídos na análise como esclarecimentos, correções ou complementação do laudo pericial original.
 
-## Instruções para o Preenchimento do JSON de Resposta
+## FIELDS
 Conforme visto acima, o JSON é composto de alguns objetos principais, cada um com suas propriedades.
 Descreverei, abaixo, informações gerais sobre cada um desses objetos principais e depois como informar
 cada uma de suas propriedades.

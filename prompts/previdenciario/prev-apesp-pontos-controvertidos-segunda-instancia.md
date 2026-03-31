@@ -113,7 +113,7 @@ As regras abaixo visam reduzir ambiguidade, padronizar a saída e evitar alucina
 Cumpridas as regras acima, prosseguir com as seções específicas.
 
 
-## Instruções para o Preenchimento do JSON de Resposta
+## FIELDS
 
 ### Tx_Nome_Da_Parte_Autora - Nome da Parte Autora
 - Nome do segurado (pessoa física) conforme consta na petição inicial ou na sentença.

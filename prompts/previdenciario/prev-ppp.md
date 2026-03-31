@@ -71,7 +71,7 @@ As regras abaixo visam reduzir ambiguidade, padronizar a saída e evitar alucina
 Cumpridas as regras acima, prosseguir com as seções específicas.
 
 
-## Instruções para o Preenchimento do JSON de Resposta
+## FIELDS
 
 ### Docs_Analisados - Documentos Analisados
 

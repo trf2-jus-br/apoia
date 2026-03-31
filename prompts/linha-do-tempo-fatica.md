@@ -28,7 +28,7 @@ Extrair uma lista de eventos fáticos cronológicos a partir do texto fornecido,
 4. **Formatação de Data:** Sempre converta datas DD/MM/YYYY. Se a data for parcial use XX no lugar do dia ou do mês (ex: "em janeiro de 2023"), use "XX/01/2023".
 5. **Entidades:** Identifique quem realizou a ação (Autor, Réu, Juízo, Terceiro).
 
-## Instruções para o Preenchimento do JSON de Resposta
+## FIELDS
 
 ### Tx_Analise_Preliminat - Análise Preliminat
 - Breve raciocínio sobre a coerência das datas encontradas (máx 1 frase).

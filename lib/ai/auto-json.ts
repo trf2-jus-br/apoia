@@ -1,8 +1,8 @@
 import { removeAccents } from "../utils/utils"
 import auto_json from './auto-json.md'
 
-export const INFORMATION_EXTRACTION_TITLE = '## Instruções para o Preenchimento do JSON de Resposta'
-export const INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE = '## Preenchimento do JSON de Resposta'
+export const INFORMATION_EXTRACTION_TITLE = '## FIELDS'
+export const INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE = '## FIELDS READONLY'
 
 // Tipo para representar as variáveis do prompt
 export type PromptVariableType = {

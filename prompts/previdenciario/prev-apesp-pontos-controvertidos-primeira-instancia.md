@@ -30,7 +30,7 @@ Extrair informações da petição inicial (entre os marcadores <peticao-inicial
 5) Saída padronizada: todos os blocos devem vir entre marcadores próprios para facilitar parsing.
 
 
-## Instruções para o Preenchimento do JSON de Resposta
+## FIELDS
 
 ### Periodos[] - Períodos da Petição Inicial
 - Gere um bloco para cada período alegado na petição inicial. A ordem dos blocos deve ser cronológica em relação à data inicial do período indicado no bloco.
