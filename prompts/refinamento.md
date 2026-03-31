@@ -3,7 +3,7 @@
 uuid: 10729660-a160-4634-8ba3-bc2511da2a7f
 name: Refinamento de Texto
 sort: 1001
-target: REFINAMENTO
+target: refinamento
 context:
   action: minuta_editar
 

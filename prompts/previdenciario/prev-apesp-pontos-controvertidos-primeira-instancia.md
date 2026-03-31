@@ -3,8 +3,8 @@
 uuid: cd044383-6e15-4569-8275-33ecb843927f
 name: Relatório de Aposentadoria Especial - Primeira Instância
 sort: 1000
-piece_strategy: MAIS_RELEVANTES_PRIMEIRA_INSTANCIA
-instance: [PRIMEIRO_GRAU]
+piece_strategy: mais-relevantes-primeira-instancia
+instance: [primeiro-grau]
 successors:
   - path: chat
 

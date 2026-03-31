@@ -3,9 +3,9 @@
 uuid: b01fed52-428c-47b1-aa7b-228be3b63ba4
 name: Relatório de Aposentadoria Especial - Segunda Instância
 sort: 1000
-piece_strategy: MAIS_RELEVANTES_SEGUNDA_INSTANCIA
+piece_strategy: mais-relevantes-segunda-instancia
 author: Caroline Tauk/JFRJ
-instance: [SEGUNDO_GRAU]
+instance: [segundo-grau]
 successors:
   - path: pedidos-fundamentacoes-e-dispositivos
   - path: voto

@@ -3,8 +3,8 @@
 uuid: 0a69eaf2-7622-4852-be6f-20b12e06bad2
 name: Sentenca BI - Laudo Desfavoravel
 sort: 1000
-share: BETA_TESTE
-piece_strategy: CONHECIMENTO
+share: beta-teste
+piece_strategy: conhecimento
 successors:
   - path: chat
 

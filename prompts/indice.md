@@ -3,8 +3,8 @@
 uuid: d3157770-3bd3-47d7-9fee-b27dedadd44e
 name: Índice
 sort: 8
-share: BETA_TESTE
-piece_strategy: TODAS
+share: beta-teste
+piece_strategy: todas
 successors:
   - path: chat
 

@@ -3,8 +3,8 @@
 uuid: acfa3a3c-fc1f-4952-ac6b-0e2766c5c1e5
 name: Litigância Predatória
 sort: 5
-share: BETA_TESTE
-piece_strategy: PETICAO_INICIAL_E_ANEXOS
+share: beta-teste
+piece_strategy: peticao-inicial-e-anexos
 successors:
   - path: chat
 

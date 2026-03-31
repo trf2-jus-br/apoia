@@ -3,7 +3,7 @@
 uuid: ee53509d-777b-4a88-8277-ebf240ba04da
 name: Relatorio de Apelacao e Triagem
 sort: 1
-piece_strategy: APELACAO_E_TRIAGEM
+piece_strategy: apelacao-e-triagem
 batch_report: true
 context:
   action: processo_selecionar

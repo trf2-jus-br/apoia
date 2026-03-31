@@ -1,7 +1,7 @@
 # METADATA
 
 uuid: 1f1cc900-6d7d-4ce1-b35a-c3a13dde0d24
-share: OCULTO
+share: oculto
 
 # SYSTEM PROMPT
 

@@ -3,8 +3,8 @@
 uuid: 8c8bac70-1aaa-46fc-90fc-328b19906307
 name: Voto
 sort: 3
-piece_strategy: MAIS_RELEVANTES_SEGUNDA_INSTANCIA
-instance: [SEGUNDO_GRAU]
+piece_strategy: mais-relevantes-segunda-instancia
+instance: [segundo-grau]
 context:
   action: minuta_editar
   instance: SEGUNDO_GRAU

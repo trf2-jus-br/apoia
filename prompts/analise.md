@@ -3,7 +3,7 @@
 uuid: 9c8f98fb-0679-4f2a-9722-91c2e1b35600
 name: Resumos e analise
 sort: 2
-piece_strategy: MAIS_RELEVANTES
+piece_strategy: mais-relevantes
 context:
   action: processo_selecionar
 successors:

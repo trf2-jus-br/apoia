@@ -3,8 +3,8 @@
 uuid: f4104c9c-9da9-4863-8016-3b83bffe5410
 name: Analise de Laudo Pericial BI
 sort: 1000
-share: BETA_TESTE
-piece_strategy: CONHECIMENTO
+share: beta-teste
+piece_strategy: conhecimento
 successors:
   - path: chat
 

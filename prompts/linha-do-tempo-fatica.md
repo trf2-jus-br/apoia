@@ -4,7 +4,7 @@ uuid: c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f
 name: Linha do Tempo Fatica
 author: Renato Crivano/TRF2
 sort: 5
-piece_strategy: PETICAO_INICIAL
+piece_strategy: peticao-inicial
 context:
   action: processo_selecionar
 successors:

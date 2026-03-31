@@ -3,7 +3,7 @@
 uuid: 610f2ed8-c775-4b63-8416-1b479c249b31
 name: Chat Padrão
 sort: 7
-target: CHAT
+target: chat
 context: {}
 
 # SYSTEM PROMPT
