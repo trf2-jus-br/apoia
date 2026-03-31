@@ -6,7 +6,7 @@ author: Renato Crivano/TRF2
 sort: 5
 piece_strategy: peticao-inicial
 context:
-  action: processo_selecionar
+  action: processo-selecionar
 successors:
   - path: chat
 

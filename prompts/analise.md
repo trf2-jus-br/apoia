@@ -5,7 +5,7 @@ name: Resumos e analise
 sort: 2
 piece_strategy: mais-relevantes
 context:
-  action: processo_selecionar
+  action: processo-selecionar
 successors:
   - path: chat
 

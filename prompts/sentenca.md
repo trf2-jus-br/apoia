@@ -5,8 +5,8 @@ name: Sentença
 piece_strategy: mais-relevantes-primeira-instancia
 instance: [primeiro-grau]
 context:
-  action: minuta_editar
-  instance: PRIMEIRO_GRAU
+  action: minuta-editar
+  instance: primeiro-grau
 sort: 3
 predecessors:
   - path: pedidos-fundamentacoes-e-dispositivos

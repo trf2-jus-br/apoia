@@ -127,6 +127,15 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
         const resolved = resolveEnumArray(metadata.matter, matterLookup, 'matter', relativePath)
         if (resolved) metadata.matter = resolved
     }
+    if (metadata.context != null && typeof metadata.context === 'object') {
+        if (metadata.context.instance != null) {
+            const resolved = resolveEnum(metadata.context.instance, instanceLookup, 'context.instance', relativePath)
+            if (resolved) metadata.context.instance = resolved
+        }
+        if (metadata.context.action != null) {
+            metadata.context.action = String(metadata.context.action).replaceAll('-', '_')
+        }
+    }
 
     // Parse workflow predecessors/successors from METADATA
     const predecessors = parseWorkflowRefs(metadata.predecessors)

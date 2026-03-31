@@ -6,8 +6,8 @@ sort: 1
 piece_strategy: apelacao-e-triagem
 batch_report: true
 context:
-  action: processo_selecionar
-  instance: SEGUNDO_GRAU
+  action: processo-selecionar
+  instance: segundo-grau
 successors:
   - path: chat
 

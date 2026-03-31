@@ -5,7 +5,7 @@ name: Revisao Ortografica
 sort: 1001
 target: refinamento
 context:
-  action: minuta_editar
+  action: minuta-editar
 successors:
   - path: revisao
 

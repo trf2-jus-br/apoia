@@ -6,8 +6,8 @@ sort: 3
 piece_strategy: mais-relevantes-segunda-instancia
 instance: [segundo-grau]
 context:
-  action: minuta_editar
-  instance: SEGUNDO_GRAU
+  action: minuta-editar
+  instance: segundo-grau
 predecessors:
   - path: pedidos-fundamentacoes-e-dispositivos
 successors:
