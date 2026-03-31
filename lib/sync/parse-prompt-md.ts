@@ -6,6 +6,56 @@
  */
 import yamlps from 'js-yaml'
 import { ParsedPrompt, WorkflowRef } from './types'
+import { slugify } from '../utils/utils'
+import { Share, Target, Scope, Instance, Matter } from '../proc/process-types'
+import { PieceStrategy } from '../proc/combinacoes'
+
+/**
+ * Build a lookup map that accepts both the canonical form (e.g. 'MAIS_RELEVANTES')
+ * and the slugified form (e.g. 'mais-relevantes'), both resolving to the canonical.
+ * This makes enum fields in markdown frontmatter case/format-insensitive.
+ */
+function buildEnumLookup(enumObj: Record<string, any>): Map<string, string> {
+    const map = new Map<string, string>()
+    for (const key of Object.keys(enumObj)) {
+        map.set(key, key)          // canonical → canonical  (MAIS_RELEVANTES)
+        map.set(slugify(key), key) // slug → canonical       (mais-relevantes)
+    }
+    return map
+}
+
+const shareLookup = buildEnumLookup(Share)
+const targetLookup = buildEnumLookup(Target)
+const scopeLookup = buildEnumLookup(Scope)
+const instanceLookup = buildEnumLookup(Instance)
+const matterLookup = buildEnumLookup(Matter)
+const pieceStrategyLookup = buildEnumLookup(PieceStrategy)
+
+/**
+ * Resolve a single string value against an enum lookup map.
+ * Accepts canonical or slugified form. Logs a warning and returns null if unknown.
+ */
+function resolveEnum(value: any, lookup: Map<string, string>, fieldName: string, source: string): string | null {
+    if (value == null) return null
+    const str = String(value)
+    const resolved = lookup.get(str) ?? lookup.get(str.toLowerCase())
+    if (!resolved) {
+        console.warn(`[sync] '${source}': valor inválido '${str}' para o campo '${fieldName}'`)
+        return null
+    }
+    return resolved
+}
+
+/**
+ * Resolve an array of enum values. Filters out any unrecognized entries.
+ */
+function resolveEnumArray(values: any, lookup: Map<string, string>, fieldName: string, source: string): string[] | null {
+    if (!Array.isArray(values)) return null
+    const resolved = values
+        .map((v: any) => resolveEnum(v, lookup, fieldName, source))
+        .filter((v): v is string => v !== null)
+    return resolved.length > 0 ? resolved : null
+}
 
 /**
  * Regex that splits a prompt .md into its sections.
@@ -50,6 +100,32 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
     if (!uuid) {
         // Files without uuid in METADATA are skipped (e.g., salvaguardas.md, sistema.md)
         return null
+    }
+
+    // Normalize and validate enum fields — accept canonical (OCULTO) or slug (oculto) form
+    if (metadata.share != null) {
+        const resolved = resolveEnum(metadata.share, shareLookup, 'share', relativePath)
+        if (resolved) metadata.share = resolved
+    }
+    if (metadata.target != null) {
+        const resolved = resolveEnum(metadata.target, targetLookup, 'target', relativePath)
+        if (resolved) metadata.target = resolved
+    }
+    if (metadata.piece_strategy != null) {
+        const resolved = resolveEnum(metadata.piece_strategy, pieceStrategyLookup, 'piece_strategy', relativePath)
+        if (resolved) metadata.piece_strategy = resolved
+    }
+    if (metadata.scope != null) {
+        const resolved = resolveEnumArray(metadata.scope, scopeLookup, 'scope', relativePath)
+        if (resolved) metadata.scope = resolved
+    }
+    if (metadata.instance != null) {
+        const resolved = resolveEnumArray(metadata.instance, instanceLookup, 'instance', relativePath)
+        if (resolved) metadata.instance = resolved
+    }
+    if (metadata.matter != null) {
+        const resolved = resolveEnumArray(metadata.matter, matterLookup, 'matter', relativePath)
+        if (resolved) metadata.matter = resolved
     }
 
     // Parse workflow predecessors/successors from METADATA

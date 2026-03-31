@@ -103,6 +103,7 @@ const TargetArray = [
     { id: 1, name: 'PROCESSO', descr: 'Peças de Processo' },
     { id: 2, name: 'TEXTO', descr: 'Editor de Texto' },
     { id: 3, name: 'REFINAMENTO', descr: 'Refinamento de Texto' },
+    { id: 4, name: 'CHAT', descr: 'Chat' },
 ]
 export type TargetValueType = EnumOfObjectsValueType & { descr: string }
 
