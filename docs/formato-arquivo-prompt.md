@@ -484,6 +484,145 @@ As seguintes funções ficam disponíveis no contexto do template:
 
 ---
 
+## Seção `## FIELDS` e `## FIELDS READONLY` _(opcional)_
+
+O recurso **auto-json** permite definir a estrutura dos campos de extração diretamente no corpo do `# PROMPT`, usando headings Markdown como definição de schema. O sistema lê esses headings, gera automaticamente o `# JSON SCHEMA` correspondente e injeta o boilerplate de instruções de preenchimento para o modelo.
+
+O resultado é que o autor do prompt escreve apenas uma vez — as descrições dos campos servem simultaneamente como instrução para o modelo e como definição do schema JSON.
+
+**Diferença entre os dois títulos:**
+
+| Título | Comportamento |
+|--------|---------------|
+| `## FIELDS` | Após o modelo retornar o JSON, a interface exibe os dados em um formulário **editável** — o usuário pode corrigir os valores antes de prosseguir |
+| `## FIELDS READONLY` | Os dados extraídos são exibidos mas **não editáveis** pelo usuário |
+
+### Estrutura dos headings
+
+Os headings de nível H3 a H6 abaixo do marcador definem a hierarquia do JSON. O nível hierárquico determina o tipo:
+
+| Nível | Tipo inferido | Exemplo |
+|-------|--------------|---------|
+| H3–H5 sem `[]` | Objeto aninhado | `### Endereco` |
+| H3–H5 com `[]` | Array de objetos | `### Itens[]` |
+| H6 | Campo primitivo | `###### Tx_Nome` |
+
+O tipo primitivo de cada campo H6 é inferido pelo **prefixo do nome**:
+
+| Prefixo | Tipo | Formato |
+|---------|------|---------|
+| `Tx_` | string curta | texto livre (máx. 300 caracteres) |
+| `Tg_` | string longa | texto livre, múltiplas linhas |
+| `Dt_` | date (string) | `dd/mm/yyyy` |
+| `Ma_` | string | mês/ano `mm/aaaa` |
+| `Nr_` | number | número |
+| `Lo_` | boolean | `true` / `false` |
+| `Ev_` | string | número de evento processual |
+| (outros) | string | inferido por palavras como "texto", "resumo" |
+
+O texto em itálico após o traço no nome do heading (`### PPP[] - Perfis Profissiográficos`) vira o rótulo de exibição; o texto antes do traço vira o nome do campo no JSON.
+
+### Exemplo — campo simples e array
+
+```markdown
+# PROMPT
+
+Extraia as informações do processo abaixo.
+
+## FIELDS
+
+### Processo - Dados do Processo
+
+###### Tx_Numero - Número do Processo
+- Número do processo no formato CNJ
+
+###### Dt_Distribuicao - Data de Distribuição
+- Data de distribuição no formato dd/mm/yyyy
+
+### Partes[] - Partes do Processo
+
+###### Tx_Nome - Nome
+- Nome completo da parte
+
+###### Tx_Polo - Polo
+- "Ativo" ou "Passivo"
+```
+
+Isso gera automaticamente o JSON schema equivalente a:
+
+```json
+{
+  "Processo": {
+    "Tx_Numero": "...",
+    "Dt_Distribuicao": "..."
+  },
+  "Partes": [
+    { "Tx_Nome": "...", "Tx_Polo": "..." }
+  ]
+}
+```
+
+### Exemplo real — array com objeto agrupador (arquivo `prev-ppp.md`)
+
+```markdown
+## FIELDS
+
+### Docs_Analisados - Documentos Analisados
+
+###### Nr_PPPs - Número de PPPs
+- Número de PPPs extraídos dos documentos
+
+### PPP[] - Perfis Profissiográficos Previdenciários
+- Extraia as informações dos textos dos PPPs nos autos
+- Se não houver PPPs, responda com um array vazio.
+
+###### Ev_Event - Evento
+- Número do evento processual
+
+###### Dt_Inicio - Início do Período
+- Data de início conforme consta no PPP ou "?" se não tiver certeza.
+
+###### Tx_Empresa - Empresa
+- Nome da empresa
+
+###### Lo_EPI_Eficaz - EPI Eficaz
+- true se o EPI foi considerado eficaz no PPP
+```
+
+### Exemplo com hierarquia de arrays (`pedidos-viabilidade-recurso.md`)
+
+Arrays podem conter sub-arrays usando H4 e H5:
+
+```markdown
+## FIELDS READONLY
+
+### Pedidos[] - Lista de Pedidos
+
+#### Tx_Texto - Texto do Pedido
+- Descrição concisa do pedido
+
+##### Argumentos[] - Lista de Argumentos
+
+###### Tx_Texto - Texto do Argumento
+- Descrição concisa do argumento
+
+###### Tx_Trecho - Trecho Comprobatório
+- Trecho exato do texto onde o argumento aparece
+```
+
+### Regras de aninhamento
+
+- H3 na raiz → campo ou array de nível raiz  
+- H4 dentro de H3 → subcampo ou subarray  
+- H5 dentro de H4 → subsubcampo ou subsubarray  
+- **H6 é sempre campo primitivo** — não pode ter filhos nem ser array  
+- Nomes de campos no mesmo nível devem ser únicos  
+- Descrições (linhas de texto após o heading) tornam-se instrução para o modelo e não entram no schema JSON
+
+> O `## FIELDS` é usado dentro da seção `# PROMPT`. O sistema injeta automaticamente o boilerplate de instruções gerais (tipos de dados, formatos de data, regras de preenchimento) antes do título, de modo que o autor não precisa repeti-las.
+
+---
+
 ## Exemplos Completos
 
 ### Prompt simples de análise de processo
