@@ -24,6 +24,17 @@ export function format(formatter: string, s: string): string {
     //    env.addFilter('deImprocedencia', arr => arr.filter(e => e.tipo == 'IMPROCEDENTE'))
 
     const env = nunjucks.configure()
+    env.addFilter('blockquoteLines', (str: string) => {
+        if (!str) return str
+        const escaped = String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+        const result = escaped.replace(/\n/g, '\n> ')
+        return (nunjucks as any).runtime.markSafe(result)
+    })
+
     env.addFilter('sortByDate', (arr, field = 'Dt_Inicio', order = 'asc') => {
         if (!Array.isArray(arr)) return arr
         const dir = order === 'desc' ? -1 : 1
