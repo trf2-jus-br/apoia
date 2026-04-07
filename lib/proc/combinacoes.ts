@@ -1,3 +1,4 @@
+import { sub } from "@mdxeditor/editor"
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
 import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
@@ -35,6 +36,7 @@ export enum T {
     CONTRARRAZOES_AO_RECURSO_EXTRAORDINARIO = 'CONTRARRAZÕES AO RECURSO EXTRAORDINÁRIO',
     CONTRARRAZOES_AO_RECURSO_ESPECIAL = 'CONTRARRAZÕES AO RECURSO ESPECIAL',
     RELATORIO = 'RELATÓRIO',
+    RELATORIO_E_VOTO = 'RELATÓRIO/VOTO',
     EXTRATO_DE_ATA = 'EXTRATO DE ATA',
     VOTO = 'VOTO',
     ACORDAO = 'ACÓRDÃO',
@@ -286,10 +288,25 @@ const pecasRelevantesViabilidadeDeRecursoExtraordinario = [
     T.CONTRARRAZOES_AO_RECURSO_EXTRAORDINARIO,
 ]
 
-export const padraoViabilidadeDeRecursoExtraordinario = [
-    ANY(),
+const subpadraoEmbargosDeDeclaracaoEmAcordao = [
     ANY({
-        capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE('Embargos de Declaração em Acórdão'),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.EMBARGOS_DE_DECLARACAO),
+    ANY({
+        capture: [T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
+    }),
+
+]
+
+const subpadraoViabilidadeDeRecursoExtraordinario = [
+    ANY({
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
     }),
     PHASE('Viabilidade de Recurso Extraordinário'),
     EXACT(T.ACORDAO),
@@ -302,10 +319,21 @@ export const padraoViabilidadeDeRecursoExtraordinario = [
     }),
 ]
 
-export const padraoViabilidadeDeRecursoEspecial = [
+
+export const padraoViabilidadeDeRecursoExtraordinario = [
     ANY(),
+    ...subpadraoViabilidadeDeRecursoExtraordinario
+]
+
+export const padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao = [
+    ANY(),
+    ...subpadraoEmbargosDeDeclaracaoEmAcordao,
+    ...subpadraoViabilidadeDeRecursoExtraordinario
+]
+
+const subpadraoViabilidadeDeRecursoEspecial = [
     ANY({
-        capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
     }),
     PHASE('Viabilidade de Recurso Especial'),
     EXACT(T.ACORDAO),
@@ -316,6 +344,17 @@ export const padraoViabilidadeDeRecursoEspecial = [
     ANY({
         capture: [T.CONTRARRAZOES_AO_RECURSO_ESPECIAL], greedy: true, except: pecasQueFinalizamFases
     }),
+]
+
+export const padraoViabilidadeDeRecursoEspecial = [
+    ANY(),
+    ...subpadraoViabilidadeDeRecursoEspecial
+]
+
+export const padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao = [
+    ANY(),
+    ...subpadraoEmbargosDeDeclaracaoEmAcordao,
+    ...subpadraoViabilidadeDeRecursoEspecial
 ]
 
 export const padraoAgravoInterno = [
@@ -498,7 +537,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         padroes: padroesBasicos,
         produtos: [P.RESUMOS, P.RESUMO, P.CHAT],
     },
-    
+
     // RELATORIO_CIVEL_PRIMEIRA_INST: {
     //     status: StatusDeLancamento.PUBLICO,
     //     relatorioDeAcervo: true,
@@ -550,7 +589,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 3,
         nome: 'Minuta de Decisão de Viabilidade de Recurso Extraordinário',
-        padroes: [padraoViabilidadeDeRecursoExtraordinario],
+        padroes: [padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao, padraoViabilidadeDeRecursoExtraordinario],
         produtos: [P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_EXTRAORDINARIO, P.CHAT],
         grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
     },
@@ -558,7 +597,7 @@ export const TipoDeSinteseMap: Record<string, TipoDeSinteseType> = {
         status: StatusDeLancamento.EM_DESENVOLVIMENTO,
         sort: 3,
         nome: 'Minuta de Decisão de Viabilidade de Recurso Especial',
-        padroes: [padraoViabilidadeDeRecursoEspecial],
+        padroes: [padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao, padraoViabilidadeDeRecursoEspecial],
         produtos: [P.PEDIDOS_DO_RECURSO_E_ARGUMENTOS, P.PESQUISA_DE_TEMAS, P.JUIZO_VIABILIDADE_RECURSO, P.DECISAO_VIABILIDADE_RECURSO_ESPECIAL, P.CHAT],
         grupo: GrupoDeSinteseMap.DECISAO_DE_VIABILIDADE
     },
