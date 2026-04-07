@@ -17,7 +17,7 @@ export async function getTiposDeSinteseValido(): Promise<TipoDeSinteseValido[]> 
         const padroes = strategyName ? PieceStrategy[strategyName]?.pattern : undefined
 
         tipos.push({
-            id: key,
+            id: agg.base_id,
             nome: agg.name || key,
             sort: typeof content?.sort === 'number' ? content.sort : 999,
             padroes,

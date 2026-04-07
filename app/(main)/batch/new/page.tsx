@@ -10,6 +10,6 @@ export default async function BatchPanel(props: { params: Promise<{ id: string }
     const allTypes = await getTiposDeSinteseValido()
     const synthesisTypes = allTypes
         .filter(t => t.share === 'PADRAO' || t.share === 'PUBLICO')
-        .map(t => ({ id: t.id, nome: t.nome, batchReport: t.batchReport }))
+        .map(t => ({ id: `${t.id}`, nome: t.nome, batchReport: t.batchReport }))
     return <NewBatchPage favorites={favorites} synthesisTypes={synthesisTypes} />
 }

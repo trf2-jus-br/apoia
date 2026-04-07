@@ -167,17 +167,17 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
         let tipoDeSinteseSelecionado: string | null = null
 
         // Localiza um tipo de síntese válido
-        const tipos = (await getTiposDeSinteseValido()).filter(t => t.share === 'PADRAO' || t.share === 'PUBLICO')
-        for (const tipoDeSintese of tipos) {
-            const pecasAcessiveis = pecas.filter(p => isNivelDeSigiloPermitido(user, p.sigilo))
-            selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, tipoDeSintese.padroes)
-            pecasSelecionadas = selecao.pecas
-            if (pecasSelecionadas !== null) {
-                tipoDeSinteseSelecionado = tipoDeSintese.id
-                break
-            }
-            if (pecasSelecionadas !== null) break
-        }
+        // const tipos = (await getTiposDeSinteseValido()).filter(t => t.share === 'PADRAO' || t.share === 'PUBLICO')
+        // for (const tipoDeSintese of tipos) {
+        //     const pecasAcessiveis = pecas.filter(p => isNivelDeSigiloPermitido(user, p.sigilo))
+        //     selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, tipoDeSintese.padroes)
+        //     pecasSelecionadas = selecao.pecas
+        //     if (pecasSelecionadas !== null) {
+        //         tipoDeSinteseSelecionado = tipoDeSintese.id
+        //         break
+        //     }
+        //     if (pecasSelecionadas !== null) break
+        // }
 
         // Se for especificado o tipo de síntese, substitui 
         if (kind === '0') kind = undefined
@@ -199,7 +199,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
                 pecasSelecionadas = selecao.pecas
             }
         }
-        if (!tipoDeSinteseSelecionado) tipoDeSinteseSelecionado = 'RESUMOS_TRIAGEM'
+        // if (!tipoDeSinteseSelecionado) tipoDeSinteseSelecionado = 'RESUMOS_TRIAGEM'
 
         // Se forem especificadas as peças desejadas, substitui a lista de peças selecionadas
         if (pieces) {

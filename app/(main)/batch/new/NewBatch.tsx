@@ -10,7 +10,7 @@ type SynthesisTypeOption = { id: string, nome: string, batchReport?: boolean }
 
 export default function NewBatchPage(props: { favorites: any[], synthesisTypes: SynthesisTypeOption[] }) {
   const [name, setName] = useState('')
-  const [tipo, setTipo] = useState('RESUMOS_TRIAGEM')
+  const [tipo, setTipo] = useState(props.synthesisTypes.length > 0 ? props.synthesisTypes[0].id : '')
   const [complete, setComplete] = useState(false)
   const [numbers, setNumbers] = useState('')
   const [err, setErr] = useState('')
@@ -33,10 +33,8 @@ export default function NewBatchPage(props: { favorites: any[], synthesisTypes: 
     setErr('')
     try {
       const arr = numbers.split(',').map(s => s.trim()).filter(Boolean)
-      const isNumeric = /^\d+$/.test(tipo)
       const payload: any = { name, complete, numbers: arr }
-      if (isNumeric) payload.prompt_base_id = Number(tipo)
-      else payload.tipo_de_sintese = tipo
+      payload.prompt_base_id = tipo ? Number(tipo) : undefined
       const res = await Fetcher.post('/api/v1/batch', payload)
       if (res?.batch?.id) router.push(`/batch/${res.batch.id}`)
       else setErr(res?.errormsg || 'Erro ao criar')

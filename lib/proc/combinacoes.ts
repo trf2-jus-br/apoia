@@ -443,7 +443,7 @@ const padroesBasicosEForcados = [
 ]
 
 export interface TipoDeSinteseValido {
-    id: string,
+    id: number,
     nome: string,
     sort?: number,
     padroes?: MatchOperator[][],
