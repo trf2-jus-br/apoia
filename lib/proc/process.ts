@@ -83,7 +83,6 @@ export type ObterDadosDoProcessoType = {
     numeroDoProcesso: string
     pUser: Promise<any>,
     idDaPeca?: string | string[]
-    identificarPecas?: boolean
     completo?: boolean
     kind?: string
     pieces?: string[]
@@ -106,7 +105,7 @@ export const getSystemIdAndDossierId = async (user: UserType, numeroDoProcesso: 
     return { system_id, dossier_id }
 }
 
-export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, identificarPecas, completo, kind, pieces, conteudoDasPecasSelecionadas = CargaDeConteudoEnum.ASSINCRONO }: ObterDadosDoProcessoType): Promise<DadosDoProcessoType> => {
+export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, completo, kind, pieces, conteudoDasPecasSelecionadas = CargaDeConteudoEnum.ASSINCRONO }: ObterDadosDoProcessoType): Promise<DadosDoProcessoType> => {
     let pecas: PecaType[] = []
     let errorMsg = undefined
     try {
@@ -161,57 +160,6 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
 
             const pecasComConteudo = conteudoDasPecasSelecionadas === CargaDeConteudoEnum.NAO ? pecas : await iniciarObtencaoDeConteudo(dossier_ids, numeroDoProcesso, pecas, interop)
             return { ...dadosDoProcesso, pecas: pecasComConteudo, pecasSelecionadas: pecasComConteudo }
-        }
-
-        // Localiza pecas with descricao == 'OUTROS' e busca no banco de dados se já foram inferidas por IA
-        if (identificarPecas === true) {
-            const pecasOutros = pecas.filter(p => p.descr === 'OUTROS')
-            if (pecasOutros.length > 0 && conteudoDasPecasSelecionadas !== CargaDeConteudoEnum.NAO) {
-                if (await DocumentDao.verifyIfDossierHasDocumentsWithPredictedCategories(numeroDoProcesso)) {
-                    devLog(`Carregando tipos documentais de ${pecasOutros.length} peças marcadas com "OUTROS"`)
-                    const pecasComDocumento = iniciarObtencaoDeDocumentoGravado(dossier_id, numeroDoProcesso, pecasOutros)
-                    for (const peca of pecasComDocumento) {
-                        if (peca.pDocumento) {
-                            peca.documento = await peca.pDocumento
-                            if (peca.documento.predicted_category && peca.documento.predicted_category !== '') {
-                                peca.descr = peca.documento.predicted_category
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Localiza pecas with descricao == 'OUTROS' e usa IA para determinar quais são os tipos destas peças
-            const pecasOutros2 = pecas.filter(p => p.descr === 'OUTROS')
-            if (pecasOutros2.length > 0) {
-                devLog(`Identificando tipos documentais de ${pecasOutros2.length} peças marcadas com "OUTROS"`)
-                const pecasComConteudo = await iniciarObtencaoDeConteudo(dossier_ids, numeroDoProcesso, pecasOutros2, interop, true)
-                for (const peca of pecasComConteudo) {
-                    if (peca.pConteudo) {
-                        const c = await peca.pConteudo
-                        if (c?.errorMsg) throw new Error(c.errorMsg)
-                        const conteudo = c?.conteudo
-                        // Localiza a categoria das peças anteriores a esta peça
-                        const anteriores: string[] = []
-                        for (const pecaAnterior of pecas) {
-                            if (pecaAnterior.id === peca.id) break
-                            anteriores.push(pecaAnterior.descr)
-                        }
-
-                        const categoria = await inferirCategoriaDaPeca(dossier_id, peca.documento?.id, conteudo, anteriores)
-                        if (categoria) {
-                            if (!peca.documento)
-                                throw new Error(`Documento ${peca.id} do processo ${numeroDoProcesso} não encontrado`)
-                            devLog(`Peça ${peca.id} do processo ${numeroDoProcesso}, originalmente categorizada como ${peca.descr}, identificada como ${categoria}`)
-                            if (peca.descr !== 'OUTROS')
-                                throw new Error(`Peça ${peca.id} do processo ${numeroDoProcesso} não é do tipo 'OUTROS'`)
-                            await DocumentDao.updateDocumentCategory(peca.documento.id, peca.descr, categoria)
-                            peca.descr = categoria
-                        }
-                    }
-                }
-            }
-            devLog('Identificação concluída')
         }
 
         let selecao: SelecionarPecasResultado = { pecas: null }

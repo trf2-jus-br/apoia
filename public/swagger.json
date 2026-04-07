@@ -243,39 +243,6 @@
         }
       }
     },
-    "/api/v1/identify-pieces/{number}": {
-      "post": {
-        "description": "Utiliza IA para identificar o tipo das peças que estão marcadas como \"OUTROS\"",
-        "tags": [
-          "batch"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "number",
-            "required": true
-          },
-          {
-            "in": "header",
-            "name": "model-and-api-key",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Modelo e chave de API separados por ':', codificados em base64"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK, processo analisado e resultado armazenado no banco de dados"
-          }
-        }
-      }
-    },
     "/api/v1/internal-prompt/{name}": {
       "get": {
         "description": "Retorna a definição interna de um prompt pelo nome.",
