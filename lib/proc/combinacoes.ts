@@ -1,3 +1,4 @@
+import { sub } from "@mdxeditor/editor"
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
 import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
@@ -35,6 +36,7 @@ export enum T {
     CONTRARRAZOES_AO_RECURSO_EXTRAORDINARIO = 'CONTRARRAZÕES AO RECURSO EXTRAORDINÁRIO',
     CONTRARRAZOES_AO_RECURSO_ESPECIAL = 'CONTRARRAZÕES AO RECURSO ESPECIAL',
     RELATORIO = 'RELATÓRIO',
+    RELATORIO_E_VOTO = 'RELATÓRIO/VOTO',
     EXTRATO_DE_ATA = 'EXTRATO DE ATA',
     VOTO = 'VOTO',
     ACORDAO = 'ACÓRDÃO',
@@ -202,10 +204,25 @@ const pecasRelevantesViabilidadeDeRecursoExtraordinario = [
     T.CONTRARRAZOES_AO_RECURSO_EXTRAORDINARIO,
 ]
 
-export const padraoViabilidadeDeRecursoExtraordinario = [
-    ANY(),
+const subpadraoEmbargosDeDeclaracaoEmAcordao = [
     ANY({
-        capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE('Embargos de Declaração em Acórdão'),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.EMBARGOS_DE_DECLARACAO),
+    ANY({
+        capture: [T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
+    }),
+
+]
+
+const subpadraoViabilidadeDeRecursoExtraordinario = [
+    ANY({
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
     }),
     PHASE('Viabilidade de Recurso Extraordinário'),
     EXACT(T.ACORDAO),
@@ -218,10 +235,21 @@ export const padraoViabilidadeDeRecursoExtraordinario = [
     }),
 ]
 
-export const padraoViabilidadeDeRecursoEspecial = [
+
+export const padraoViabilidadeDeRecursoExtraordinario = [
     ANY(),
+    ...subpadraoViabilidadeDeRecursoExtraordinario
+]
+
+export const padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao = [
+    ANY(),
+    ...subpadraoEmbargosDeDeclaracaoEmAcordao,
+    ...subpadraoViabilidadeDeRecursoExtraordinario
+]
+
+const subpadraoViabilidadeDeRecursoEspecial = [
     ANY({
-        capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
     }),
     PHASE('Viabilidade de Recurso Especial'),
     EXACT(T.ACORDAO),
@@ -229,6 +257,33 @@ export const padraoViabilidadeDeRecursoEspecial = [
         greedy: false, except: pecasQueFinalizamFases
     }),
     EXACT(T.RECURSO_ESPECIAL),
+    ANY({
+        capture: [T.CONTRARRAZOES_AO_RECURSO_ESPECIAL], greedy: true, except: pecasQueFinalizamFases
+    }),
+]
+
+export const padraoViabilidadeDeRecursoEspecial = [
+    ANY(),
+    ...subpadraoViabilidadeDeRecursoEspecial
+]
+
+export const padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao = [
+    ANY(),
+    ...subpadraoEmbargosDeDeclaracaoEmAcordao,
+    ...subpadraoViabilidadeDeRecursoEspecial
+]
+
+export const padraoAgravoInterno = [
+    ANY(),
+    ANY({
+        capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE('Agravo Interno'),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.AGRAVO_INTERNO),
     ANY({
         capture: [T.CONTRARRAZOES_AO_RECURSO_ESPECIAL], greedy: true, except: pecasQueFinalizamFases
     }),
@@ -395,7 +450,6 @@ export interface TipoDeSinteseValido {
     share: string,
     batchReport?: boolean,
 }
-
 
 const PieceStrategyArray = [
     { id: 1, name: 'MAIS_RELEVANTES', descr: 'Peças mais relevantes', pattern: padroesBasicos },

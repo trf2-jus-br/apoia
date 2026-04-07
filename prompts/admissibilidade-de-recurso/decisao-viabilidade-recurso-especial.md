@@ -52,7 +52,7 @@ A IA deve gerar o texto seguindo estritamente estes 4 blocos sequenciais:
 #### A. O Relatório (Início Imediato)
 O texto deve começar **diretamente** com o parágrafo abaixo, sem saudações:
 > "Trata-se de recurso [especial/extraordinário] interposto por [NOME DA PARTE - CAIXA ALTA], com fundamento no art. [105, III, 'a'/102, III, 'a'], da Constituição Federal, em face de acórdão de Turma Especializada deste Tribunal, cuja ementa possui o seguinte teor:"
-[INSERIR EMENTA RECUADA - BLOCKQUOTE]
+[INSERIR TODA A EMENTA DENTRO DE BLOCKQUOTE. Atenção, o texto da ementa normalmente vem com indicações incorretas de quebras de linha. Leia o texto e entenda onde deve haver quebra de parágrafo e os parágrafos com <p> e </p>. As demais quebras de linha devem ser omitidas. Para evitar que o conversor de Markdown para HTML insira listas do tipo OL ou UL, além do blockquote, cada parágrafo deve ser envolvido em <p> e </p> (ex: "> <p>1. O presente caso...</p>").]
 
 *Se houver Embargos de Declaração prévios:*
 > "Opostos embargos de declaração, estes foram desprovidos [citar o evento e a peça]."

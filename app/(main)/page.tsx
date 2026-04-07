@@ -51,14 +51,6 @@ export default async function HomePage() {
             color: "text-brown"
         },
         {
-            icon: faBalanceScale,
-            title: "Admissibilidade de Recursos",
-            description: "Analise a viabilidade de recursos extraordinários e especiais",
-            href: "/prompts?group=decisao-de-viabilidade",
-            color: "text-library",
-            betaOnly: true
-        },
-        {
             icon: faFileText,
             title: "Revisão de Texto",
             description: "Revise e aprimore textos jurídicos com IA",
@@ -92,6 +84,15 @@ export default async function HomePage() {
             description: "Encontre temas dos Tribunais Superiores através de busca semântica",
             href: "/semantic-search",
             color: "text-library"
+        },
+        {
+            icon: faBalanceScale,
+            title: "AdmitIA",
+            subtitle: "Vice-Presidência",
+            description: "Juízo de Admissibilidade de Recursos",
+            href: "/prompts?group=decisao-de-viabilidade",
+            color: "text-library",
+            betaOnly: true
         },
         {
             icon: faBookOpen,
@@ -161,6 +162,7 @@ export default async function HomePage() {
                                                 <span className="alert-link">{feature.title}</span>
                                             </CardTitle>
                                             <CardText className="text-body-tertiary flex-grow-1">
+                                                {feature.subtitle && <>{feature.subtitle}<br/></>}
                                                 {feature.description}
                                             </CardText>
                                         </CardBody>
