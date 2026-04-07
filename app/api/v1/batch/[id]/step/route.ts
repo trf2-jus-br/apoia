@@ -33,9 +33,8 @@ async function POST_HANDLER(req: Request, props: { params: Promise<{ id: string 
 
   const processed = await BatchDao.stepBatch(batch_id, async (job) => {
     try {
-  const kind = (summary as any).prompt_base_id ? (summary as any).prompt_base_id : (summary.tipo_de_sintese || 'RELATORIO_DE_ACERVO')
   const complete = !!summary.complete
-  await analyze(summary.name, job.dossier_code, kind, complete)
+  await analyze(summary.name, job.dossier_code, (summary as any).prompt_base_id, complete)
       return { status: 'READY' as const }
     } catch (e: any) {
       return { status: 'ERROR' as const, error_msg: e?.message || String(e) }

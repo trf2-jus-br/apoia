@@ -50,7 +50,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
         let dadosDoProcesso: DadosDoProcessoType = await obterDadosDoProcesso({ numeroDoProcesso: dossierNumber, pUser, completo: complete, kind: undefined, conteudoDasPecasSelecionadas: CargaDeConteudoEnum.NAO })
         if (dadosDoProcesso.errorMsg) throw new Error(dadosDoProcesso.errorMsg)
-        if (!dadosDoProcesso?.tipoDeSintese) throw new Error(`${dossierNumber}: Nenhum tipo de síntese válido`)
+        // if (!dadosDoProcesso?.tipoDeSintese) throw new Error(`${dossierNumber}: Nenhum tipo de síntese válido`)
         let promptFromDB: IAPrompt | null = null
 
         const promptId = Number(kind)
