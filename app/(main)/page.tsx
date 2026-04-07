@@ -52,8 +52,9 @@ export default async function HomePage() {
         },
         {
             icon: faBalanceScale,
-            title: "Admissibilidade de Recursos",
-            description: "Analise a viabilidade de recursos extraordinários e especiais",
+            title: "AdmitIA",
+            subtitle: "Vice-Presidência",
+            description: "Juízo de Admissibilidade de Recursos",
             href: "/prompts?group=decisao-de-viabilidade",
             color: "text-library",
             betaOnly: true
@@ -161,6 +162,7 @@ export default async function HomePage() {
                                                 <span className="alert-link">{feature.title}</span>
                                             </CardTitle>
                                             <CardText className="text-body-tertiary flex-grow-1">
+                                                {feature.subtitle && <>{feature.subtitle}<br/></>}
                                                 {feature.description}
                                             </CardText>
                                         </CardBody>
