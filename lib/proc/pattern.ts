@@ -2,15 +2,60 @@ import { T } from "./combinacoes";
 
 // Interface para documentos do processo
 export interface Documento {
+  kind?: 'documento'
   id: string
   tipo: T
   numeroDoEvento: string
   descricaoDoEvento: string
 }
 
+// Interface para eventos/movimentos do processo (sem documento associado)
+export interface Evento {
+  kind: 'evento'
+  sequencia: number
+  descricao: string
+  tipoNome?: string
+}
+
+// Union type para itens na sequência de matching
+export type SequenceItem = Documento | Evento
+
+// Type guards
+export function isDocumento(item: SequenceItem): item is Documento {
+  return item.kind !== 'evento'
+}
+export function isEvento(item: SequenceItem): item is Evento {
+  return item.kind === 'evento'
+}
+
+// Critério de matching para eventos
+export interface EventMatch {
+  descricao?: string | RegExp
+  tipoNome?: string | RegExp
+}
+
+function matchesEventCriteria(evento: Evento, criteria: EventMatch): boolean {
+  if (criteria.descricao !== undefined) {
+    if (typeof criteria.descricao === 'string') {
+      if (evento.descricao !== criteria.descricao) return false
+    } else {
+      if (!criteria.descricao.test(evento.descricao)) return false
+    }
+  }
+  if (criteria.tipoNome !== undefined) {
+    if (typeof criteria.tipoNome === 'string') {
+      if (evento.tipoNome !== criteria.tipoNome) return false
+    } else {
+      if (!evento.tipoNome || !criteria.tipoNome.test(evento.tipoNome)) return false
+    }
+  }
+  return true
+}
+
 export interface MatchOptions {
   capture?: T[]
   except?: T[]
+  exceptEvent?: EventMatch[]
   greedy?: boolean // quando true, tenta consumir o máximo possível (mais distante) antes de retroceder
 }
 
@@ -19,12 +64,14 @@ export type MatchOperator =
   | { type: 'EXACT'; docType: T; captureAllInSameEvent?: boolean; phase?: string }
   | { type: 'OR'; docTypes: T[]; phase?: string }
   | { type: 'ANY'; options?: MatchOptions; phase?: string }
-  | { type: 'SOME'; options?: MatchOptions; phase?: string };
+  | { type: 'SOME'; options?: MatchOptions; phase?: string }
+  | { type: 'EVENT'; criteria: EventMatch; phase?: string };
 
 export const EXACT = (docType: T, captureAllInSameEvent?: boolean, phase?: string) => ({ type: 'EXACT' as const, docType, captureAllInSameEvent, phase })
 export const OR = (...docTypes: T[]) => ({ type: 'OR' as const, docTypes })
 export const ANY = (options?: MatchOptions, phase?: string) => ({ type: 'ANY' as const, options, phase })
 export const SOME = (options?: MatchOptions, phase?: string) => ({ type: 'SOME' as const, options, phase })
+export const EVENT = (criteria: EventMatch, phase?: string) => ({ type: 'EVENT' as const, criteria, phase })
 // Versões explícitas que setam greedy em options
 export const ANY_GREEDY = (options?: MatchOptions, phase?: string) => ANY({ ...options, greedy: true }, phase)
 export const SOME_GREEDY = (options?: MatchOptions, phase?: string) => SOME({ ...options, greedy: true }, phase)
@@ -54,14 +101,14 @@ export interface MatchFullResult {
 export type MatchResult = MatchResultItem[] | null
 
 function matchFromIndex(
-  documents: Documento[],
+  items: SequenceItem[],
   pattern: MatchOperator[],
   patternIdx: number,
-  docIdx: number,
+  itemIdx: number,
   matched: MatchResultItem[] = [],
   phases: PhaseMatchInfo[] = []
 ): MatchFullResult | null {
-  if (patternIdx < 0 && docIdx < 0) {
+  if (patternIdx < 0 && itemIdx < 0) {
     // resolve lastPhase
     const lastPhase = resolveLastPhase(phases)
     return { items: matched, phasesMatched: phases, lastPhase }
@@ -69,77 +116,112 @@ function matchFromIndex(
   if (patternIdx < 0) return null
 
   const operator = pattern[patternIdx];
-  const document: Documento = docIdx >= 0 ? documents[docIdx] : { id: null, tipo: null, numeroDoEvento: null, descricaoDoEvento: null };
+  const currentItem: SequenceItem | null = itemIdx >= 0 ? items[itemIdx] : null;
 
   switch (operator.type) {
-    case 'EXACT':
+    case 'EXACT': {
+      // EXACT só faz match com documentos, nunca com eventos
+      if (!currentItem || isEvento(currentItem)) return null
+      const document = currentItem
       if (document.tipo === operator.docType) {
         const captured: Documento[] = [document];
-        let currentIdx = docIdx + 1;
+        let currentIdx = itemIdx + 1;
         if (operator.captureAllInSameEvent) {
-          while (currentIdx < documents.length) {
-            const currentDoc = documents[currentIdx]
-            if (currentDoc.numeroDoEvento !== document.numeroDoEvento) break
-            captured.push(currentDoc)
+          while (currentIdx < items.length) {
+            const nextItem = items[currentIdx]
+            if (isEvento(nextItem)) break
+            if (nextItem.numeroDoEvento !== document.numeroDoEvento) break
+            captured.push(nextItem)
             currentIdx++;
           }
         }
-        const item: MatchResultItem = { operator, captured }
-        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [{ operator, captured }, ...matched], documents) : phases
+        const matchItem: MatchResultItem = { operator, captured }
+        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [matchItem, ...matched], items) : phases
         return matchFromIndex(
-          documents,
+          items,
           pattern,
           patternIdx - 1,
-          docIdx - 1,
-          [{ operator, captured }, ...matched],
+          itemIdx - 1,
+          [matchItem, ...matched],
           newPhases
         );
       }
       return null;
-    case 'OR':
+    }
+    case 'OR': {
+      // OR só faz match com documentos, nunca com eventos
+      if (!currentItem || isEvento(currentItem)) return null
+      const document = currentItem
       if (operator.docTypes.includes(document.tipo)) {
-        const item: MatchResultItem = { operator, captured: [document] }
-        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [{ operator, captured: [document] }, ...matched], documents) : phases
+        const matchItem: MatchResultItem = { operator, captured: [document] }
+        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [matchItem, ...matched], items) : phases
         return matchFromIndex(
-          documents,
+          items,
           pattern,
           patternIdx - 1,
-          docIdx - 1,
-          [{ operator, captured: [document] }, ...matched],
+          itemIdx - 1,
+          [matchItem, ...matched],
           newPhases
         );
       }
       return null;
+    }
+    case 'EVENT': {
+      // EVENT só faz match com eventos, nunca com documentos
+      if (!currentItem || !isEvento(currentItem)) return null
+      if (matchesEventCriteria(currentItem, operator.criteria)) {
+        const matchItem: MatchResultItem = { operator, captured: [] }
+        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [matchItem, ...matched], items) : phases
+        return matchFromIndex(
+          items,
+          pattern,
+          patternIdx - 1,
+          itemIdx - 1,
+          [matchItem, ...matched],
+          newPhases
+        );
+      }
+      return null;
+    }
     case 'ANY': {
       // Pré-calcula todos os consumos possíveis (0..N) e depois tenta na ordem conforme greedy
-      const candidates: { captured: Documento[]; nextDocIdx: number }[] = []
-      let currentIdx = docIdx
+      const candidates: { captured: Documento[]; nextItemIdx: number }[] = []
+      let currentIdx = itemIdx
       let capturedWorking: Documento[] = []
 
       // Consumo zero
-      candidates.push({ captured: [], nextDocIdx: currentIdx })
+      candidates.push({ captured: [], nextItemIdx: currentIdx })
 
       while (currentIdx >= 0) {
-        const currentDoc = documents[currentIdx]
-        if (operator.options?.except?.includes(currentDoc.tipo)) break
-        if (operator.options?.capture && (operator.options.capture.length === 0 || operator.options.capture.includes(currentDoc.tipo))) {
-          capturedWorking = [currentDoc, ...capturedWorking]
+        const item = items[currentIdx]
+        if (isEvento(item)) {
+          // Verifica exceptEvent: se o evento bate com algum critério, para
+          if (operator.options?.exceptEvent?.some(criteria => matchesEventCriteria(item, criteria))) break
+          // Evento não bloqueado: consome sem capturar
+          currentIdx--
+          candidates.push({ captured: [...capturedWorking], nextItemIdx: currentIdx })
+          continue
+        }
+        // É um documento
+        if (operator.options?.except?.includes(item.tipo)) break
+        if (operator.options?.capture && (operator.options.capture.length === 0 || operator.options.capture.includes(item.tipo))) {
+          capturedWorking = [item, ...capturedWorking]
         }
         currentIdx--
-        candidates.push({ captured: [...capturedWorking], nextDocIdx: currentIdx })
+        candidates.push({ captured: [...capturedWorking], nextItemIdx: currentIdx })
       }
 
       const order = operator.options?.greedy ? [...candidates.keys()].reverse() : [...candidates.keys()]
       for (const idx of order) {
         const cand = candidates[idx]
-        const item: MatchResultItem = { operator, captured: cand.captured }
-        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [item, ...matched], documents) : phases
+        const matchItem: MatchResultItem = { operator, captured: cand.captured }
+        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [matchItem, ...matched], items) : phases
         const attempt = matchFromIndex(
-          documents,
+          items,
           pattern,
           patternIdx - 1,
-          cand.nextDocIdx,
-          [item, ...matched],
+          cand.nextItemIdx,
+          [matchItem, ...matched],
           newPhases
         )
         if (attempt) return attempt
@@ -147,38 +229,49 @@ function matchFromIndex(
       return null
     }
     case 'SOME': {
-      const candidates: { captured: Documento[]; nextDocIdx: number }[] = []
-      let currentIdx = docIdx
+      const candidates: { captured: Documento[]; nextItemIdx: number }[] = []
+      let currentIdx = itemIdx
       let capturedWorking: Documento[] = []
 
       while (currentIdx >= 0) {
-        const currentDoc = documents[currentIdx]
-        if (operator.options?.except?.includes(currentDoc.tipo)) break
-        if (operator.options?.capture && (operator.options.capture.length === 0 || operator.options.capture.includes(currentDoc.tipo))) {
+        const item = items[currentIdx]
+        if (isEvento(item)) {
+          // Verifica exceptEvent
+          if (operator.options?.exceptEvent?.some(criteria => matchesEventCriteria(item, criteria))) break
+          // Evento não bloqueado: consome sem capturar
+          currentIdx--
+          if (!operator.options?.greedy && capturedWorking.length) {
+            candidates.push({ captured: [...capturedWorking], nextItemIdx: currentIdx })
+          }
+          continue
+        }
+        // É um documento
+        if (operator.options?.except?.includes(item.tipo)) break
+        if (operator.options?.capture && (operator.options.capture.length === 0 || operator.options.capture.includes(item.tipo))) {
           if (operator.options?.greedy) {
             // Para greedy, cada documento capturável vira um candidato isolado; não acumulamos
-            candidates.push({ captured: [currentDoc], nextDocIdx: currentIdx - 1 })
+            candidates.push({ captured: [item], nextItemIdx: currentIdx - 1 })
           } else {
-            capturedWorking = [currentDoc, ...capturedWorking]
+            capturedWorking = [item, ...capturedWorking]
           }
         }
         currentIdx--
         if (!operator.options?.greedy && capturedWorking.length) {
-          candidates.push({ captured: [...capturedWorking], nextDocIdx: currentIdx })
+          candidates.push({ captured: [...capturedWorking], nextItemIdx: currentIdx })
         }
       }
 
       const order = operator.options?.greedy ? [...candidates.keys()].reverse() : [...candidates.keys()]
       for (const idx of order) {
         const cand = candidates[idx]
-        const item: MatchResultItem = { operator, captured: cand.captured }
-        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [item, ...matched], documents) : phases
+        const matchItem: MatchResultItem = { operator, captured: cand.captured }
+        const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [matchItem, ...matched], items) : phases
         const attempt = matchFromIndex(
-          documents,
+          items,
           pattern,
           patternIdx - 1,
-          cand.nextDocIdx,
-          [item, ...matched],
+          cand.nextItemIdx,
+          [matchItem, ...matched],
           newPhases
         )
         if (attempt) return attempt
@@ -190,12 +283,12 @@ function matchFromIndex(
   }
 }
 
-function addPhase(existing: PhaseMatchInfo[], operator: MatchOperator, patternIdx: number, items: MatchResultItem[], documents: Documento[]): PhaseMatchInfo[] {
-  const capturedFlat = items[0].captured // items[0] é o operador atual recém adicionado
+function addPhase(existing: PhaseMatchInfo[], operator: MatchOperator, patternIdx: number, matchedItems: MatchResultItem[], sequence: SequenceItem[]): PhaseMatchInfo[] {
+  const capturedFlat = matchedItems[0].captured // matchedItems[0] é o operador atual recém adicionado
   let lastCapturedDocIndex: number | null = null
   if (capturedFlat && capturedFlat.length) {
     const lastDoc = capturedFlat[capturedFlat.length - 1]
-    const idx = documents.findIndex(d => d.id === lastDoc.id)
+    const idx = sequence.findIndex(item => isDocumento(item) && item.id === lastDoc.id)
     lastCapturedDocIndex = idx >= 0 ? idx : null
   }
   const resultIndex = 0 // posição ainda não final; ajustaremos quando resolver lastPhase (recalcular após match)
@@ -217,15 +310,15 @@ function resolveLastPhase(phases: PhaseMatchInfo[]): PhaseMatchInfo | undefined 
   return ranked[0]
 }
 
-// New enriched function
-export function matchFull(documents: Documento[], pattern: MatchOperator[]): MatchFullResult | null {
-  const result = matchFromIndex(documents, pattern, pattern.length - 1, documents.length - 1)
+// New enriched function — aceita Documento[] (retrocompatível) ou SequenceItem[]
+export function matchFull(sequence: SequenceItem[], pattern: MatchOperator[]): MatchFullResult | null {
+  const result = matchFromIndex(sequence, pattern, pattern.length - 1, sequence.length - 1)
   return result
 }
 
 // Backwards compatible wrapper: returns only items array like before.
-export function match(documents: Documento[], pattern: MatchOperator[]): MatchResult {
-  const full = matchFull(documents, pattern)
+export function match(sequence: SequenceItem[], pattern: MatchOperator[]): MatchResult {
+  const full = matchFull(sequence, pattern)
   if (!full) return null
   return full.items
 }
