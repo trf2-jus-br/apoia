@@ -3,7 +3,7 @@
 uuid: bb4f02ef-a5f4-458e-bac2-551acb361414
 name: Pedidos de Viabilidade de Recurso
 sort: 3
-share: beta-teste
+share: oculto
 piece_strategy: viabilidade-recurso-especial
 grupo:
   slug: decisao-de-viabilidade

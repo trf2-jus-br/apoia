@@ -3,12 +3,6 @@ import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { ReactNode } from 'react'
 import { formatBrazilianDate, maiusculasEMinusculas, maiusculasEMinusculasOuSigla } from '@/lib/utils/utils'
 
-export const SubtituloAsync = async ({ pDadosDoProcesso }) => {
-    const dadosDoProcesso = await pDadosDoProcesso
-
-    return <Subtitulo dadosDoProcesso={dadosDoProcesso} />
-}
-
 export const Subtitulo = ({ dadosDoProcesso }: { dadosDoProcesso: DadosDoProcessoType }) => {
     const ajuizamento = dadosDoProcesso?.ajuizamento
     const nomeDaClasse = tua[dadosDoProcesso?.codigoDaClasse]

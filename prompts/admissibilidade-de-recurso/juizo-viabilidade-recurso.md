@@ -3,7 +3,7 @@
 uuid: 64182d4d-da22-4135-8150-3379386db58a
 name: Juízo de Viabilidade de Recurso
 sort: 3
-share: beta-teste
+share: oculto
 piece_strategy: viabilidade-recurso-especial
 grupo:
   slug: decisao-de-viabilidade
@@ -26,7 +26,7 @@ Você receberá os textos de peças processuais recursais (Recurso Extraordinár
 
 Você receberá, também, um documento marcado como <pedidos-do-recurso-e-argumentos> que contém os pedidos formulados no recurso judicial e os argumentos apresentados para embasar cada pedido. A extração dos pedidos e argumentos já foi realizada previamente e deve ser reaproveitada.
 
-Você receberá, também, um documento marcado como <pesquisa-de-temas> que contém a análise de viabilidade jurídica do recurso com base em teses e súmulas vinculantes. Você deverá trascrever os dados dessa análise nos campos apropriados da resposta.
+Você receberá, também, um documento marcado como <pesquisa-de-temas> que contém a análise de viabilidade jurídica do recurso com base em teses e súmulas vinculantes. Se você optar por utilizar essa análise, deverá trascrever os dados dessa análise nos campos apropriados da resposta. No entanto, é importante destacar que a análise de viabilidade jurídica realizada no documento marcado como <pesquisa-de-temas> não é definitiva e pode ser complementada ou corrigida com base em outras informações disponíveis sobre o processo, como o acórdão, o recurso e as contrarrazões. Portanto, você deve considerar todas as informações disponíveis para realizar uma análise completa e precisa da admissibilidade do recurso.
 
 
 ## FIELDS READONLY
@@ -42,7 +42,7 @@ Você receberá, também, um documento marcado como <pesquisa-de-temas> que cont
 - Esse texto deve ser copiado do documento ipsis litteris, do documento marcado como <pedidos-do-recurso-e-argumentos>.
 
 ##### dispositivo
-- Conforme o indicado no documento marcado como <pesquisa-de-temas>, o pedido pode ter como dispositivo uma das seguintes opções: SUSPENDER, NEGAR_SEGUIMENTO, ENCAMINHAR_PARA_RETRATACAO, ADMITIR, INADIMITIR, DESCONSIDERAR. Ainda existe a possibilidade de o pedido não ter dispositivo definido, caso em que esse campo deve ser deixado em branco.
+- O pedido pode ter como dispositivo uma das seguintes opções: SUSPENDER, NEGAR_SEGUIMENTO, ENCAMINHAR_PARA_RETRATACAO, ADMITIR, INADIMITIR, DESCONSIDERAR. Ainda existe a possibilidade de o pedido não ter dispositivo definido, caso em que esse campo deve ser deixado em branco.
 - Se foi identificado um tema, as opções SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO devem ser utilizadas conforme o caso.
 - Se foi identificado um motivo de inadmissão, a opção INADIMITIR deve ser utilizada.
 - Se não houver conclusão sobre o pedido, deixe esse campo em branco.
@@ -79,7 +79,7 @@ Você receberá, também, um documento marcado como <pesquisa-de-temas> que cont
 - Esse texto deve ser copiado do documento marcado como <pedidos-do-recurso-e-argumentos>.
 
 ##### dispositivo
-- Caso o documento marcado com <pesquisa-de-temas> tenha indicado um dispositivo especificamente para o argumento, preencha este campo conforme indicado. Caso contrário, deixe em branco.
+- Se desejar informar um dispositivo especificamente para o argumento, preencha este campo. Caso contrário, deixe em branco.
 - Se o pedido ao qual o argumento pertence tiver o campo dispositivo preenchido com SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO, deixe esse campo em branco.
 
 ##### tema - Tema do Pedido

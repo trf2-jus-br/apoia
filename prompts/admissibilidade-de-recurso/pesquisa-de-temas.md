@@ -3,7 +3,7 @@
 uuid: d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a
 name: Pesquisa de Temas e Súmulas para Viabilidade de Recurso
 sort: 3
-share: beta-teste
+share: oculto
 piece_strategy: viabilidade-recurso-especial
 grupo:
   slug: decisao-de-viabilidade
