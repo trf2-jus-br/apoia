@@ -72,7 +72,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
                 const key = pieceStrategy.toString().trim().toUpperCase().replace(/-/g, '_')
                 const strategy = (PieceStrategy as any)[key]
                 if (strategy?.pattern) {
-                    const selecao = selecionarPecasPorPadraoComFase(allPieces, strategy.pattern)
+                    const selecao = selecionarPecasPorPadraoComFase(allPieces, strategy.pattern, dadosDoProcesso.movimentosEDocumentos)
                     if (selecao?.pecas?.length) selectedIds = selecao.pecas.map(p => p.id)
                 } else if (key === 'TIPOS_ESPECIFICOS' && pieceDescr?.length) {
                     const pieceDescrValues = pieceDescr.map(d => T[d])

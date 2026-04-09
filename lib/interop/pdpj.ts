@@ -199,8 +199,17 @@ export class InteropPDPJ implements Interop {
     public consultarProcesso = async (numeroDoProcesso: string, recursivo?: boolean): Promise<DadosDoProcessoType[]> => {
         const data: PdpjProcessoResponse = await this.consultarProcessoPdpj(numeroDoProcesso)
 
+        // Aproveitar mapPdpjToSimplified para obter movimentosEDocumentos já construídos
+        let simplified: InteropProcessoType[] = []
+        try {
+            simplified = mapPdpjToSimplified(data[0] as unknown as PdpjInput)
+        } catch (e) {
+            console.error(`Erro ao mapear movimentosEDocumentos para o processo ${numeroDoProcesso}: ${e.message}`)
+        }
+
         const resp: DadosDoProcessoType[] = []
-        for (const processo of data[0].tramitacoes) {
+        for (let tramIdx = 0; tramIdx < data[0].tramitacoes.length; tramIdx++) {
+            const processo = data[0].tramitacoes[tramIdx]
             const idClasse = processo?.classe?.[0]?.codigo
             assertNivelDeSigilo(this.user, '' + processo.nivelSigilo)
 
@@ -273,7 +282,10 @@ export class InteropPDPJ implements Interop {
                 }
             }
 
-            resp.push({ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, segmento, instancia, materia, poloAtivo, poloPassivo, oabPoloAtivo })
+            // Obter movimentosEDocumentos já construídos por mapPdpjToSimplified
+            const movimentosEDocumentos = simplified[tramIdx]?.movimentosEDocumentos
+
+            resp.push({ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, movimentosEDocumentos, segmento, instancia, materia, poloAtivo, poloPassivo, oabPoloAtivo })
 
             // Se o processo tem processos relacionados, vamos pegar o originario    
             if (processo.processosRelacionados?.length && !recursivo) {

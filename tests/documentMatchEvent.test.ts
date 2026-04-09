@@ -1,6 +1,5 @@
-import { match, matchFull, ANY, SOME, EXACT, OR, EVENT, Documento, Evento, SequenceItem, MatchResultItem } from '../lib/proc/pattern';
+import { match, matchFull, ANY, SOME, EXACT, OR, EVENT, Documento, Evento, SequenceItem } from '../lib/proc/pattern';
 import { T } from '../lib/proc/combinacoes';
-import test, { describe } from 'node:test';
 
 // Helper para criar documento
 function doc(id: number, tipo: T, numeroDoEvento?: string): Documento {
@@ -351,7 +350,4 @@ describe('backward compatibility - sequences without events', () => {
     expect(result).not.toBeNull();
   });
 });
-function expect(result: MatchResultItem[]) {
-    throw new Error('Function not implemented.');
-}
 

@@ -1,6 +1,6 @@
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { IADocument } from "../db/mysql-types"
-import { InteropProcessoType } from "../interop/interop-types"
+import { InteropMovimentoComDocumentosType, InteropProcessoType } from "../interop/interop-types"
 import { slugify } from "../utils/utils"
 
 export type PecaConteudoType = {
@@ -31,6 +31,7 @@ export type PecaType = {
 export type DadosDoProcessoType = {
     pecas: PecaType[]
     pecasSelecionadas?: PecaType[]
+    movimentosEDocumentos?: InteropMovimentoComDocumentosType[]
     sigilo?: string
     tipoDeSintese?: string
     ajuizamento?: Date

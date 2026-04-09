@@ -1,8 +1,9 @@
 import { sub } from "@mdxeditor/editor"
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
-import { ANY, Documento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
+import { ANY, Documento, Evento, SequenceItem, isDocumento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
 import { PecaType } from "./process-types"
+import { InteropMovimentoComDocumentosType } from "../interop/interop-types"
 
 // Enum com os tipos de peças
 export enum T {
@@ -486,7 +487,7 @@ export interface SelecionarPecasResultado {
     fases?: string[]
 }
 
-export const selecionarPecasPorPadraoComFase = (pecas: PecaType[], padroes: MatchOperator[][]): SelecionarPecasResultado => {
+export const selecionarPecasPorPadraoComFase = (pecas: PecaType[], padroes: MatchOperator[][], movimentosEDocumentos?: InteropMovimentoComDocumentosType[]): SelecionarPecasResultado => {
     let ps: Documento[] = pecas.map(p => ({ id: p.id, tipo: p.descr as T, numeroDoEvento: p.numeroDoEvento, descricaoDoEvento: p.descricaoDoEvento }))
 
     // Cria um índice de peças por id
@@ -495,10 +496,33 @@ export const selecionarPecasPorPadraoComFase = (pecas: PecaType[], padroes: Matc
         indexById[ps[i].id] = i
     }
 
+    // Constrói a sequência de items (documentos intercalados com eventos) quando movimentosEDocumentos está disponível
+    let sequence: SequenceItem[]
+    if (movimentosEDocumentos?.length) {
+        sequence = []
+        const docMap = new Map<string, Documento>()
+        for (const d of ps) docMap.set(d.id, d)
+        for (const mov of movimentosEDocumentos) {
+            const evento: Evento = {
+                kind: 'evento',
+                sequencia: mov.sequencia,
+                descricao: mov.descricao,
+                tipoNome: mov.tipo?.nome,
+            }
+            sequence.push(evento)
+            for (const docRef of mov.documentos) {
+                const doc = docMap.get(docRef.id)
+                if (doc) sequence.push(doc)
+            }
+        }
+    } else {
+        sequence = ps
+    }
+
     // Cria um índice de matches possíveis
     const matches: MatchFullResult[] = []
     for (const padrao of padroes) {
-        const m = matchFull(ps, padrao)
+        const m = matchFull(sequence, padrao)
         if (m !== null && m.items.length > 0) {
             matches.push(m)
             break
