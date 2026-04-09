@@ -9,7 +9,7 @@ import { cookies } from 'next/headers'
 
 export default async function HomePage() {
     const user = await assertCurrentUser()
-    
+
     // Verifica se é beta tester
     const cookieStore = await cookies()
     const isBetaTester = cookieStore.get('beta-tester')?.value === '2'
@@ -162,7 +162,7 @@ export default async function HomePage() {
                                                 <span className="alert-link">{feature.title}</span>
                                             </CardTitle>
                                             <CardText className="text-body-tertiary flex-grow-1">
-                                                {feature.subtitle && <>{feature.subtitle}<br/></>}
+                                                {feature.subtitle && <>{feature.subtitle}<br /></>}
                                                 {feature.description}
                                             </CardText>
                                         </CardBody>

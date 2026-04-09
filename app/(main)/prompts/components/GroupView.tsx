@@ -32,6 +32,10 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
         if (!p.origin) return false
         const grupo = p.content?.grupo as any
         return grupo?.slug === groupSlug
+    }).sort((a, b) => {
+        const sortA = a.content?.sort ?? 0
+        const sortB = b.content?.sort ?? 0
+        return sortA - sortB
     })
 
     const handleBack = () => {
@@ -72,7 +76,7 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
                                         <CardTitle className="h5 mb-3">
                                             <span className="alert-link">{prompt.name}</span>
                                         </CardTitle>
-                                        {prompt.content?.author && (
+                                        {prompt.content?.author && prompt.content.author !== '-' && (
                                             <CardText className="text-body-tertiary flex-grow-1 small">
                                                 Autor: {prompt.content.author}
                                             </CardText>
