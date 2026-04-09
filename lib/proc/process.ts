@@ -195,7 +195,7 @@ export const obterDadosDoProcesso = async ({ numeroDoProcesso, pUser, idDaPeca, 
             }
 
             if (padroes) {
-                selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, padroes)
+                selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, padroes, dadosDoProcesso.movimentosEDocumentos)
                 pecasSelecionadas = selecao.pecas
             }
         }

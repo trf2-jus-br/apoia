@@ -75,7 +75,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                 const strategy = PieceStrategy[strategyName]
                 if (strategy?.pattern) {
                     const pecasAcessiveis = allPieces.filter(p => isNivelDeSigiloPermitidoClient(maxConfidentialityLevel, p.sigilo))
-                    const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, strategy.pattern)
+                    const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, strategy.pattern, dadosDoProcesso.movimentosEDocumentos)
                     return selecao.pecas || []
                 }
             }
@@ -83,7 +83,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         const pattern = PieceStrategy[pieceStrategy]?.pattern
         if (pattern) {
             const pecasAcessiveis = allPieces.filter(p => isNivelDeSigiloPermitidoClient(maxConfidentialityLevel, p.sigilo))
-            const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, pattern)
+            const selecao = selecionarPecasPorPadraoComFase(pecasAcessiveis, pattern, dadosDoProcesso.movimentosEDocumentos)
             const pecasSelecionadas = selecao.pecas
             return pecasSelecionadas || []
         }

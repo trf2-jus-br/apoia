@@ -107,7 +107,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
             const procJson = (response && typeof response === 'object' && 'arrayDeDadosDoProcesso' in response) ? response as ProcessoResponseType : undefined
             if (procJson?.arrayDeDadosDoProcesso && procJson.arrayDeDadosDoProcesso.length > 0) {
                 for (const dadosDoProc of procJson.arrayDeDadosDoProcesso) {
-                    const selecao = selecionarPecasPorPadraoComFase(dadosDoProc.pecas, PieceStrategy['PETICAO_INICIAL_E_ANEXOS']?.pattern)
+                    const selecao = selecionarPecasPorPadraoComFase(dadosDoProc.pecas, PieceStrategy['PETICAO_INICIAL_E_ANEXOS']?.pattern, dadosDoProc.movimentosEDocumentos)
                     const pecasSelecionadas = selecao.pecas
                     const peticaoInicialPeca = pecasSelecionadas.find(peca => slugify(peca.descr) === 'peticao-inicial')
                     if (!peticaoInicialPeca)
