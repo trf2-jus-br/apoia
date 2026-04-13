@@ -1,7 +1,7 @@
 import { sub } from "@mdxeditor/editor"
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
-import { ANY, Documento, Evento, SequenceItem, isDocumento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE } from "./pattern"
+import { ANY, Documento, Evento, SequenceItem, isDocumento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE, EVENT, EventMatch } from "./pattern"
 import { PecaType } from "./process-types"
 import { InteropMovimentoComDocumentosType } from "../interop/interop-types"
 
@@ -443,6 +443,33 @@ const padroesBasicosEForcados = [
     padraoConhecimentoForcado,
 ]
 
+// Padrões para suspensão por IRDR / Recursos Repetitivos / Repercussão Geral
+const eventoSuspensaoRegex = /Suspens.o.Sobrestamento.*Aguarda Decis.o|Despacho.Decis.o.*Processo Suspenso|Processo Suspenso por|Suspens.o.*Decis.o.*(?:STF|STJ).*IRDR|Recurso Extraordin.rio.*repercuss.o geral|Recurso Especial.[Rr]epetitivo/i
+
+const eventoCriteriaSuspensao: EventMatch = { descricao: eventoSuspensaoRegex }
+
+// Preferência: peça vinculada ao evento de suspensão (documento do mesmo evento)
+const padraoSuspensaoDecisaoVinculada = [
+    ANY(),
+    EVENT(eventoCriteriaSuspensao),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY(),
+]
+
+// Fallback: peça encontrada antes do evento de suspensão
+const padraoSuspensaoDecisaoAnterior = [
+    ANY({greedy: true}),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY(),
+    EVENT(eventoCriteriaSuspensao),
+    ANY(),
+]
+
+export const padroesSuspensao = [
+    padraoSuspensaoDecisaoVinculada,
+    padraoSuspensaoDecisaoAnterior,
+]
+
 export interface TipoDeSinteseValido {
     id: number,
     nome: string,
@@ -465,6 +492,7 @@ const PieceStrategyArray = [
     { id: 2, name: 'PPP', descr: 'Perfil Profissiográfico Previdenciário', pattern: [[ANY({ capture: [T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO], greedy: true })]] },
     { id: 3, name: 'TIPOS_ESPECIFICOS', descr: 'Peças de tipos específicos', pattern: undefined },
     { id: 3, name: 'TODAS', descr: 'Todas', pattern: [[ANY({ capture: [] })]] },
+    { id: 2, name: 'SUSPENSAO', descr: 'Decisão de suspensão por IRDR/Repetitivos/Repercussão Geral', pattern: padroesSuspensao },
 ]
 export type PieceStrategyValueType = EnumOfObjectsValueType & { descr: string, pattern: MatchOperator[][] | undefined }
 export type PieceStrategyType = { [key: string]: PieceStrategyValueType }

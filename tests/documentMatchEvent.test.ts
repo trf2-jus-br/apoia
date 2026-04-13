@@ -1,5 +1,5 @@
 import { match, matchFull, ANY, SOME, EXACT, OR, EVENT, Documento, Evento, SequenceItem } from '../lib/proc/pattern';
-import { T } from '../lib/proc/combinacoes';
+import { T, padroesSuspensao } from '../lib/proc/combinacoes';
 
 // Helper para criar documento
 function doc(id: number, tipo: T, numeroDoEvento?: string): Documento {
@@ -12,7 +12,7 @@ function doc(id: number, tipo: T, numeroDoEvento?: string): Documento {
 }
 
 // Helper para criar evento
-function evt(sequencia: number, descricao: string, tipoNome?: string): Evento {
+function evt(sequencia: number, tipoNome?: string, descricao?: string): Evento {
   return {
     kind: 'evento',
     sequencia,
@@ -25,7 +25,7 @@ describe('EVENT operator', () => {
   test('EVENT matches an event by exact descricao', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(10, 'Distribuição'),
+      evt(10, 'tipo', 'Distribuição'),
       doc(2, T.SENTENCA),
     ];
     const pattern = [ANY(), EVENT({ descricao: 'Distribuição' }), ANY()];
@@ -40,7 +40,7 @@ describe('EVENT operator', () => {
   test('EVENT matches an event by regex descricao', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(10, 'Distribuição automática'),
+      evt(10, 'tipo', 'Distribuição automática'),
       doc(2, T.SENTENCA),
     ];
     const pattern = [ANY(), EVENT({ descricao: /distribuição/i }), ANY()];
@@ -64,7 +64,7 @@ describe('EVENT operator', () => {
       evt(10, 'Julgamento', 'Decisão'),
       doc(2, T.SENTENCA),
     ];
-    const pattern = [ANY(), EVENT({ tipoNome: 'Decisão' }), ANY()];
+    const pattern = [ANY(), EVENT({ tipoNome: 'Julgamento' }), ANY()];
     const result = match(sequence, pattern);
     expect(result).not.toBeNull();
   });
@@ -75,7 +75,7 @@ describe('EVENT operator', () => {
       evt(10, 'Julgamento', 'Decisão Monocrática'),
       doc(2, T.SENTENCA),
     ];
-    const pattern = [ANY(), EVENT({ tipoNome: /decisão/i }), ANY()];
+    const pattern = [ANY(), EVENT({ tipoNome: /julga/i }), ANY()];
     const result = match(sequence, pattern);
     expect(result).not.toBeNull();
   });
@@ -85,17 +85,17 @@ describe('EVENT operator', () => {
       evt(10, 'Julgamento', 'Decisão'),
     ];
     // Both match
-    const pattern1 = [EVENT({ descricao: 'Julgamento', tipoNome: 'Decisão' })];
+    const pattern1 = [EVENT({ descricao: 'Decisão', tipoNome: 'Julgamento' })];
     expect(match(sequence, pattern1)).not.toBeNull();
 
     // descricao matches, tipoNome doesn't
-    const pattern2 = [EVENT({ descricao: 'Julgamento', tipoNome: 'Sentença' })];
+    const pattern2 = [EVENT({ descricao: 'Decisão', tipoNome: 'Sentença' })];
     expect(match(sequence, pattern2)).toBeNull();
   });
 
   test('EVENT does not match when descricao is wrong', () => {
     const sequence: SequenceItem[] = [
-      evt(10, 'Distribuição'),
+      evt(10, 'tipo', 'Distribuição'),
     ];
     const pattern = [EVENT({ descricao: 'Julgamento' })];
     expect(match(sequence, pattern)).toBeNull();
@@ -103,7 +103,7 @@ describe('EVENT operator', () => {
 
   test('EVENT does not match when tipoNome is undefined in evento but criteria requires it', () => {
     const sequence: SequenceItem[] = [
-      evt(10, 'Distribuição'), // tipoNome undefined
+      evt(10, 'tipo', 'Distribuição'), // tipoNome undefined
     ];
     const pattern = [EVENT({ tipoNome: /algo/i })];
     expect(match(sequence, pattern)).toBeNull();
@@ -113,7 +113,7 @@ describe('EVENT operator', () => {
 describe('EXACT and OR with events in sequence', () => {
   test('EXACT skips over events - does not match events', () => {
     const sequence: SequenceItem[] = [
-      evt(10, 'Distribuição'),
+      evt(10, 'tipo', 'Distribuição'),
     ];
     const pattern = [EXACT(T.PETICAO_INICIAL)];
     expect(match(sequence, pattern)).toBeNull();
@@ -121,7 +121,7 @@ describe('EXACT and OR with events in sequence', () => {
 
   test('OR skips over events - does not match events', () => {
     const sequence: SequenceItem[] = [
-      evt(10, 'Distribuição'),
+      evt(10, 'tipo', 'Distribuição'),
     ];
     const pattern = [OR(T.PETICAO_INICIAL, T.SENTENCA)];
     expect(match(sequence, pattern)).toBeNull();
@@ -173,7 +173,7 @@ describe('exceptEvent in ANY/SOME', () => {
   test('ANY stops at event matching exceptEvent criteria', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(10, 'Julgamento'),
+      evt(10, 'tipo', 'Julgamento'),
       doc(2, T.SENTENCA),
       doc(3, T.APELACAO),
     ];
@@ -217,7 +217,7 @@ describe('exceptEvent in ANY/SOME', () => {
   test('SOME stops at event matching exceptEvent criteria', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(10, 'Julgamento'),
+      evt(10, 'tipo', 'Julgamento'),
       doc(2, T.SENTENCA),
       doc(3, T.APELACAO),
     ];
@@ -236,7 +236,7 @@ describe('exceptEvent in ANY/SOME', () => {
   test('exceptEvent with regex', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(10, 'Julgamento Final'),
+      evt(10, 'tipo', 'Julgamento Final'),
       doc(2, T.SENTENCA),
     ];
     const pattern = [
@@ -254,9 +254,9 @@ describe('exceptEvent in ANY/SOME', () => {
   test('exceptEvent OR semantics - any criteria match stops', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(10, 'Distribuição'),
+      evt(10, 'tipo', 'Distribuição'),
       doc(2, T.SENTENCA),
-      evt(20, 'Julgamento'),
+      evt(20, 'tipo', 'Julgamento'),
       doc(3, T.APELACAO),
     ];
     // Ancora no Julgamento, ANY após com exceptEvent que para em ambos os eventos
@@ -282,10 +282,10 @@ describe('EVENT + ANY composition for capturing docs after event', () => {
   test('EVENT followed by ANY captures docs until next event boundary', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(10, 'Distribuição'),
+      evt(10, 'tipo', 'Distribuição'),
       doc(2, T.SENTENCA),
       doc(3, T.CERTIDAO),
-      evt(20, 'Julgamento'),
+      evt(20, 'tipo', 'Julgamento'),
       doc(4, T.APELACAO),
     ];
     const pattern = [
@@ -303,7 +303,7 @@ describe('EVENT + ANY composition for capturing docs after event', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
       doc(2, T.CONTESTACAO),
-      evt(10, 'Sentença Proferida'),
+      evt(10, 'tipo', 'Sentença Proferida'),
       doc(3, T.SENTENCA),
       doc(4, T.CERTIDAO),
     ];
@@ -348,6 +348,156 @@ describe('backward compatibility - sequences without events', () => {
     const pattern = [EXACT(T.PETICAO_INICIAL), ANY()];
     const result = match(documentos as any, pattern);
     expect(result).not.toBeNull();
+  });
+});
+
+describe('padroesSuspensao - suspension event patterns', () => {
+  const suspensionDescricao = [
+    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior  - Agravo de Instrumento em Processament',
+    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Agravo de Instrumento remetido',
+    'Suspensão/Sobrestamento - Aguarda Decisão da Instância Superior no processo digitalizado',
+    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Repercussão Geral (STF)',
+    'Despacho/Decisão - Processo Suspenso',
+    'Despacho/Decisão - Processo Suspenso por Recurso Extraordinário com repercussão geral',
+    'Despacho/Decisão - Processo Suspenso por RESP Repetitivo e REXT com repercussão geral',
+    'Recurso Extraordinário com repercussão geral',
+    'Suspensão/Sobrestamento - Aguarda Decisão TRF2 - IRDR',
+    'Suspensão/Sobrestamento - Aguarda Decisão RESP Repetitivo (STJ) e REXT com Repercussão Geral (STF)',
+    'Processo Suspenso por Recurso Extraordinário com repercussão geral',
+    'Processo Suspenso por Recurso Extraordinário com repercussão geral e por Recurso Especial repetitivo',
+    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Recursos Repetitivos (STJ)',
+    'Despacho/Decisão - Processo Suspenso por Recurso Especial Repetitivo',
+    'Recurso Especial repetitivo',
+    'Processo Suspenso por Recurso Especial Repetitivo',
+    'Processo Suspenso por Incidente de Resolução de Demandas Repetitivas',
+    'Despacho/Decisão - Processo Suspenso por IRDR',
+    'Suspensão do Decisão do STJ - IRDR',
+    'Suspensão por Decisão do Presidente do STJ - IRDR',
+    'Suspensão por Decisão do Presidente do STF - IRDR',
+  ];
+
+  test('Pattern 1: captures DESPACHO_DECISAO linked to suspension event', () => {
+    const sequence: SequenceItem[] = [
+      doc(1, T.PETICAO_INICIAL),
+      evt(10, 'Distribuição'),
+      doc(2, T.CONTESTACAO),
+      evt(20, 'Decisão proferida', 'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Recursos Repetitivos (STJ)'),
+      doc(3, T.DESPACHO_DECISAO),
+      evt(30, 'Outro movimento'),
+      doc(4, T.CERTIDAO),
+    ];
+    let matched = false;
+    for (const padrao of padroesSuspensao) {
+      const result = matchFull(sequence, padrao);
+      if (result && result.items.some(m => m.captured.length > 0)) {
+        const captured = result.items.flatMap(m => m.captured);
+        expect(captured.length).toBe(1);
+        expect(captured[0].tipo).toBe(T.DESPACHO_DECISAO);
+        expect(captured[0].id).toBe('3');
+        matched = true;
+        break;
+      }
+    }
+    expect(matched).toBe(true);
+  });
+
+  test('Pattern 1: captures SENTENCA linked to suspension event', () => {
+    const sequence: SequenceItem[] = [
+      doc(1, T.PETICAO_INICIAL),
+      evt(20, 'Decisão proferida', 'Suspensão por Decisão do Presidente do STF - IRDR'),
+      doc(2, T.SENTENCA),
+      evt(30, 'Outro'),
+      doc(3, T.CERTIDAO),
+    ];
+    let matched = false;
+    for (const padrao of padroesSuspensao) {
+      const result = matchFull(sequence, padrao);
+      if (result && result.items.some(m => m.captured.length > 0)) {
+        const captured = result.items.flatMap(m => m.captured);
+        expect(captured.length).toBe(1);
+        expect(captured[0].tipo).toBe(T.SENTENCA);
+        matched = true;
+        break;
+      }
+    }
+    expect(matched).toBe(true);
+  });
+
+  test('Pattern 2: captures DESPACHO_DECISAO before suspension event (fallback)', () => {
+    const sequence: SequenceItem[] = [
+      doc(1, T.PETICAO_INICIAL),
+      evt(10, 'Distribuição'),
+      doc(2, T.DESPACHO_DECISAO),
+      evt(20, 'Suspensão determinada', 'Despacho/Decisão - Processo Suspenso por IRDR'),
+      doc(3, T.CERTIDAO),
+    ];
+    let matched = false;
+    for (const padrao of padroesSuspensao) {
+      const result = matchFull(sequence, padrao);
+      if (result && result.items.some(m => m.captured.length > 0)) {
+        const captured = result.items.flatMap(m => m.captured);
+        expect(captured.some(d => d.tipo === T.DESPACHO_DECISAO)).toBe(true);
+        matched = true;
+        break;
+      }
+    }
+    expect(matched).toBe(true);
+  });
+
+  test('no match when no suspension event exists', () => {
+    const sequence: SequenceItem[] = [
+      doc(1, T.PETICAO_INICIAL),
+      evt(10, 'Distribuição', 'Distribuição'),
+      doc(2, T.DESPACHO_DECISAO),
+      evt(20, 'Julgamento', 'Julgamento'),
+      doc(3, T.SENTENCA),
+    ];
+    let matched = false;
+    for (const padrao of padroesSuspensao) {
+      const result = matchFull(sequence, padrao);
+      if (result && result.items.some(m => m.captured.length > 0)) {
+        matched = true;
+        break;
+      }
+    }
+    expect(matched).toBe(false);
+  });
+
+  for (const descricao of suspensionDescricao) {
+    test(`matches suspension descricao: "${descricao}"`, () => {
+      const sequence: SequenceItem[] = [
+        doc(1, T.PETICAO_INICIAL),
+        evt(20, 'Movimento qualquer', descricao),
+        doc(2, T.DESPACHO_DECISAO),
+      ];
+      let matched = false;
+      for (const padrao of padroesSuspensao) {
+        const result = matchFull(sequence, padrao);
+        if (result && result.items.some(m => m.captured.length > 0)) {
+          matched = true;
+          break;
+        }
+      }
+      expect(matched).toBe(true);
+    });
+  }
+
+  test('prefers linked doc (Pattern 1) over doc before event (Pattern 2)', () => {
+    const sequence: SequenceItem[] = [
+      doc(1, T.PETICAO_INICIAL),
+      evt(10, 'Distribuição'),
+      doc(2, T.DESPACHO_DECISAO), // doc before event
+      evt(20, 'Suspensão', 'Recurso Extraordinário com repercussão geral'),
+      doc(3, T.SENTENCA), // doc linked to event
+      doc(4, T.CERTIDAO),
+    ];
+    // Pattern 1 should match first, capturing doc(3) SENTENCA (linked)
+    const result = matchFull(sequence, padroesSuspensao[0]);
+    expect(result).not.toBeNull();
+    const captured = result!.items.flatMap(m => m.captured);
+    expect(captured.length).toBe(1);
+    expect(captured[0].id).toBe('3');
+    expect(captured[0].tipo).toBe(T.SENTENCA);
   });
 });
 

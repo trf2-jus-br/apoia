@@ -87,6 +87,48 @@
 
 ### Testes
 - Testes do sync engine: `npx jest sync` (26 testes)
+- Testes de pattern matching: `npx jest tests/documentMatch` (54 testes)
 - Type check: `npx tsc --noEmit`
 - Check rápido: `npm run check`
 - Build completo: `npm run build`
+
+## Pattern Matching de Peças e Eventos
+
+### Visão Geral
+O motor de pattern matching seleciona peças de um processo judicial com base em padrões declarativos. Fica em `lib/proc/pattern.ts` (engine) e `lib/proc/combinacoes.ts` (padrões e estratégias).
+
+### Algoritmo
+- **Varredura backward-recursiva**: `matchFromIndex` percorre a sequência de trás para frente, casando operadores do pattern de trás para frente também.
+- **Backtracking**: operadores como `ANY` e `SOME` geram candidatos (consumos possíveis) e tentam cada um; se falhar, volta e tenta o próximo.
+- `matchFull` retorna `MatchFullResult` com items capturados, fases marcadas e última fase.
+- `selecionarPecasPorPadraoComFase` (em `combinacoes.ts`) é o ponto de entrada principal — recebe peças, padrões e opcionalmente `movimentosEDocumentos`.
+
+### Tipos de Sequência
+- **`Documento`**: peça do processo (`id`, `tipo: T`, `numeroDoEvento`, `descricaoDoEvento`). O campo `kind` é opcional (ausente = documento por backward compat).
+- **`Evento`**: movimento processual (`kind: 'evento'`, `sequencia`, `descricao`, `tipoNome?`). Criado a partir de `InteropMovimentoComDocumentosType`.
+- **`SequenceItem = Documento | Evento`**: quando `movimentosEDocumentos` é fornecido, a sequência intercala eventos e seus documentos; senão, usa array plano de documentos.
+
+### Operadores
+| Operador | Faz match com | Comportamento |
+|----------|--------------|---------------|
+| `EXACT(T.X)` | Documento | Casa exatamente com tipo `X`. `captureAllInSameEvent` captura docs do mesmo evento. |
+| `OR(T.A, T.B)` | Documento | Casa com qualquer dos tipos listados. |
+| `ANY(opts)` | Docs + Eventos | Consome 0..N itens. `capture` lista tipos a capturar (docs); `except` para em certos tipos de doc; `exceptEvent` para em certos eventos. `greedy` tenta consumir o máximo primeiro. |
+| `SOME(opts)` | Docs + Eventos | Como `ANY` mas exige pelo menos 1 captura. |
+| `EVENT(criteria)` | Evento | Casa com evento por `descricao` e/ou `tipoNome` (string exata ou RegExp). Campos em AND; itens de `exceptEvent[]` em OR. |
+| `PHASE(name)` | Nenhum | Marcador de fase (sugar para `ANY(undefined, name)`). Não consome itens. |
+
+### Eventos em ANY/SOME
+- Eventos são consumidos transparentemente (sem captura) por `ANY` e `SOME`.
+- `exceptEvent: EventMatch[]` faz `ANY`/`SOME` parar ao encontrar um evento que case com algum dos critérios.
+
+### Padrões e Estratégias
+- Padrões são arrays de `MatchOperator[]` (um pattern). Estratégias são arrays de patterns (`MatchOperator[][]`) tentados em ordem.
+- `PieceStrategy` em `combinacoes.ts` mapeia nomes (ex: `MAIS_RELEVANTES`, `SUSPENSAO`) a conjuntos de padrões.
+- `padroesSuspensao` usa `EVENT({ tipoNome: regex })` para identificar eventos de suspensão por IRDR/Repetitivos/Repercussão Geral.
+
+### Fluxo de Dados
+1. `consultarProcesso` (pdpj.ts) popula `movimentosEDocumentos` via `mapPdpjToSimplified`
+2. `DadosDoProcessoType` carrega `movimentosEDocumentos?: InteropMovimentoComDocumentosType[]`
+3. `selecionarPecasPorPadraoComFase` recebe como 3º parâmetro opcional e constrói `SequenceItem[]`
+4. Chamadores: `analysis.ts`, `process.ts`, `process-contents.tsx`, `AbusiveLitigationPage.tsx` (todos passam `movimentosEDocumentos`); `select-pieces/route.ts` não tem acesso (param opcional, degrada gracefully)
