@@ -1,5 +1,6 @@
 import { IAPrompt } from "../db/mysql-types"
 import { PecaType } from "../proc/process-types"
+import { Plugin } from "../proc/combinacoes"
 import { slugify } from "../utils/utils"
 import devLog from "../utils/log"
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "./prompt-types"
@@ -90,7 +91,7 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
             promptSlug: prompt.slug || slugify(prompt.name),
             internalPrompt: definition,
             title: prompt.name,
-            plugins: []
+            plugins: (prompt.content.plugins as Plugin[]) || []
         }
         requestArray.push(req)
     }

@@ -8,7 +8,7 @@ import yamlps from 'js-yaml'
 import { ParsedPrompt, WorkflowRef } from './types'
 import { slugify } from '../utils/utils'
 import { Share, Target, Scope, Instance, Matter } from '../proc/process-types'
-import { PieceStrategy } from '../proc/combinacoes'
+import { PieceStrategy, Plugin } from '../proc/combinacoes'
 
 /**
  * Build a lookup map that accepts both the canonical form (e.g. 'MAIS_RELEVANTES')
@@ -30,6 +30,21 @@ const scopeLookup = buildEnumLookup(Scope)
 const instanceLookup = buildEnumLookup(Instance)
 const matterLookup = buildEnumLookup(Matter)
 const pieceStrategyLookup = buildEnumLookup(PieceStrategy)
+
+/**
+ * Build a lookup that resolves to enum **values** instead of keys.
+ * Needed for Plugin where DB/runtime uses the value form (e.g. 'Triagem').
+ */
+function buildEnumValueLookup(enumObj: Record<string, string>): Map<string, string> {
+    const map = new Map<string, string>()
+    for (const [key, value] of Object.entries(enumObj)) {
+        map.set(key, value)           // TRIAGEM → Triagem
+        map.set(slugify(key), value)  // triagem → Triagem
+        map.set(value, value)         // Triagem → Triagem
+    }
+    return map
+}
+const pluginLookup = buildEnumValueLookup(Plugin)
 
 /**
  * Resolve a single string value against an enum lookup map.
@@ -126,6 +141,11 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
     if (metadata.matter != null) {
         const resolved = resolveEnumArray(metadata.matter, matterLookup, 'matter', relativePath)
         if (resolved) metadata.matter = resolved
+    }
+    if (metadata.plugins != null) {
+        const resolved = resolveEnumArray(metadata.plugins, pluginLookup, 'plugins', relativePath)
+        if (resolved) metadata.plugins = resolved
+        else delete metadata.plugins
     }
     if (metadata.context != null && typeof metadata.context === 'object') {
         if (metadata.context.instance != null) {

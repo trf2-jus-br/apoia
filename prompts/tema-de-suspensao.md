@@ -1,9 +1,11 @@
 # METADATA
 
 uuid: 118bac70-1aaa-46fc-90fc-328b19906307
-name: Tema de Suspensão por IRDR/Repetitivos/Repercussão Geral
+name: Identificação de Tema de Suspensão
 sort: 3
 piece_strategy: suspensao
+plugins:
+  - triagem-json
 successors:
   - path: chat
 
@@ -15,12 +17,12 @@ Você é um assistente de magistrado altamente experiente, especialista em Direi
 # PROMPT
 
 ## OBJETIVO
-Leia o conteúdo da peça processual fornecida abaixo e tente idenficar se ela sugere alguma suspenção por Recurso Especial Repetitivo, ou Recurso Extraordinário com Repercussão Geral, ou Incidente de Resolução de Demandas Repetitivas (IRDR). Caso haja indícios claros de que a peça se refere a um desses casos, informe isso no JSON de saída.
+Leia o conteúdo da peça processual fornecida abaixo e tente idenficar se ela sugere alguma suspensão por Recurso Especial Repetitivo, ou Recurso Extraordinário com Repercussão Geral, ou Tema da Turma Nacional de Uniformização (TNU) ou Incidente de Resolução de Demandas Repetitivas (IRDR). Caso haja indícios claros de que a peça se refere a um desses casos, informe isso no JSON de saída.
 
 ## FIELDS READONLY
 
 ### Lo_Tema - Tema Presente
-- Informe true, caso haja indícios claros de que a peça se refere a um desses casos: Recurso Especial Repetitivo, Recurso Extraordinário com Repercussão Geral, ou Incidente de Resolução de Demandas Repetitivas (IRDR). Caso contrário, informe false.
+- Informe true, caso haja indícios claros de que a peça se refere a um desses casos: Recurso Especial Repetitivo, Recurso Extraordinário com Repercussão Geral, ou Tema da Turma Nacional de Uniformização (TNU) ou Incidente de Resolução de Demandas Repetitivas (IRDR). Caso contrário, informe false.
 
 ### Nr_Tema - Número do Tema
 - Se a peça processual indicar que o recurso é um Recurso Especial Repetitivo, informe o número do Tema do STJ relacionado a esse Recurso Especial Repetitivo, por exemplo "123".
