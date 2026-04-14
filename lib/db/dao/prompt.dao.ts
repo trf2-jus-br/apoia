@@ -131,6 +131,11 @@ export class PromptDao {
         return result
     }
 
+    static async retrieveVersionIdsByBaseId(base_id: number): Promise<number[]> {
+        const rows = await knex('ia_prompt').select('id').where({ base_id })
+        return rows.map((r: any) => r.id)
+    }
+
     // Lista prompts favoritos (qualquer share) do usuário corrente trazendo somente a versão mais recente
     static async retrieveFavoriteLatestPromptsForCurrentUser(): Promise<{ base_id: number, name: string, target: string }[]> {
         const userId = await UserDao.getCurrentUserId()

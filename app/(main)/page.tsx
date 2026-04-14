@@ -33,7 +33,7 @@ export default async function HomePage() {
             icon: faList,
             title: "Síntese",
             description: "Gere automaticamente resumos de peças processuais",
-            href: "/prompts?prompt=resumos-triagem",
+            href: "/prompts?prompt=resumo",
             color: "text-success"
         },
         {

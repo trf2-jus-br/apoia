@@ -87,6 +87,15 @@ export class BatchDao {
         return result
     }
 
+    static async retrieveBatchDossiers(batch_id: number): Promise<{ batch_dossier_id: number, dossier_code: string }[]> {
+        if (!knex) return []
+        return knex('ia_batch_dossier as bd')
+            .select('bd.id as batch_dossier_id', 'd.code as dossier_code')
+            .innerJoin('ia_dossier as d', 'd.id', 'bd.dossier_id')
+            .where('bd.batch_id', batch_id)
+            .orderBy('d.code')
+    }
+
     static async assertIABatchId(batchName: string): Promise<number> {
         if (!knex) return 0
         const created_by = await UserDao.getCurrentUserId()

@@ -21,6 +21,14 @@ Leia o conteúdo da peça processual fornecida abaixo e tente idenficar se ela s
 
 ## FIELDS READONLY
 
+### Tx_Peca - Rótulo da Peça Analisada
+- Informe o rótulo da peça processual analisada, por exemplo "DESPADEC1", "SENT1", etc, conforme o campo "label" da peça processual.
+- Caso não tenha sido fornecida uma peça processual, deixe esse campo em branco.
+
+### Ev_Evento - Evento da Peça Analisada
+- Informe o evento da peça processual analisada, por exemplo "1", "2", etc, conforme o campo "event" da peça processual.
+- Caso não tenha sido fornecida uma peça processual, deixe esse campo em branco.
+
 ### Lo_Tema - Tema Presente
 - Informe true, caso haja indícios claros de que a peça se refere a um desses casos: Recurso Especial Repetitivo, Recurso Extraordinário com Repercussão Geral, ou Tema da Turma Nacional de Uniformização (TNU) ou Incidente de Resolução de Demandas Repetitivas (IRDR). Caso contrário, informe false.
 
@@ -31,7 +39,11 @@ Leia o conteúdo da peça processual fornecida abaixo e tente idenficar se ela s
 - Informe "STJ", "STF", "TNU" ou "IRDR", conforme o caso, caso haja indícios claros de que a peça se refere a um desses casos. Caso contrário, deixe esse campo em branco.
 
 ### triagem - Triagem
-- Deixar em branco caso Lo_Tema seja false.
+- Deixar em branco se qualquer das opções abaixo for verdadeira:
+  - Lo_Tema seja false;
+  - Nr_Tema esteja vazio;
+  - Nr_Tema seja 0;
+  - Tx_Tribunal esteja vazio.
 - Preencher com um prefixo em letras minúsculas imediatamente por um hifem e pelo número do tema, sem espaços, caso Lo_Tema seja true. Por exemplo, "stf-rg-123" ou "stj-rr-456" ou "tnu-789". Os prefixos possíveis são:
   - stf-rg para Recurso Extraordinário com Repercussão Geral
   - stj-rr para Recurso Especial Repetitivo
@@ -43,6 +55,4 @@ Leia os documentos abaixo e preencha o JSON de saída.
 {{textos}}
 
 # FORMAT
-{% if Lo_Tema %}Tema identificado: {{ Nr_Tema }} ({{ Tx_Tribunal }}){% else %}Não foi identificado tema de suspensão.{% endif %}
-
-{{ triagem}}
+{% if Lo_Tema %}Tema identificado: {{ Nr_Tema if Nr_Tema !== 0 else '?'}} ({{ Tx_Tribunal }}){% else %}Não foi identificado tema de suspensão.{% endif %}
