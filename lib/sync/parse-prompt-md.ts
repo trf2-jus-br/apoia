@@ -8,7 +8,7 @@ import yamlps from 'js-yaml'
 import { ParsedPrompt, WorkflowRef } from './types'
 import { slugify } from '../utils/utils'
 import { Share, Target, Scope, Instance, Matter } from '../proc/process-types'
-import { PieceStrategy, Plugin } from '../proc/combinacoes'
+import { PieceStrategy, Plugin, T } from '../proc/combinacoes'
 
 /**
  * Build a lookup map that accepts both the canonical form (e.g. 'MAIS_RELEVANTES')
@@ -30,6 +30,7 @@ const scopeLookup = buildEnumLookup(Scope)
 const instanceLookup = buildEnumLookup(Instance)
 const matterLookup = buildEnumLookup(Matter)
 const pieceStrategyLookup = buildEnumLookup(PieceStrategy)
+const pieceDescrLookup = buildEnumLookup(T)
 
 /**
  * Build a lookup that resolves to enum **values** instead of keys.
@@ -70,6 +71,18 @@ function resolveEnumArray(values: any, lookup: Map<string, string>, fieldName: s
         .map((v: any) => resolveEnum(v, lookup, fieldName, source))
         .filter((v): v is string => v !== null)
     return resolved.length > 0 ? resolved : null
+}
+
+/**
+ * Normalize the `summary` metadata field to 'SIM' or 'NAO'.
+ * YAML may parse boolean-like values (true/false, yes/no) into JS booleans,
+ * so we handle boolean, string, and case-insensitive forms.
+ */
+function normalizeSummary(value: any): string {
+    if (typeof value === 'boolean') return value ? 'SIM' : 'NAO'
+    const str = String(value).trim().toUpperCase()
+    if (['SIM', 'TRUE', 'YES', '1'].includes(str)) return 'SIM'
+    return 'NAO'
 }
 
 /**
@@ -146,6 +159,14 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
         const resolved = resolveEnumArray(metadata.plugins, pluginLookup, 'plugins', relativePath)
         if (resolved) metadata.plugins = resolved
         else delete metadata.plugins
+    }
+    if (metadata.piece_descr != null) {
+        const resolved = resolveEnumArray(metadata.piece_descr, pieceDescrLookup, 'piece_descr', relativePath)
+        if (resolved) metadata.piece_descr = resolved
+        else delete metadata.piece_descr
+    }
+    if (metadata.summary != null) {
+        metadata.summary = normalizeSummary(metadata.summary)
     }
     if (metadata.context != null && typeof metadata.context === 'object') {
         if (metadata.context.instance != null) {

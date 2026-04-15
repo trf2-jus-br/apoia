@@ -249,6 +249,164 @@ No workflow
         expect(parsed.length).toBeGreaterThanOrEqual(40)
         console.log(`Successfully parsed ${parsed.length} prompts with unique UUIDs`)
     })
+
+    describe('summary normalization', () => {
+        const baseMd = (summaryValue: string) => `# METADATA
+
+uuid: aa000000-0000-0000-0000-000000000001
+summary: ${summaryValue}
+
+# PROMPT
+
+Test
+`
+        test.each([
+            ['SIM', 'SIM'],
+            ['sim', 'SIM'],
+            ['true', 'SIM'],
+            ['yes', 'SIM'],
+            ['1', 'SIM'],
+            ['NAO', 'NAO'],
+            ['nao', 'NAO'],
+            ['false', 'NAO'],
+            ['no', 'NAO'],
+            ['0', 'NAO'],
+        ])('normalizes "%s" to "%s"', (input, expected) => {
+            const result = parsePromptMarkdown('test', baseMd(input), 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.summary).toBe(expected)
+        })
+
+        test('normalizes YAML boolean true to SIM', () => {
+            // YAML parses bare `true` as boolean
+            const md = `# METADATA
+
+uuid: aa000000-0000-0000-0000-000000000002
+summary: true
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.summary).toBe('SIM')
+        })
+
+        test('normalizes YAML boolean false to NAO', () => {
+            const md = `# METADATA
+
+uuid: aa000000-0000-0000-0000-000000000003
+summary: false
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.summary).toBe('NAO')
+        })
+
+        test('does not set summary when absent', () => {
+            const md = `# METADATA
+
+uuid: aa000000-0000-0000-0000-000000000004
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.summary).toBeUndefined()
+        })
+    })
+
+    describe('piece_descr normalization', () => {
+        test('accepts canonical enum keys', () => {
+            const md = `# METADATA
+
+uuid: bb000000-0000-0000-0000-000000000001
+piece_descr:
+  - PETICAO_INICIAL
+  - SENTENCA
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.piece_descr).toEqual(['PETICAO_INICIAL', 'SENTENCA'])
+        })
+
+        test('accepts slugified keys', () => {
+            const md = `# METADATA
+
+uuid: bb000000-0000-0000-0000-000000000002
+piece_descr:
+  - peticao-inicial
+  - sentenca
+  - despacho-decisao
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.piece_descr).toEqual(['PETICAO_INICIAL', 'SENTENCA', 'DESPACHO_DECISAO'])
+        })
+
+        test('filters out invalid values', () => {
+            const md = `# METADATA
+
+uuid: bb000000-0000-0000-0000-000000000003
+piece_descr:
+  - PETICAO_INICIAL
+  - INVALIDO_TIPO
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.piece_descr).toEqual(['PETICAO_INICIAL'])
+        })
+
+        test('deletes piece_descr when all values are invalid', () => {
+            const md = `# METADATA
+
+uuid: bb000000-0000-0000-0000-000000000004
+piece_descr:
+  - FOO
+  - BAR
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.piece_descr).toBeUndefined()
+        })
+
+        test('does not set piece_descr when absent', () => {
+            const md = `# METADATA
+
+uuid: bb000000-0000-0000-0000-000000000005
+
+# PROMPT
+
+Test
+`
+            const result = parsePromptMarkdown('test', md, 'test.md')
+            expect(result).not.toBeNull()
+            expect(result!.metadata.piece_descr).toBeUndefined()
+        })
+    })
 })
 
 describe('LocalProvider', () => {
