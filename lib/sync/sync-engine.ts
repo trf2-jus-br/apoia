@@ -40,6 +40,9 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
         ...(parsed.metadata?.grupo ? { grupo: parsed.metadata.grupo } : {}),
         ...(parsed.metadata?.batch_report != null ? { batch_report: parsed.metadata.batch_report } : {}),
         ...(parsed.metadata?.plugins ? { plugins: parsed.metadata.plugins } : {}),
+        ...(parsed.metadata?.summary ? { summary: parsed.metadata.summary } : {}),
+        ...(parsed.metadata?.editor_label ? { editor_label: parsed.metadata.editor_label } : {}),
+        ...(parsed.metadata?.piece_descr ? { piece_descr: parsed.metadata.piece_descr } : {}),
     }
 }
 
