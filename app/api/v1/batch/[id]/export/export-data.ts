@@ -96,7 +96,11 @@ export function buildCsv(rows: ExportRow[]): string {
     const lines = [headers.map(escapeCsv).join(',')]
     for (const row of rows) {
         const flat = flattenForCsv(row)
-        lines.push(headers.map(h => escapeCsv(flat[h] ?? '')).join(','))
+        lines.push(headers.map(h => {
+            const val = flat[h] ?? ''
+            if (h === 'processNumber' && val) return `="${val}"`
+            return escapeCsv(val)
+        }).join(','))
     }
     return lines.join('\r\n')
 }

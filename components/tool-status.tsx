@@ -117,6 +117,17 @@ function toolMessage(part: UIMessagePart<any, any>): ReactElement {
                 case 'output-error':
                     return <div>Error: {part.errorText}</div>;
             }
+        case 'tool-getLeadingCaseSearch':
+            switch (part.state) {
+                case 'input-streaming':
+                    return <span className="text-secondary">Acessando busca por processo paradigma...</span>
+                case 'input-available':
+                    return <span className="text-secondary">Buscando temas pelo processo paradigma: {part.input?.numero}...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Consultei temas pelo processo paradigma: {part.input?.numero} e localizei: {joinWithAnd(part.output?.results?.map(i => `${i.tipo} ${i.nr} - ${i.orgao}`))}.</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
         default:
             return <span className="text-secondary">Ferramenta desconhecida: {part.type}</span>
     }

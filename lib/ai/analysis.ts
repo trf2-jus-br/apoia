@@ -116,7 +116,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
         // Retrieve from cache or generate
         for (const req of requests) {
-            req.result = generateContent(req.internalPrompt, req.data, getTools(pUser))
+            req.result = generateContent(req.internalPrompt, req.data, await getTools(pUser))
         }
 
         let model: string | undefined = undefined

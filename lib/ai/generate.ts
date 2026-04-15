@@ -237,7 +237,8 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
                 devLog('Provider metadata:', providerMetadata)
             }
         },
-        tools: structuredOutputs ? undefined : tools, // Gemini models don't support tools when structured outputs are used
+        // tools: structuredOutputs ? undefined : tools, // Gemini models don't support tools when structured outputs are used
+        tools: tools, 
         stopWhen: stepCountIs(10),
         providerOptions: {
             google: {
