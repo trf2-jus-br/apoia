@@ -55,18 +55,18 @@ export async function POST(req: Request) {
     }
 
     // Check that this repo is in our PROMPT_LIBRARIES list
-    const librariesEnv = process.env.PROMPT_LIBRARIES || ''
-    const configuredUrls = librariesEnv.split(',').map(u => u.trim()).filter(Boolean)
-    const matchedUrl = configuredUrls.find(url => repoUrl.includes(url.replace(/#.*$/, '')) || url.replace(/#.*$/, '').includes(repoUrl))
+    const { parseLibrariesEnv, findLibraryConfig } = await import('@/lib/sync/providers/factory')
+    const configs = parseLibrariesEnv(process.env.PROMPT_LIBRARIES)
+    const matchedCfg = findLibraryConfig(repoUrl, configs)
 
-    if (!matchedUrl) {
+    if (!matchedCfg) {
         devLog(`[webhook] Repository ${repoUrl} not found in PROMPT_LIBRARIES`)
         return NextResponse.json({ errormsg: 'Repository not configured for sync' }, { status: 404 })
     }
 
     // Check if this is a push to the configured branch
     const branch = extractBranch(payload)
-    const configuredBranch = matchedUrl.includes('#') ? matchedUrl.split('#')[1] : 'main'
+    const configuredBranch = matchedCfg.url.includes('#') ? matchedCfg.url.split('#')[1] : 'main'
     if (branch && branch !== configuredBranch) {
         devLog(`[webhook] Push to ${branch}, configured branch is ${configuredBranch} — skipping`)
         return NextResponse.json({ status: 'skipped', reason: `Push to ${branch}, not ${configuredBranch}` })
@@ -75,8 +75,8 @@ export async function POST(req: Request) {
     // Trigger sync
     try {
         const { syncLibraryByUrl } = await import('@/lib/sync')
-        const result = await syncLibraryByUrl(matchedUrl)
-        devLog(`[webhook] Sync complete for ${matchedUrl}: +${result.added} ~${result.updated} -${result.deactivated}`)
+        const result = await syncLibraryByUrl(matchedCfg.url)
+        devLog(`[webhook] Sync complete for ${matchedCfg.url}: +${result.added} ~${result.updated} -${result.deactivated}`)
 
         return NextResponse.json({
             status: 'ok',

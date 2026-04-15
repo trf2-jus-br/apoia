@@ -485,7 +485,7 @@ describe('LocalProvider', () => {
 })
 
 describe('createProvider (factory)', () => {
-    const { createProvider, parseTokensEnv, findToken } = require('@/lib/sync/providers/factory')
+    const { createProvider, parseLibrariesEnv, findLibraryConfig } = require('@/lib/sync/providers/factory')
 
     test('creates LocalProvider for local: prefix', () => {
         const provider = createProvider('local:./prompts')
@@ -521,34 +521,68 @@ describe('createProvider (factory)', () => {
         expect(() => createProvider('not-a-url')).toThrow('Invalid library URL')
     })
 
-    describe('parseTokensEnv', () => {
-        test('parses comma-separated url=token pairs', () => {
-            const tokens = parseTokensEnv('github.com/owner/repo=token123,gitlab.com/group/repo=token456')
-            expect(tokens.size).toBe(2)
-            expect(tokens.get('github.com/owner/repo')).toBe('token123')
-            expect(tokens.get('gitlab.com/group/repo')).toBe('token456')
+    describe('parseLibrariesEnv', () => {
+        test('parses semicolon-separated entries with url,prefix,token', () => {
+            const configs = parseLibrariesEnv('https://github.com/trf2/prompts,trf2,ghp_xxxx;https://gitlab.com/cnj/prompts,cnj,glpat-yyyy')
+            expect(configs).toHaveLength(2)
+            expect(configs[0]).toEqual({ url: 'https://github.com/trf2/prompts', slugPrefix: 'trf2', token: 'ghp_xxxx' })
+            expect(configs[1]).toEqual({ url: 'https://gitlab.com/cnj/prompts', slugPrefix: 'cnj', token: 'glpat-yyyy' })
         })
 
-        test('returns empty map for undefined', () => {
-            expect(parseTokensEnv(undefined).size).toBe(0)
+        test('parses entries with url and prefix only (no token)', () => {
+            const configs = parseLibrariesEnv('https://github.com/org/repo,myprefix')
+            expect(configs).toHaveLength(1)
+            expect(configs[0]).toEqual({ url: 'https://github.com/org/repo', slugPrefix: 'myprefix', token: undefined })
         })
 
-        test('skips entries without =', () => {
-            const tokens = parseTokensEnv('invalid,valid=token')
-            expect(tokens.size).toBe(1)
-            expect(tokens.get('valid')).toBe('token')
+        test('parses entries with url only (no prefix, no token)', () => {
+            const configs = parseLibrariesEnv('https://github.com/org/repo')
+            expect(configs).toHaveLength(1)
+            expect(configs[0]).toEqual({ url: 'https://github.com/org/repo', slugPrefix: undefined, token: undefined })
+        })
+
+        test('supports empty prefix with token (url,,token)', () => {
+            const configs = parseLibrariesEnv('https://github.com/org/repo,,ghp_secrettoken')
+            expect(configs).toHaveLength(1)
+            expect(configs[0]).toEqual({ url: 'https://github.com/org/repo', slugPrefix: undefined, token: 'ghp_secrettoken' })
+        })
+
+        test('returns empty array for undefined', () => {
+            expect(parseLibrariesEnv(undefined)).toEqual([])
+        })
+
+        test('returns empty array for empty string', () => {
+            expect(parseLibrariesEnv('')).toEqual([])
+        })
+
+        test('trims whitespace from entries', () => {
+            const configs = parseLibrariesEnv('  https://github.com/a/b , pfx , tok ; https://github.com/c/d  ')
+            expect(configs).toHaveLength(2)
+            expect(configs[0]).toEqual({ url: 'https://github.com/a/b', slugPrefix: 'pfx', token: 'tok' })
+            expect(configs[1]).toEqual({ url: 'https://github.com/c/d', slugPrefix: undefined, token: undefined })
+        })
+
+        test('skips empty entries from trailing semicolons', () => {
+            const configs = parseLibrariesEnv('https://github.com/a/b;')
+            expect(configs).toHaveLength(1)
         })
     })
 
-    describe('findToken', () => {
-        test('finds token by substring match', () => {
-            const tokens = new Map([['github.com/owner', 'mytoken']])
-            expect(findToken('https://github.com/owner/repo#main', tokens)).toBe('mytoken')
+    describe('findLibraryConfig', () => {
+        test('finds config by substring match', () => {
+            const configs = [
+                { url: 'https://github.com/owner/repo#main', slugPrefix: 'pfx', token: 'tok' },
+            ]
+            const found = findLibraryConfig('https://github.com/owner/repo', configs)
+            expect(found).toBeTruthy()
+            expect(found!.slugPrefix).toBe('pfx')
         })
 
         test('returns undefined when no match', () => {
-            const tokens = new Map([['github.com/other', 'mytoken']])
-            expect(findToken('https://github.com/owner/repo', tokens)).toBeUndefined()
+            const configs = [
+                { url: 'https://github.com/other/repo', slugPrefix: undefined, token: undefined },
+            ]
+            expect(findLibraryConfig('https://github.com/owner/repo', configs)).toBeUndefined()
         })
     })
 })
@@ -680,6 +714,54 @@ Second
         expect(result.valid).toBe(false)
         const file2 = result.files.find((f: any) => f.path === 'file2.md')
         expect(file2!.errors[0]).toContain('Duplicate UUID')
+    })
+
+    test('rejects duplicate slugs within the same file set', () => {
+        const result = validatePromptFiles([
+            {
+                path: 'analise.md',
+                content: `# METADATA
+
+uuid: aaaaaaaa-1111-2222-aaaa-444444444444
+
+# PROMPT
+
+First
+`,
+            },
+            {
+                path: 'subdir/analise.md',
+                content: `# METADATA
+
+uuid: bbbbbbbb-1111-2222-aaaa-555555555555
+
+# PROMPT
+
+Second with same slug
+`,
+            },
+        ])
+        expect(result.valid).toBe(false)
+        const file2 = result.files.find((f: any) => f.path === 'subdir/analise.md')
+        expect(file2!.errors[0]).toContain('Duplicate slug')
+        expect(file2!.errors[0]).toContain('analise')
+    })
+
+    test('allows same slug when same uuid (same file listed twice)', () => {
+        const result = validatePromptFiles([
+            {
+                path: 'analise.md',
+                content: `# METADATA
+
+uuid: aaaaaaaa-1111-2222-aaaa-444444444444
+
+# PROMPT
+
+First
+`,
+            },
+        ])
+        expect(result.valid).toBe(true)
     })
 
     test('warns on unresolved workflow reference', () => {

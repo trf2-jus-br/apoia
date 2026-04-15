@@ -12,7 +12,7 @@
 import knex from '../db/knex'
 import { getId } from '../db/dao/utils'
 import { slugify } from '../utils/utils'
-import { OriginProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
+import { LibraryConfig, OriginProvider, ParsedPrompt, SyncResult, WorkflowRef, WorkflowResolved, WorkflowStepResolved } from './types'
 import { LocalProvider } from './providers/local'
 import devLog from '../utils/log'
 import { canonicalize } from 'json-canonicalize'
@@ -71,15 +71,27 @@ function contentHasChanged(dbContent: Record<string, any>, newContent: Record<st
 /**
  * Build a slug->UUID lookup index from all parsed prompts.
  * Used to resolve `path:` references in workflow definitions.
+ * @param prompts - The parsed prompts to index
+ * @param slugPrefix - Optional prefix that was applied to slugs (for scoped resolution)
  */
-function buildSlugIndex(prompts: ParsedPrompt[]): Map<string, string> {
+function buildSlugIndex(prompts: ParsedPrompt[], slugPrefix?: string): Map<string, string> {
     const index = new Map<string, string>()
     for (const p of prompts) {
+        // Index by the final (potentially prefixed) slug
         index.set(p.slug, p.uuid)
+        // Also index by the ORIGINAL slug (without prefix) for scoped intra-library resolution
+        if (slugPrefix) {
+            const originalSlug = p.slug.startsWith(slugPrefix + '-') ? p.slug.slice(slugPrefix.length + 1) : p.slug
+            index.set(originalSlug, p.uuid)
+        }
         // Also index by relative path without extension (for subdirectory prompts)
         const pathWithoutExt = p.relativePath.replace(/\.md$/, '')
         if (pathWithoutExt !== p.slug) {
             index.set(pathWithoutExt, p.uuid)
+            // Also index the prefixed version of the path
+            if (slugPrefix) {
+                index.set(slugPrefix + '-' + pathWithoutExt, p.uuid)
+            }
         }
     }
     return index
@@ -147,14 +159,23 @@ function resolveWorkflow(parsed: ParsedPrompt, slugIndex: Map<string, string>, n
  * Synchronize prompts from a single origin provider into the database.
  * 
  * @param provider - The origin provider to read prompts from
+ * @param slugPrefix - Optional prefix to prepend to all slugs from this library
  * @returns A SyncResult with counts of added/updated/deactivated/unchanged prompts
  */
-export async function syncOrigin(provider: OriginProvider): Promise<SyncResult> {
+export async function syncOrigin(provider: OriginProvider, slugPrefix?: string): Promise<SyncResult> {
     if (!knex) {
         return { origin: 'unknown', added: 0, updated: 0, deactivated: 0, unchanged: 0, errors: ['Database not available'] }
     }
 
     const contents = await provider.read()
+
+    // Apply slug prefix if configured
+    if (slugPrefix) {
+        for (const p of contents.prompts) {
+            p.slug = slugPrefix + '-' + p.slug
+        }
+    }
+
     const result: SyncResult = {
         origin: contents.origin,
         added: 0,
@@ -165,7 +186,8 @@ export async function syncOrigin(provider: OriginProvider): Promise<SyncResult> 
     }
 
     // Build slug->UUID index for resolving path: references
-    const slugIndex = buildSlugIndex(contents.prompts)
+    // Includes both prefixed and original slugs for scoped intra-library resolution
+    const slugIndex = buildSlugIndex(contents.prompts, slugPrefix)
     // Build UUID->name index for populating name in workflow steps
     const nameIndex = buildNameIndex(contents.prompts)
 
@@ -231,6 +253,13 @@ async function syncSinglePrompt(
             existing = { ...latestInactive, is_latest: 1 }
             devLog(`[sync-engine] Reactivated orphan prompt ${parsed.slug} (id=${latestInactive.id})`)
         }
+    }
+
+    // Cross-origin UUID conflict: if the existing record belongs to a different origin,
+    // skip this prompt to prevent one library from overwriting another's data.
+    if (existing && existing.origin && existing.origin !== origin) {
+        result.errors.push(`UUID conflict: prompt '${parsed.slug}' (${parsed.uuid}) already belongs to origin '${existing.origin}', cannot import from '${origin}'`)
+        return
     }
 
     const newContent = buildContentJson(parsed)
@@ -337,13 +366,14 @@ export async function syncLocalPrompts(): Promise<SyncResult> {
 /**
  * Sync all configured prompt libraries.
  * 
- * Reads PROMPT_LIBRARIES env var (comma-separated URLs) and syncs each,
- * plus always syncs the built-in local:./prompts library.
+ * Reads PROMPT_LIBRARIES env var and syncs each library.
  * 
- * PROMPT_LIBRARIES_TOKENS env var provides auth tokens (format: "url=token,url2=token2").
+ * PROMPT_LIBRARIES format: "url,slug-prefix,token;url2,prefix2;url3"
+ *   - Entries separated by semicolons
+ *   - Within each entry: url[,slugPrefix[,token]]
  */
 export async function syncAllLibraries(): Promise<SyncResult[]> {
-    const { createProvider, parseTokensEnv, findToken } = await import('./providers/factory')
+    const { createProvider, parseLibrariesEnv } = await import('./providers/factory')
 
     const results: SyncResult[] = []
 
@@ -360,21 +390,17 @@ export async function syncAllLibraries(): Promise<SyncResult[]> {
     // }
 
     // Sync configured remote libraries
-    const librariesEnv = process.env.PROMPT_LIBRARIES
-    if (!librariesEnv) return results
+    const configs = parseLibrariesEnv(process.env.PROMPT_LIBRARIES)
+    if (configs.length === 0) return results
 
-    const tokens = parseTokensEnv(process.env.PROMPT_LIBRARIES_TOKENS)
-    const urls = librariesEnv.split(',').map(u => u.trim()).filter(Boolean)
-
-    for (const url of urls) {
+    for (const cfg of configs) {
         try {
-            const token = findToken(url, tokens)
-            const provider = createProvider(url, token)
-            const result = await syncOrigin(provider)
+            const provider = createProvider(cfg.url, cfg.token)
+            const result = await syncOrigin(provider, cfg.slugPrefix)
             results.push(result)
         } catch (err: any) {
             results.push({
-                origin: url,
+                origin: cfg.url,
                 added: 0, updated: 0, deactivated: 0, unchanged: 0,
                 errors: [`Failed to sync: ${err.message}`],
             })
@@ -386,12 +412,15 @@ export async function syncAllLibraries(): Promise<SyncResult[]> {
 
 /**
  * Sync a single library by URL. Used by the webhook endpoint.
+ * Looks up the LibraryConfig from PROMPT_LIBRARIES to get slugPrefix and token.
  */
 export async function syncLibraryByUrl(url: string): Promise<SyncResult> {
-    const { createProvider, parseTokensEnv, findToken } = await import('./providers/factory')
+    const { createProvider, parseLibrariesEnv, findLibraryConfig } = await import('./providers/factory')
 
-    const tokens = parseTokensEnv(process.env.PROMPT_LIBRARIES_TOKENS)
-    const token = findToken(url, tokens)
+    const configs = parseLibrariesEnv(process.env.PROMPT_LIBRARIES)
+    const cfg = findLibraryConfig(url, configs)
+    const token = cfg?.token
+    const slugPrefix = cfg?.slugPrefix
     const provider = createProvider(url, token)
-    return syncOrigin(provider)
+    return syncOrigin(provider, slugPrefix)
 }

@@ -89,6 +89,13 @@ export function validatePromptFiles(files: { path: string; content: string }[]):
             uuidToPath.set(parsed.uuid, file.path)
         }
 
+        // Duplicate slug check
+        const existingSlugUuid = slugToUuid.get(parsed.slug)
+        if (existingSlugUuid && existingSlugUuid !== parsed.uuid) {
+            result.valid = false
+            result.errors.push(`Duplicate slug '${parsed.slug}' — already used by a different prompt`)
+        }
+
         // Build slug index for workflow resolution
         slugToUuid.set(parsed.slug, parsed.uuid)
         const pathWithoutExt = parsed.relativePath.replace(/\.md$/, '')

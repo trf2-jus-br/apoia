@@ -59,6 +59,16 @@ export interface WorkflowResolved {
     successors?: WorkflowStepResolved[]
 }
 
+/** Configuration for a prompt library parsed from PROMPT_LIBRARIES env var */
+export interface LibraryConfig {
+    /** Library URL or local path (e.g., 'https://github.com/org/repo#main') */
+    url: string
+    /** Optional slug prefix to namespace prompts from this library (e.g., 'trf2') */
+    slugPrefix?: string
+    /** Optional auth token for private repositories */
+    token?: string
+}
+
 /** Result of reading an origin source */
 export interface OriginContents {
     /** Identifier of the origin (e.g., 'local:./prompts', 'github:cnj-ia/prompts-core') */

@@ -835,24 +835,17 @@ Além dos prompts locais (diretório `prompts/`), o sistema suporta sincronizar 
 
 ### Configuração
 
-Defina a variável de ambiente `PROMPT_LIBRARIES` com as URLs dos repositórios, separadas por vírgula:
+Defina a variável de ambiente `PROMPT_LIBRARIES` com as bibliotecas remotas. Cada entrada contém a URL, um prefixo de slug opcional e um token opcional, separados por vírgula. Múltiplas entradas são separadas por ponto-e-vírgula:
 
 ```properties
-PROMPT_LIBRARIES=https://github.com/org/prompts-core,https://gitlab.com/equipe/prompts-especializados#develop
+# Formato: url[,slug-prefix[,token]];url2[,prefix2[,token2]]
+PROMPT_LIBRARIES=https://github.com/trf2/prompts,trf2,ghp_xxxx;https://gitlab.com/cnj/prompts-core,cnj;https://github.com/org/prompts-extras
 ```
 
 - Appenda `#branch` à URL para sincronizar uma branch específica (padrão: `main`)
-- Repositórios privados requerem tokens configurados em `PROMPT_LIBRARIES_TOKENS`
-
-### Tokens de Acesso
-
-Para repositórios privados, defina tokens no formato `url=token`, separados por vírgula:
-
-```properties
-PROMPT_LIBRARIES_TOKENS=github.com/org/prompts-core=ghp_xxxx,gitlab.com/equipe=glpat-xxxx
-```
-
-A correspondência é feita por substring: se a URL configurada contiver o padrão do token, ele será usado.
+- **Slug prefix**: quando definido, todos os slugs dos prompts dessa biblioteca recebem o prefixo (ex: `analise` → `trf2-analise`). Isso evita conflitos de nomes entre bibliotecas que possuem prompts com o mesmo slug.
+- **Token**: para repositórios privados, informe o token de acesso na terceira posição da entrada. Não é necessária uma variável separada.
+- **Resolução de workflow**: referências `path:` em predecessors/successors são resolvidas primeiro dentro da mesma biblioteca (pelo slug original, sem prefixo), depois globalmente. Isso permite que os arquivos `.md` referenciem prompts da mesma biblioteca sem precisar saber do prefixo.
 
 ### Webhook (Sincronização Automática)
 

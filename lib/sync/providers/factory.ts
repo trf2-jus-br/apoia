@@ -5,8 +5,13 @@
  *   - Local paths (starting with './' or '/') -> LocalProvider
  *   - github.com URLs -> GitHubProvider
  *   - Other HTTPS URLs -> GitLabProvider (generic Git hosting)
+ * 
+ * PROMPT_LIBRARIES format (semicolon-separated entries):
+ *   url,slug-prefix,token;url2,prefix2;url3
+ *   - Each entry: url[,slugPrefix[,token]]
+ *   - slug-prefix and token are optional
  */
-import { OriginProvider } from '../types'
+import { LibraryConfig, OriginProvider } from '../types'
 import { LocalProvider } from './local'
 import { GitHubProvider } from './github'
 import { GitLabProvider } from './gitlab'
@@ -47,37 +52,45 @@ export function createProvider(url: string, token?: string): OriginProvider {
 }
 
 /**
- * Parse the PROMPT_LIBRARIES_TOKENS environment variable into a URL->token map.
+ * Parse the PROMPT_LIBRARIES environment variable into an array of LibraryConfig.
  * 
- * Format: "url1=token1,url2=token2"
- * The URL part is matched against library URLs (substring match).
+ * Format: "url,slug-prefix,token;url2,prefix2;url3"
+ *   - Entries are separated by semicolons
+ *   - Within each entry: url,slugPrefix,token (comma-separated)
+ *   - slugPrefix and token are optional
+ *   - An empty slugPrefix field (url,,token) is allowed
  */
-export function parseTokensEnv(tokensEnv: string | undefined): Map<string, string> {
-    const tokens = new Map<string, string>()
-    if (!tokensEnv) return tokens
+export function parseLibrariesEnv(librariesEnv: string | undefined): LibraryConfig[] {
+    if (!librariesEnv) return []
 
-    for (const entry of tokensEnv.split(',')) {
-        const eqIdx = entry.indexOf('=')
-        if (eqIdx === -1) continue
-        const url = entry.substring(0, eqIdx).trim()
-        const token = entry.substring(eqIdx + 1).trim()
-        if (url && token) {
-            tokens.set(url, token)
-        }
+    const configs: LibraryConfig[] = []
+    const entries = librariesEnv.split(';')
+
+    for (const entry of entries) {
+        const trimmed = entry.trim()
+        if (!trimmed) continue
+
+        const parts = trimmed.split(',').map(s => s.trim())
+        const url = parts[0]
+        if (!url) continue
+
+        const slugPrefix = parts[1] || undefined
+        const token = parts[2] || undefined
+
+        configs.push({ url, slugPrefix, token })
     }
 
-    return tokens
+    return configs
 }
 
 /**
- * Find a token for a given library URL from the tokens map.
- * Uses substring matching: if any token key is contained in the URL, it matches.
+ * Find a LibraryConfig whose URL matches the given repo URL.
+ * Uses substring matching: if the config URL (without #branch) is contained
+ * in the repo URL, or vice versa, it matches.
  */
-export function findToken(url: string, tokens: Map<string, string>): string | undefined {
-    for (const [pattern, token] of tokens) {
-        if (url.includes(pattern)) {
-            return token
-        }
-    }
-    return undefined
+export function findLibraryConfig(repoUrl: string, configs: LibraryConfig[]): LibraryConfig | undefined {
+    return configs.find(cfg => {
+        const cfgClean = cfg.url.replace(/#.*$/, '')
+        return repoUrl.includes(cfgClean) || cfgClean.includes(repoUrl)
+    })
 }

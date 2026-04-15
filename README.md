@@ -97,13 +97,13 @@ A Apoia sincroniza automaticamente os prompts do diretório local `prompts/` par
 Para configurar bibliotecas remotas, defina as variáveis abaixo:
 
 ```properties
-# URLs dos repositórios de prompts, separadas por vírgula
-# Appenda #branch para uma branch específica (padrão: main)
-PROMPT_LIBRARIES=https://github.com/org/prompts-core,https://gitlab.com/equipe/prompts#develop
-
-# Tokens de acesso para repositórios privados (formato: url=token, separados por vírgula)
-# A correspondência é por substring da URL
-PROMPT_LIBRARIES_TOKENS=github.com/org/prompts-core=ghp_xxxx,gitlab.com/equipe=glpat-xxxx
+# Bibliotecas de prompts remotas
+# Formato: url[,slug-prefix[,token]];url2[,prefix2[,token2]]
+# - Entries separadas por ponto-e-vírgula (;)
+# - Cada entry: URL obrigatória, slug-prefix e token opcionais (separados por vírgula)
+# - Appenda #branch à URL para uma branch específica (padrão: main)
+# - Slug prefix evita conflitos entre bibliotecas com slugs iguais (ex: analise → trf2-analise)
+PROMPT_LIBRARIES=https://github.com/trf2/prompts,trf2,ghp_xxxx;https://gitlab.com/cnj/prompts-core,cnj
 
 # Secret compartilhado para autenticar webhooks
 PROMPT_LIBRARY_SECRET=SUBSTITUIR_POR_UM_SECRET_ALEATORIO
