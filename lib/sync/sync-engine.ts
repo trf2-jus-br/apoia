@@ -160,9 +160,10 @@ function resolveWorkflow(parsed: ParsedPrompt, slugIndex: Map<string, string>, n
  * 
  * @param provider - The origin provider to read prompts from
  * @param slugPrefix - Optional prefix to prepend to all slugs from this library
+ * @param configuredOrigins - Set of all origin URLs currently configured (for rename detection)
  * @returns A SyncResult with counts of added/updated/deactivated/unchanged prompts
  */
-export async function syncOrigin(provider: OriginProvider, slugPrefix?: string): Promise<SyncResult> {
+export async function syncOrigin(provider: OriginProvider, slugPrefix?: string, configuredOrigins?: Set<string>): Promise<SyncResult> {
     if (!knex) {
         return { origin: 'unknown', added: 0, updated: 0, deactivated: 0, unchanged: 0, errors: ['Database not available'] }
     }
@@ -199,7 +200,7 @@ export async function syncOrigin(provider: OriginProvider, slugPrefix?: string):
 
         try {
             const resolvedWorkflow = resolveWorkflow(parsed, slugIndex, nameIndex)
-            await syncSinglePrompt(parsed, contents.origin, contents.version, resolvedWorkflow, result)
+            await syncSinglePrompt(parsed, contents.origin, contents.version, resolvedWorkflow, result, configuredOrigins)
         } catch (err: any) {
             result.errors.push(`Error syncing ${parsed.slug} (${parsed.uuid}): ${err.message}`)
         }
@@ -226,7 +227,8 @@ async function syncSinglePrompt(
     origin: string,
     originVersion: string,
     resolvedWorkflow: WorkflowResolved | null,
-    result: SyncResult
+    result: SyncResult,
+    configuredOrigins?: Set<string>,
 ): Promise<void> {
 
     // if (parsed.slug === 'sentenca') {
@@ -255,11 +257,20 @@ async function syncSinglePrompt(
         }
     }
 
-    // Cross-origin UUID conflict: if the existing record belongs to a different origin,
-    // skip this prompt to prevent one library from overwriting another's data.
+    // Cross-origin UUID conflict detection.
+    // If the existing record belongs to a different origin:
+    //   - If the old origin is still configured → real conflict, skip.
+    //   - If the old origin is no longer configured → repo was renamed, adopt new origin.
     if (existing && existing.origin && existing.origin !== origin) {
-        result.errors.push(`UUID conflict: prompt '${parsed.slug}' (${parsed.uuid}) already belongs to origin '${existing.origin}', cannot import from '${origin}'`)
-        return
+        const oldOriginStillConfigured = configuredOrigins?.has(existing.origin) ?? false
+        if (oldOriginStillConfigured) {
+            result.errors.push(`UUID conflict: prompt '${parsed.slug}' (${parsed.uuid}) already belongs to origin '${existing.origin}', cannot import from '${origin}'`)
+            return
+        }
+        // Old origin no longer configured — adopt this prompt under the new origin
+        devLog(`[sync-engine] Adopting prompt '${parsed.slug}' (${parsed.uuid}) from old origin '${existing.origin}' → '${origin}'`)
+        await knex!('ia_prompt').update({ origin }).where({ id: existing.id })
+        existing = { ...existing, origin }
     }
 
     const newContent = buildContentJson(parsed)
@@ -393,10 +404,13 @@ export async function syncAllLibraries(): Promise<SyncResult[]> {
     const configs = parseLibrariesEnv(process.env.PROMPT_LIBRARIES)
     if (configs.length === 0) return results
 
+    // Build the set of all configured origins for rename detection
+    const configuredOrigins = new Set<string>(configs.map(c => c.url))
+
     for (const cfg of configs) {
         try {
             const provider = createProvider(cfg.url, cfg.token)
-            const result = await syncOrigin(provider, cfg.slugPrefix)
+            const result = await syncOrigin(provider, cfg.slugPrefix, configuredOrigins)
             results.push(result)
         } catch (err: any) {
             results.push({
@@ -421,6 +435,7 @@ export async function syncLibraryByUrl(url: string): Promise<SyncResult> {
     const cfg = findLibraryConfig(url, configs)
     const token = cfg?.token
     const slugPrefix = cfg?.slugPrefix
+    const configuredOrigins = new Set<string>(configs.map(c => c.url))
     const provider = createProvider(url, token)
-    return syncOrigin(provider, slugPrefix)
+    return syncOrigin(provider, slugPrefix, configuredOrigins)
 }
