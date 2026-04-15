@@ -333,3 +333,65 @@ export async function syncLocalPrompts(): Promise<SyncResult> {
     const provider = new LocalProvider('local:./prompts')
     return syncOrigin(provider)
 }
+
+/**
+ * Sync all configured prompt libraries.
+ * 
+ * Reads PROMPT_LIBRARIES env var (comma-separated URLs) and syncs each,
+ * plus always syncs the built-in local:./prompts library.
+ * 
+ * PROMPT_LIBRARIES_TOKENS env var provides auth tokens (format: "url=token,url2=token2").
+ */
+export async function syncAllLibraries(): Promise<SyncResult[]> {
+    const { createProvider, parseTokensEnv, findToken } = await import('./providers/factory')
+
+    const results: SyncResult[] = []
+
+    // Always sync local prompts first
+    // try {
+    //     const localResult = await syncLocalPrompts()
+    //     results.push(localResult)
+    // } catch (err: any) {
+    //     results.push({
+    //         origin: 'local:./prompts',
+    //         added: 0, updated: 0, deactivated: 0, unchanged: 0,
+    //         errors: [`Failed to sync local prompts: ${err.message}`],
+    //     })
+    // }
+
+    // Sync configured remote libraries
+    const librariesEnv = process.env.PROMPT_LIBRARIES
+    if (!librariesEnv) return results
+
+    const tokens = parseTokensEnv(process.env.PROMPT_LIBRARIES_TOKENS)
+    const urls = librariesEnv.split(',').map(u => u.trim()).filter(Boolean)
+
+    for (const url of urls) {
+        try {
+            const token = findToken(url, tokens)
+            const provider = createProvider(url, token)
+            const result = await syncOrigin(provider)
+            results.push(result)
+        } catch (err: any) {
+            results.push({
+                origin: url,
+                added: 0, updated: 0, deactivated: 0, unchanged: 0,
+                errors: [`Failed to sync: ${err.message}`],
+            })
+        }
+    }
+
+    return results
+}
+
+/**
+ * Sync a single library by URL. Used by the webhook endpoint.
+ */
+export async function syncLibraryByUrl(url: string): Promise<SyncResult> {
+    const { createProvider, parseTokensEnv, findToken } = await import('./providers/factory')
+
+    const tokens = parseTokensEnv(process.env.PROMPT_LIBRARIES_TOKENS)
+    const token = findToken(url, tokens)
+    const provider = createProvider(url, token)
+    return syncOrigin(provider)
+}

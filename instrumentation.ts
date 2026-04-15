@@ -13,15 +13,17 @@ export async function register() {
         const { migrateIfNeeded } = await import('./lib/migrate-on-start')
         await migrateIfNeeded()
 
-        // Sync local prompts from filesystem into the database
+        // Sync prompt libraries (local + configured remote) into the database
         try {
-            const { syncLocalPrompts } = await import('./lib/sync')
-            const syncResult = await syncLocalPrompts()
-            if (syncResult.errors.length > 0) {
-                console.error('[sync] Errors:', syncResult.errors)
+            const { syncAllLibraries } = await import('./lib/sync')
+            const syncResults = await syncAllLibraries()
+            for (const syncResult of syncResults) {
+                if (syncResult.errors.length > 0) {
+                    console.error(`[sync] Errors for ${syncResult.origin}:`, syncResult.errors)
+                }
             }
         } catch (err: any) {
-            console.error('[sync] Failed to sync local prompts:', err?.message)
+            console.error('[sync] Failed to sync prompt libraries:', err?.message)
         }
 
         if (!process.env.APP_CODE || !process.env.APP_HOST || !process.env.APP_PORT || !process.env.APP_REGISTRY_HOST || !process.env.APP_REGISTRY_PORT) return

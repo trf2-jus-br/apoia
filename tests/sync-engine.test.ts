@@ -483,3 +483,271 @@ describe('LocalProvider', () => {
         expect(withWorkflow.length).toBeGreaterThanOrEqual(17) // At least 17 prompts should have workflows
     })
 })
+
+describe('createProvider (factory)', () => {
+    const { createProvider, parseTokensEnv, findToken } = require('@/lib/sync/providers/factory')
+
+    test('creates LocalProvider for local: prefix', () => {
+        const provider = createProvider('local:./prompts')
+        expect(provider.constructor.name).toBe('LocalProvider')
+    })
+
+    test('creates LocalProvider for ./ path', () => {
+        const provider = createProvider('./prompts')
+        expect(provider.constructor.name).toBe('LocalProvider')
+    })
+
+    test('creates GitHubProvider for github.com URLs', () => {
+        const provider = createProvider('https://github.com/owner/repo')
+        expect(provider.constructor.name).toBe('GitHubProvider')
+    })
+
+    test('creates GitHubProvider for github.com URLs with branch', () => {
+        const provider = createProvider('https://github.com/owner/repo#develop')
+        expect(provider.constructor.name).toBe('GitHubProvider')
+    })
+
+    test('creates GitLabProvider for gitlab.com URLs', () => {
+        const provider = createProvider('https://gitlab.com/group/repo')
+        expect(provider.constructor.name).toBe('GitLabProvider')
+    })
+
+    test('creates GitLabProvider for self-hosted GitLab', () => {
+        const provider = createProvider('https://gitlab.example.com/group/repo')
+        expect(provider.constructor.name).toBe('GitLabProvider')
+    })
+
+    test('throws for invalid URL', () => {
+        expect(() => createProvider('not-a-url')).toThrow('Invalid library URL')
+    })
+
+    describe('parseTokensEnv', () => {
+        test('parses comma-separated url=token pairs', () => {
+            const tokens = parseTokensEnv('github.com/owner/repo=token123,gitlab.com/group/repo=token456')
+            expect(tokens.size).toBe(2)
+            expect(tokens.get('github.com/owner/repo')).toBe('token123')
+            expect(tokens.get('gitlab.com/group/repo')).toBe('token456')
+        })
+
+        test('returns empty map for undefined', () => {
+            expect(parseTokensEnv(undefined).size).toBe(0)
+        })
+
+        test('skips entries without =', () => {
+            const tokens = parseTokensEnv('invalid,valid=token')
+            expect(tokens.size).toBe(1)
+            expect(tokens.get('valid')).toBe('token')
+        })
+    })
+
+    describe('findToken', () => {
+        test('finds token by substring match', () => {
+            const tokens = new Map([['github.com/owner', 'mytoken']])
+            expect(findToken('https://github.com/owner/repo#main', tokens)).toBe('mytoken')
+        })
+
+        test('returns undefined when no match', () => {
+            const tokens = new Map([['github.com/other', 'mytoken']])
+            expect(findToken('https://github.com/owner/repo', tokens)).toBeUndefined()
+        })
+    })
+})
+
+describe('GitProvider URL parsing', () => {
+    // We test URL parsing through the concrete GitHubProvider/GitLabProvider constructors
+
+    test('parses GitHub URL into owner/repo/ref', () => {
+        const { GitHubProvider } = require('@/lib/sync/providers/github')
+        const p = new GitHubProvider('https://github.com/cnj-ia/prompts-core')
+        expect(p.owner).toBe('cnj-ia')
+        expect(p.repo).toBe('prompts-core')
+        expect(p.ref).toBe('main')
+    })
+
+    test('parses GitHub URL with branch', () => {
+        const { GitHubProvider } = require('@/lib/sync/providers/github')
+        const p = new GitHubProvider('https://github.com/cnj-ia/prompts-core#develop')
+        expect(p.owner).toBe('cnj-ia')
+        expect(p.repo).toBe('prompts-core')
+        expect(p.ref).toBe('develop')
+    })
+
+    test('parses GitLab nested group URL', () => {
+        const { GitLabProvider } = require('@/lib/sync/providers/gitlab')
+        const p = new GitLabProvider('https://gitlab.com/group/subgroup/repo')
+        expect(p.owner).toBe('group/subgroup')
+        expect(p.repo).toBe('repo')
+        expect(p.ref).toBe('main')
+    })
+
+    test('strips .git suffix', () => {
+        const { GitHubProvider } = require('@/lib/sync/providers/github')
+        const p = new GitHubProvider('https://github.com/owner/repo.git')
+        expect(p.repo).toBe('repo')
+    })
+
+    test('strips trailing slashes', () => {
+        const { GitHubProvider } = require('@/lib/sync/providers/github')
+        const p = new GitHubProvider('https://github.com/owner/repo/')
+        expect(p.repo).toBe('repo')
+    })
+
+    test('throws for URL with no path', () => {
+        const { GitHubProvider } = require('@/lib/sync/providers/github')
+        expect(() => new GitHubProvider('https://github.com/')).toThrow('Invalid git repository URL')
+    })
+})
+
+describe('validatePromptFiles', () => {
+    const { validatePromptFiles } = require('@/lib/sync/validate')
+
+    test('validates a valid prompt file', () => {
+        const result = validatePromptFiles([{
+            path: 'test.md',
+            content: `# METADATA
+
+uuid: 9c8f98fb-0679-4f2a-9722-91c2e1b35600
+name: Test
+
+# PROMPT
+
+Hello world
+`,
+        }])
+        expect(result.valid).toBe(true)
+        expect(result.files).toHaveLength(1)
+        expect(result.files[0].errors).toHaveLength(0)
+    })
+
+    test('rejects file without uuid', () => {
+        const result = validatePromptFiles([{
+            path: 'no-uuid.md',
+            content: `# METADATA
+
+name: Test
+
+# PROMPT
+
+Hello
+`,
+        }])
+        expect(result.valid).toBe(false)
+        expect(result.files[0].errors).toContain('Missing uuid in METADATA section')
+    })
+
+    test('rejects file with invalid UUID format', () => {
+        const result = validatePromptFiles([{
+            path: 'bad-uuid.md',
+            content: `# METADATA
+
+uuid: not-a-valid-uuid
+name: Test
+
+# PROMPT
+
+Hello
+`,
+        }])
+        expect(result.valid).toBe(false)
+        expect(result.files[0].errors[0]).toContain('Invalid UUID format')
+    })
+
+    test('detects duplicate UUIDs', () => {
+        const result = validatePromptFiles([
+            {
+                path: 'file1.md',
+                content: `# METADATA
+
+uuid: 9c8f98fb-0679-4f2a-9722-91c2e1b35600
+
+# PROMPT
+
+First
+`,
+            },
+            {
+                path: 'file2.md',
+                content: `# METADATA
+
+uuid: 9c8f98fb-0679-4f2a-9722-91c2e1b35600
+
+# PROMPT
+
+Second
+`,
+            },
+        ])
+        expect(result.valid).toBe(false)
+        const file2 = result.files.find((f: any) => f.path === 'file2.md')
+        expect(file2!.errors[0]).toContain('Duplicate UUID')
+    })
+
+    test('warns on unresolved workflow reference', () => {
+        const result = validatePromptFiles([{
+            path: 'with-workflow.md',
+            content: `# METADATA
+
+uuid: aaaaaaaa-bbbb-1111-aaaa-aaaaaaaaaaaa
+predecessors:
+  - path: nonexistent-prompt
+
+# PROMPT
+
+Test
+`,
+        }])
+        expect(result.valid).toBe(true) // warnings don't fail validation
+        expect(result.files[0].warnings.some((w: string) => w.includes('nonexistent-prompt'))).toBe(true)
+    })
+
+    test('warns on missing prompt content', () => {
+        const result = validatePromptFiles([{
+            path: 'no-content.md',
+            content: `# METADATA
+
+uuid: bbbbbbbb-cccc-1111-aaaa-aaaaaaaaaaaa
+`,
+        }])
+        expect(result.valid).toBe(true)
+        expect(result.files[0].warnings.some((w: string) => w.includes('No SYSTEM PROMPT or PROMPT'))).toBe(true)
+    })
+
+    test('skips non-.md files with warning', () => {
+        const result = validatePromptFiles([{ path: 'readme.txt', content: 'hello' }])
+        expect(result.valid).toBe(true)
+        expect(result.files[0].warnings[0]).toContain('.md extension')
+    })
+
+    test('resolves workflow references within the file set', () => {
+        const result = validatePromptFiles([
+            {
+                path: 'chat.md',
+                content: `# METADATA
+
+uuid: aaaaaaaa-bbbb-1111-aaaa-111111111111
+
+# PROMPT
+
+Chat prompt
+`,
+            },
+            {
+                path: 'analise.md',
+                content: `# METADATA
+
+uuid: aaaaaaaa-bbbb-1111-aaaa-222222222222
+successors:
+  - path: chat
+
+# PROMPT
+
+Analysis prompt
+`,
+            },
+        ])
+        expect(result.valid).toBe(true)
+        const analise = result.files.find((f: any) => f.path === 'analise.md')
+        // No warnings about unresolved refs since 'chat' exists
+        expect(analise!.warnings.filter((w: string) => w.includes('could not be resolved'))).toHaveLength(0)
+    })
+})

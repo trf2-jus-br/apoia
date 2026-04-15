@@ -181,6 +181,86 @@
         }
       }
     },
+    "/api/v1/batch/{id}/export/csv": {
+      "get": {
+        "description": "Exporta dados estruturados de um lote em formato CSV. Funciona apenas para lotes cujo prompt principal produz saída estruturada (json_schema).",
+        "tags": [
+          "batch"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do lote"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados estruturados em CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batch/{id}/export/json": {
+      "get": {
+        "description": "Exporta dados estruturados de um lote em formato JSON. Funciona apenas para lotes cujo prompt principal produz saída estruturada (json_schema).",
+        "tags": [
+          "batch"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do lote"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados estruturados em JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "processNumber": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/batch/{name}/html": {
       "get": {
         "description": "Obtem um relatório em HTML para um lote de processos",

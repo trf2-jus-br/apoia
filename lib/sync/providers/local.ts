@@ -1,14 +1,13 @@
 /**
  * Local filesystem library provider.
  * 
- * Reads prompt .md files and workflow .yaml files from a directory on disk.
+ * Reads prompt .md files from a directory on disk.
  * Used for the built-in prompts shipped with the application (prompts/ directory).
  */
 import fs from 'fs'
 import path from 'path'
-import crypto from 'crypto'
-import { OriginProvider, OriginContents, ParsedPrompt } from '../types'
-import { parsePromptMarkdown } from '../parse-prompt-md'
+import { OriginProvider, OriginContents } from '../types'
+import { parseFiles, computeContentHash } from './shared'
 
 export class LocalProvider implements OriginProvider {
     /** Absolute path to the directory containing .md files */
@@ -24,26 +23,18 @@ export class LocalProvider implements OriginProvider {
     }
 
     async read(): Promise<OriginContents> {
-        const prompts: ParsedPrompt[] = []
-
         // Read all .md files recursively
         const mdFiles = this.findFiles(this.dirPath, '.md')
-        for (const filePath of mdFiles) {
-            const relativePath = path.relative(this.dirPath, filePath).replace(/\\/g, '/')
-            const slug = this.slugFromPath(relativePath)
-            const content = fs.readFileSync(filePath, 'utf-8')
-            const parsed = parsePromptMarkdown(slug, content, relativePath)
-            if (parsed) {
-                prompts.push(parsed)
-            }
-        }
+        const rawFiles = mdFiles.map(filePath => ({
+            relativePath: path.relative(this.dirPath, filePath).replace(/\\/g, '/'),
+            content: fs.readFileSync(filePath, 'utf-8'),
+        }))
 
-        // Compute a content hash as version identifier
-        const contentHash = this.computeContentHash(prompts)
+        const prompts = parseFiles(rawFiles)
 
         return {
             origin: this.origin,
-            version: contentHash,
+            version: computeContentHash(prompts),
             prompts,
         }
     }
@@ -67,30 +58,5 @@ export class LocalProvider implements OriginProvider {
         }
 
         return results
-    }
-
-    /**
-     * Derive a slug from a relative path.
-     * e.g., 'admissibilidade-de-recurso/pedidos-viabilidade-recurso.md' -> 'pedidos-viabilidade-recurso'
-     * e.g., 'analise-completa.md' -> 'analise-completa'
-     */
-    private slugFromPath(relativePath: string): string {
-        const basename = path.basename(relativePath, '.md')
-        return basename
-    }
-
-    /**
-     * Compute a hash of all prompt contents for versioning.
-     */
-    private computeContentHash(prompts: ParsedPrompt[]): string {
-        const hash = crypto.createHash('sha256')
-        for (const p of prompts.sort((a, b) => a.uuid.localeCompare(b.uuid))) {
-            hash.update(p.uuid)
-            hash.update(p.systemPrompt || '')
-            hash.update(p.prompt || '')
-            hash.update(p.jsonSchema || '')
-            hash.update(p.format || '')
-        }
-        return hash.digest('hex').substring(0, 16)
     }
 }
