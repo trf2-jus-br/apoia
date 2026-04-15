@@ -1,34 +1,16 @@
 /**
  * Validation endpoint for prompt files.
  * 
- * Called from CI/CD pipelines to validate prompt files before merging.
- * Does not write to database — purely validation.
- * 
- * Security: validates request using PROMPT_LIBRARY_SECRET shared secret
- * sent via Authorization: Bearer <secret> header.
+ * Public endpoint — does not require authentication.
+ * Called from pre-commit hooks or CI/CD pipelines to validate prompt files.
+ * Does not write to database — purely stateless validation.
  * 
  * POST /api/v1/sync/validate
  * Body: { files: [{ path: string, content: string }] }
  */
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
 
 export async function POST(req: Request) {
-    const secret = process.env.PROMPT_LIBRARY_SECRET
-    if (!secret) {
-        return NextResponse.json({ errormsg: 'Validation endpoint not configured' }, { status: 503 })
-    }
-
-    // Verify authorization
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return NextResponse.json({ errormsg: 'Missing Authorization header' }, { status: 401 })
-    }
-    const token = authHeader.substring(7)
-    if (!crypto.timingSafeEqual(Buffer.from(token), Buffer.from(secret))) {
-        return NextResponse.json({ errormsg: 'Invalid token' }, { status: 401 })
-    }
-
     // Parse request body
     let body: any
     try {

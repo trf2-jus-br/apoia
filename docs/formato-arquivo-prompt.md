@@ -273,6 +273,72 @@ context:
 
 ---
 
+### `plugins` _(opcional)_
+
+Lista de plugins ativados para este prompt. Os plugins adicionam funcionalidades extras à execução.
+
+| Valor | Descrição |
+|-------|----------|
+| `triagem` | Plugin de triagem |
+| `normas` | Extração de normas citadas |
+| `palavras-chave` | Extração de palavras-chave |
+| `triagem-json` | Triagem com saída em JSON |
+| `normas-json` | Normas com saída em JSON |
+| `palavras-chave-json` | Palavras-chave com saída em JSON |
+
+```yaml
+plugins:
+  - triagem-json
+  - normas
+```
+
+---
+
+### `batch_report` _(opcional)_
+
+Indica que este prompt pode ser utilizado em relatórios de lote (batch). Quando `true`, o prompt aparece como opção no processamento em lote de múltiplos processos.
+
+```yaml
+batch_report: true
+```
+
+---
+
+### `summary` _(opcional)_
+
+Controla se o prompt gera um resumo exibido na interface. Aceita `SIM` ou `NAO` (também aceita variantes como `true`/`false`, `yes`/`no` no YAML — o sistema normaliza automaticamente).
+
+```yaml
+summary: SIM
+```
+
+---
+
+### `editor_label` _(opcional)_
+
+Texto curto exibido no editor quando este prompt é selecionado como opção. Útil para diferenciar prompts com nomes semelhantes no contexto do editor.
+
+```yaml
+editor_label: Minuta de Voto
+```
+
+---
+
+### `piece_descr` _(opcional)_
+
+Lista de tipos de peça processual associados a este prompt. Usado quando `piece_strategy: tipos-especificos` para indicar exatamente quais peças devem ser selecionadas. Os valores são as chaves do enum de tipos de peça, podendo ser escritas na forma canônica ou com hífens (slug).
+
+Exemplos de valores aceitos: `peticao-inicial`, `contestacao`, `sentenca`, `apelacao`, `recurso-especial`, `PETICAO_INICIAL`, `CONTESTACAO`, etc.
+
+```yaml
+piece_descr:
+  - peticao-inicial
+  - contestacao
+  - sentenca
+```
+
+---
+
 ### `predecessors` _(opcional)_
 
 Lista de prompts que devem ser executados **antes** deste. O sistema usa essa informação para sugerir a ordem de execução em workflows.
@@ -760,3 +826,278 @@ successors:
 6. **Defina `instance` e `scope`** quando o prompt for específico para um tipo de tribunal ou grau — isso evita que apareça em contextos irrelevantes e melhora a experiência do usuário.
 
 7. **Use `share: privado`** durante o desenvolvimento para que o prompt fique visível apenas para você antes de ser publicado.
+
+---
+
+## Sincronização de Bibliotecas Remotas
+
+Além dos prompts locais (diretório `prompts/`), o sistema suporta sincronizar prompts de repositórios Git remotos (GitHub e GitLab). Isso permite que equipes distribuídas mantenham bibliotecas de prompts versionadas em repositórios separados.
+
+### Configuração
+
+Defina a variável de ambiente `PROMPT_LIBRARIES` com as URLs dos repositórios, separadas por vírgula:
+
+```properties
+PROMPT_LIBRARIES=https://github.com/org/prompts-core,https://gitlab.com/equipe/prompts-especializados#develop
+```
+
+- Appenda `#branch` à URL para sincronizar uma branch específica (padrão: `main`)
+- Repositórios privados requerem tokens configurados em `PROMPT_LIBRARIES_TOKENS`
+
+### Tokens de Acesso
+
+Para repositórios privados, defina tokens no formato `url=token`, separados por vírgula:
+
+```properties
+PROMPT_LIBRARIES_TOKENS=github.com/org/prompts-core=ghp_xxxx,gitlab.com/equipe=glpat-xxxx
+```
+
+A correspondência é feita por substring: se a URL configurada contiver o padrão do token, ele será usado.
+
+### Webhook (Sincronização Automática)
+
+Para sincronizar automaticamente quando houver push no repositório, configure um webhook apontando para:
+
+```
+POST https://sua-instancia.exemplo.com/api/v1/sync/webhook
+```
+
+- **GitHub**: Configure o webhook com `Content type: application/json` e o secret definido em `PROMPT_LIBRARY_SECRET`
+- **GitLab**: Configure o webhook com o token secreto (campo "Secret token") igual ao valor de `PROMPT_LIBRARY_SECRET`
+
+### Validação em CI/CD
+
+Para validar prompts antes de fazer merge, use o endpoint de validação:
+
+```
+POST https://sua-instancia.exemplo.com/api/v1/sync/validate
+Content-Type: application/json
+
+{
+  "files": [
+    { "path": "analise.md", "content": "<conteúdo do arquivo>" }
+  ]
+}
+```
+
+O endpoint é público e não requer autenticação — a operação é puramente de leitura, sem efeitos colaterais no banco de dados.
+
+A resposta indica se os arquivos são válidos (UUIDs corretos, sem duplicatas, referências de workflow resolvidas, etc.). Retorna HTTP 200 se tudo estiver correto, ou 422 com detalhes dos erros.
+
+---
+
+### Bloqueando Commits Inválidos com Pre-Commit Hook
+
+A forma mais eficaz de impedir que prompts inválidos entrem no repositório é usando um **Git hook `pre-commit`**. Diferente de GitHub Actions (que rodam após o push), o hook roda **localmente antes do commit** — se a validação falhar, o commit é bloqueado.
+
+No ecossistema Node.js, o pacote **husky** gerencia Git hooks de forma simples. O script de validação é escrito em JavaScript (Node.js) para garantir compatibilidade entre Windows, macOS e Linux.
+
+#### Passo 1 — Inicializar o projeto Node.js (se ainda não for)
+
+No repositório da biblioteca de prompts, inicialize um `package.json`:
+
+```shell
+npm init -y
+```
+
+#### Passo 2 — Instalar o husky
+
+```shell
+npm install --save-dev husky
+npx husky init
+```
+
+Isso cria o diretório `.husky/` e configura o Git para usar hooks desse diretório.
+
+#### Passo 3 — Criar o script de validação
+
+Crie o arquivo `validate-prompts.mjs` na raiz do repositório:
+
+```javascript
+#!/usr/bin/env node
+// validate-prompts.mjs — Valida arquivos .md staged antes do commit
+// Cross-platform (Windows, macOS, Linux)
+
+import { execSync } from 'child_process'
+
+const APOIA_URL = process.env.APOIA_VALIDATE_URL
+  || 'https://sua-instancia.exemplo.com/api/v1/sync/validate'
+
+// Coleta os arquivos .md que estão staged para commit
+const staged = execSync('git diff --cached --name-only --diff-filter=ACM -- "*.md"', { encoding: 'utf-8' }).trim()
+
+if (!staged) {
+  console.log('Nenhum arquivo .md alterado, pulando validacao.')
+  process.exit(0)
+}
+
+const filePaths = staged.split('\n').filter(Boolean)
+console.log(`Validando ${filePaths.length} arquivo(s): ${filePaths.join(', ')}`)
+
+// Lê o conteúdo staged de cada arquivo (não o working copy, mas o que está no index)
+const files = filePaths.map(filePath => ({
+  path: filePath,
+  content: execSync(`git show ":${filePath}"`, { encoding: 'utf-8' }),
+}))
+
+// Envia para o endpoint de validação
+try {
+  const response = await fetch(APOIA_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files }),
+  })
+
+  const result = await response.json()
+
+  if (response.ok) {
+    console.log('Validacao OK: todos os prompts sao validos.')
+    process.exit(0)
+  }
+
+  console.error(`ERRO: Validacao falhou (HTTP ${response.status})`)
+  for (const file of result.files || []) {
+    if (file.errors?.length) {
+      console.error(`  ${file.path}:`)
+      for (const err of file.errors) console.error(`    - ${err}`)
+    }
+    for (const warn of file.warnings || []) {
+      console.warn(`    [aviso] ${warn}`)
+    }
+  }
+  process.exit(1)
+} catch (err) {
+  console.error(`ERRO: Nao foi possivel conectar ao endpoint de validacao: ${err.message}`)
+  console.error(`URL: ${APOIA_URL}`)
+  console.error('Verifique se a variavel APOIA_VALIDATE_URL esta configurada corretamente.')
+  process.exit(1)
+}
+```
+
+#### Passo 4 — Configurar o hook pre-commit
+
+Edite o arquivo `.husky/pre-commit`:
+
+```
+node validate-prompts.mjs
+```
+
+#### Passo 5 — Configurar a URL da instância Apoia
+
+Cada desenvolvedor deve definir a variável de ambiente `APOIA_VALIDATE_URL` apontando para a instância Apoia do seu tribunal. Em sistemas Unix (macOS/Linux), adicione ao `.bashrc` ou `.zshrc`:
+
+```shell
+export APOIA_VALIDATE_URL=https://sua-instancia.exemplo.com/api/v1/sync/validate
+```
+
+No Windows (PowerShell), adicione ao perfil (`$PROFILE`):
+
+```powershell
+$env:APOIA_VALIDATE_URL = "https://sua-instancia.exemplo.com/api/v1/sync/validate"
+```
+
+Ou defina permanentemente via Painel de Controle > Variáveis de Ambiente do Sistema.
+
+#### Resultado
+
+A partir de agora, ao executar `git commit`, o hook:
+
+1. Identifica os arquivos `.md` que estão no stage
+2. Envia o conteúdo para o endpoint de validação da Apoia
+3. Se a validação falhar (UUID inválido, duplicado, etc.), o commit é **bloqueado** com mensagem de erro detalhada
+4. Se todos os arquivos forem válidos, o commit prossegue normalmente
+
+> **Nota:** Hooks do Git são locais — cada desenvolvedor precisa rodar `npm install` uma vez após clonar o repositório para que o husky configure os hooks automaticamente.
+
+---
+
+### Bloqueando Merges com GitHub Actions
+
+Como camada adicional de proteção, uma GitHub Action pode validar prompts em pull requests e impedir o merge se houver erros. Diferente do hook local (que pode ser desabilitado por um desenvolvedor), a Action roda no servidor e é obrigatória.
+
+#### Passo 1 — Criar o workflow
+
+No repositório de prompts, crie o arquivo `.github/workflows/validate-prompts.yml`:
+
+```yaml
+name: Validar Prompts
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Coletar arquivos .md alterados
+        id: changed
+        run: |
+          FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only | grep '\.md$' || true)
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validar prompts
+        if: steps.changed.outputs.files != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Executar validação
+        if: steps.changed.outputs.files != ''
+        run: |
+          node -e "
+          const fs = require('fs');
+          const files = process.env.CHANGED_FILES.split('\n').filter(f => f.trim());
+          if (!files.length) { console.log('Sem arquivos .md para validar'); process.exit(0); }
+
+          const payload = files.map(f => ({
+            path: f,
+            content: fs.readFileSync(f, 'utf-8'),
+          }));
+
+          fetch(process.env.APOIA_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ files: payload }),
+          })
+          .then(async r => {
+            const result = await r.json();
+            if (r.ok) { console.log('Validacao OK'); process.exit(0); }
+            console.error('Validacao falhou:');
+            for (const f of result.files || []) {
+              for (const e of f.errors || []) console.error('  ' + f.path + ': ' + e);
+              for (const w of f.warnings || []) console.warn('  ' + f.path + ': [aviso] ' + w);
+            }
+            process.exit(1);
+          })
+          .catch(e => { console.error('Erro de conexao:', e.message); process.exit(1); });
+          "
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+          APOIA_URL: ${{ secrets.APOIA_VALIDATE_URL }}
+```
+
+#### Passo 2 — Configurar o secret no GitHub
+
+No repositório, vá em **Settings > Secrets and variables > Actions** e crie:
+
+- `APOIA_VALIDATE_URL`: a URL do endpoint de validação da sua instância Apoia (ex: `https://apoia.trf2.jus.br/api/v1/sync/validate`)
+
+#### Passo 3 — Ativar branch protection
+
+Em **Settings > Branches > Branch protection rules**, para a branch `main`:
+
+1. Marque **Require a pull request before merging**
+2. Marque **Require status checks to pass before merging**
+3. Pesquise e adicione o check **Validar Prompts** (ou o nome do job `validate`)
+
+Com isso, pull requests que alterem arquivos `.md` só poderão ser mesclados se a validação passar.
+
+> **Dica:** Use as duas abordagens em conjunto — o hook `pre-commit` dá feedback imediato ao desenvolvedor, e a Action garante que nada passe mesmo se alguém desabilitar o hook local.

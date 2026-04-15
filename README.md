@@ -90,6 +90,29 @@ Uma encriptação a mais é realizada na senha a partir da chave abaixo:
 PWD_SECRET=SUBSTITUIR_POR_UM_UUID_ALEATORIO
 ```
 
+## Sincronização de Bibliotecas de Prompts
+
+A Apoia sincroniza automaticamente os prompts do diretório local `prompts/` para o banco de dados na inicialização. Além disso, é possível sincronizar prompts de repositórios Git remotos (GitHub e GitLab).
+
+Para configurar bibliotecas remotas, defina as variáveis abaixo:
+
+```properties
+# URLs dos repositórios de prompts, separadas por vírgula
+# Appenda #branch para uma branch específica (padrão: main)
+PROMPT_LIBRARIES=https://github.com/org/prompts-core,https://gitlab.com/equipe/prompts#develop
+
+# Tokens de acesso para repositórios privados (formato: url=token, separados por vírgula)
+# A correspondência é por substring da URL
+PROMPT_LIBRARIES_TOKENS=github.com/org/prompts-core=ghp_xxxx,gitlab.com/equipe=glpat-xxxx
+
+# Secret compartilhado para autenticar webhooks
+PROMPT_LIBRARY_SECRET=SUBSTITUIR_POR_UM_SECRET_ALEATORIO
+```
+
+**Webhook para sincronização automática:** Configure um webhook no GitHub/GitLab apontando para `POST /api/v1/sync/webhook` usando o secret definido em `PROMPT_LIBRARY_SECRET`.
+
+**Validação de prompts:** O endpoint `POST /api/v1/sync/validate` é público e pode ser usado em hooks pre-commit para bloquear commits com prompts inválidos. Veja [docs/formato-arquivo-prompt.md](docs/formato-arquivo-prompt.md) para o guia completo de configuração com husky.
+
 ## Inicialização do banco de dados
 
 Para criar o esquema `apoia`, execute os comandos encontrados nos arquivos `mysql/migration` para MySQL e `postgres/migration` para postgres
