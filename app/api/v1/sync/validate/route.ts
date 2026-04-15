@@ -9,6 +9,7 @@
  * Body: { files: [{ path: string, content: string }] }
  */
 import { NextResponse } from 'next/server'
+import { validatePromptFiles } from '@/lib/sync/validate'
 
 export async function POST(req: Request) {
     // Parse request body
@@ -30,9 +31,13 @@ export async function POST(req: Request) {
         }
     }
 
+    // Filter out README files — they are not prompts
+    const promptFiles = body.files.filter(
+        (f: any) => !/^readme\.md$/i.test(f.path.split('/').pop() || '')
+    )
+
     // Run validation
-    const { validatePromptFiles } = await import('@/lib/sync/validate')
-    const result = validatePromptFiles(body.files)
+    const result = validatePromptFiles(promptFiles)
 
     return NextResponse.json(result, { status: result.valid ? 200 : 422 })
 }

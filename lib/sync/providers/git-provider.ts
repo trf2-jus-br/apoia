@@ -137,18 +137,20 @@ export abstract class GitProvider implements OriginProvider {
                 const chunks: Buffer[] = []
 
                 if (header.type === 'file' && header.name.endsWith('.md')) {
-                    stream.on('data', (chunk: Buffer) => chunks.push(chunk))
-                    stream.on('end', () => {
-                        const content = Buffer.concat(chunks).toString('utf-8')
-                        // Tarball paths have a prefix directory (e.g., 'owner-repo-sha/')
-                        // Strip the first path component to get the relative path
-                        const parts = header.name.split('/')
-                        const relativePath = parts.slice(1).join('/')
-                        if (relativePath) {
+                    // Strip the tarball prefix directory to get the relative path
+                    const parts = header.name.split('/')
+                    const relativePath = parts.slice(1).join('/')
+                    // Skip README files — they are not prompts
+                    if (!relativePath || /^readme\.md$/i.test(relativePath.split('/').pop()!)) {
+                        stream.on('end', next)
+                    } else {
+                        stream.on('data', (chunk: Buffer) => chunks.push(chunk))
+                        stream.on('end', () => {
+                            const content = Buffer.concat(chunks).toString('utf-8')
                             rawFiles.push({ relativePath, content })
-                        }
-                        next()
-                    })
+                            next()
+                        })
+                    }
                 } else {
                     stream.on('end', next)
                 }

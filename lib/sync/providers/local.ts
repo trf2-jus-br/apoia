@@ -52,7 +52,7 @@ export class LocalProvider implements OriginProvider {
             const fullPath = path.join(dir, entry.name)
             if (entry.isDirectory()) {
                 results.push(...this.findFiles(fullPath, extension))
-            } else if (entry.isFile() && entry.name.endsWith(extension)) {
+            } else if (entry.isFile() && entry.name.endsWith(extension) && !/^readme\.md$/i.test(entry.name)) {
                 results.push(fullPath)
             }
         }

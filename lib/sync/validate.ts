@@ -41,12 +41,13 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 export function validatePromptFiles(files: { path: string; content: string }[]): ValidationResult {
     const fileResults: FileValidationResult[] = []
     const uuidToPath = new Map<string, string>()
-    const slugToUuid = new Map<string, string>()
+    const slugToPath = new Map<string, string>()
 
     // First pass: parse all files, check individual validity
     const parsedFiles: { path: string; parsed: ReturnType<typeof parsePromptMarkdown> }[] = []
 
     for (const file of files) {
+        console.log(`[sync] Validating file: ${file.path}`)
         const result: FileValidationResult = { path: file.path, valid: true, errors: [], warnings: [] }
 
         if (!file.path.endsWith('.md')) {
@@ -89,18 +90,18 @@ export function validatePromptFiles(files: { path: string; content: string }[]):
             uuidToPath.set(parsed.uuid, file.path)
         }
 
-        // Duplicate slug check
-        const existingSlugUuid = slugToUuid.get(parsed.slug)
-        if (existingSlugUuid && existingSlugUuid !== parsed.uuid) {
+        // Duplicate slug check (two different files must not produce the same slug)
+        const existingSlugPath = slugToPath.get(parsed.slug)
+        if (existingSlugPath && existingSlugPath !== file.path) {
             result.valid = false
-            result.errors.push(`Duplicate slug '${parsed.slug}' — already used by a different prompt`)
+            result.errors.push(`Duplicate slug '${parsed.slug}' — also produced by '${existingSlugPath}'`)
         }
 
         // Build slug index for workflow resolution
-        slugToUuid.set(parsed.slug, parsed.uuid)
+        slugToPath.set(parsed.slug, file.path)
         const pathWithoutExt = parsed.relativePath.replace(/\.md$/, '')
         if (pathWithoutExt !== parsed.slug) {
-            slugToUuid.set(pathWithoutExt, parsed.uuid)
+            slugToPath.set(pathWithoutExt, file.path)
         }
 
         // Content presence check
@@ -121,7 +122,7 @@ export function validatePromptFiles(files: { path: string; content: string }[]):
         const allRefs = [...(parsed.predecessors || []), ...(parsed.successors || [])]
         for (const ref of allRefs) {
             if (ref.path && !ref.uuid) {
-                if (!slugToUuid.has(ref.path)) {
+                if (!slugToPath.has(ref.path)) {
                     result.warnings.push(`Workflow reference '${ref.path}' could not be resolved within the file set`)
                 }
             }

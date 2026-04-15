@@ -93,7 +93,7 @@ import { execSync } from 'child_process'
 const APOIA_URL = process.env.APOIA_VALIDATE_URL
   || 'https://sua-instancia.exemplo.com/api/v1/sync/validate'
 
-// Coleta os arquivos .md que estão staged para commit
+// Verifica se há arquivos .md staged — se não houver, pula a validação
 const staged = execSync('git diff --cached --name-only --diff-filter=ACM -- "*.md"', { encoding: 'utf-8' }).trim()
 
 if (!staged) {
@@ -101,10 +101,13 @@ if (!staged) {
   process.exit(0)
 }
 
-const filePaths = staged.split('\n').filter(Boolean)
-console.log(`Validando ${filePaths.length} arquivo(s): ${filePaths.join(', ')}`)
+// Envia TODOS os .md rastreados para validação (não só os staged),
+// para que o endpoint possa detectar UUIDs duplicados entre arquivos.
+const allMd = execSync('git ls-files -- "*.md"', { encoding: 'utf-8' }).trim()
+const filePaths = allMd.split('\n').filter(Boolean)
+console.log(`Validando ${filePaths.length} arquivo(s) .md (${staged.split('\n').filter(Boolean).length} alterado(s))`)
 
-// Lê o conteúdo staged de cada arquivo (não o working copy, mas o que está no index)
+// Lê o conteúdo staged de cada arquivo (do index, não do working copy)
 const files = filePaths.map(filePath => ({
   path: filePath,
   content: execSync(`git show ":${filePath}"`, { encoding: 'utf-8' }),
@@ -125,14 +128,18 @@ try {
     process.exit(0)
   }
 
-  console.error(`ERRO: Validacao falhou (HTTP ${response.status})`)
+  // Primeira linha com o primeiro erro concreto (VS Code exibe em messagebox)
+  const allErrors = (result.files || [])
+    .flatMap(f => (f.errors || []).map(e => `${f.path}: ${e}`))
+  if (allErrors.length) {
+    console.error(`ERRO: ${allErrors[0]}`)
+    for (const e of allErrors.slice(1)) console.error(`  - ${e}`)
+  } else {
+    console.error(`ERRO: Validacao falhou (HTTP ${response.status})`)
+  }
   for (const file of result.files || []) {
-    if (file.errors?.length) {
-      console.error(`  ${file.path}:`)
-      for (const err of file.errors) console.error(`    - ${err}`)
-    }
     for (const warn of file.warnings || []) {
-      console.warn(`    [aviso] ${warn}`)
+      console.warn(`  [aviso] ${file.path}: ${warn}`)
     }
   }
   process.exit(1)
@@ -178,6 +185,104 @@ A partir de agora, ao executar `git commit`, o hook:
 4. Se todos os arquivos forem válidos, o commit prossegue normalmente
 
 > **Nota:** Hooks do Git são locais — cada desenvolvedor precisa rodar `npm install` uma vez após clonar o repositório para que o husky configure os hooks automaticamente.
+
+---
+
+## Alternativa: Pre-Commit Hook sem Node.js
+
+Se o repositório de prompts não usa Node.js, é possível usar um hook shell puro que depende apenas de `curl` e `perl` — ambos já vêm inclusos no **Git for Windows** e estão disponíveis por padrão em Linux e macOS.
+
+### Passo 1 — Criar o hook
+
+Crie o arquivo `.git/hooks/pre-commit` (ou em um diretório compartilhado via `core.hooksPath`):
+
+```sh
+#!/bin/sh
+# pre-commit — Valida arquivos .md staged antes do commit
+# Dependências: curl + perl (ambos inclusos no Git for Windows)
+
+APOIA_URL="${APOIA_VALIDATE_URL:-http://localhost:8081/api/v1/sync/validate}"
+
+staged=$(git diff --cached --name-only --diff-filter=ACM -- "*.md")
+[ -z "$staged" ] && exit 0
+
+# Envia TODOS os .md rastreados (não só staged) para detectar UUIDs duplicados
+all_md=$(git ls-files -- "*.md")
+count=$(echo "$all_md" | wc -l | tr -d ' ')
+changed=$(echo "$staged" | wc -l | tr -d ' ')
+
+# Monta o JSON usando perl (incluso no Git for Windows e em Linux/macOS)
+payload=$(echo "$all_md" | perl -e '
+  my @entries;
+  while (<STDIN>) {
+    chomp; my $p = $_;
+    my $c = `git show ":$p"`;
+    for my $s (\$p, \$c) {
+      $$s =~ s/\\/\\\\/g;
+      $$s =~ s/"/\\"/g;
+      $$s =~ s/\t/\\t/g;
+      $$s =~ s/\r/\\r/g;
+      $$s =~ s/\n/\\n/g;
+    }
+    push @entries, qq({"path":"$p","content":"$c"});
+  }
+  print q({"files":[) . join(",", @entries) . q(]});
+')
+
+tmpfile=$(mktemp)
+trap "rm -f $tmpfile $tmpfile.req" EXIT
+
+# Grava payload em arquivo para evitar limite de tamanho de argumento do OS
+echo "$payload" > "$tmpfile.req"
+
+http_code=$(curl -s -o "$tmpfile" -w '%{http_code}' \
+  -X POST "$APOIA_URL" \
+  -H "Content-Type: application/json" \
+  -d @"$tmpfile.req")
+
+if [ "$http_code" = "200" ]; then
+  echo "Validacao OK."
+  exit 0
+fi
+
+perl -e '
+  local $/; my $j = <STDIN>;
+  while ($j =~ /"path"\s*:\s*"([^"]+)"[^}]*?"errors"\s*:\s*\[([^\]]*)\]/gs) {
+    my ($p, $e) = ($1, $2);
+    my @errs = $e =~ /"((?:[^"\\]|\\.)*)"/g;
+    next unless @errs;
+    print "  $p: $_\n" for @errs;
+  }
+' < "$tmpfile" 2>/dev/null || cat "$tmpfile"
+exit 1
+```
+
+### Passo 2 — Tornar executável
+
+Em Linux/macOS:
+
+```shell
+chmod +x .git/hooks/pre-commit
+```
+
+No Windows (Git Bash), o `chmod` também funciona. Se estiver usando Git para Windows nativo, o arquivo já é executável.
+
+### Passo 3 — Configurar a URL
+
+Defina `APOIA_VALIDATE_URL` conforme descrito na seção anterior (variável de ambiente do sistema ou do perfil do shell).
+
+### Compartilhando o hook com a equipe
+
+Como `.git/hooks/` não é versionado, a forma recomendada é versionar o hook e apontar o Git para ele:
+
+1. Coloque o script em `.githooks/pre-commit` no repositório (versionado)
+2. Cada desenvolvedor executa uma vez após clonar:
+   ```shell
+   git config core.hooksPath .githooks
+   ```
+3. Adicione essa instrução ao README do repositório para que novos membros configurem ao clonar
+
+> **Nota:** O comando `git config core.hooksPath` funciona em qualquer terminal — cmd, PowerShell, Git Bash, etc.
 
 ---
 
