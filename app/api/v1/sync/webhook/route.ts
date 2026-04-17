@@ -8,10 +8,43 @@
  *   - GitLab: X-Gitlab-Token header (shared secret)
  * 
  * POST /api/v1/sync/webhook
- */
+*/
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import devLog from '@/lib/utils/log'
+import { parseLibrariesEnv, findLibraryConfig } from '@/lib/sync/providers/factory'
+import { syncLibraryByUrl, syncAllLibraries } from '@/lib/sync'
+
+export async function GET() {
+    if (process.env.VERCEL_ENV !== "development")
+        return NextResponse.json({ errormsg: 'GET endpoint not available in production' }, { status: 503 })
+
+    let logRecords: string[] = []
+
+    const log = (msg: string, ...args: any[]) => {
+        const formatted = [msg, ...args].map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ')
+        logRecords.push(formatted)
+        devLog('[sync-webhook]', formatted)
+    }
+
+    try {
+        const syncResults = await syncAllLibraries()
+        for (const syncResult of syncResults) {
+            if (syncResults)
+                log(`[sync-engine] Origin "${syncResult.origin}" synced: +${syncResult.added} ~${syncResult.updated} -${syncResult.deactivated} =${syncResult.unchanged}${syncResult.errors.length ? ` (${syncResult.errors.length} errors)` : ''}`)
+
+            if (syncResult.errors.length > 0) {
+                log(`[sync] Errors for ${syncResult.origin}:`, syncResult.errors)
+            }
+        }
+    } catch (err: any) {
+        log('[sync] Failed to sync prompt libraries:', err?.message)
+    }
+
+    return new NextResponse(logRecords.join('\n'), {
+        headers: { 'Content-Type': 'text/plain' },
+    })
+}
 
 export async function POST(req: Request) {
     const secret = process.env.PROMPT_LIBRARY_SECRET
@@ -55,7 +88,6 @@ export async function POST(req: Request) {
     }
 
     // Check that this repo is in our PROMPT_LIBRARIES list
-    const { parseLibrariesEnv, findLibraryConfig } = await import('@/lib/sync/providers/factory')
     const configs = parseLibrariesEnv(process.env.PROMPT_LIBRARIES)
     const matchedCfg = findLibraryConfig(repoUrl, configs)
 
@@ -74,7 +106,6 @@ export async function POST(req: Request) {
 
     // Trigger sync
     try {
-        const { syncLibraryByUrl } = await import('@/lib/sync')
         const result = await syncLibraryByUrl(matchedCfg.url)
         devLog(`[webhook] Sync complete for ${matchedCfg.url}: +${result.added} ~${result.updated} -${result.deactivated}`)
 
