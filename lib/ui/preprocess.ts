@@ -21,7 +21,7 @@ const makeHtml = (text: string) => {
 }
 
 export const enum VisualizationEnum {
-    DIFF,
+    DIFF = 1,
     DIFF_COMPACT,
     DIFF_HIGHLIGHT_INCLUSIONS,
     TEXT_EDITED,
