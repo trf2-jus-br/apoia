@@ -51,9 +51,9 @@ function toolMessage(part: UIMessagePart<any, any>): ReactElement {
                         matches.push(`${kind} (${eventNumber})`)
                     }
                     if (matches.length === 1)
-                        return <span className="text-secondary">Consultei conteúdo da peça: {matches[0]}</span>
+                        return <span className="text-secondary">Consultei conteúdo da peça: {matches[0] || part.input.pieceIdArray[0]}</span>
                     else
-                        return <span className="text-secondary">Consultei conteúdo das peças: {matches.join(', ')}</span>
+                        return <span className="text-secondary">Consultei conteúdo das peças: {matches.join(', ') || part.input.pieceIdArray.join(', ')}</span>
                 case 'output-error':
                     return <div>Error: {part.errorText}</div>;
             }

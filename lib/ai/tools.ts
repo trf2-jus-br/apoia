@@ -14,8 +14,19 @@ import { getSemanticSearchTool } from "./tools-semantic-search"
 import { getLeadingCaseSearchTool } from "./tools-leading-case-search"
 import { cookies } from "next/headers"
 import { anonymizeText } from "../anonym/anonym"
-import { isAllowedUser } from "../utils/env"
+import { envString, isAllowedUser } from "../utils/env"
 import { assertAnonimizacaoAutomatica } from "../proc/sigilo"
+import devLog from "../utils/log"
+
+// write response to a file for debugging
+function devWriteJsonToFile(kind: string, text: string) {
+    const path: string = envString('SAVE_PROMPT_RESULTS_PATH') || ''
+    if (envString('NODE_ENV') === 'development' && path) {
+        const fs = require('fs')
+        const currentDate = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').split('.')[0]
+        fs.writeFileSync(`${path}/${currentDate}-${kind}.json`, text)
+    }
+}
 
 const anonymizeRecursively = (data: any, seen: WeakSet<object> = new WeakSet()): any => {
     if (Array.isArray(data)) {
@@ -81,14 +92,15 @@ export const getProcessMetadataTool = (pUser: Promise<UserType>) => tool({
                         }
                     }
                     for (const movimento of processo.movimentosEDocumentos) {
-                        movimento.documentos = movimento.documentos.map(doc => ({
+                        movimento.documentos = movimento.documentos?.map(doc => ({
                             ...doc,
                             nome: anonymizeText(doc.nome, { endereco: true, email: true, names: true }).text,
-                            signatarios: doc.signatarios.map(sig => anonymizeText(sig, { endereco: true, email: true, names: true }).text)
-                        }));
+                            signatarios: doc.signatarios?.map(sig => anonymizeText(sig, { endereco: true, email: true, names: true }).text)
+                        })) || [];
                     }
                 }
             }
+            devWriteJsonToFile(`metadata-${processNumber}`, JSON.stringify(metadata, null, 2))
             return metadata
         } catch (error) {
             console.error('Error executing getProcessMetadataTool:', error)
@@ -114,8 +126,8 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
                 if (!pieceId || !pieceId.trim()) {
                     return `Identificador de peça inválido: ${pieceId}`
                 }
-                if (!/^[a-zA-Z0-9-]+$/.test(pieceId)) {
-                    return `Identificador de peça inválido: ${pieceId}. Deve conter apenas letras, números e hífens.`
+                if (!/^[a-zA-Z0-9-_]+$/.test(pieceId)) {
+                    return `Identificador de peça inválido: ${pieceId}. Deve conter apenas letras, números, hífens ou underscore.`
                 }
                 pPecas.push(interop.obterPeca(processNumber, pieceId, false))
             }

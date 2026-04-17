@@ -35,8 +35,7 @@
 
 ### getPiecesText
 - Se desejar conhecer o conteúdo de peças processuais, utilize "getPiecesText".
-- O identificador das peças processuais é obtido na resposta da ferramenta "getProcessMetadata". Ele pode ser localizado em movimentosEDocumentos[].documentos[].id.
-- Dependendo do sistema integrado, o identificador de uma peça pode ser simplesmente numérico, alfanumérico ou uma UUID com formatação semelhante à 4aae338a-a605-5e13-a3a0-8bd0750ef391.
+- Os identificadores das peças processuais são obtidos na resposta da ferramenta "getProcessMetadata". Eles podem ser localizados em movimentosEDocumentos[].documentos[].id. Cada identificador deve ser passado exatamente como fornecido, sem formatação ou modificação.
 
 ### getLibraryDocument
 - Use "getLibraryDocument" para carregar documentos da biblioteca.
