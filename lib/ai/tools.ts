@@ -61,7 +61,7 @@ export const getProcessMetadataTool = (pUser: Promise<UserType>) => tool({
 
             // Anonymize metadata if the cookie is set
             const cookiesList = await (cookies());
-            const anonymize = cookiesList.get('anonymize')?.value === 'true'
+            const anonymize = cookiesList.get('anonymize')?.value !== 'false'
             for (const processo of metadata) {
                 const sigilo = processo.informacoesGerais.nivelSigilo
                 if (anonymize || assertAnonimizacaoAutomatica(sigilo)) {
@@ -149,7 +149,7 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
 
                 // Anonymize text if the cookie is set
                 const cookiesList = await (cookies());
-                const anonymize = cookiesList.get('anonymize')?.value === 'true'
+                const anonymize = cookiesList.get('anonymize')?.value !== 'false'
 
                 if (anonymize || assertAnonimizacaoAutomatica(sigilo)) {
                     texto = anonymizeText(texto).text

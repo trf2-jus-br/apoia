@@ -79,17 +79,19 @@ export default async function HomePage() {
             color: "text-info"
         },
         {
-            icon: faSearch,
+            logo: "logo-vp-thermantia2.png",
+            // icon: faSearch,
             title: "Busca de Temas",
             description: "Encontre temas dos Tribunais Superiores através de busca semântica",
             href: "/semantic-search",
             color: "text-library"
         },
         {
-            icon: faBalanceScale,
-            title: "AdmitIA",
-            subtitle: "Vice-Presidência",
-            description: "Juízo de Admissibilidade de Recursos",
+            logo: "logo-vp-admitia2.png",
+            // icon: faBalanceScale,
+            title: "Admissibilidade de Recursos",
+            // subtitle: "Vice-Presidência",
+            description: "Avaliação da admissibilidade de recursos (Vice-Presidência)",
             href: "/prompts?group=decisao-de-viabilidade",
             color: "text-library",
             betaOnly: true
@@ -152,11 +154,15 @@ export default async function HomePage() {
                                     <Card className="h-100 text-center">
                                         <CardBody className="d-flex flex-column">
                                             <div className="mb-3">
-                                                <FontAwesomeIcon
-                                                    icon={feature.icon}
-                                                    size="3x"
-                                                    className={feature.color}
-                                                />
+                                                {feature.logo ? (
+                                                    <img src={`/logos/${feature.logo}`} alt={feature.title} style={{ height: '3em', filter: 'brightness(0) saturate(100%) invert(36%) sepia(89%) saturate(1083%) hue-rotate(181deg) brightness(93%) contrast(103%);' }} />
+                                                ) : (
+                                                    <FontAwesomeIcon
+                                                        icon={feature.icon}
+                                                        size="3x"
+                                                        className={feature.color}
+                                                    />
+                                                )}
                                             </div>
                                             <CardTitle className="h5 mb-3">
                                                 <span className="alert-link">{feature.title}</span>

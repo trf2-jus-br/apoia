@@ -5,6 +5,7 @@
  * without writing to the database. Can be used in CI pipelines to block
  * bad commits before they reach production.
  */
+import devLog from '../utils/log'
 import { parsePromptMarkdown } from './parse-prompt-md'
 import { slugFromPath } from './providers/shared'
 
@@ -47,7 +48,7 @@ export function validatePromptFiles(files: { path: string; content: string }[]):
     const parsedFiles: { path: string; parsed: ReturnType<typeof parsePromptMarkdown> }[] = []
 
     for (const file of files) {
-        console.log(`[sync] Validating file: ${file.path}`)
+        devLog(`[sync] Validating file: ${file.path}`)
         const result: FileValidationResult = { path: file.path, valid: true, errors: [], warnings: [] }
 
         if (!file.path.endsWith('.md')) {

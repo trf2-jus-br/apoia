@@ -51,7 +51,7 @@ async function GET_HANDLER(
   })
 
   const cookiesList = await cookies()
-  const anonymize = cookiesList.get('anonymize')?.value === 'true'
+  const anonymize = cookiesList.get('anonymize')?.value !== 'false'
   if (anonymize && dadosDoProcesso?.arrayDeDadosDoProcesso) {
     for (const d of dadosDoProcesso.arrayDeDadosDoProcesso) {
       if (d.poloAtivo) d.poloAtivo = anonymizeNames(d.poloAtivo).text

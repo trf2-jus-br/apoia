@@ -9,16 +9,16 @@ export default function UserMenuAnonymize() {
     const [isAnonymized, setIsAnonymized] = useState(false)
 
     useEffect(() => {
-        setIsAnonymized(document.cookie.includes('anonymize=true'))
+        setIsAnonymized(!document.cookie.includes('anonymize=false'))
     }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked
         setIsAnonymized(checked)
         if (checked) {
-            document.cookie = "anonymize=true;path=/;max-age=31536000"
+            document.cookie = "anonymize=true;path=/;max-age=86400"
         } else {
-            document.cookie = "anonymize=false;path=/;max-age=0"
+            document.cookie = "anonymize=false;path=/;max-age=86400"
         }
         router.refresh()
     }

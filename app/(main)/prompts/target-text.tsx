@@ -20,7 +20,7 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
  * Uses workflow successors from DB.
  */
 const resolveFirstProductDefinition = async (prompt: IAPrompt): Promise<PromptDefinitionType | null> => {
-    if (!prompt.origin) return null
+    // if (!prompt.origin) return null
 
     // Use workflow successors from DB (origin-synced aggregator)
     if (prompt.content?.workflow?.successors?.length) {
@@ -53,32 +53,28 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
     const [promptConfig, setPromptConfig] = useState({} as PromptConfigType)
     const [content, setContent] = useState<ContentType>()
     const [definition, setDefinition] = useState<PromptDefinitionType | null>(null)
+    const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
 
     useEffect(() => {
         if (!prompt) return
-        if (prompt.origin) {
-            resolveFirstProductDefinition(prompt).then(def => {
-                if (def) setDefinition(def)
-            })
-        } else {
-            setDefinition(buildStaticDefinition(prompt))
-        }
+        resolvePromptDefinitionByUuid(prompt.uuid).then(def => { setDefinition(def) })
     }, [prompt])
-
-    if (!prompt) return null
-    if (!definition) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
 
     const textChanged = (text) => {
         setMarkdown(text)
         setHidden(true)
         setContent(undefined)
-    }
+    }    
 
+    // return JSON.stringify(prompt)
     useEffect(() => {
         textChanged(source || '')
         if (source)
             setHidden(false)
     }, [source])
+
+    if (!prompt) return null
+    if (!definition) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
 
     const handleReady = (content: ContentType) => {
         setContent(content)
@@ -89,7 +85,6 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
 
     const textoDescr = prompt.content.editor_label || 'Texto'
 
-    const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
     const handleCopyPrompt = async () => {
         if (!prompt || !markdown || !definition) return
         const exec = await serverPromptExecuteBuilder(definition, { textos: [{ numeroDoProcesso: '', descr: prompt.content?.editor_label || 'Texto', slug: slugify(prompt.content?.editor_label || 'texto'), texto: markdown, sigilo: '0' }] })
