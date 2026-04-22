@@ -26,6 +26,12 @@ export async function register() {
             console.error('[sync] Failed to sync prompt libraries:', err?.message)
         }
 
+        // In development, watch local prompt directories for changes
+        if (process.env.NODE_ENV === 'development') {
+            const { watchLocalLibraries } = await import('./lib/sync/watch-local')
+            watchLocalLibraries()
+        }
+
         if (!process.env.APP_CODE || !process.env.APP_HOST || !process.env.APP_PORT || !process.env.APP_REGISTRY_HOST || !process.env.APP_REGISTRY_PORT) return
         // await import('lib/eureka')
     }

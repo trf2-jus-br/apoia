@@ -366,15 +366,6 @@ async function deactivateRemovedPrompts(origin: string, activeUuids: Set<string>
 }
 
 /**
- * Convenience function: sync from the local prompts directory.
- * This is the main entry point called during application startup.
- */
-export async function syncLocalPrompts(): Promise<SyncResult> {
-    const provider = new LocalProvider('local:./prompts')
-    return syncOrigin(provider)
-}
-
-/**
  * Sync all configured prompt libraries.
  * 
  * Reads PROMPT_LIBRARIES env var and syncs each library.
