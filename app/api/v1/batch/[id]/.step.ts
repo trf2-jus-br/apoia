@@ -17,10 +17,11 @@ async function POST_HANDLER(req: Request, props: { params: Promise<{ id: string 
 
   const processed = await BatchDao.stepBatch(batch_id, async (job: any) => {
       // Execute the job using existing analyze pipeline
-      const tipo_de_sintese = summary.tipo_de_sintese || 'RELATORIO_DE_ACERVO'
+      const kind: number = summary.prompt_latest_id
+      if (!kind) return { status: 'ERROR' as const, error_msg: 'Batch sem prompt configurado' }
       const complete = !!summary.complete
       try {
-        const r = await analyze(summary.name, job.dossier_code, tipo_de_sintese, complete)
+        const r = await analyze(summary.name, job.dossier_code, kind as number, complete)
         // Sum costs for this job: use generations created under this analyze
         // We can compute cost_sum later via join; for now return undefined to leave as-is
         return { status: 'READY' as const }

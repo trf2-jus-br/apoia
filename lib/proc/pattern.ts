@@ -15,6 +15,7 @@ export interface Evento {
   sequencia: number
   descricao: string
   tipoNome?: string
+  id?: number | null
 }
 
 // Union type para itens na sequência de matching
@@ -32,6 +33,7 @@ export function isEvento(item: SequenceItem): item is Evento {
 export interface EventMatch {
   descricao?: string | RegExp
   tipoNome?: string | RegExp
+  id?: number | number[]
 }
 
 function matchesEventCriteria(evento: Evento, criteria: EventMatch): boolean {
@@ -47,6 +49,13 @@ function matchesEventCriteria(evento: Evento, criteria: EventMatch): boolean {
       if (evento.tipoNome !== criteria.tipoNome) return false
     } else {
       if (!evento.tipoNome || !criteria.tipoNome.test(evento.tipoNome)) return false
+    }
+  }
+  if (criteria.id !== undefined) {
+    if (typeof criteria.id === 'number') {
+      if (evento?.id !== criteria.id) return false
+    } else {
+      if (!evento?.id || !criteria.id.includes(evento.id)) return false
     }
   }
   return true

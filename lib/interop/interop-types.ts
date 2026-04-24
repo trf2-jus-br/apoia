@@ -50,6 +50,7 @@ export interface InteropMovimentoComDocumentosType {
     orgaoJulgador: string;
     responsavel?: string;
     tipo: {
+        id: number | null;
         nome: string;
         descricao: string;
     };

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
 import { assertCurrentUser } from '@/lib/user'
 import { cookies } from 'next/headers'
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
 export default async function HomePage() {
     const user = await assertCurrentUser()
@@ -14,7 +15,7 @@ export default async function HomePage() {
     const cookieStore = await cookies()
     const isBetaTester = cookieStore.get('beta-tester')?.value === '2'
 
-    const features = [
+    const features: { icon?: IconDefinition; logo?: string; title: string; subtitle?: string; description: string; href: string; color: string; betaOnly?: boolean }[] = [
         {
             icon: faComments,
             title: "Chat",

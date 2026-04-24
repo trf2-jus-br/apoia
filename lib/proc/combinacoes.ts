@@ -444,11 +444,18 @@ const padroesBasicosEForcados = [
 ]
 
 // Padrões para suspensão por IRDR / Recursos Repetitivos / Repercussão Geral
-const eventoSuspensaoRegex = /Suspens.o.Sobrestamento.*Aguarda Decis.o|Despacho.Decis.o.*Processo Suspenso|Processo Suspenso por|Suspens.o.*Decis.o.*(?:STF|STJ).*IRDR|Recurso Extraordin.rio.*repercuss.o geral|Recurso Especial.[Rr]epetitivo/i
-
-const eventoCriteriaSuspensao: EventMatch = { descricao: eventoSuspensaoRegex }
+const eventoCriteriaSuspensao: EventMatch = { id: [265, 11975, 12098, 12099, 12100] }
 
 // Preferência: peça vinculada ao evento de suspensão (documento do mesmo evento)
+const padraoSuspensaoDecisaoVinculada2Pecas = [
+    ANY(),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY(),
+    EVENT(eventoCriteriaSuspensao),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY(),
+]
+
 const padraoSuspensaoDecisaoVinculada = [
     ANY(),
     EVENT(eventoCriteriaSuspensao),
@@ -457,8 +464,18 @@ const padraoSuspensaoDecisaoVinculada = [
 ]
 
 // Fallback: peça encontrada antes do evento de suspensão
+const padraoSuspensaoDecisaoAnterior2Pecas = [
+    ANY({ greedy: true }),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY(),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY(),
+    EVENT(eventoCriteriaSuspensao),
+    ANY(),
+]
+
 const padraoSuspensaoDecisaoAnterior = [
-    ANY({greedy: true}),
+    ANY({ greedy: true }),
     OR(T.DESPACHO_DECISAO, T.SENTENCA),
     ANY(),
     EVENT(eventoCriteriaSuspensao),
@@ -466,7 +483,9 @@ const padraoSuspensaoDecisaoAnterior = [
 ]
 
 export const padroesSuspensao = [
+    padraoSuspensaoDecisaoVinculada2Pecas,
     padraoSuspensaoDecisaoVinculada,
+    padraoSuspensaoDecisaoAnterior2Pecas,
     padraoSuspensaoDecisaoAnterior,
 ]
 
@@ -536,6 +555,7 @@ export const selecionarPecasPorPadraoComFase = (pecas: PecaType[], padroes: Matc
                 sequencia: mov.sequencia,
                 descricao: mov.descricao,
                 tipoNome: mov.tipo?.nome,
+                id: mov.tipo?.id,
             }
             sequence.push(evento)
             for (const docRef of mov.documentos) {

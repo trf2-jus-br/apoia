@@ -65,6 +65,7 @@ interface PdpjMovimentoConsulta {
     idDocumento?: string
     sequencia: number
     descricao: string
+    id: number | null
 }
 
 interface PdpjProcessoRelacionado {
@@ -151,13 +152,17 @@ export class InteropPDPJ implements Interop {
         throw new Error('Not implemented')
     }
 
-
+    private limparEValidarNumeroProcesso(numero: string): string {
+        const n =  numero.replace(/\D/g, '')
+        if (n.length !== 20) 
+            throw new InvalidProcessNumberError(`Número do processo inválido: ${numero}`)
+        return n
+    }
 
     private consultarProcessoPdpj = async (numeroDoProcesso: string) => {
-        const num = (numeroDoProcesso || '').replace(/\D/g, '')
-        if (num.length !== 20) throw new InvalidProcessNumberError(`Número do processo inválido: ${numeroDoProcesso}`)
+        const num = this.limparEValidarNumeroProcesso(numeroDoProcesso)
         const response = await fetch(
-            `${this.datalakeApiUrl}/processos/${numeroDoProcesso}`,
+            `${this.datalakeApiUrl}/processos/${num}`,
             {
                 method: 'GET',
                 headers: {
@@ -196,7 +201,9 @@ export class InteropPDPJ implements Interop {
         return processos
     }
 
-    public consultarProcesso = async (numeroDoProcesso: string, recursivo?: boolean): Promise<DadosDoProcessoType[]> => {
+    public consultarProcesso = async (numProc: string, recursivo?: boolean): Promise<DadosDoProcessoType[]> => {
+        const numeroDoProcesso = this.limparEValidarNumeroProcesso(numProc)
+
         const data: PdpjProcessoResponse = await this.consultarProcessoPdpj(numeroDoProcesso)
 
         // Aproveitar mapPdpjToSimplified para obter movimentosEDocumentos já construídos
@@ -317,7 +324,8 @@ export class InteropPDPJ implements Interop {
         return fixSigiloDePecas(resp)
     }
 
-    public obterPeca = async (numeroDoProcesso, idDaPeca, binary?: boolean): Promise<ObterPecaType> => {
+    public obterPeca = async (numProc, idDaPeca, binary?: boolean): Promise<ObterPecaType> => {
+        const numeroDoProcesso = this.limparEValidarNumeroProcesso(numProc)
         try {
             const response = await fetch(
                 `${this.datalakeApiUrl}/processos/${numeroDoProcesso}/documentos/${idDaPeca}/${binary ? 'binario' : 'texto'}`,

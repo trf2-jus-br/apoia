@@ -58,8 +58,15 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const searchParams = useSearchParams()
     const isBetaTester = document.cookie.includes('beta-tester=2') || null
 
-    const changeSelectedPieces = (pieces: string[]) => {
-        setSelectedPieces(dadosDoProcesso.pecas.filter(p => pieces.includes(p.id)))
+    const updateSelectedPieces = (pieces: PecaType[]) => {
+        if (selectedPieces && pieces.length === selectedPieces.length && pieces.every(p => selectedPieces.some(sp => sp.id === p.id))) {
+            return // No change in selection
+        }
+        setSelectedPieces(pieces)
+    }
+
+    const changeSelectedPieces = (pieces: string[]) => {        
+        updateSelectedPieces(dadosDoProcesso.pecas.filter(p => pieces.includes(p.id)))
     }
 
     const changeSelectedLibraryDocuments = (documentIds: string[]) => {
@@ -153,13 +160,13 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
                     .filter((v): v is string => !!v)
                 const uniqueIds = Array.from(new Set(ids))
                 const sel = dadosDoProcesso.pecas.filter(p => uniqueIds.includes(p.id))
-                setSelectedPieces(sel)
+                updateSelectedPieces(sel)
                 return
             }
         } else {
             // Fallback to automatic selection only if we don't have a selection yet
             // if (!selectedPieces || selectedPieces.length === 0) {
-            setSelectedPieces(autoDefault)
+            updateSelectedPieces(autoDefault)
             // }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

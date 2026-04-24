@@ -73,7 +73,7 @@ async function GET_HANDLER(req: Request, props: { params: Promise<{ number: stri
   const url = new URL(req.url)
   const complete: boolean = url.searchParams.get('complete') === 'true'
   const kind: string | undefined = url.searchParams.get('kind')
-  const analysis = await analyze(undefined, params.number, kind, complete)
+  const analysis = await analyze(undefined, params.number, kind ? Number(kind) : undefined, complete)
   const resp = analysis.generatedContent.map((content: GeneratedContent) => ({ descr: content.title, prompt: content.promptSlug, generated: filterText(content.generated) }))
   return Response.json({ status: 'OK', products: resp })
 }

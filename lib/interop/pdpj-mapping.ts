@@ -5,6 +5,7 @@
  * into simplified structures for easier consumption.
  */
 
+import { id } from "zod/v4/locales";
 import { InteropMovimentoComDocumentosType, InteropParteType, InteropProcessoType } from "./interop-types";
 import { nivelDeSigiloFromNivel } from "./pdpj";
 
@@ -78,6 +79,7 @@ interface PdpjMovimento {
     descricao: string;
     idDocumento?: string;
     tipo: {
+        id: number | null;
         nome: string;
         descricao: string;
     };
@@ -212,7 +214,8 @@ export function mapPdpjToSimplified(processo: PdpjInput): InteropProcessoType[] 
                 responsavel: movimento.magistrado?.nome || movimento.usuario?.nome,
                 tipo: {
                     nome: movimento.tipo?.nome,
-                    descricao: movimento.tipo?.descricao
+                    descricao: movimento.tipo?.descricao,
+                    id: movimento.tipo?.id || null
                 },
                 documentos: []
             };
