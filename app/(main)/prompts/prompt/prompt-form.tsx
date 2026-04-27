@@ -174,18 +174,18 @@ export default function PromptForm(props) {
                     <Frm.Input label="Nome do Campo" name="content.editor_label" width={3} visible={[Target.TEXTO.name, Target.REFINAMENTO.name].includes(data.content.target)} />
                     <Frm.Select label="Seleção de Peças" name="content.piece_strategy" options={pieceStrategyOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
                     <Frm.MultiSelect label="Tipos de Peças" name="content.piece_descr" options={pieceDescrOptions} width={2} visible={Target.PROCESSO.name === data.content.target && PieceStrategy.TIPOS_ESPECIFICOS.name === data.content.piece_strategy} />
-                    <Frm.Select label="Resumir Selecionadas" name="content.summary" options={summaryOptions} width={2} visible={Target.PROCESSO.name === data.content.target} />
+                    <Frm.Select label="Resumir Selecionadas" name="content.summary" options={summaryOptions} width={2} visible={Target.PROCESSO.name === data.content.target && showAdvancedOptions} />
                     <Frm.Select label="Compartilhamento" name="share" options={shareOptions} width={2} />
-                    <Frm.Input label="Ordem" name="content.sort" width={1} />
-                    <Frm.Checkbox label="Lote" name="content.batch_report" width={1} />
-                    <Frm.MultiSelect label="Plugins" name="content.plugins" options={pluginOptions} width={3} />
+                    <Frm.Checkbox label="Lote" name="content.batch_report" width={2} visible={showAdvancedOptions} />
+                    <Frm.MultiSelect label="Plugins" name="content.plugins" options={pluginOptions} width={2} visible={showAdvancedOptions && data.content.batch_report} />
+                    <Frm.Input label="Ordem" name="content.sort" width={3} visible={showAdvancedOptions && false} />
 
                     {/* Workflow: Predecessors and Successors */}
                     {props.allPrompts && props.allPrompts.length > 0 && (
-                        <div className="col col-12 mt-3 mb-3">
+                        <div className={`col col-12 mt-3 mb-3 ${showAdvancedOptions ? '' : 'd-none'}`}>
                             <div className="row">
                                 <div className="col col-6">
-                                    <label className="form-label fw-bold">Predecessores</label>
+                                    <label className="form-label fw-bold d-block">Prompts Predecessores</label>
                                     {(data.content?.workflow?.predecessors || []).map((pred, idx) => (
                                         <div key={idx} className="d-flex align-items-center mb-1 gap-2">
                                             <Form.Select size="sm" value={pred.uuid || ''} onChange={(e) => {
@@ -208,13 +208,13 @@ export default function PromptForm(props) {
                                             }}><FontAwesomeIcon icon={faRemove} /></Button>
                                         </div>
                                     ))}
-                                    <Button variant="light" size="sm" className="mt-1" onClick={() => {
+                                    <Button variant="outline-secondary" size="sm" className="mt-1" onClick={() => {
                                         const newPreds = [...(data.content?.workflow?.predecessors || []), { uuid: '', optional: false }]
                                         setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, predecessors: newPreds } } })
                                     }}><FontAwesomeIcon icon={faAdd} /> Predecessor</Button>
                                 </div>
                                 <div className="col col-6">
-                                    <label className="form-label fw-bold">Sucessores</label>
+                                    <label className="form-label fw-bold d-block">Propts Sucessores</label>
                                     {(data.content?.workflow?.successors || []).map((succ, idx) => (
                                         <div key={idx} className="d-flex align-items-center mb-1 gap-2">
                                             <Form.Select size="sm" value={succ.uuid || ''} onChange={(e) => {
@@ -237,7 +237,7 @@ export default function PromptForm(props) {
                                             }}><FontAwesomeIcon icon={faRemove} /></Button>
                                         </div>
                                     ))}
-                                    <Button variant="light" size="sm" className="mt-1" onClick={() => {
+                                    <Button variant="outline-secondary" size="sm" className="mt-1" onClick={() => {
                                         const newSuccs = [...(data.content?.workflow?.successors || []), { uuid: '', optional: false }]
                                         setData({ ...data, content: { ...data.content, workflow: { ...data.content.workflow, successors: newSuccs } } })
                                     }}><FontAwesomeIcon icon={faAdd} /> Sucessor</Button>
@@ -247,7 +247,7 @@ export default function PromptForm(props) {
                     )}
 
                     <div className='col col-12'>
-                        {showAdvancedOptions &&
+                        {showAdvancedOptions && false &&
                             <Nav variant="underline" defaultActiveKey="fields" onSelect={(eventKey) => { setTab(eventKey || 'fields') }} className="mb-2">
                                 <Nav.Item>
                                     <Nav.Link eventKey="fields">Campos</Nav.Link>
@@ -264,11 +264,11 @@ export default function PromptForm(props) {
                                         {showAdvancedOptions && <>
                                             <div className="row">
                                                 {data.content.system_prompt !== undefined && <Frm.TextArea label="Prompt de Sistema (opcional)" name="content.system_prompt" maxRows={5} width={""} />}
-                                                {data.content.system_prompt !== undefined && <Frm.Button variant="light" onClick={() => { data.content.system_prompt = undefined; setData({ ...data }) }}><FontAwesomeIcon icon={faRemove} /> Prompt de Sistema</Frm.Button>}
+                                                {data.content.system_prompt !== undefined && <Frm.Button variant="outline-secondary" onClick={() => { data.content.system_prompt = undefined; setData({ ...data }) }}><FontAwesomeIcon icon={faRemove} /> Prompt de Sistema</Frm.Button>}
                                             </div>
                                             <div className="row">
                                                 <Frm.TextArea label="Prompt (opcional)" name="content.prompt" maxRows={5} width={""} />
-                                                {data.content.system_prompt === undefined && <Frm.Button variant="light" onClick={() => { data.content.system_prompt = ''; setData({ ...data }) }}><FontAwesomeIcon icon={faAdd} /> Prompt de Sistema</Frm.Button>}
+                                                {data.content.system_prompt === undefined && <Frm.Button variant="outline-secondary" onClick={() => { data.content.system_prompt = ''; setData({ ...data }) }}><FontAwesomeIcon icon={faAdd} /> Prompt de Sistema</Frm.Button>}
                                             </div>
                                         </>}
                                         <Frm.Markdown key={showImportModal} label="Modelo" name="content.template" maxRows={5} width={""} />
@@ -284,16 +284,16 @@ export default function PromptForm(props) {
                                         {showAdvancedOptions && <>
                                             <div className="row">
                                                 {data.content.json_schema !== undefined && <Frm.TextArea label="JSON Schema (opcional)" name="content.json_schema" maxRows={5} width={""} />}
-                                                {data.content.json_schema !== undefined && <Frm.Button variant="light" onClick={() => { data.content.json_schema = undefined; setData({ ...data }) }}><FontAwesomeIcon icon={faRemove} /> Schema</Frm.Button>}
+                                                {data.content.json_schema !== undefined && <Frm.Button variant="outline-secondary" onClick={() => { data.content.json_schema = undefined; setData({ ...data }) }}><FontAwesomeIcon icon={faRemove} /> Schema</Frm.Button>}
                                             </div>
                                             <div className="row">
                                                 {data.content.format !== undefined && <Frm.TextArea label="Format (opcional)" name="content.format" maxRows={5} width={""} />}
-                                                {data.content.format !== undefined && <Frm.Button variant="light" onClick={() => { data.content.format = undefined; setData({ ...data }) }}><FontAwesomeIcon icon={faRemove} /> Format</Frm.Button>}
+                                                {data.content.format !== undefined && <Frm.Button variant="outline-secondary" onClick={() => { data.content.format = undefined; setData({ ...data }) }}><FontAwesomeIcon icon={faRemove} /> Format</Frm.Button>}
                                             </div>
                                             <div className="row">
                                                 <Frm.TextArea label="Prompt de Sistema (opcional)" name="content.system_prompt" maxRows={5} width={""} />
-                                                {data.content.json_schema === undefined && <Frm.Button variant="light" onClick={() => { data.content.json_schema = ''; setData({ ...data }) }}><FontAwesomeIcon icon={faAdd} /> Schema</Frm.Button>}
-                                                {data.content.format === undefined && <Frm.Button variant="light" onClick={() => { data.content.format = ''; setData({ ...data }) }}><FontAwesomeIcon icon={faAdd} /> Format</Frm.Button>}
+                                                {data.content.json_schema === undefined && <Frm.Button variant="outline-secondary" onClick={() => { data.content.json_schema = ''; setData({ ...data }) }}><FontAwesomeIcon icon={faAdd} /> Schema</Frm.Button>}
+                                                {data.content.format === undefined && <Frm.Button variant="outline-secondary" onClick={() => { data.content.format = ''; setData({ ...data }) }}><FontAwesomeIcon icon={faAdd} /> Format</Frm.Button>}
                                             </div>
                                         </>}
                                         <Frm.TextArea label="Prompt" name="content.prompt" maxRows={20} explanation={`Utilize {{textos}} onde devem ser incluídos os textos capturados ${Target.PROCESSO.name === data.content.target ? 'das peças do processo' : 'do editor de textos'}, ou serão automaticamente incluídos no final.`} />
@@ -312,13 +312,13 @@ export default function PromptForm(props) {
                         </div>
                         </div>}
                     <div className="col col-auto mt-3 mb-3">
-                        <Button variant="light" className="" onClick={handleBack}>Voltar</Button>
+                        <Button variant="outline-secondary" className="" onClick={handleBack}>Voltar</Button>
                     </div>
 
                     <div className="col col-auto mt-3 mb-3 ms-auto">
                         {showAdvancedOptions
-                            ? <Button variant="light" className="me-3" disabled={data.content.system_prompt || data.content.json_schema || data.content.format} onClick={() => { setShowAdvancedOptions(false) }}>Ocultar Opções Avançadas</Button>
-                            : <Button variant="light" className="me-3" onClick={() => { setShowAdvancedOptions(true) }}>Exibir Opções Avançadas</Button>}
+                            ? <Button variant="outline-secondary" className="me-3" disabled={data.content.system_prompt || data.content.json_schema || data.content.format} onClick={() => { setShowAdvancedOptions(false) }}>Ocultar Opções Avançadas</Button>
+                            : <Button variant="outline-secondary" className="me-3" onClick={() => { setShowAdvancedOptions(true) }}>Exibir Opções Avançadas</Button>}
                         <Button variant="primary" disabled={!data?.name || !data?.content?.author || pending || pristine} className="" onClick={handleSave}>Salvar</Button>
                         <FormError formState={formState} />
                     </div>

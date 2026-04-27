@@ -216,9 +216,12 @@ const subpadraoEmbargosDeDeclaracaoEmAcordao = [
     }),
     EXACT(T.EMBARGOS_DE_DECLARACAO),
     ANY({
-        capture: [T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.EMBARGOS_DE_DECLARACAO,T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
     }),
+]
 
+const padraoEmbargosDeDeclaracaoEmAcordao = [
+    subpadraoEmbargosDeDeclaracaoEmAcordao
 ]
 
 const subpadraoViabilidadeDeRecursoExtraordinario = [
@@ -419,6 +422,7 @@ export const padroesConhecimento = [
 ]
 
 const padroesBasicosSegundaInstancia = [
+    ...padraoEmbargosDeDeclaracaoEmAcordao,
     ...padroesApelacao,
     ...padroesAgravo,
 ]
