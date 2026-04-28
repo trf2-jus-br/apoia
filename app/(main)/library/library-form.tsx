@@ -10,7 +10,6 @@ import { deleteLibraryAction } from '@/app/(main)/library/actions'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
-import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
 
@@ -30,6 +29,8 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
   const [editorKey, setEditorKey] = useState(0)
   const isGuideline = data.kind === IALibraryKind.GUIDELINE
   const isReadOnly = data.id && !data.is_mine
+  const isBetaTester = document.cookie.includes('beta-tester=2') || null
+
   const router = useRouter()
 
   useEffect(() => { setData({ ...record }) }, [record])
@@ -185,7 +186,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
         </Form.Group>
       </div>
 
-      <div className="col-2">
+      <div className={`col-2 ${isBetaTester ? '' : 'd-none'}`}>
         <Form.Group className="mb-3">
           <Form.Label>Tipo</Form.Label>
           <Form.Select value={data.kind} onChange={e => setData({ ...data, kind: e.target.value as IALibraryKind })} disabled={!!data.id}>
