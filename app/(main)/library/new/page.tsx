@@ -2,6 +2,7 @@ import { Container } from 'react-bootstrap'
 import { assertCurrentUser } from '@/lib/user'
 import LibraryForm from '@/app/(main)/library/library-form'
 import { IALibraryKind, IALibraryInclusion } from '@/lib/db/mysql-types'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 
 export default async function New(props: { searchParams?: Promise<{ kind?: string }> }) {
   await assertCurrentUser()
@@ -11,7 +12,7 @@ export default async function New(props: { searchParams?: Promise<{ kind?: strin
   return (
     <Container fluid={false}>
       <h1 className="mt-5 mb-3">Novo Item</h1>
-      <LibraryForm record={record} />
+      <LibraryForm record={record} promptDefinition={await getPromptDefinition('guideline-a-partir-de-exemplos')} />
     </Container>
   )
 }

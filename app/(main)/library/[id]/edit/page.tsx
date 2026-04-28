@@ -2,6 +2,7 @@ import { Container } from 'react-bootstrap'
 import { LibraryDao } from '@/lib/db/dao'
 import { assertCurrentUser } from '@/lib/user'
 import LibraryForm from '@/app/(main)/library/library-form'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
 
 export default async function Edit(props: { params: Promise<{ id: string }> }) {
   await assertCurrentUser()
@@ -13,7 +14,7 @@ export default async function Edit(props: { params: Promise<{ id: string }> }) {
   return (
     <Container fluid={false}>
       <h1 className="mt-5 mb-3">{safe.is_mine ? 'Editar Item' : 'Visualizar Item'}</h1>
-      <LibraryForm record={safe} />
+      <LibraryForm record={safe} promptDefinition={await getPromptDefinition('guideline-a-partir-de-exemplos')} />
     </Container>
   )
 }

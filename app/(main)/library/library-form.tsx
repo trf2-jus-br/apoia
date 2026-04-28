@@ -12,10 +12,9 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
 import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
 import { useRouter } from 'next/navigation'
-import { getInternalPrompt } from '@/lib/ai/prompt'
 import ProcessTextarea from '@/components/ProcessTextarea'
 
-export default function LibraryForm({ record }: { record: any }) {
+export default function LibraryForm({ record, promptDefinition }: { record: any, promptDefinition: any }) {
   const [data, setData] = useState<any>({ ...record })
   const [pending, setPending] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -26,7 +25,6 @@ export default function LibraryForm({ record }: { record: any }) {
   // examples table is always visible when there are examples
   const [runningAI, setRunningAI] = useState(false)
   const [showAI, setShowAI] = useState(false)
-  const [promptDefinition, setPromptDefinition] = useState<any>(null)
   const [selecting, setSelecting] = useState<{ pn: string, pieces: any[] } | null>(null)
   const [selectedPieceId, setSelectedPieceId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
@@ -167,8 +165,6 @@ export default function LibraryForm({ record }: { record: any }) {
   const generateFromExamples = async () => {
     setRunningAI(true)
     try {
-      const definition = getInternalPrompt('guideline-a-partir-de-exemplos')
-      setPromptDefinition(definition)
       setShowAI(true)
     } finally {
       setRunningAI(false)
