@@ -25,7 +25,6 @@
       }
     ],
     "strictNullChecks": false,
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
@@ -44,6 +43,7 @@
   ],
   "exclude": [
     "node_modules",
-    "migrations/*.ts"
+    "migrations/*.ts",
+    "__tests__"
   ]
 }

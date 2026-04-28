@@ -117,6 +117,10 @@
     "roots": [
       "<rootDir>"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.next/"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1",
       "\\.(md)$": "<rootDir>/txtTransformer.js"
