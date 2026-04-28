@@ -1,6 +1,7 @@
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { BadRequestError, NotFoundError, withErrorHandler } from '@/lib/utils/api-error'
+import { slugify } from '@/lib/utils/utils'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60

@@ -12,6 +12,8 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
 import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context'
 import { useRouter } from 'next/navigation'
+import { getInternalPrompt } from '@/lib/ai/prompt'
+import ProcessTextarea from '@/components/ProcessTextarea'
 
 export default function LibraryForm({ record }: { record: any }) {
   const [data, setData] = useState<any>({ ...record })
@@ -27,7 +29,8 @@ export default function LibraryForm({ record }: { record: any }) {
   const [promptDefinition, setPromptDefinition] = useState<any>(null)
   const [selecting, setSelecting] = useState<{ pn: string, pieces: any[] } | null>(null)
   const [selectedPieceId, setSelectedPieceId] = useState<string>('')
-  const isModel = data.kind === IALibraryKind.MODELO
+  const [editorKey, setEditorKey] = useState(0)
+  const isGuideline = data.kind === IALibraryKind.GUIDELINE
   const isReadOnly = data.id && !data.is_mine
   const router = useRouter()
 
@@ -43,10 +46,10 @@ export default function LibraryForm({ record }: { record: any }) {
   }, [record?.id])
 
   const unclosed = useMemo(() => {
-    return isModel ? findUnclosedMarking(data.content_markdown || '') : null
-  }, [isModel, data.content_markdown])
+    return isGuideline ? findUnclosedMarking(data.content_markdown || '') : null
+  }, [isGuideline, data.content_markdown])
 
-  const save = async (stayOnPage = false) => {
+  const save = async (stayOnPage = false, callback?: () => void) => {
     if (!data.title || data.title.trim() === '') {
       alert('O título é obrigatório')
       return
@@ -109,7 +112,7 @@ export default function LibraryForm({ record }: { record: any }) {
         // If staying on page, update state with new id
         if (stayOnPage) {
           const j = await res.json()
-          setData((d: any) => ({ ...d, id: j.id }))
+          setData((d: any) => ({ ...d, id: j.id, is_mine: true }))
           return
         }
       }
@@ -119,62 +122,15 @@ export default function LibraryForm({ record }: { record: any }) {
       }
     } finally {
       setPending(false)
-    }
-  }
-
-  const ensureSavedBeforeExamples = async () => {
-    // If item doesn't exist yet, save it first then return the new id
-    if (data.id) return data.id
-    setPending(true)
-    try {
-      let res: Response
-      if (data.kind === IALibraryKind.ARQUIVO) {
-        if (!file) {
-          setFileError('Selecione um arquivo para enviar')
-          return null
-        }
-        if (file.size > 10 * 1024 * 1024) {
-          setFileError('Arquivo maior que 10MB')
-          return null
-        }
-        const form = new FormData()
-        form.append('kind', data.kind)
-        form.append('title', data.title || '')
-        form.append('file', file)
-        res = await fetch('/api/v1/library', { method: 'POST', body: form })
-      } else {
-        res = await fetch('/api/v1/library', {
-          method: 'POST', body: JSON.stringify({
-            kind: data.kind,
-            title: data.title,
-            content_markdown: data.content_markdown,
-            content_type: data.content_type,
-            model_subtype: data.model_subtype,
-            inclusion: data.inclusion,
-            context: data.context,
-          })
-        })
-      }
-      const j = await res.json()
-      if (res.ok) {
-        // instead of redirect, keep on page and update state
-        setData((d: any) => ({ ...d, id: j.id }))
-        return j.id as number
-      }
-      return null
-    } finally {
-      setPending(false)
+      if (callback) callback()
     }
   }
 
   const addExamples = async () => {
-    // Ensure exists
-    const id = await ensureSavedBeforeExamples()
-    if (!id) return
     setPending(true)
     try {
-      await fetch(`/api/v1/library/${id}/examples`, { method: 'POST', body: JSON.stringify({ processNumbers: csv, pieceType: data.model_subtype === 'PRIMEIRO_DESPACHO' ? 'DESPACHO_DECISAO' : data.model_subtype || undefined }) })
-      const list = await fetch(`/api/v1/library/${id}/examples`)
+      await fetch(`/api/v1/library/${data.id}/examples`, { method: 'POST', body: JSON.stringify({ processNumbers: csv, pieceType: data.model_subtype === 'PRIMEIRO_DESPACHO' ? 'DESPACHO_DECISAO' : data.model_subtype || undefined }) })
+      const list = await fetch(`/api/v1/library/${data.id}/examples`)
       const j = await list.json()
       setExamples(j.items || [])
       setShowExamples(false)
@@ -211,8 +167,7 @@ export default function LibraryForm({ record }: { record: any }) {
   const generateFromExamples = async () => {
     setRunningAI(true)
     try {
-      const defRes = await fetch('/api/v1/internal-prompt/template-a-partir-de-exemplos')
-      const definition = await defRes.json()
+      const definition = getInternalPrompt('guideline-a-partir-de-exemplos')
       setPromptDefinition(definition)
       setShowAI(true)
     } finally {
@@ -227,25 +182,39 @@ export default function LibraryForm({ record }: { record: any }) {
           <div className="alert alert-info">Este documento é de outro usuário e está na sua biblioteca como favorito. Você não pode editá-lo.</div>
         </div>
       )}
-      <div className="col-8">
+      <div className="col-6">
         <Form.Group className="mb-3">
           <Form.Label>Título</Form.Label>
           <Form.Control value={data.title || ''} onChange={e => setData({ ...data, title: e.target.value })} disabled={isReadOnly} />
         </Form.Group>
       </div>
 
-      <div className="col-4" style={{ display: 'none' }}>
+      <div className="col-2">
         <Form.Group className="mb-3">
           <Form.Label>Tipo</Form.Label>
           <Form.Select value={data.kind} onChange={e => setData({ ...data, kind: e.target.value as IALibraryKind })} disabled={!!data.id}>
-            {Object.entries(IALibraryKindLabels).map(([value, label]) => (
+            {Object.entries(IALibraryKindLabels).filter(([value]) => value !== IALibraryKind.ARQUIVO).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </Form.Select>
         </Form.Group>
       </div>
 
-      <div className="col-4">
+      {isGuideline && (
+        <div className="col-2">
+          <Form.Group className="mb-3">
+            <Form.Label>Tipo de Manual</Form.Label>
+            <Form.Select value={data.model_subtype || ''} onChange={e => setData({ ...data, model_subtype: (e.target.value || null) as IAModelSubtype | null })} disabled={isReadOnly}>
+              <option value="">Selecione</option>
+              {Object.entries(IAModelSubtypeLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </div>
+      )}
+
+      <div className="col-2">
         <Form.Group className="mb-3">
           <Form.Label>Inclusão Automática</Form.Label>
           <Form.Select value={data.inclusion} onChange={e => setData({ ...data, inclusion: e.target.value as IALibraryInclusion })} disabled={isReadOnly}>
@@ -265,15 +234,15 @@ export default function LibraryForm({ record }: { record: any }) {
       </div>
 
       <div className="col-12">
-        {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.MODELO) && (
+        {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.GUIDELINE) && (
           <Form.Group className="mb-3">
-            <Form.Label>{data.kind === IALibraryKind.MODELO ? 'Modelo' : 'Documento'}</Form.Label>
+            <Form.Label>{data.kind === IALibraryKind.GUIDELINE ? 'Manual' : 'Documento'}</Form.Label>
             <div className="alert alert-secondary mb-1 p-0">
               <Suspense fallback={null}>
-                <EditorComp markdown={data.content_markdown || ''} onChange={(text) => setData({ ...data, content_markdown: text })} readOnly={isReadOnly} showPdfUpload={true} />
+                <EditorComp key={editorKey} markdown={data.content_markdown || ''} onChange={(text) => setData({ ...data, content_markdown: text })} readOnly={isReadOnly} showPdfUpload={true} />
               </Suspense>
             </div>
-            {isModel && unclosed && (
+            {isGuideline && unclosed && (
               <div className="alert alert-danger mt-2">
                 Marcação não fechada: <strong>{unclosed.kind}</strong> na linha <strong>{unclosed.lineNumber}</strong> - <span className="template-error" dangerouslySetInnerHTML={{ __html: unclosed.lineContent }} />
               </div>
@@ -302,29 +271,7 @@ export default function LibraryForm({ record }: { record: any }) {
         )}
       </div>
       <div className="col-12">
-        {isModel && (
-          <Form.Group className="mb-3">
-            <Form.Label>Tipo de Modelo</Form.Label>
-            <Form.Select value={data.model_subtype || ''} onChange={e => setData({ ...data, model_subtype: (e.target.value || null) as IAModelSubtype | null })} disabled={isReadOnly}>
-              <option value="">Selecione</option>
-              {Object.entries(IAModelSubtypeLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        )}
-
         <div className="row">
-          {isModel && !isReadOnly && (
-            <Button variant="light" onClick={async () => {
-              // ensure saved before opening modal
-              const id = await ensureSavedBeforeExamples()
-              if (id) setShowExamples(true)
-            }}>Acrescentar Exemplos</Button>
-          )}
-          {isModel && examples.length > 0 && !isReadOnly && (
-            <Button variant="secondary" disabled={runningAI} onClick={generateFromExamples}>Gerar modelo a partir dos exemplos</Button>
-          )}
           <div className="col">
             <Button variant="outline-secondary" onClick={() => router.replace('/library')}>Cancelar</Button>
             {data.id && data.is_mine && (<Button variant="outline-danger" className="ms-2" disabled={pending} onClick={async () => {
@@ -354,14 +301,30 @@ export default function LibraryForm({ record }: { record: any }) {
             )}
           </div>
           <div className="col text-end">
+            {isGuideline && examples.length > 0 && !isReadOnly && (
+              <Button
+                variant="outline-primary"
+                className="me-2"
+                disabled={runningAI}
+                onClick={generateFromExamples}
+              >Gerar Manual com IA</Button>
+            )}
+
+            {isGuideline && !isReadOnly && data.id && (
+              <Button
+                variant="outline-primary"
+                disabled={pending || !data.title || data.title.trim() === '' || (data.kind === IALibraryKind.GUIDELINE && !data.model_subtype)}
+                className="me-2"
+                onClick={async () => { setShowExamples(true) }}>Acrescentar Exemplos</Button>
+            )}
             {!isReadOnly && !data.id && (
               <Button
                 variant="outline-primary"
-                disabled={pending || !data.title || data.title.trim() === ''}
-                onClick={() => save(true)}
+                disabled={pending || !data.title || data.title.trim() === '' || (data.kind === IALibraryKind.GUIDELINE && !data.model_subtype)}
+                onClick={() => save(true, () => setShowExamples(true))}
                 className="me-2"
               >
-                Incluir Anexos
+                Incluir {isGuideline ? 'Exemplos' : 'Anexos'}
               </Button>
             )}
             {!isReadOnly && (
@@ -377,7 +340,7 @@ export default function LibraryForm({ record }: { record: any }) {
         </div>
       </div>
 
-      {data.id && (
+      {data.id && !isGuideline && (
         <div className="col-12 mt-4">
           <LibraryAttachments libraryId={data.id} />
         </div>
@@ -405,7 +368,7 @@ export default function LibraryForm({ record }: { record: any }) {
                     <td className="text-end">
                       {!isReadOnly && (
                         <>
-                          <Button size="sm" variant="light" className="me-2" onClick={() => openSelectPiece(ex.process_number)}>Selecionar peça</Button>
+                          <Button size="sm" variant="outline-primary" className="me-2" onClick={() => openSelectPiece(ex.process_number)}>Selecionar peça</Button>
                           <Button size="sm" variant="outline-danger" onClick={() => removeExample(ex.process_number)}>Excluir</Button>
                         </>
                       )}
@@ -418,31 +381,37 @@ export default function LibraryForm({ record }: { record: any }) {
         )
       }
 
-      {
-        showAI && promptDefinition && (
-          <div className="col-12 mt-3">
-            <div className="alert alert-info">Gerando modelo a partir dos exemplos...</div>
-            <AiContent
-              definition={promptDefinition}
-              data={{
-                textos: examples.map((ex, idx) => ({
-                  numeroDoProcesso: '',
-                  descr: ex.piece_title || `Exemplo ${idx + 1}`,
-                  slug: `exemplo-${idx + 1}`,
-                  texto: ex.content_markdown ? `<despacho-decisao>\n${ex.content_markdown}\n</despacho-decisao>` : '',
-                  sigilo: '0',
-                }))
-              }}
-              config={{ prompt_slug: 'template-a-partir-de-exemplos' }}
-              dossierCode={''}
-              onReady={(content) => {
-                setData((d: any) => ({ ...d, content_markdown: content?.raw || '' }))
-                setShowAI(false)
-              }}
-            />
-          </div>
-        )
-      }
+      <Modal show={showAI && !!promptDefinition} onHide={() => setShowAI(false)} size="xl">
+        <Modal.Header closeButton>
+          <Modal.Title>Gerar manual a partir dos exemplos</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {showAI && promptDefinition && (
+            <>
+              <AiContent
+                definition={promptDefinition}
+                data={{
+                  textos: examples.map((ex, idx) => ({
+                    numeroDoProcesso: '',
+                    descr: ex.piece_title || `Exemplo ${idx + 1}`,
+                    slug: `exemplo-${idx + 1}`,
+                    texto: ex.content_markdown || '',
+                    sigilo: '0',
+                  }))
+                }}
+                config={{ prompt_slug: 'guideline-a-partir-de-exemplos' }}
+                dossierCode={''}
+                onReady={(content) => {
+                  setData((d: any) => ({ ...d, content_markdown: content?.raw || '' }))
+                  setEditorKey(k => k + 1)
+                  setShowAI(false)
+                }}
+              />
+              <p className="text-muted mt-2">Aguarde enquanto o manual é gerado. Quando concluído, será automaticamente transferido para o formulário.</p>
+            </>
+          )}
+        </Modal.Body>
+      </Modal>
 
       <Modal show={!!selecting} onHide={() => setSelecting(null)}>
         <Modal.Header closeButton>
@@ -472,7 +441,7 @@ export default function LibraryForm({ record }: { record: any }) {
         <Modal.Body>
           <Form.Group>
             <Form.Label>Números de processos (separados por vírgula)</Form.Label>
-            <Form.Control as="textarea" rows={3} value={csv} onChange={e => setCsv(e.target.value)} />
+            <ProcessTextarea rows={3} value={csv} onChange={e => setCsv(e)} />
           </Form.Group>
           <div className="text-muted small mt-2">Itens já existentes serão ignorados.</div>
         </Modal.Body>
