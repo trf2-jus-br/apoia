@@ -213,7 +213,7 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                             disabled={!table.getCanPreviousPage()} />
                         <Pagination.Prev onClick={() => table.previousPage()}
                             disabled={!table.getCanPreviousPage()} />
-                        <Pagination.Item> {table.getState().pagination.pageIndex + 1} of{' '}
+                        <Pagination.Item> Página {table.getState().pagination.pageIndex + 1} de{' '}
                             {table.getPageCount()}</Pagination.Item>
                         <Pagination.Next onClick={() => table.nextPage()}
                             disabled={!table.getCanNextPage()} />
