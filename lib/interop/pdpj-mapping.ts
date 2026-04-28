@@ -148,7 +148,7 @@ export function mapPdpjToSimplified(processo: PdpjInput): InteropProcessoType[] 
                 codigo: tramitacao.classe[0]?.codigo || 0,
                 descricao: tramitacao.classe[0]?.descricao || ''
             },
-            assuntos: tramitacao.assunto.map(assunto => ({
+            assuntos: tramitacao.assunto?.map(assunto => ({
                 codigo: assunto.codigo,
                 descricao: assunto.descricao
             })),
@@ -171,8 +171,8 @@ export function mapPdpjToSimplified(processo: PdpjInput): InteropProcessoType[] 
                 nome: parte.nome,
                 tipo: parte.tipoParte,
                 tipoPessoa: parte.tipoPessoa,
-                documentos: parte.documentosPrincipais.map(doc => `${doc.tipo}: ${doc.numero}`),
-                representantes: parte.representantes.map(rep => ({
+                documentos: parte.documentosPrincipais?.map(doc => `${doc.tipo}: ${doc.numero}`),
+                representantes: parte.representantes?.map(rep => ({
                     nome: rep.nome,
                     tipo: rep.tipoRepresentacao,
                     oab: rep.oab ? `${rep.oab[0]?.numero}/${rep.oab[0]?.uf}` : undefined
