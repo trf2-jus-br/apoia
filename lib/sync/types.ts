@@ -7,7 +7,7 @@
 
 /** A parsed prompt from a .md file, ready to be synced to the database */
 export interface ParsedPrompt {
-    /** UUID from the # METADATA section. Required for github: provider, auto-generated for local: */
+    /** UUID from the YAML front matter. Required for github: provider, auto-generated for local: */
     uuid: string
     /** Slug derived from the filename (e.g., 'analise-completa' from 'analise-completa.md') */
     slug: string

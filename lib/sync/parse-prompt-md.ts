@@ -86,35 +86,36 @@ function normalizeSummary(value: any): string {
 }
 
 /**
- * Regex that splits a prompt .md into its sections.
- * Must match the headings: METADATA, SYSTEM PROMPT, PROMPT, JSON SCHEMA, FORMAT
+ * Regex that splits a prompt .md body into its sections.
+ * Must match the headings: SYSTEM PROMPT, PROMPT, JSON SCHEMA, FORMAT
  */
-const SECTION_REGEX = /(?:^# (?<tag>METADATA|SYSTEM PROMPT|PROMPT|JSON SCHEMA|FORMAT)\s*)$/gms
+const SECTION_REGEX = /(?:^# (?<tag>SYSTEM PROMPT|PROMPT|JSON SCHEMA|FORMAT)\s*)$/gms
 
 /**
- * Parse a markdown string (with # METADATA, # SYSTEM PROMPT, etc.) into a ParsedPrompt.
+ * Regex that extracts YAML front matter from the beginning of a file.
+ * Matches --- delimiters and captures the YAML content between them.
+ */
+const FRONT_MATTER_REGEX = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
+
+/**
+ * Parse a markdown string (with YAML front matter and # SYSTEM PROMPT, etc.) into a ParsedPrompt.
  * 
  * @param slug - The slug derived from the filename (e.g., 'analise-completa')
  * @param md - The raw markdown content
  * @param relativePath - The relative file path within the library
- * @returns A ParsedPrompt object, or null if the file has no METADATA uuid
+ * @returns A ParsedPrompt object, or null if the file has no uuid in front matter
  */
 export function parsePromptMarkdown(slug: string, md: string, relativePath: string): ParsedPrompt | null {
-    // Split by headings into sections
-    const parts = md.split(SECTION_REGEX).reduce((acc, part, index, array) => {
-        if (index % 2 === 0) {
-            const tag = array[index - 1]?.trim()
-            if (tag) {
-                const key = tag.toLowerCase().replace(/\s+/g, '_')
-                acc[key] = part.trim()
-            }
-        }
-        return acc
-    }, {} as Record<string, string>)
+    // Extract YAML front matter
+    const frontMatterMatch = md.match(FRONT_MATTER_REGEX)
+    let metadataRaw: string | null = null
+    let bodyMd = md
+    if (frontMatterMatch) {
+        metadataRaw = frontMatterMatch[1]
+        bodyMd = md.slice(frontMatterMatch[0].length)
+    }
 
-    const { metadata: metadataRaw, system_prompt, prompt, json_schema, format } = parts
-
-    // Parse METADATA as YAML
+    // Parse front matter as YAML
     let metadata: Record<string, any> = {}
     if (metadataRaw) {
         try {
@@ -126,9 +127,23 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
 
     const uuid = metadata.uuid as string
     if (!uuid) {
-        // Files without uuid in METADATA are skipped (e.g., salvaguardas.md, sistema.md)
+        // Files without uuid in front matter are skipped (e.g., salvaguardas.md, sistema.md)
         return null
     }
+
+    // Split body by section headings
+    const parts = bodyMd.split(SECTION_REGEX).reduce((acc, part, index, array) => {
+        if (index % 2 === 0) {
+            const tag = array[index - 1]?.trim()
+            if (tag) {
+                const key = tag.toLowerCase().replace(/\s+/g, '_')
+                acc[key] = part.trim()
+            }
+        }
+        return acc
+    }, {} as Record<string, string>)
+
+    const { system_prompt, prompt, json_schema, format } = parts
 
     // Normalize and validate enum fields — accept canonical (OCULTO) or slug (oculto) form
     if (metadata.share != null) {

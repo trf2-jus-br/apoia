@@ -71,7 +71,7 @@ export function validatePromptFiles(files: { path: string; content: string }[]):
 
         if (!parsed) {
             result.valid = false
-            result.errors.push('Missing uuid in METADATA section')
+            result.errors.push('Missing uuid in front matter')
             fileResults.push(result)
             continue
         }

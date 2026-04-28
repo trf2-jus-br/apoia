@@ -6,11 +6,12 @@ Este documento explica como criar e editar arquivos `.md` de prompts para o sist
 
 ## Estrutura Geral do Arquivo
 
-Um arquivo de prompt é dividido em **seções** delimitadas por títulos de nível 1 (`# NOME DA SEÇÃO`). A única seção obrigatória é `METADATA`. As demais são opcionais, dependendo do tipo de prompt.
+Um arquivo de prompt começa com um **bloco de front matter YAML** (delimitado por `---`) que contém os metadados do prompt. O `uuid` é o único campo obrigatório. Em seguida, as seções de conteúdo são delimitadas por títulos de nível 1 (`# NOME DA SEÇÃO`).
 
 ```
-# METADATA
+---
 <metadados em formato YAML>
+---
 
 # SYSTEM PROMPT
 <instruções de sistema para o modelo de IA>
@@ -27,15 +28,14 @@ Um arquivo de prompt é dividido em **seções** delimitadas por títulos de ní
 
 ---
 
-## Seção `# METADATA`
+## Front Matter
 
-Contém os metadados do prompt em formato YAML. Controla visibilidade, filtros, ordenação e integração com outros prompts.
+Contém os metadados do prompt em formato YAML, delimitado por `---` no início e no fim. Controla visibilidade, filtros, ordenação e integração com outros prompts.
 
 ### Exemplo completo
 
 ```yaml
-# METADATA
-
+---
 uuid: 8c8bac70-1aaa-46fc-90fc-328b19906307
 name: Voto
 sort: 3
@@ -56,6 +56,7 @@ predecessors:
   - path: pedidos-fundamentacoes-e-dispositivos
 successors:
   - path: chat
+---
 ```
 
 ---
@@ -694,8 +695,7 @@ Arrays podem conter sub-arrays usando H4 e H5:
 ### Prompt simples de análise de processo
 
 ```markdown
-# METADATA
-
+---
 uuid: 9c8f98fb-0679-4f2a-9722-91c2e1b35600
 name: Resumos e Análise
 sort: 2
@@ -704,6 +704,7 @@ context:
   action: processo-selecionar
 successors:
   - path: chat
+---
 
 # SYSTEM PROMPT
 
@@ -723,8 +724,7 @@ Leia com atenção os textos a seguir e resuma as informações mais importantes
 ### Prompt de segúnda instância com workflow completo
 
 ```markdown
-# METADATA
-
+---
 uuid: 8c8bac70-1aaa-46fc-90fc-328b19906307
 name: Voto
 sort: 3
@@ -737,6 +737,7 @@ predecessors:
   - path: pedidos-fundamentacoes-e-dispositivos
 successors:
   - path: chat
+---
 
 # SYSTEM PROMPT
 
@@ -754,8 +755,7 @@ Considerando as informações do processo em questão, gere uma minuta completa 
 ### Prompt com grupo e share restrito
 
 ```markdown
-# METADATA
-
+---
 uuid: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
 name: Minuta de Decisão de Viabilidade de Recurso Especial
 sort: 3
@@ -770,6 +770,7 @@ predecessors:
   - path: juizo-viabilidade-recurso
 successors:
   - path: chat
+---
 
 # SYSTEM PROMPT
 
@@ -785,8 +786,7 @@ successors:
 ### Prompt de subpasta com scope específico
 
 ```markdown
-# METADATA
-
+---
 uuid: b01fed52-428c-47b1-aa7b-228be3b63ba4
 name: Relatório de Aposentadoria Especial - Segunda Instância
 sort: 1000
@@ -799,6 +799,7 @@ successors:
   - path: pedidos-fundamentacoes-e-dispositivos
   - path: voto
   - path: chat
+---
 
 # SYSTEM PROMPT
 

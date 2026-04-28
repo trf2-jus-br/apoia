@@ -67,10 +67,19 @@ export const promptDefinitionFromDefinitionAndOptions = (definition: PromptDefin
 
 
 export const promptDefinitionFromMarkdown = (slug, md: string): PromptDefinitionType => {
-    const regex = /(?:^# (?<tag>METADATA|SYSTEM PROMPT|PROMPT|JSON SCHEMA|FORMAT)\s*)$/gms;
+    // Extract YAML front matter
+    const frontMatterMatch = md.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/)
+    let metadataRaw: string | undefined
+    let bodyMd = md
+    if (frontMatterMatch) {
+        metadataRaw = frontMatterMatch[1]
+        bodyMd = md.slice(frontMatterMatch[0].length)
+    }
+
+    const regex = /(?:^# (?<tag>SYSTEM PROMPT|PROMPT|JSON SCHEMA|FORMAT)\s*)$/gms;
 
     // Create an object with the different parts of the markdown
-    const parts = md.split(regex).reduce((acc, part, index, array) => {
+    const parts = bodyMd.split(regex).reduce((acc, part, index, array) => {
         if (index % 2 === 0) {
             const tag = array[index - 1]?.trim()
             if (tag) {
@@ -78,13 +87,13 @@ export const promptDefinitionFromMarkdown = (slug, md: string): PromptDefinition
             }
         }
         return acc;
-    }, {} as { prompt: string, system_prompt?: string, json_schema?: string, format?: string, template?: string, metadata?: string })
+    }, {} as { prompt: string, system_prompt?: string, json_schema?: string, format?: string, template?: string })
 
-    const { prompt, system_prompt, json_schema, format, template, metadata } = parts
+    const { prompt, system_prompt, json_schema, format, template } = parts
 
     return {
         kind: slug, prompt, systemPrompt: system_prompt, jsonSchema: json_schema, format, template,
-        metadata: metadata ? yamlps.load(metadata) as PromptDefinitionMetadataType : undefined,
+        metadata: metadataRaw ? yamlps.load(metadataRaw) as PromptDefinitionMetadataType : undefined,
         cacheControl: true
     }
 }
