@@ -68,7 +68,7 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
         requestArray.push(...workflowRequests)
     }
 
-    if (prompt?.content?.system_prompt || prompt?.content?.prompt) {
+    if (prompt?.content?.system_prompt || prompt?.content?.prompt || prompt?.content?.template) {
         const definition: PromptDefinitionType = {
             kind: `prompt-${prompt.id}`,
             prompt: prompt.content.prompt,
