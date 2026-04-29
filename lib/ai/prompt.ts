@@ -99,6 +99,7 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
     }
 
     const promptContent: string = await applyTextsAndVariables(prompt, data, definition.jsonSchema, definition.template)
+
     if (prompt) {
         // Verificar se há arquivos (Data URLs) nos textos
         const filesInTexts = data.textos.filter(txt => txt.texto?.startsWith('data:'))
@@ -112,14 +113,17 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
             // Adicionar cada arquivo como parte da mensagem
             for (const txt of filesInTexts) {
                 if (txt.texto?.startsWith('data:')) {
-                    // Extrair tipo MIME da Data URL
-                    const mimeMatch = txt.texto.match(/^data:([^;]+);base64,(.+)$/)
-                    if (mimeMatch) {
+                    // Extrair tipo MIME da Data URL usando operações de string (evita stack overflow com base64 grandes)
+                    const base64Marker = ';base64,'
+                    const base64Index = txt.texto.indexOf(base64Marker)
+                    if (base64Index !== -1) {
+                        const mediaType = txt.texto.substring('data:'.length, base64Index)
+                        const data = txt.texto.substring(base64Index + base64Marker.length)
                         contentParts.push({
                             type: 'file',
                             filename: txt.descr || 'arquivo',
-                            mediaType: mimeMatch[1],
-                            data: mimeMatch[2] // Dados base64 do arquivo
+                            mediaType,
+                            data
                         })
                     }
                 }
