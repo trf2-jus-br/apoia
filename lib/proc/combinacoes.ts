@@ -277,6 +277,13 @@ export const padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao = [
     ...subpadraoViabilidadeDeRecursoEspecial
 ]
 
+export const padroesViabilidadeDeRecursosExtraordinarioEEspecial = [
+    padraoViabilidadeDeRecursoExtraordinario,
+    padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao,
+    padraoViabilidadeDeRecursoEspecial,
+    padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao,
+]
+
 export const padraoAgravoInterno = [
     ANY(),
     ANY({
@@ -433,6 +440,7 @@ const padroesMinimosSegundaInstancia = [
 ]
 
 const padroesBasicos = [
+    ...padroesViabilidadeDeRecursosExtraordinarioEEspecial,
     ...padroesBasicosSegundaInstancia,
     ...padroesTurmaRecursal,
     ...padroesConhecimento
