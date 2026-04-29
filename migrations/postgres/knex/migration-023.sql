@@ -5,9 +5,9 @@
 -- 4. Set all category to NULL (arena not in use, library prompts use slug for lookups)
 
 -- 1. Move workflow into content (content is json, so cast to jsonb, merge, cast back)
-UPDATE ia_prompt
-SET content = (content::jsonb || jsonb_build_object('workflow', workflow::jsonb))::json
-WHERE workflow IS NOT NULL;
+-- UPDATE ia_prompt
+-- SET content = (content::jsonb || jsonb_build_object('workflow', workflow::jsonb))::json
+-- WHERE workflow IS NOT NULL;
 
 -- 2. Drop workflow column
 ALTER TABLE ia_prompt DROP COLUMN workflow;
