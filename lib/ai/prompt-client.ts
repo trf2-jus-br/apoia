@@ -61,7 +61,8 @@ export const promptDefinitionFromDefinitionAndOptions = (definition: PromptDefin
         format: options.overrideFormat !== undefined ? options.overrideFormat : definition.format,
         template: options.overrideTemplate !== undefined ? options.overrideTemplate : definition.template,
         model: options.overrideModel !== undefined ? options.overrideModel : definition.model,
-        cacheControl: options.cacheControl !== undefined ? options.cacheControl : definition.cacheControl
+        cacheControl: options.cacheControl !== undefined ? options.cacheControl : definition.cacheControl,
+        metadata: definition.metadata
     }
 }
 

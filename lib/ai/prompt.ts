@@ -70,7 +70,8 @@ export const applyTextsAndVariables = async (text: string, data: PromptDataType,
 export const promptExecuteBuilder = async (definition: PromptDefinitionType, data: PromptDataType, libraryPrompt?: string): Promise<PromptExecuteType> => {
     const message: ModelMessage[] = []
     if (definition?.kind !== 'chat' && definition?.kind !== 'chat_standalone' && !(definition?.systemPrompt?.includes('{{semPromptPadrao}}') || definition?.prompt?.includes('{{semPromptPadrao}}'))) {
-        for (const part of sistema.split(/^\s*---\s*$/gm)) {
+        const systemContent = definition.metadata?.target === 'PROCESSO' ? sistema : sistemaTextual
+        for (const part of systemContent.split(/^\s*---\s*$/gm)) {
             const content = await applyTextsAndVariables(part, data, definition.jsonSchema, definition.template, libraryPrompt)
             devLog('System message content type:', typeof content, 'isArray:', Array.isArray(content))
             message.push({ role: 'system', content } as ModelMessage)
@@ -142,3 +143,4 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
 
 import salvaguardas from '@/prompts/salvaguardas.md'
 import sistema from '@/prompts/sistema.md'
+import sistemaTextual from '@/prompts/sistema-textual.md'

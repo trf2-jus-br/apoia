@@ -39,6 +39,7 @@ export type PromptDefinitionType = {
 export type PromptDefinitionMetadataType = {
     author?: string
     description?: string
+    target?: string
 }
 
 // Tipo que define os textos que serão passados para um prompt

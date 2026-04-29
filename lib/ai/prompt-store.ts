@@ -30,6 +30,7 @@ function dbRecordToDefinition(record: IAPrompt): PromptDefinitionType {
         template: content?.template || undefined,
         metadata: {
             author: content?.author || undefined,
+            target: content?.target || undefined,
         },
         cacheControl: true,
         dbId: record.id,

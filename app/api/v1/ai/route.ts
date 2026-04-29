@@ -73,6 +73,9 @@ async function resolveApiPrompt(kind: string, promptSlug?: string, promptId?: nu
             format: prompt.content.format || undefined,
             template: prompt.content.template || undefined,
             dbId: prompt.id,
+            metadata: {
+                target: prompt.content.target || undefined,
+            }
         } : await getPromptDefinitionFromStore(kind)
 
     return definition
