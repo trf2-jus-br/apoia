@@ -12,12 +12,13 @@ function doc(id: number, tipo: T, numeroDoEvento?: string): Documento {
 }
 
 // Helper para criar evento
-function evt(sequencia: number, tipoNome?: string, descricao?: string): Evento {
+function evt(sequencia: number, tipoNome?: string, descricao?: string, id?: number): Evento {
   return {
     kind: 'evento',
     sequencia,
     descricao,
     tipoNome,
+    id,
   };
 }
 
@@ -352,36 +353,15 @@ describe('backward compatibility - sequences without events', () => {
 });
 
 describe('padroesSuspensao - suspension event patterns', () => {
-  const suspensionDescricao = [
-    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior  - Agravo de Instrumento em Processament',
-    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Agravo de Instrumento remetido',
-    'Suspensão/Sobrestamento - Aguarda Decisão da Instância Superior no processo digitalizado',
-    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Repercussão Geral (STF)',
-    'Despacho/Decisão - Processo Suspenso',
-    'Despacho/Decisão - Processo Suspenso por Recurso Extraordinário com repercussão geral',
-    'Despacho/Decisão - Processo Suspenso por RESP Repetitivo e REXT com repercussão geral',
-    'Recurso Extraordinário com repercussão geral',
-    'Suspensão/Sobrestamento - Aguarda Decisão TRF2 - IRDR',
-    'Suspensão/Sobrestamento - Aguarda Decisão RESP Repetitivo (STJ) e REXT com Repercussão Geral (STF)',
-    'Processo Suspenso por Recurso Extraordinário com repercussão geral',
-    'Processo Suspenso por Recurso Extraordinário com repercussão geral e por Recurso Especial repetitivo',
-    'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Recursos Repetitivos (STJ)',
-    'Despacho/Decisão - Processo Suspenso por Recurso Especial Repetitivo',
-    'Recurso Especial repetitivo',
-    'Processo Suspenso por Recurso Especial Repetitivo',
-    'Processo Suspenso por Incidente de Resolução de Demandas Repetitivas',
-    'Despacho/Decisão - Processo Suspenso por IRDR',
-    'Suspensão do Decisão do STJ - IRDR',
-    'Suspensão por Decisão do Presidente do STJ - IRDR',
-    'Suspensão por Decisão do Presidente do STF - IRDR',
-  ];
+  // IDs numéricos dos tipos de movimento de suspensão no PDPJ
+  const suspensionIds = [265, 11975, 12098, 12099, 12100];
 
   test('Pattern 1: captures DESPACHO_DECISAO linked to suspension event', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
       evt(10, 'Distribuição'),
       doc(2, T.CONTESTACAO),
-      evt(20, 'Decisão proferida', 'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Recursos Repetitivos (STJ)'),
+      evt(20, 'Decisão proferida', 'Suspensão/Sobrestamento - Aguarda Decisão Tribunal Superior - Recursos Repetitivos (STJ)', 265),
       doc(3, T.DESPACHO_DECISAO),
       evt(30, 'Outro movimento'),
       doc(4, T.CERTIDAO),
@@ -404,7 +384,7 @@ describe('padroesSuspensao - suspension event patterns', () => {
   test('Pattern 1: captures SENTENCA linked to suspension event', () => {
     const sequence: SequenceItem[] = [
       doc(1, T.PETICAO_INICIAL),
-      evt(20, 'Decisão proferida', 'Suspensão por Decisão do Presidente do STF - IRDR'),
+      evt(20, 'Decisão proferida', 'Suspensão por Decisão do Presidente do STF - IRDR', 265),
       doc(2, T.SENTENCA),
       evt(30, 'Outro'),
       doc(3, T.CERTIDAO),
@@ -428,7 +408,7 @@ describe('padroesSuspensao - suspension event patterns', () => {
       doc(1, T.PETICAO_INICIAL),
       evt(10, 'Distribuição'),
       doc(2, T.DESPACHO_DECISAO),
-      evt(20, 'Suspensão determinada', 'Despacho/Decisão - Processo Suspenso por IRDR'),
+      evt(20, 'Suspensão determinada', 'Despacho/Decisão - Processo Suspenso por IRDR', 265),
       doc(3, T.CERTIDAO),
     ];
     let matched = false;
@@ -463,11 +443,11 @@ describe('padroesSuspensao - suspension event patterns', () => {
     expect(matched).toBe(false);
   });
 
-  for (const descricao of suspensionDescricao) {
-    test(`matches suspension descricao: "${descricao}"`, () => {
+  for (const id of suspensionIds) {
+    test(`matches suspension event id: ${id}`, () => {
       const sequence: SequenceItem[] = [
         doc(1, T.PETICAO_INICIAL),
-        evt(20, 'Movimento qualquer', descricao),
+        evt(20, 'Movimento qualquer', 'Suspensão qualquer', id),
         doc(2, T.DESPACHO_DECISAO),
       ];
       let matched = false;
@@ -487,12 +467,12 @@ describe('padroesSuspensao - suspension event patterns', () => {
       doc(1, T.PETICAO_INICIAL),
       evt(10, 'Distribuição'),
       doc(2, T.DESPACHO_DECISAO), // doc before event
-      evt(20, 'Suspensão', 'Recurso Extraordinário com repercussão geral'),
+      evt(20, 'Suspensão', 'Recurso Extraordinário com repercussão geral', 265),
       doc(3, T.SENTENCA), // doc linked to event
       doc(4, T.CERTIDAO),
     ];
-    // Pattern 1 should match first, capturing doc(3) SENTENCA (linked)
-    const result = matchFull(sequence, padroesSuspensao[0]);
+    // padroesSuspensao[1] = padraoSuspensaoDecisaoVinculada captura apenas o doc após o evento
+    const result = matchFull(sequence, padroesSuspensao[1]);
     expect(result).not.toBeNull();
     const captured = result!.items.flatMap(m => m.captured);
     expect(captured.length).toBe(1);
