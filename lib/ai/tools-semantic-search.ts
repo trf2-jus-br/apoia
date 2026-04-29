@@ -1,19 +1,39 @@
 import { tool } from "ai"
 import { z } from "zod"
 import { UserType } from "../user"
+import devLog from "../utils/log"
 
 // =====================
 // Tipos da API
 // =====================
 
-interface SearchResultItem {
+interface SearchResultItemInner {
     id: string
-    title?: string
+    sourceId: string
+    externalId: string
     content?: string
-    sourceSlug?: string
-    score?: number
-    metadata?: Record<string, any>
-    [key: string]: any
+    data?: Record<string, any>
+    createdAt?: string
+    updatedAt?: string
+}
+
+interface SearchResultSource {
+    id: string
+    slug: string
+    name: string
+    endpoint?: string
+    method?: string
+    displayTemplate?: string
+}
+
+interface SearchResultItem {
+    item: SearchResultItemInner
+    renderedTitle?: string
+    renderedDisplay?: string
+    similarity?: number
+    vectorScore?: number
+    textScore?: number
+    source: SearchResultSource
 }
 
 export interface SemanticSearchRawResponse {
@@ -148,29 +168,49 @@ export const getSemanticSearchTool = (_pUser: Promise<UserType>) => tool({
         debug: z.boolean().optional().describe('Se true, inclui resposta bruta.')
     }),
     execute: async ({ query, sourceSlugs, limit, offset, searchType, hybridAlpha, maxItems, debug }) => {
-        const raw = await searchSemantic({
-            query: query.trim(),
-            sourceSlugs,
-            limit,
-            offset,
-            searchType,
-            hybridAlpha
-        })
+        try {
+            const apiUrl = process.env.SEMANTIC_SEARCH_API_URL
+            if (!apiUrl) {
+                return {
+                    status: 'ERROR' as const,
+                    total: 0, count: 0, offset: 0, limit: 0, results: [],
+                    error: 'SEMANTIC_SEARCH_API_URL não está configurada'
+                }
+            }
 
-        const results = raw.results || []
-        const normalized = results.map(r => normalizeSearchItem(r))
-        const sliced = maxItems ? normalized.slice(0, maxItems) : normalized
+            const raw = await searchSemantic({
+                query: query.trim(),
+                sourceSlugs,
+                limit,
+                offset,
+                searchType,
+                hybridAlpha
+            })
 
-        const response: SemanticSearchNormalizedResponse = {
-            status: 'OK',
-            total: raw.total || 0,
-            count: sliced.length,
-            offset: raw.offset || offset || 0,
-            limit: raw.limit || limit || 10,
-            results: sliced,
-            ...(debug ? { debugRaw: raw } : {})
+            const results = raw.results || []
+
+            devLog('Raw search results count:', results.length)
+
+            const normalized = results.map(r => normalizeSearchItem(r))
+            const sliced = maxItems ? normalized.slice(0, maxItems) : normalized
+
+            const response: SemanticSearchNormalizedResponse = {
+                status: 'OK',
+                total: raw.total || sliced.length,
+                count: sliced.length,
+                offset: raw.offset || offset || 0,
+                limit: raw.limit || limit || 10,
+                results: sliced,
+                ...(debug ? { debugRaw: raw } : {})
+            }
+
+            return response
+        } catch (err: any) {
+            return {
+                status: 'ERROR' as const,
+                total: 0, count: 0, offset: 0, limit: 0, results: [],
+                error: err?.message || 'Erro desconhecido'
+            }
         }
-
-        return response
     }
 })

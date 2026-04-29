@@ -7,10 +7,10 @@ const originalFetch = global.fetch
 describe('getSemanticSearchTool', () => {
   // Configurar variável de ambiente para testes
   const originalEnv = process.env.SEMANTIC_SEARCH_API_URL
-  
+
   beforeEach(() => {
     jest.resetAllMocks()
-    process.env.SEMANTIC_SEARCH_API_URL = 'https://api.exemplo.com'
+    process.env.SEMANTIC_SEARCH_API_URL = 'http://www.example.com/api/v1'
   })
 
   afterAll(() => {
@@ -28,24 +28,44 @@ describe('getSemanticSearchTool', () => {
 
   test('retorna resultados normalizados', async () => {
     const mockResponse = {
-      total: 2,
-      limit: 10,
-      offset: 0,
       results: [
         {
-          id: '1',
-          title: 'Tema STF 123',
-          content: 'Conteúdo sobre repercussão geral',
-          sourceSlug: 'stf-rg',
-          score: 0.95,
-          metadata: { orgao: 'STF', tipo: 'RG' }
+          item: {
+            id: '10acbc6b-2568-4fa3-b753-b5f27ebd51fd',
+            sourceId: 'ba61b168-6632-4447-8d0a-6fd578e49a88',
+            externalId: 'stf-rg-1456',
+            content: 'Conteúdo sobre repercussão geral',
+            data: { nr: 1456, tipo: 'RG', orgao: 'STF', questao: 'Questão 1456' }
+          },
+          renderedTitle: 'Tema 1456/STF',
+          renderedDisplay: '<div>Tema 1456</div>',
+          similarity: 0.95,
+          vectorScore: 0.95,
+          textScore: 0,
+          source: {
+            id: 'ba61b168-6632-4447-8d0a-6fd578e49a88',
+            slug: 'stf-rg',
+            name: 'STF - Temas de Repercussão Geral'
+          }
         },
         {
-          id: '2',
-          title: 'Recurso STJ 456',
-          content: 'Conteúdo sobre recurso repetitivo',
-          sourceSlug: 'stj-rer',
-          score: 0.87
+          item: {
+            id: 'e18f3e38-dab7-4a04-9732-179b5fd5e671',
+            sourceId: 'ba61b168-6632-4447-8d0a-6fd578e49a88',
+            externalId: 'stj-rer-456',
+            content: 'Conteúdo sobre recurso repetitivo',
+            data: { nr: 456, tipo: 'RER', orgao: 'STJ', questao: 'Questão 456' }
+          },
+          renderedTitle: 'Recurso STJ 456',
+          renderedDisplay: '<div>STJ 456</div>',
+          similarity: 0.87,
+          vectorScore: 0.87,
+          textScore: 0,
+          source: {
+            id: 'cd72f168-1234-4447-8d0a-6fd578e49a88',
+            slug: 'stj-rer',
+            name: 'STJ - Recursos Repetitivos'
+          }
         }
       ]
     }
@@ -62,9 +82,9 @@ describe('getSemanticSearchTool', () => {
     expect(result.total).toBe(2)
     expect(result.count).toBe(2)
     expect(result.results.length).toBe(2)
-    expect(result.results[0].id).toBe('1')
-    expect(result.results[0].title).toBe('Tema STF 123')
-    expect(result.results[0].score).toBe(0.95)
+    expect(result.results[0].id).toBe('10acbc6b-2568-4fa3-b753-b5f27ebd51fd')
+    expect(result.results[0].title).toBe('Tema 1456/STF')
+    expect(result.results[0].sourceSlug).toBe('stf-rg')
   })
 
   test('erro HTTP', async () => {
@@ -105,10 +125,14 @@ describe('getSemanticSearchTool', () => {
 
   test('usa valores default quando não especificados', async () => {
     const mockResponse = {
-      total: 1,
-      limit: 10,
-      offset: 0,
-      results: [{ id: '1', title: 'Teste', content: 'Conteúdo' }]
+      results: [
+        {
+          item: { id: 'aaa', sourceId: 'src1', externalId: 'ext-1', data: {} },
+          renderedTitle: 'Teste',
+          similarity: 0.9,
+          source: { id: 'src1', slug: 'stf-rg', name: 'STF' }
+        }
+      ]
     }
 
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockResponse }) as any
@@ -125,17 +149,14 @@ describe('getSemanticSearchTool', () => {
   })
 
   test('respeita maxItems quando fornecido', async () => {
+    const makeItem = (n: number) => ({
+      item: { id: `id-${n}`, sourceId: 'src1', externalId: `ext-${n}`, data: {} },
+      renderedTitle: `Resultado ${n}`,
+      similarity: 0.9,
+      source: { id: 'src1', slug: 'stf-rg', name: 'STF' }
+    })
     const mockResponse = {
-      total: 5,
-      limit: 10,
-      offset: 0,
-      results: [
-        { id: '1', title: 'Resultado 1' },
-        { id: '2', title: 'Resultado 2' },
-        { id: '3', title: 'Resultado 3' },
-        { id: '4', title: 'Resultado 4' },
-        { id: '5', title: 'Resultado 5' }
-      ]
+      results: [1, 2, 3, 4, 5].map(makeItem)
     }
 
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockResponse }) as any
@@ -153,10 +174,14 @@ describe('getSemanticSearchTool', () => {
 
   test('funciona com sourceSlugs filtrados', async () => {
     const mockResponse = {
-      total: 1,
-      limit: 10,
-      offset: 0,
-      results: [{ id: '1', title: 'Tema STF', sourceSlug: 'stf-rg' }]
+      results: [
+        {
+          item: { id: 'aaa', sourceId: 'src1', externalId: 'stf-rg-1', data: {} },
+          renderedTitle: 'Tema STF',
+          similarity: 0.9,
+          source: { id: 'src1', slug: 'stf-rg', name: 'STF' }
+        }
+      ]
     }
 
     global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockResponse }) as any
