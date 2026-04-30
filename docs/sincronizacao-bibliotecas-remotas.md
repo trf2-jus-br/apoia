@@ -33,6 +33,25 @@ POST https://sua-instancia.exemplo.com/api/v1/sync/webhook
 - **GitHub**: Configure o webhook com `Content type: application/json` e o secret definido em `PROMPT_LIBRARY_SECRET`
 - **GitLab**: Configure o webhook com o token secreto (campo "Secret token") igual ao valor de `PROMPT_LIBRARY_SECRET`
 
+### Configuração passo a passo no GitHub
+
+1. Acesse o repositório no GitHub
+2. Clique em **Settings** → **Webhooks** → **Add webhook**
+3. Preencha o formulário:
+
+   | Campo | Valor |
+   |---|---|
+   | **Payload URL** | `https://sua-instancia.exemplo.com/api/v1/sync/webhook` |
+   | **Content type** | `application/json` |
+   | **Secret** | valor de `PROMPT_LIBRARY_SECRET` |
+   | **Which events?** | _Just the push event_ |
+   | **Active** | marcado |
+
+4. Clique em **Add webhook**. O GitHub enviará um ping inicial — HTTP 200 confirma que o endpoint está acessível.
+5. Para verificar entregas, clique em **Recent Deliveries** nas configurações do webhook.
+
+> O handler filtra automaticamente o branch: apenas pushes para o branch configurado em `PROMPT_LIBRARIES` (padrão: `main`) disparam a sincronização. Pushes para outros branches retornam `status: skipped`.
+
 ---
 
 ## Validação em CI/CD
