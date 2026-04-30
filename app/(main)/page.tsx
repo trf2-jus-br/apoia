@@ -80,7 +80,7 @@ export default async function HomePage() {
             color: "text-info"
         },
         {
-            logo: "logo-vp-thermantia2.png",
+            logo: "logo-themantia.png",
             // icon: faSearch,
             title: "Busca de Temas",
             description: "Encontre temas dos Tribunais Superiores através de busca semântica",
@@ -88,7 +88,7 @@ export default async function HomePage() {
             color: "text-library"
         },
         {
-            logo: "logo-vp-admitia2.png",
+            logo: "logo-admitia.png",
             // icon: faBalanceScale,
             title: "Admissibilidade de Recursos",
             // subtitle: "Vice-Presidência",
@@ -156,7 +156,7 @@ export default async function HomePage() {
                                         <CardBody className="d-flex flex-column">
                                             <div className="mb-3">
                                                 {feature.logo ? (
-                                                    <img src={`/logos/${feature.logo}`} alt={feature.title} style={{ height: '3em', filter: 'brightness(0) saturate(100%) invert(36%) sepia(89%) saturate(1083%) hue-rotate(181deg) brightness(93%) contrast(103%);' }} />
+                                                    <img src={`/logos/${feature.logo}`} alt={feature.title} style={{ height: '3em' }} />
                                                 ) : (
                                                     <FontAwesomeIcon
                                                         icon={feature.icon}
