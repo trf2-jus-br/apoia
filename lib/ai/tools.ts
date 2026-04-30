@@ -127,7 +127,11 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
                     return `Identificador de peça inválido: ${pieceId}`
                 }
                 if (!/^[a-zA-Z0-9-_]+$/.test(pieceId)) {
+<<<<<<< HEAD
                     return `Identificador de peça inválido: ${pieceId}. Deve conter apenas letras, números, hífens ou underscore.`
+=======
+                    return `Identificador de peça inválido: ${pieceId}. Deve conter apenas letras, números, hífens e underscores.`
+>>>>>>> master
                 }
                 pPecas.push(interop.obterPeca(processNumber, pieceId, false))
             }
