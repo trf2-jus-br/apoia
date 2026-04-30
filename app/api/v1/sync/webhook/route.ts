@@ -14,9 +14,10 @@ import crypto from 'crypto'
 import devLog from '@/lib/utils/log'
 import { parseLibrariesEnv, findLibraryConfig } from '@/lib/sync/providers/factory'
 import { syncLibraryByUrl, syncAllLibraries } from '@/lib/sync'
+import { envString } from '@/lib/utils/env'
 
 export async function GET() {
-    if (process.env.VERCEL_ENV !== "development")
+    if (envString('VERCEL_ENV') !== "development")
         return NextResponse.json({ errormsg: 'GET endpoint not available in production' }, { status: 503 })
 
     let logRecords: string[] = []
@@ -47,7 +48,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-    const secret = process.env.PROMPT_LIBRARY_SECRET
+    const secret = envString('PROMPT_LIBRARY_SECRET')
     if (!secret) {
         return NextResponse.json({ errormsg: 'Webhook not configured' }, { status: 503 })
     }
