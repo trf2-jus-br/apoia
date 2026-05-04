@@ -1,7 +1,7 @@
 import { T } from "../proc/combinacoes";
 import { TEXTO_INDICACAO_PARCIAL } from "../proc/process-types";
 import devLog from "../utils/log";
-import { Model, ModelValueType } from "./model-types";
+import { getModelClipLimit } from "./model-metadata-server";
 import { TextoType } from "./prompt-types";
 
 const UNCLIPPABLE_PIECES: string[] = [
@@ -157,13 +157,13 @@ function clipNumericAndSymbolicPieces(textos: TextoType[]): TextoType[] {
     });
 }
 
-export function clipPieces(model: string, textos: TextoType[]): TextoType[] {
+export async function clipPieces(model: string, textos: TextoType[]): Promise<TextoType[]> {
     // Primeiro, aplica o clip para peças numéricas/simbólicas, respeitando as unclippables.
     const initialClipedTextos = clipNumericAndSymbolicPieces(textos);
 
     const K_TOKENS_TO_CHARS = 1500; // Aproximadamente 0.75 tokens por caractere
-    const modelDetails: ModelValueType = Object.values(Model).find(m => m.name === model);
-    const maxTotalSize = modelDetails?.clip ? modelDetails.clip * K_TOKENS_TO_CHARS : null;
+    const modelClipLimit = await getModelClipLimit(model)
+    const maxTotalSize = modelClipLimit ? modelClipLimit * K_TOKENS_TO_CHARS : null;
 
     // Se não há limite de tamanho, retorna as peças após o primeiro clip.
     if (maxTotalSize === null) {

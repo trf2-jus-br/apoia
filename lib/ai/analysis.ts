@@ -136,7 +136,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
             const systemCode = user?.system || 'PDPJ'
             const systemId = await SystemDao.assertSystemId(systemCode)
             const textosParaClipagem = JSON.parse(JSON.stringify(pecasComConteudo))
-            const textosClipados = clipPieces(model, textosParaClipagem)
+            const textosClipados = await clipPieces(model, textosParaClipagem)
             const footer = buildFooter(model || '-', textosClipados)
             storeBatchItem(systemId, batchName, dossierNumber, requests, dadosDoProcesso, footer)
         }

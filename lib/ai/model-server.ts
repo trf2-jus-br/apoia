@@ -1,9 +1,9 @@
 'use server'
 
 import { redirect } from "next/navigation"
-import { enumSortById, enumSorted, Model, ModelProvider, ModelProviderType } from "./model-types"
+import { enumSortById, enumSorted, Model, ModelProvider, ModelProviderType, ModelProviderValueType } from "./model-types"
 import { getPrefs } from "../utils/prefs"
-import { envString, envStringPrefixed, getEnvStringPrefixedIfUserIsAllowed } from "../utils/env"
+import { envStringPrefixed, getEnvStringPrefixedIfUserIsAllowed } from "../utils/env"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
@@ -11,10 +11,12 @@ import { createAzure } from "@ai-sdk/azure"
 import { createGroq } from "@ai-sdk/groq"
 import { createDeepSeek } from "@ai-sdk/deepseek"
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
+import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EMPTY_PREFS_COOKIE, PrefsCookieType } from '@/lib/utils/prefs-types'
 import { assertCourtId, getCurrentUser } from "../user"
 import { LanguageModelV3 } from "@ai-sdk/provider"
 import devLog from "../utils/log"
+import { getConfiguredOpenRouterModelsFromPrefs, getOpenRouterModelsFromPrefs } from "./model-metadata-server"
 
 function getEnvKeyByModel(model: string): string {
     if (!model) throw new Error('Model is required')
@@ -32,6 +34,8 @@ function getEnvKeyByModel(model: string): string {
         return ModelProvider.GROQ.apiKey
     } else if (model.startsWith('deepseek-')) {
         return ModelProvider.DEEPSEEK.apiKey
+    } else if (model.startsWith('openrouter-')) {
+        return ModelProvider.OPENROUTER.apiKey
     } else if (model.startsWith('lm-studio')) {
         return ModelProvider.LM_STUDIO.apiKey
     }
@@ -53,7 +57,7 @@ export const assertModel = async () => {
     }
 }
 
-export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, selectableModels?: string[], userMayChangeModel: boolean, azureResourceName: string, lmStudioUrl?: string, awsRegion?: string, awsAccessKeyId?: string }
+export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, selectableModels?: string[], userMayChangeModel: boolean, azureResourceName: string, lmStudioUrl?: string, awsRegion?: string, awsAccessKeyId?: string, openRouterModels?: string }
 export async function getSelectedModelParams(): Promise<ModelParams> {
     const prefs = await getPrefs()
     const user = await getCurrentUser()
@@ -64,6 +68,7 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     let lmStudioUrl: string
     let awsRegion: string
     let awsAccessKeyId: string
+    let openRouterModels: string
 
     let defaultModel = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, 'MODEL', seqTribunalPai) as string
     let selectableModels = undefined as string[]
@@ -86,6 +91,7 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     lmStudioUrl = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.LM_STUDIO.resourceName, seqTribunalPai) as string
     awsRegion = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.AWS.region, seqTribunalPai) as string
     awsAccessKeyId = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.AWS.accessKeyId, seqTribunalPai) as string
+    openRouterModels = await getOpenRouterModelsFromPrefs()
 
     if (prefs?.model) model = prefs.model
     if (prefs?.env[ModelProvider.AZURE.resourceName]) azureResourceName = prefs.env[ModelProvider.AZURE.resourceName]
@@ -109,7 +115,7 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     }
     if (!model) {
         // try to find an available api key
-        let provider: ModelProviderType
+        let provider: ModelProviderValueType
         for (const p of enumSortById(ModelProvider)) {
             provider = p.value
             apiKey = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, p.value.apiKey, seqTribunalPai)
@@ -119,6 +125,12 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
         }
         // try to find a model for the api key
         if (apiKey) {
+            if (provider.apiKey === ModelProvider.OPENROUTER.apiKey) {
+                const configuredOpenRouterModels = await getConfiguredOpenRouterModelsFromPrefs()
+                if (configuredOpenRouterModels.length > 0) {
+                    model = configuredOpenRouterModels[0].name
+                }
+            }
             for (const m of enumSorted(Model)) {
                 if (m.value.provider.apiKey === provider.apiKey) {
                     model = m.value.name
@@ -133,7 +145,7 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
         const envKey = getEnvKeyByModel(model)
         apiKeyFromEnv = apiKey === getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, envKey, seqTribunalPai)
     }
-    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, selectableModels, userMayChangeModel, azureResourceName, lmStudioUrl, awsRegion, awsAccessKeyId }
+    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, selectableModels, userMayChangeModel, azureResourceName, lmStudioUrl, awsRegion, awsAccessKeyId, openRouterModels }
 }
 
 export async function getSelectedModelName(): Promise<string> {
@@ -186,6 +198,10 @@ export async function getModel(params?: { structuredOutputs: boolean, overrideMo
     if (getEnvKeyByModel(model) === ModelProvider.DEEPSEEK.apiKey) {
         const deepseek = createDeepSeek({ apiKey })
         return { model, modelRef: deepseek(model), apiKeyFromEnv }
+    }
+    if (getEnvKeyByModel(model) === ModelProvider.OPENROUTER.apiKey) {
+        const openrouter = createOpenRouter({ apiKey })
+        return { model, modelRef: openrouter(model.replace('openrouter-', '')) as unknown as LanguageModelV3, apiKeyFromEnv }
     }
     throw new Error(`Model ${model} not found`)
 }

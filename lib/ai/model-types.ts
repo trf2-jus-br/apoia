@@ -28,10 +28,11 @@ const ModelProviderArray = [
     { id: 7, name: 'AWS', apiKey: 'AWS_SECRET_ACCESS_KEY', accessKeyId: 'AWS_ACCESS_KEY_ID', region: 'AWS_REGION', apiKeyRegex: /^sk-[a-zA-Z0-9]{32}$/, status: StatusDeLancamento.PUBLICO },
     { id: 5, name: 'Groq', apiKey: 'GROQ_API_KEY', apiKeyRegex: /^gsk_[a-zA-Z0-9]{52}$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
     { id: 6, name: 'DeepSeek', apiKey: 'DEEPSEEK_API_KEY', apiKeyRegex: /^sk-[a-zA-Z0-9]{32}$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
+    { id: 9, name: 'OpenRouter', apiKey: 'OPENROUTER_API_KEY', models: 'OPENROUTER_MODELS', apiKeyRegex: /^sk-or-v1-[a-zA-Z0-9_-]+$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
     { id: 8, name: 'LM Studio', apiKey: 'LM_STUDIO_API_KEY', resourceName: 'LM_STUDIO_URL', apiKeyRegex: /.*/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
 ]
 
-export type ModelProviderValueType = EnumOfObjectsValueType & { apiKey: string, resourceName?: string, region?: string, accessKeyId?: string, apiKeyRegex: RegExp, status: StatusDeLancamento }
+export type ModelProviderValueType = EnumOfObjectsValueType & { apiKey: string, resourceName?: string, region?: string, accessKeyId?: string, models?: string, apiKeyRegex: RegExp, status: StatusDeLancamento }
 export type ModelProviderType = { [key: string]: ModelProviderValueType }
 
 // export const ModelProvider: ModelProviderType = {
@@ -134,6 +135,87 @@ export const Model: ModelType = ModelArray.reduce((acc, cur, idx) => {
     return acc
 }, {} as ModelType)
 
+export type ConfiguredModelValueType = {
+    name: string
+    provider: ModelProviderValueType
+    cachedInputTokenPPM?: number
+    inputTokenPPM?: number
+    outputTokenPPM?: number
+    clip?: number
+    supportedFileTypes?: FileTypeEnum[]
+}
+
+const AUDIO_FILE_TYPES = [FileTypeEnum.MP3, FileTypeEnum.WMA, FileTypeEnum.WAV, FileTypeEnum.AIFF, FileTypeEnum.AAC, FileTypeEnum.OGG, FileTypeEnum.FLAC]
+const VIDEO_FILE_TYPES = [FileTypeEnum.MP4, FileTypeEnum.WMV]
+
+function parseOptionalNumber(value?: string): number | undefined {
+    if (!value) return undefined
+    const parsed = Number(value.trim())
+    return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function parseSupportedFileTypes(value?: string): FileTypeEnum[] | undefined {
+    if (!value) return undefined
+
+    const fileTypes = new Set<FileTypeEnum>()
+    const tokens = value.split('|').map(token => token.trim().toLowerCase()).filter(Boolean)
+
+    for (const token of tokens) {
+        if (token === 'pdf') {
+            fileTypes.add(FileTypeEnum.PDF)
+            continue
+        }
+        if (token === 'audio') {
+            AUDIO_FILE_TYPES.forEach(type => fileTypes.add(type))
+            continue
+        }
+        if (token === 'video') {
+            VIDEO_FILE_TYPES.forEach(type => fileTypes.add(type))
+            continue
+        }
+
+        const exactMatch = Object.values(FileTypeEnum).find(fileType => fileType.split('/').pop()?.toLowerCase() === token || fileType.toLowerCase() === token)
+        if (exactMatch) fileTypes.add(exactMatch)
+    }
+
+    return fileTypes.size > 0 ? Array.from(fileTypes) : undefined
+}
+
+export function normalizeOpenRouterModelName(modelName: string): string {
+    return modelName.startsWith('openrouter-') ? modelName : `openrouter-${modelName}`
+}
+
+export function parseOpenRouterModels(modelsConfig?: string): ConfiguredModelValueType[] {
+    if (!modelsConfig?.trim()) return []
+
+    const parsedModels: ConfiguredModelValueType[] = []
+
+    for (const entry of modelsConfig.split(';').map(item => item.trim()).filter(Boolean)) {
+            const [rawModelName, inputTokenPPM, outputTokenPPM, cachedInputTokenPPM, clip, supportedFileTypes] = entry.split(',').map(part => part.trim())
+            if (!rawModelName) continue
+
+            parsedModels.push({
+                name: normalizeOpenRouterModelName(rawModelName),
+                provider: ModelProvider.OPENROUTER,
+                inputTokenPPM: parseOptionalNumber(inputTokenPPM),
+                outputTokenPPM: parseOptionalNumber(outputTokenPPM),
+                cachedInputTokenPPM: parseOptionalNumber(cachedInputTokenPPM),
+                clip: parseOptionalNumber(clip),
+                supportedFileTypes: parseSupportedFileTypes(supportedFileTypes),
+            })
+    }
+
+    return parsedModels
+}
+
+export function getModelDetails(modelName: string, configuredModels?: string | ConfiguredModelValueType[]): ModelValueType | ConfiguredModelValueType | undefined {
+    const staticModel = Object.values(Model).find(model => model.name === modelName)
+    if (staticModel) return staticModel
+
+    const parsedConfiguredModels = typeof configuredModels === 'string' ? parseOpenRouterModels(configuredModels) : configuredModels || []
+    return parsedConfiguredModels.find(model => model.name === modelName)
+}
+
 // export const Model: ModelType = {
 //     GPT_4_O_MINI_2024_07_18:
 //         { sort: 1, id: 3, name: 'gpt-4o-mini-2024-07-18', provider: ModelProvider.OPENAI, status: StatusDeLancamento.PUBLICO },
@@ -181,8 +263,8 @@ export type ModelUsageResult = {
     input_tokens: number, output_tokens: number, approximate_cost: number
 }
 
-export function modelCalcUsage(model: string, usage: UsageType): ModelUsageResult {
-    const modelDetails: ModelValueType = Object.values(Model).find(m => m.name === model)
+export function modelCalcUsage(model: string, usage: UsageType, configuredModels?: string | ConfiguredModelValueType[]): ModelUsageResult {
+    const modelDetails = getModelDetails(model, configuredModels)
     if(!modelDetails) {
     console.warn(`Model not found: ${model}, using default token costs.`)
 }
@@ -203,7 +285,7 @@ const approximate_cost = (reasoningTokens + outputTokens) > 0
         + outputTokens * outputTokenPPM) / 1000000
     : (200000 * inputTokenPPM + 100000 * outputTokenPPM) / 1000000
 
-devLog(`Using model: ${modelDetails.name}, inputTokenPPM: ${inputTokenPPM}, outputTokenPPM: ${outputTokenPPM}`)
+devLog(`Using model: ${modelDetails?.name || model}, inputTokenPPM: ${inputTokenPPM}, outputTokenPPM: ${outputTokenPPM}`)
 devLog('Cached input tokens:', cachedInputTokens)
 devLog('Input tokens:', inputTokens)
 devLog('Reasoning tokens:', reasoningTokens)

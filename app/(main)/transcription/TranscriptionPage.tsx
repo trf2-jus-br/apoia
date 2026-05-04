@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import AiContent from '@/components/ai-content'
 import AudioConversionProgress from '@/components/audio-conversion-progress'
 import { Button, Alert } from 'react-bootstrap'
 import { FileTypeEnum } from '@/lib/ai/model-types'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
-import { checkModelSupportsAudioVideoSync } from '@/lib/ai/model-validation'
 import {
     extractAudioToMp3,
     AudioExtractionProgress as AudioExtractionProgressType,
@@ -35,12 +34,11 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 // Cache de conversões de áudio/vídeo para MP3 16kHz mono
 const audioConversionCache = new Map<string, AudioExtractionResult>()
 
-export default function TranscriptionPage({ model, degravacaoDefinition, chatDefinition }: { model: string, degravacaoDefinition: PromptDefinitionType, chatDefinition: PromptDefinitionType }) {
+export default function TranscriptionPage({ model, modelSupportsFiles, degravacaoDefinition, chatDefinition }: { model: string, modelSupportsFiles: boolean, degravacaoDefinition: PromptDefinitionType, chatDefinition: PromptDefinitionType }) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [fileDataUrl, setFileDataUrl] = useState<string | null>(null)
     const [fileError, setFileError] = useState<string | null>(null)
     const [hidden, setHidden] = useState(true)
-    const [modelSupportsFiles, setModelSupportsFiles] = useState<boolean>(true)
 
     // Estados para conversão de áudio
     const [isConverting, setIsConverting] = useState(false)
@@ -214,16 +212,6 @@ export default function TranscriptionPage({ model, degravacaoDefinition, chatDef
             fileInputRef.current.value = ''
         }
     }
-
-    // Verificar se o modelo selecionado suporta áudio/vídeo
-    useEffect(() => {
-        if (model) {
-            const supportsFiles = checkModelSupportsAudioVideoSync(model)
-            setModelSupportsFiles(supportsFiles)
-        } else {
-            setModelSupportsFiles(false)
-        }
-    }, [model])
 
     const formatFileSize = (bytes: number) => {
         if (bytes === 0) return '0 Bytes'

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { useRouter } from 'next/navigation';
-import { enumSorted, Model, ModelProvider } from '@/lib/ai/model-types';
+import { enumSorted, Model, ModelProvider, parseOpenRouterModels } from '@/lib/ai/model-types';
 import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support';
 import { addGenericCookie } from '../prompts/add-cookie';
 
@@ -20,6 +20,8 @@ export default function PrefsForm(params) {
     const router = useRouter();
 
     Frm.update(data, setData, formState)
+
+    const configuredOpenRouterModels = parseOpenRouterModels(data?.env?.[ModelProvider.OPENROUTER.models] || params.openRouterModels)
 
     const handleClick = (e) => {
         setProcessing(true);
@@ -45,6 +47,9 @@ export default function PrefsForm(params) {
         for (const m of enumSorted(Model)) {
             if (data.env && !!data.env[m.value.provider.apiKey])
                 return m.value.name
+        }
+        if (data.env?.[ModelProvider.OPENROUTER.apiKey] && configuredOpenRouterModels[0]) {
+            return configuredOpenRouterModels[0].name
         }
         // if (params.defaultModel) return params.defaultModel
         // for (const m of enumSorted(Model)) {
@@ -78,6 +83,13 @@ export default function PrefsForm(params) {
     const modelOptions = enumSorted(Model)
         // .sort((a, b) => a.value.provider.id - b.value.provider.id)
         .map(e => ({ id: e.value.name, name: e.value.name, disabled: isDisabled(e), hidden: isDisabled(e), visible: params.statusDeLancamento >= e.value.provider.status }))
+        .concat(configuredOpenRouterModels.map(model => ({
+            id: model.name,
+            name: model.name,
+            disabled: !data.env?.[ModelProvider.OPENROUTER.apiKey],
+            hidden: !data.env?.[ModelProvider.OPENROUTER.apiKey],
+            visible: params.statusDeLancamento >= ModelProvider.OPENROUTER.status,
+        })))
         .sort((a, b) => a.disabled ? 1 : b.disabled ? -1 : 0)
     // .filter(e => e.visible)
 
@@ -120,6 +132,14 @@ export default function PrefsForm(params) {
                                             <Frm.Input label={`Id Chave`} name={`env['${provider.value.accessKeyId}']`} width="4" />
                                             <Frm.Input label={`Região`} name={`env['${provider.value.region}']`} width="4" />
                                         </>}
+                                        {provider.value.models && (
+                                            <Frm.TextArea
+                                                label="Modelos OpenRouter"
+                                                name={`env['${provider.value.models}']`}
+                                                width="12"
+                                                explanation="Use ';' para separar modelos. Formato: modelId ou modelId,inputPrice,outputPrice,cacheReadPrice,totalContext,supports. Ex.: openai/gpt-5.2; google/gemini-2.5-pro,2.5,15,0.25,1000,pdf|audio|video"
+                                            />
+                                        )}
                                     </div>
                                 ))}
                                 {/* <div className="row mb-3">

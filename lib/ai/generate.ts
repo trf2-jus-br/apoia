@@ -10,7 +10,7 @@ import { calcSha256 } from '../utils/hash'
 import { envString } from '../utils/env'
 import { anonymizeText } from '../anonym/anonym'
 import { getModel } from './model-server'
-import { modelCalcUsage, Model, FileTypeEnum, ModelUsageResult } from './model-types'
+import { FileTypeEnum, ModelUsageResult } from './model-types'
 import { cookies } from 'next/headers';
 import { clipPieces } from './clip-pieces'
 import { pdfToText } from '../pdf/pdf'
@@ -20,21 +20,7 @@ import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai'
 import devLog, { isDev } from '../utils/log'
 import * as Sentry from '@sentry/nextjs'
 import { getLibraryDocumentsForPrompt } from './library'
-
-export async function checkModelSupportsAudioVideo(modelName: string): Promise<boolean> {
-    const details = Object.values(Model).find(m => m.name === modelName)
-    const audioVideoTypes = [
-        FileTypeEnum.MP3, FileTypeEnum.MP4, FileTypeEnum.WAV,
-        FileTypeEnum.WMA, FileTypeEnum.WMV, FileTypeEnum.AIFF,
-        FileTypeEnum.AAC, FileTypeEnum.OGG, FileTypeEnum.FLAC
-    ]
-    return audioVideoTypes.some(type => details?.supportedFileTypes?.includes(type))
-}
-
-export async function checkModelSupportsPdf(modelName: string): Promise<boolean> {
-    const details = Object.values(Model).find(m => m.name === modelName)
-    return !!details?.supportedFileTypes?.includes(FileTypeEnum.PDF)
-}
+import { calculateModelUsage, checkModelSupportsAudioVideo, checkModelSupportsPdf } from './model-metadata-server'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await GenerationDao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -143,7 +129,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
 
     // Get the model so that we can clip the pieces if necessary
     const { model: modelPreSelected } = await getModel({ structuredOutputs: false, overrideModel: definition.model })
-    data.textos = clipPieces(modelPreSelected, data.textos)
+    data.textos = await clipPieces(modelPreSelected, data.textos)
 
     const libraryPrompt = await getLibraryDocumentsForPrompt(data.documentosDaBiblioteca)
     const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
@@ -224,7 +210,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             console.error('Error during streaming:', error, (error as any)?.cause)
         },
         onFinish: async ({ text, usage, providerMetadata }) => {
-            const modelUsage = modelCalcUsage(model, usage)
+            const modelUsage = await calculateModelUsage(model, usage)
             returnData.usage = { ...usage, dollarValue: modelUsage.approximate_cost }
             if (apiKeyFromEnv)
                 writeUsage(usage, model, user_id, court_id, modelUsage)
@@ -241,7 +227,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
         tools: tools, 
         stopWhen: stepCountIs(10),
         providerOptions: {
-            google: {
+             google: {
                 thinkingConfig: {
                     // thinkingBudget: 2024, // Set a budget (0 to disable, up to 24576 for Flash)
                     includeThoughts: true, // Crucial to include the thinking process in the response
@@ -266,20 +252,8 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
 
 async function processMessages(model: string, messages: ModelMessage[]): Promise<{ processedMessagesModel: ModelMessage[], processedMessagesLog: ModelMessage[] }> {
     // --- PDF processing & logging sanitization ---
-    const modelSupportsPdf = () => {
-        const details = Object.values(Model).find(m => m.name === model)
-        return !!details?.supportedFileTypes?.includes(FileTypeEnum.PDF)
-    }
-
-    const modelSupportsAudioVideo = () => {
-        const details = Object.values(Model).find(m => m.name === model)
-        const audioVideoTypes = [
-            FileTypeEnum.MP3, FileTypeEnum.MP4, FileTypeEnum.WAV,
-            FileTypeEnum.WMA, FileTypeEnum.WMV, FileTypeEnum.AIFF,
-            FileTypeEnum.AAC, FileTypeEnum.OGG, FileTypeEnum.FLAC
-        ]
-        return audioVideoTypes.some(type => details?.supportedFileTypes?.includes(type))
-    }
+    const supportsPdf = await checkModelSupportsPdf(model)
+    const supportsAudioVideo = await checkModelSupportsAudioVideo(model)
     const processedMessagesModel: ModelMessage[] = []
     const processedMessagesLog: ModelMessage[] = []
     for (const m of messages) {
@@ -288,7 +262,7 @@ async function processMessages(model: string, messages: ModelMessage[]): Promise
         const newPartsLog: any[] = []
         for (const part of (m as any).content) {
             if (part?.type === 'file' && part.mediaType === 'application/pdf') {
-                if (!modelSupportsPdf()) {
+                if (!supportsPdf) {
                     try {
                         if (part.url?.startsWith('data:')) {
                             const base64 = part.url.split(',')[1]
@@ -322,7 +296,7 @@ async function processMessages(model: string, messages: ModelMessage[]): Promise
                 }
             } else if (part?.type === 'file' && (part.mediaType?.startsWith('audio/') || part.mediaType?.startsWith('video/'))) {
                 // Handle audio/video files
-                if (!modelSupportsAudioVideo()) {
+                if (!supportsAudioVideo) {
                     // Model doesn't support audio/video, show warning
                     const unsupported = { type: 'text', text: `Arquivo ${part.mediaType} (${part.filename}) não é suportado pelo modelo selecionado. Use um modelo como Gemini que suporta áudio e vídeo.` }
                     newPartsModel.push(unsupported)
