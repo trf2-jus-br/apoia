@@ -19,7 +19,8 @@ export const reasoning = (m: UIMessage): ReasoningType | undefined => {
         const match = last.match(/\*\*([\s\S]*?)\*\*\s*([\s\S]*?)\s*$/)
         const title = match ? match[1] : undefined
         const content = match ? match[2] : undefined
-        return match ? { title: title, content: converter.makeHtml(content) } : undefined
+        if (match) return { title, content: converter.makeHtml(content) }
+        return { title: undefined, content: converter.makeHtml(last) }
     }
 }
 
