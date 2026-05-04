@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Container } from "react-bootstrap"
-import { SourceMessageFromParentType, MessageWithType, AuthPopupMessageType, SinkMessageFromParentType, PromptsMessageFromParentType, PromptsMessageToParentType } from "@/lib/utils/messaging"
+import { SourceMessageFromParentType, MessageWithType, AuthPopupMessageType, SinkMessageFromParentType, PromptsMessageFromParentType, PromptsMessageToParentType, SOURCE_PARAM_THAT_INDICATES_TO_RETRIEVE_USING_MESSAGE_TO_PARENT, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT } from "@/lib/utils/messaging"
 import devLog from "@/lib/utils/log"
 
 export const ClientIFrameTest = (props: { baseUrl: string; callbackUrl: string }) => {
@@ -71,13 +71,13 @@ export const ClientIFrameTest = (props: { baseUrl: string; callbackUrl: string }
         }
     }, [])
 
-    // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?prompt=refinamento-de-texto%26source=${SOURCE_PARAM_THAT_INDICATES_TO_RETRIEVE_USING_MESSAGE_TO_PARENT}%26sink=${SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT}%26sink-button-text=Enviar+para+o+Eproc`
+    const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?prompt=refinamento-de-texto%26source=${SOURCE_PARAM_THAT_INDICATES_TO_RETRIEVE_USING_MESSAGE_TO_PARENT}%26sink=${SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT}%26sink-button-text=Enviar+para+o+Eproc`
     // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025113%26prompt=minuta-de-sentenca%26sink=${SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT}%26sink-button-text=Enviar+para+o+Eproc`
     // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025113%26prompt=minuta-de-sentenca%26instance=primeiro-grau`
     // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025114%26prompt=chat%26instance=primeiro-grau`
     // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025114%26instance=primeiro-grau`
     // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025114%26instance=segundo-grau%26action=minuta_editar`
-    const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025114%26instance=primeiro-grau%26action=processo_selecionar`
+    // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025114%26instance=primeiro-grau%26action=processo_selecionar`
 
     return <Container className="mt-3 text-center">
         <h1>Keycloak Authentication Test Page</h1>

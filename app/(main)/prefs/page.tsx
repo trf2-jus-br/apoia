@@ -2,8 +2,6 @@ import { Container } from 'react-bootstrap'
 import { getPrefs } from '@/lib/utils/prefs'
 import { EMPTY_PREFS_COOKIE, PrefsCookieType } from '@/lib/utils/prefs-types'
 import PrefsForm from './prefs-form'
-import { ModelProvider } from '@/lib/ai/model-types'
-import { envString } from '@/lib/utils/env'
 import { cookies } from 'next/headers';
 import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { getSelectedModelParams } from '@/lib/ai/model-server'

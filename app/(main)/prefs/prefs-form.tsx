@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, FormEvent, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { useRouter } from 'next/navigation';
 import { enumSorted, Model, ModelProvider } from '@/lib/ai/model-types';
 import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support';
-import { StatusDeLancamento } from '@/lib/proc/process-types';
+import { addGenericCookie } from '../prompts/add-cookie';
 
 const Frm = new FormHelper()
 
@@ -25,8 +25,7 @@ export default function PrefsForm(params) {
         setProcessing(true);
         e.preventDefault();
         const cookie = btoa(JSON.stringify(data))
-        document.cookie = `prefs=${cookie}; path=/;`
-        // document.cookie = `model=${cookie}; path=/; Secure; SameSite=Strict; HttpOnly;`
+        addGenericCookie('prefs', cookie)
         router.replace(`/`)
         router.refresh()
         // setProcessing(false);

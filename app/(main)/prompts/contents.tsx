@@ -5,7 +5,7 @@ import { UserType } from "@/lib/user"
 import React, { useEffect, useMemo, useState } from "react"
 import { Toast, ToastContainer } from "react-bootstrap"
 import ErrorMessage from "@/components/error-message"
-import { addGenericCookie } from "./add-cookie"
+import { addGenericCookie, getCookieValue } from "./add-cookie"
 import TermosDeUso from "./termos-de-uso"
 import { PromptProvider, usePromptContext } from "./context/PromptContext"
 import { filterPrompts, getPromptsPrincipais, getPromptsComunidade, getPromptsSidekick } from "./utils/promptFilters"
@@ -49,14 +49,11 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
     const [promptsState, setPromptsState] = useState<IAPromptList[]>(prompts)
 
     useEffect(() => {
-        const getCookie = (name: string): string | null => {
-            if (typeof document === 'undefined') return null
-            const cookies = document.cookie ? document.cookie.split('; ') : []
-            const found = cookies.find((c) => c.startsWith(`${name}=`))
-            return found ? decodeURIComponent(found.split('=').slice(1).join('=')) : null
+        const fetchCookie = async () => {
+            const raw = await getCookieValue('termos-de-uso')
+            setTermosAceitos(raw === '1')
         }
-        const raw = getCookie('termos-de-uso')
-        setTermosAceitos(raw === '1')
+        fetchCookie()
     }, [])
 
     const promptOnClick = async (kind: string, row: any) => {
@@ -159,7 +156,7 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
 
     if (sidekick) {
         if (termosAceitos === false) {
-            return <TermosDeUso onAccept={() => { setTermosAceitos(true); addGenericCookie('termos-de-uso', '1') }} />
+            return <TermosDeUso onAccept={() => { setTermosAceitos(true); addGenericCookie('termos-de-uso', '1', 60 * 60 * 24 * 90) }} />
         }
 
         return (
