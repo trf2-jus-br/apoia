@@ -188,6 +188,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         const textDecoder = new TextDecoder('utf-8')
         const payload = {
             kind: params.definition.kind,
+            dbId: params.definition.dbId,
             data: params.data,
             date: new Date(),
             overrideSystemPrompt: params.options?.overrideSystemPrompt,

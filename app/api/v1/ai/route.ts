@@ -188,7 +188,7 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
     const body = await request.json()
     const kind: string = body.kind
     const promptSlug: string | undefined = body.promptSlug
-    let promptId: number | undefined = body.promptId
+    let promptId: number | undefined = body.promptId || body.dbId
     if (!promptId && kind.startsWith('prompt-')) {
         const parts = kind.split('-')
         if (parts.length === 2) {
