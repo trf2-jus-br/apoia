@@ -60,6 +60,10 @@ type ModelArrayType = {
 }
 
 const ModelArray: ModelArrayType[] = [
+    { id: 21, name: 'gpt-5.5', provider: ModelProvider.OPENAI, cachedInputTokenPPM: 0.5, inputTokenPPM: 5, outputTokenPPM: 30, status: StatusDeLancamento.PUBLICO, supportedFileTypes: [FileTypeEnum.PDF] },
+    { id: 21, name: 'gpt-5.4-mini', provider: ModelProvider.OPENAI, cachedInputTokenPPM: 0.08, inputTokenPPM: 0.75, outputTokenPPM: 4.5, status: StatusDeLancamento.PUBLICO, supportedFileTypes: [FileTypeEnum.PDF] },
+    { id: 21, name: 'gpt-5.4-nano', provider: ModelProvider.OPENAI, cachedInputTokenPPM: 0.02, inputTokenPPM: 0.2, outputTokenPPM: 1.25, status: StatusDeLancamento.PUBLICO, supportedFileTypes: [FileTypeEnum.PDF] },
+    { id: 21, name: 'gpt-5.4', provider: ModelProvider.OPENAI, cachedInputTokenPPM: 0.5, inputTokenPPM: 5, outputTokenPPM: 22.5, status: StatusDeLancamento.PUBLICO, supportedFileTypes: [FileTypeEnum.PDF] },
     { id: 15, name: 'gpt-5.2', provider: ModelProvider.OPENAI, cachedInputTokenPPM: 0.175, inputTokenPPM: 1.75, outputTokenPPM: 14, status: StatusDeLancamento.PUBLICO },
     { id: 15, name: 'gpt-5.2-chat-latest', provider: ModelProvider.OPENAI, cachedInputTokenPPM: 0.175, inputTokenPPM: 1.75, outputTokenPPM: 14, status: StatusDeLancamento.PUBLICO },
     { id: 15, name: 'gpt-5.1', provider: ModelProvider.OPENAI, cachedInputTokenPPM: 0.125, inputTokenPPM: 1.25, outputTokenPPM: 10, status: StatusDeLancamento.PUBLICO },
