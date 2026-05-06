@@ -7,6 +7,8 @@ import { headers } from "next/headers"
 import { verifyJweToken, verifyJwkSignedToken } from './utils/jwt'
 import { envString } from './utils/env'
 import { UnauthorizedError } from './utils/api-error'
+import { slugify } from './utils/utils'
+import devLog from './utils/log'
 
 export type UserType = {
     id?: number, name: string, email: string, preferredUsername?: string, iss?: string, encryptedPassword: string, system: string, accessToken?: string, corporativo?: any[], roles?: string[]
@@ -97,6 +99,15 @@ export const assertCourtId = (user: UserType): number => {
         const map = mapping.split(',').map(m => m.split(':')).reduce((acc, [k, v]) => ({ ...acc, [k]: Number(v) }), {} as Record<string, number>)
         if (user?.system && map[user.system]) {
             return map[user.system]
+        }
+    }
+    const courtFromEmail = user.email ? user.email?.match(/@(.+)\.jus\.br/)?.[1] : undefined
+    // devLog('Court from email:', courtFromEmail)
+    if (courtFromEmail) {
+        const courtIdFromEmail = envString(`TRIBUNAL_${slugify(courtFromEmail.replace('-', '_'))}`)
+        // devLog('Court ID from email:', courtIdFromEmail)
+        if (courtIdFromEmail) {
+            return Number(courtIdFromEmail)
         }
     }
     if (user?.corporativo?.[0]?.seq_tribunal_pai) {
