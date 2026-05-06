@@ -1,6 +1,7 @@
 import { tool } from "ai"
 import { z } from "zod"
 import { UserType } from "../user"
+import devLog from "../utils/log"
 
 // =====================
 // Tipos
@@ -65,7 +66,9 @@ export const searchByLeadingCase = async (numero: string): Promise<LeadingCaseTh
         throw new Error(`Leading Case Search API error (HTTP ${response.status}): ${errorText}`)
     }
 
-    return await response.json() as LeadingCaseTheme[]
+    const json = await response.json() as LeadingCaseTheme[]
+    devLog('Leading Case Search API response', numero, JSON.stringify(json, null, 2))
+    return json
 }
 
 // =====================

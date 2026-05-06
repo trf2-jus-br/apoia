@@ -158,7 +158,7 @@ export const searchSemantic = async (params: {
 export const getSemanticSearchTool = (_pUser: Promise<UserType>) => tool({
     description: 'Busca semântica/híbrida de temas de repercussão geral do STF e recursos especiais repetitivos do STJ.',
     inputSchema: z.object({
-        query: z.string().min(3, 'A consulta deve ter ao menos 3 caracteres.').describe('Texto da busca (mínimo 3 caracteres).'),
+        query: z.string().min(3, 'A consulta deve ter ser uma frase descritiva da questão analisada no tema. Alternativamente, se souber o número do tema, pode pesquisar apenas pela número (sem traços ou pontos) ou por "stf-[número]"/"stj-[número]".').describe('Texto da busca (mínimo 3 caracteres).'),
         sourceSlugs: z.array(z.string()).optional().describe('Slugs das fontes para filtrar (opcional).'),
         limit: z.number().int().min(1).max(200).default(10).describe('Número de resultados por página (1 a 200).'),
         offset: z.number().int().min(0).default(0).describe('Offset para paginação.'),
@@ -204,6 +204,7 @@ export const getSemanticSearchTool = (_pUser: Promise<UserType>) => tool({
                 ...(debug ? { debugRaw: raw } : {})
             }
 
+            devLog('Semantic search', query, sliced.length)
             return response
         } catch (err: any) {
             return {

@@ -42,7 +42,7 @@ data:
   DATALAKE_API_URL: "https://api-processo-integracao.data-lake.pdpj.jus.br/processo-api/api/v1"
 
   GOOGLE_ANALYTICS_ID: "G-YT91JXZFP9"
-  WOOTRIC_ACCOUNT_TOKEN: "NPS-8c9fb077"
+  # WOOTRIC_ACCOUNT_TOKEN: "NPS-8c9fb077"
   MODERATOR_ENCRYPTED: "14efc06ba8d81f22368a58c0fc23fadaa933750885ac0febe825fb88568cb34a1c31436c0ee92409dc90fab5f21f8516aff6d11fa5f54d0684c7246623b98f9e5a22491fbeaf6a13c05be9205a96c337f267c92535ea0bf89efcd22ce476a318ae7353adb26d69cc2d7ba4b81f005874e52cd4ac6bc8a0815db5b0b46a3d63a3b2fef6"
   
   # MODEL: "gpt-4.1-nano"

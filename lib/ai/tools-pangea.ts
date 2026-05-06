@@ -1,6 +1,7 @@
 import { tool } from "ai"
 import { z } from "zod"
 import { UserType } from "../user"
+import devLog from "../utils/log"
 
 // =====================
 // Tipos Pangea (parcial – somente campos usados)
@@ -176,7 +177,7 @@ export const searchPangea = async (params: {
     throw new Error(`HTTP ${response.status}`)
   }
   const json = await response.json() as PangeaSearchRawResponse
-  console.log('Pangea response:', JSON.stringify(json))
+  devLog('Pangea response:', params.query, JSON.stringify(json.resultados?.length))
   return json
 }
 

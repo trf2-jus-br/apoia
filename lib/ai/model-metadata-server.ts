@@ -28,7 +28,7 @@ async function getModelDetailsFromPrefs(modelName: string) {
 
 export async function checkModelSupportsAudioVideo(modelName: string): Promise<boolean> {
     const details = await getModelDetailsFromPrefs(modelName)
-    devLog('Model details for', modelName, ':', details)
+    // devLog('Model details for', modelName, ':', details)
 
     const audioVideoTypes = [
         FileTypeEnum.MP3, FileTypeEnum.MP4, FileTypeEnum.WAV,
