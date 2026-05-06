@@ -127,7 +127,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
                     </div>}
                     <div className="row mt-1">
                         <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} />
-                        <Frm.Select label="Dispositivo" name={`pedidos.pedidos[${i}].dispositivo`} options={tiposDeDispositivo} width={'col-12 col-sm-4'} />
+                        <Frm.Select label="Comando" name={`pedidos.pedidos[${i}].dispositivo`} options={tiposDeDispositivo} width={'col-12 col-sm-4'} />
                     </div>
                 </div>
             )}
