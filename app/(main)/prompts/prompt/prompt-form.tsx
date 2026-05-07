@@ -296,7 +296,7 @@ export default function PromptForm(props) {
                                                 {data.content.format === undefined && <Frm.Button variant="outline-secondary" onClick={() => { data.content.format = ''; setData({ ...data }) }}><FontAwesomeIcon icon={faAdd} /> Format</Frm.Button>}
                                             </div>
                                         </>}
-                                        <Frm.TextArea label="Prompt" name="content.prompt" maxRows={20} explanation={`Utilize {{textos}} onde devem ser incluídos os textos capturados ${Target.PROCESSO.name === data.content.target ? 'das peças do processo' : 'do editor de textos'}, ou serão automaticamente incluídos no final.`} />
+                                        <Frm.TextArea label="Prompt" name="content.prompt" maxRows={20} explanation={`Utilize {{textos}} onde devem ser incluídos os textos capturados ${Target.PROCESSO.name === data.content.target ? 'das peças do processo' : 'do editor de textos'}, ou serão automaticamente incluídos no início.`} />
                                     </>)}
                             </>)
                             : (<TextareaAutosize className="form-control" value={yaml} onChange={(e) => handleYamlChanged(e.target.value)} />)}

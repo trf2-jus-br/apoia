@@ -89,7 +89,7 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
     // add {{textos}} to the prompt if it doesn't have it
     let prompt = definition.prompt
     if (prompt && !prompt.includes('{{') && (!definition.systemPrompt || !definition.systemPrompt.includes('{{')))
-        prompt = `${prompt}\n\n{{textos}}`
+        prompt = `Leia cuidadosamente os textos a seguir:\n\n{{textos}}\n\n${prompt}`
 
     if (prompt)
         prompt = fixPromptForAutoJson(prompt)
