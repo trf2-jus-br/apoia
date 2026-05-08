@@ -7,6 +7,8 @@ import ApiKeyMissing from '@/components/api-key-missing'
 import { assertCurrentUser } from '@/lib/user'
 import { cookies } from 'next/headers'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import { Suspense } from 'react'
+import { HomeGlobalStats } from '@/components/stats/home-global-stats'
 
 export default async function HomePage() {
     const user = await assertCurrentUser()
@@ -144,6 +146,12 @@ export default async function HomePage() {
                 </p>
                 <ApiKeyMissing />
 
+                {isBetaTester && (
+                    <Suspense fallback={null}>
+                        <HomeGlobalStats />
+                    </Suspense>
+                )}
+
                 {/* Features Section */}
                 <div className="mb-5">
                     <h2 className="text-center mb-4">Escolha uma das ferramentas abaixo para começar:</h2>
@@ -152,7 +160,7 @@ export default async function HomePage() {
                         {features.filter(f => !f.betaOnly || isBetaTester).map((feature, index) => (
                             <Col key={index} md={6} lg={3}>
                                 <Link href={feature.href} className="text-decoration-none text-dark">
-                                    <Card className="h-100 text-center">
+                                    <Card className="h-100 text-center shadow-sm border rounded-4">
                                         <CardBody className="d-flex flex-column">
                                             <div className="mb-3">
                                                 {feature.logo ? (

@@ -85,7 +85,7 @@ export default function GlobalStatsPage() {
                 <Spinner animation="border" role="status">
                     <span className="visually-hidden">Carregando...</span>
                 </Spinner>
-                <p className="mt-3 text-muted">Carregando estatisticas da comunidade...</p>
+                <p className="mt-3 text-muted">Carregando estatísticas da comunidade...</p>
             </Container>
         )
     }
@@ -94,7 +94,7 @@ export default function GlobalStatsPage() {
         return (
             <Container className="py-5">
                 <Alert variant="danger">
-                    <Alert.Heading>Erro ao carregar estatisticas</Alert.Heading>
+                    <Alert.Heading>Erro ao carregar estatísticas</Alert.Heading>
                     <p>{error}</p>
                 </Alert>
             </Container>
@@ -104,7 +104,7 @@ export default function GlobalStatsPage() {
     if (!stats) {
         return (
             <Container className="py-5">
-                <Alert variant="warning">Nenhuma estatistica disponivel.</Alert>
+                <Alert variant="warning">Nenhuma estatística disponível.</Alert>
             </Container>
         )
     }
@@ -143,7 +143,7 @@ export default function GlobalStatsPage() {
                         Isso equivale a aproximadamente <strong className="text-primary">{daysEquivalent} dias</strong> de trabalho!
                         <OverlayTrigger
                             placement="top"
-                            overlay={<BsTooltip>Calculado considerando que cada utilização da IA economiza {STATS_CONFIG.TEMPO_MEDIO_ECONOMIA_POR_EXECUCAO_MINUTOS} minutos ao usuário (tempo medio estimado)</BsTooltip>}
+                            overlay={<BsTooltip>Calculado considerando que cada utilização da IA economiza {STATS_CONFIG.TEMPO_MEDIO_ECONOMIA_POR_EXECUCAO_MINUTOS} minutos ao usuário (tempo médio estimado)</BsTooltip>}
                         >
                             <FontAwesomeIcon icon={faInfoCircle} className="ms-2 text-secondary" style={{ cursor: 'help' }} />
                         </OverlayTrigger>
@@ -162,7 +162,7 @@ export default function GlobalStatsPage() {
                                 Processos Acelerados
                                 <OverlayTrigger
                                     placement="top"
-                                    overlay={<BsTooltip>Total de execucoes de prompts desde o inicio da plataforma</BsTooltip>}
+                                    overlay={<BsTooltip>Total de execuções de prompts desde o início da plataforma</BsTooltip>}
                                 >
                                     <FontAwesomeIcon icon={faInfoCircle} className="ms-1 text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
                                 </OverlayTrigger>
@@ -179,7 +179,7 @@ export default function GlobalStatsPage() {
                                 Prompts em Alta
                                 <OverlayTrigger
                                     placement="top"
-                                    overlay={<BsTooltip>Prompts publicos mais executados nos ultimos 30 dias</BsTooltip>}
+                                    overlay={<BsTooltip>Prompts públicos mais executados nos últimos 30 dias</BsTooltip>}
                                 >
                                     <FontAwesomeIcon icon={faInfoCircle} className="ms-1 text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
                                 </OverlayTrigger>
@@ -193,10 +193,10 @@ export default function GlobalStatsPage() {
                             <FontAwesomeIcon icon={faUsers} size="2x" className="text-success mb-2" />
                             <h3 className="display-6 fw-bold">{stats.totalActiveUsers.toLocaleString('pt-BR')}</h3>
                             <p className="text-muted mb-0">
-                                Usuarios Ativos
+                                Usuários Ativos
                                 <OverlayTrigger
                                     placement="top"
-                                    overlay={<BsTooltip>Usuarios que executaram pelo menos um prompt nos ultimos 30 dias</BsTooltip>}
+                                    overlay={<BsTooltip>Usuários que executaram pelo menos um prompt nos últimos 30 dias</BsTooltip>}
                                 >
                                     <FontAwesomeIcon icon={faInfoCircle} className="ms-1 text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
                                 </OverlayTrigger>
@@ -213,7 +213,7 @@ export default function GlobalStatsPage() {
                                 Tribunais Conectados
                                 <OverlayTrigger
                                     placement="top"
-                                    overlay={<BsTooltip>Numero de tribunais distintos com usuarios cadastrados</BsTooltip>}
+                                    overlay={<BsTooltip>Número de tribunais distintos com usuários cadastrados</BsTooltip>}
                                 >
                                     <FontAwesomeIcon icon={faInfoCircle} className="ms-1 text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
                                 </OverlayTrigger>
@@ -235,7 +235,7 @@ export default function GlobalStatsPage() {
                             </h5>
                             <OverlayTrigger
                                 placement="top"
-                                overlay={<BsTooltip>Total historico de execucoes por tribunal</BsTooltip>}
+                                overlay={<BsTooltip>Total histórico de execuções de prompts por tribunal</BsTooltip>}
                             >
                                 <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help' }} />
                             </OverlayTrigger>
@@ -257,13 +257,13 @@ export default function GlobalStatsPage() {
                                             tick={{ fontSize: 12 }}
                                         />
                                         <Tooltip
-                                            formatter={(value: number) => [value.toLocaleString('pt-BR'), 'Execucoes']}
+                                            formatter={(value: number) => [value.toLocaleString('pt-BR'), 'Execuções']}
                                             labelFormatter={(label) => {
                                                 const court = chartData.find(c => c.name === label)
                                                 return court?.fullName || label
                                             }}
                                         />
-                                        <Bar dataKey="executions" name="Execucoes" radius={[0, 4, 4, 0]}>
+                                        <Bar dataKey="executions" name="Execuções" radius={[0, 4, 4, 0]}>
                                             {chartData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
@@ -271,7 +271,7 @@ export default function GlobalStatsPage() {
                                     </BarChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <p className="text-muted text-center py-5">Nenhum dado de tribunal disponivel.</p>
+                                <p className="text-muted text-center py-5">Nenhum dado de tribunal disponível.</p>
                             )}
                         </Card.Body>
                     </Card>
@@ -287,7 +287,7 @@ export default function GlobalStatsPage() {
                             </h5>
                             <OverlayTrigger
                                 placement="top"
-                                overlay={<BsTooltip>Prompts publicos mais executados nos ultimos 30 dias</BsTooltip>}
+                                overlay={<BsTooltip>Prompts públicos mais executados nos últimos 30 dias</BsTooltip>}
                             >
                                 <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help' }} />
                             </OverlayTrigger>
@@ -318,7 +318,7 @@ export default function GlobalStatsPage() {
                                                 <small className="text-muted">
                                                     {prompt.authorName || 'Desconhecido'}
                                                     <span className="mx-1">-</span>
-                                                    {prompt.executionsLast30Days.toLocaleString('pt-BR')} execucoes
+                                                    {prompt.executionsLast30Days.toLocaleString('pt-BR')} execuções
                                                 </small>
                                             </div>
                                             {prompt.avgStars && prompt.avgStars > 0 && (
@@ -352,7 +352,7 @@ export default function GlobalStatsPage() {
                             </h5>
                             <OverlayTrigger
                                 placement="top"
-                                overlay={<BsTooltip>Autores de prompts publicos com mais execucoes e avaliacoes nos ultimos 30 dias</BsTooltip>}
+                                overlay={<BsTooltip>Autores de prompts públicos com mais execuções e avaliações nos últimos 30 dias</BsTooltip>}
                             >
                                 <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help' }} />
                             </OverlayTrigger>
@@ -379,7 +379,7 @@ export default function GlobalStatsPage() {
                                                 <small className="text-muted">
                                                     {contributor.courtSigla && <span className="me-1">{contributor.courtSigla}</span>}
                                                     {contributor.courtSigla && <span className="me-1">-</span>}
-                                                    {contributor.totalExecutions.toLocaleString('pt-BR')} execucoes
+                                                    {contributor.totalExecutions.toLocaleString('pt-BR')} execuções
                                                 </small>
                                             </div>
                                             {contributor.avgStars > 0 && (
@@ -406,11 +406,11 @@ export default function GlobalStatsPage() {
                         <Card.Header className="bg-white border-bottom d-flex justify-content-between align-items-center">
                             <h5 className="mb-0">
                                 <FontAwesomeIcon icon={faStar} className="me-2 text-primary" />
-                                Usuarios em Destaque
+                                Usuários em Destaque
                             </h5>
                             <OverlayTrigger
                                 placement="top"
-                                overlay={<BsTooltip>Usuarios com mais execucoes de prompts nos ultimos 30 dias</BsTooltip>}
+                                overlay={<BsTooltip>Usuários com mais execuções de prompts nos últimos 30 dias</BsTooltip>}
                             >
                                 <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help' }} />
                             </OverlayTrigger>
@@ -437,14 +437,14 @@ export default function GlobalStatsPage() {
                                                 <small className="text-muted">
                                                     {user.courtSigla && <span className="me-1">{user.courtSigla}</span>}
                                                     {user.courtSigla && <span className="me-1">-</span>}
-                                                    {user.totalExecutions.toLocaleString('pt-BR')} execucoes
+                                                    {user.totalExecutions.toLocaleString('pt-BR')} execuções
                                                 </small>
                                             </div>
                                         </li>
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="text-muted text-center py-5">Nenhum usuario encontrado.</p>
+                                <p className="text-muted text-center py-5">Nenhum usuário encontrado.</p>
                             )}
                         </Card.Body>
                     </Card>
