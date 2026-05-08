@@ -146,7 +146,7 @@ export default async function HomePage() {
                 </p>
                 <ApiKeyMissing />
 
-                {isBetaTester && (
+                {false && isBetaTester && (
                     <Suspense fallback={null}>
                         <HomeGlobalStats />
                     </Suspense>
