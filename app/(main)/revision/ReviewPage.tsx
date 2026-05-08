@@ -28,7 +28,7 @@ export default function Revison({ definition }: { definition: PromptDefinitionTy
     return (
         <>
             <h2 className="mt-3">Texto</h2>
-            <PromptConfig kind="refinamento" setPromptConfig={promptConfigChanged} />
+            <PromptConfig kind="revisao-de-texto" setPromptConfig={promptConfigChanged} />
             <div className="alert alert-secondary mb-1 p-0">
                 <Suspense fallback={null}>
                     <EditorComp markdown={markdown} onChange={textChanged} showPdfUpload={true} />
@@ -39,11 +39,7 @@ export default function Revison({ definition }: { definition: PromptDefinitionTy
                 <Button disabled={!markdown} className="mt-3" onClick={() => setHidden(false)}>Revisar</Button>
             </>}
             {!hidden && markdown && <>
-                {/* <h2 className="mt-3">Revisão</h2>
-                <AiContent
-                    infoDeProduto={{ produto: P.REVISAO, dados: [], titulo: 'Revisão', prompt: 'revisao', plugins: [] }}
-                    textos={[{ descr: 'Texto', slug: 'texto', texto: markdown }]} /> */}
-                <h2 className="mt-3">Refinamento</h2>
+                <h2 className="mt-3">Revisão de Texto</h2>
                 <AiContent definition={definition} data={{ textos: [{ numeroDoProcesso: '', descr: 'Texto', slug: 'texto', texto: markdown, sigilo: '0' }] }} config={promptConfig} visualization={VisualizationEnum.DIFF} dossierCode={undefined} />
             </>}
         </>

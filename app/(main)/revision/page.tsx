@@ -5,7 +5,7 @@ import { getPromptDefinition } from '@/lib/ai/prompt-store'
 
 export default async function Revison() {
     await assertModel()
-    const definition = await getPromptDefinition('revisao')
+    const definition = await getPromptDefinition('revisao-de-texto')
     
     return (<Container fluid={false}>
         <ReviewPage definition={definition} />

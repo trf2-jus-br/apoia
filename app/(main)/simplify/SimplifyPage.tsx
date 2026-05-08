@@ -28,7 +28,7 @@ export default function Simplification({ definition }: { definition: PromptDefin
     return (
         <>
             <h2 className="mt-3">Texto</h2>
-            <PromptConfig kind="refinamento" setPromptConfig={promptConfigChanged} />
+            <PromptConfig kind="linguagem-simples" setPromptConfig={promptConfigChanged} />
             <div className="alert alert-secondary mb-1 p-0">
                 <Suspense fallback={null}>
                     <EditorComp
@@ -46,10 +46,6 @@ export default function Simplification({ definition }: { definition: PromptDefin
                 <Button disabled={!markdown} className="mt-3" onClick={() => setHidden(false)}>Simplificar</Button>
             </>}
             {!hidden && markdown && <>
-                {/* <h2 className="mt-3">Revisão</h2>
-                <AiContent
-                    infoDeProduto={{ produto: P.REVISAO, dados: [], titulo: 'Revisão', prompt: 'revisao', plugins: [] }}
-                    textos={[{ descr: 'Texto', slug: 'texto', texto: markdown }]} /> */}
                 <h2 className="mt-3">Liguagem Simples</h2>
                 <AiContent definition={definition} data={{ textos: [{ numeroDoProcesso: '', descr: 'Texto', slug: 'texto', texto: markdown, sigilo: '0' }] }} config={promptConfig} visualization={VisualizationEnum.TEXT_EDITED} dossierCode={undefined} />
             </>}
