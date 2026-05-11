@@ -57,8 +57,8 @@ export const ClientIFrameTest = (props: { baseUrl: string; callbackUrl: string }
                 case 'get-prompts': {
                     devLog('Received get-prompts message from iframe:', data)
                     const prompts = (data as PromptsMessageToParentType).payload.prompts
-                    prompts.forEach((p: any) => { if (p.slug === 'PEDIDOS' && p.origin) p.is_hidden = false })
-                    prompts.forEach((p: any) => { if (p.slug === 'REFINAMENTO_DE_TEXTO' && p.origin) p.is_hidden = true })
+                    prompts.forEach((p: any) => { if (p.slug === 'pedidos' && p.origin) p.is_hidden = false })
+                    prompts.forEach((p: any) => { if (p.slug === 'refinamento-de-texto' && p.origin) p.is_hidden = true })
                     postMsgToIframe({ type: 'set-prompts', payload: { prompts } } satisfies PromptsMessageFromParentType)
                     break
                 }

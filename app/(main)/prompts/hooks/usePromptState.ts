@@ -312,7 +312,7 @@ export function usePromptState(
         devLog('*** Sink from URL:', sinkFromURL)
         if (sinkFromURL === SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT || sinkFromURL === SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT_AUTOMATICALLY) return
 
-        if (!prompt?.origin || !['MINUTA_DE_SENTENCA', 'MINUTA_DE_VOTO', 'REFINAMENTO_DE_TEXTO', 'REVISAO_DE_TEXTO'].includes(prompt?.slug || '')) return
+        if (!prompt?.origin || !['sentenca', 'voto', 'refinamento-de-texto', 'revisao-de-texto'].includes(prompt?.slug || '')) return
 
         // // Previne execução dupla em desenvolvimento (React 18 Strict Mode)
         // if (hasRunSink.current) return
