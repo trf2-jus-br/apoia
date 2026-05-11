@@ -189,7 +189,7 @@ export class UserDao {
             if (user_usage_count && user_usage_count > 0 && userDailyUsageId.usage_count >= user_usage_count) {
                 throw new OutOfQuotaError(`Limite diário de consultas do usuário foi atingido, por favor, aguarde até amanhã para poder usar novamente.`)
             }
-            if (user_usage_count && user_usage_cost > 0 && userDailyUsageId.approximate_cost >= user_usage_cost) {
+            if (user_usage_cost && user_usage_cost > 0 && userDailyUsageId.approximate_cost >= user_usage_cost) {
                 throw new OutOfQuotaError(`Limite diário de gastos do usuário foi atingido, por favor, aguarde até amanhã para poder usar novamente.`)
             }
         }
