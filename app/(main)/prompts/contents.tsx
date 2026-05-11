@@ -125,7 +125,7 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
     const resetToHome = () => {
         setNumeroDoProcesso(null)
         setNumber('')
-        setPrompt(prompts.find(p => p.slug === 'CHAT_STANDALONE' && !!p.origin) || null)
+        setPrompt(prompts.find(p => p.slug === 'chat-standalone' && !!p.origin) || null)
         setSource(null)
         setSourcePayload(null)
         replacePiecesParam(null)

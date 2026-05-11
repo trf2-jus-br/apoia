@@ -32,16 +32,16 @@ async function syncInternalPrompts(basePrompts: IAPromptList[]): Promise<Map<str
  * Visibility is controlled by the DB share column (set from .md metadata by sync engine).
  */
 async function buildVisiblePrompts(
-    baseBySlug: Map<string, IAPromptList>, 
-    isBetaTester: boolean, 
+    baseBySlug: Map<string, IAPromptList>,
+    isBetaTester: boolean,
     showChatPadrao: boolean
 ): Promise<IAPromptList[]> {
     const seededOverlay: IAPromptList[] = []
-    
+
     for (const [slug, base] of baseBySlug.entries()) {
         // Skip CHAT_STANDALONE if not showing chat padrão
-        if (!showChatPadrao && slug === 'CHAT_STANDALONE') continue
-        
+        if (!showChatPadrao && slug === 'chat-standalone') continue
+
         // Skip BETA_TESTE prompts for non-beta testers unless favorited
         if (base.share === 'BETA_TESTE' && !isBetaTester && !((base as any).is_favorite)) continue
 
@@ -81,10 +81,10 @@ export async function fixPromptList(basePrompts: IAPromptList[], showChatPadrao 
 
     // Step 1: Sync internal prompts with database
     const syncedPrompts = await syncInternalPrompts(basePrompts)
-    
+
     // Step 2: Build visible prompts list
     const seededOverlay = await buildVisiblePrompts(syncedPrompts, isBetaTester, showChatPadrao)
-    
+
     // Step 3: Combine with non-seeded prompts and sort
     const nonSeeded = basePrompts.filter(p => !p.origin)
         .filter(p => p.share !== 'BETA_TESTE' || isBetaTester || (p as any).is_favorite)

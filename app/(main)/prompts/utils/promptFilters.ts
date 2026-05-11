@@ -26,7 +26,7 @@ export function getPromptsPrincipais(prompts: IAPromptList[]): IAPromptList[] {
 }
 
 export function getPromptsComunidade(prompts: IAPromptList[]): IAPromptList[] {
-    return prompts.filter((p) => p.share !== 'PADRAO' && !p.is_mine)
+    return prompts.filter((p) => p.share !== 'PADRAO' && p.share !== 'OCULTO' && !p.is_mine)
 }
 
 export function getPromptsSidekick(
@@ -70,15 +70,15 @@ export function getPromptsSidekick(
 
         if (!p.is_auto_hidden) {
             if (p.slug === 'chat' && !!p.origin && chatIsCurrentPrompt) p.is_auto_hidden = true
-            if (p.slug === 'CHAT_STANDALONE' && !!p.origin && numeroDoProcesso) p.is_auto_hidden = true
+            if (p.slug === 'chat-standalone' && !!p.origin && numeroDoProcesso) p.is_auto_hidden = true
         }
     }
 
     const list = [...prompts]
 
     list.sort((a, b) => {
-        if (a.slug === 'CHAT_STANDALONE' && !!a.origin && (b.slug !== 'CHAT_STANDALONE' || !b.origin)) return -1
-        if ((a.slug !== 'CHAT_STANDALONE' || !a.origin) && b.slug === 'CHAT_STANDALONE' && !!b.origin) return 1
+        if (a.slug === 'chat-standalone' && !!a.origin && (b.slug !== 'chat-standalone' || !b.origin)) return -1
+        if ((a.slug !== 'chat-standalone' || !a.origin) && b.slug === 'chat-standalone' && !!b.origin) return 1
         if (a.slug === 'chat' && !!a.origin && (b.slug !== 'chat' || !b.origin)) return -1
         if ((a.slug !== 'chat' || !a.origin) && b.slug === 'chat' && !!b.origin) return 1
         if (a.is_favorite && !b.is_favorite) return 1

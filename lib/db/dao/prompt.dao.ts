@@ -403,9 +403,9 @@ export class PromptDao {
             )
             .where('ia_prompt.is_latest', 1)
             .andWhere('ia_prompt.name', 'not like', '^%')
-            .andWhere('ia_prompt.share', '!=', 'OCULTO')
             .andWhere(function () {
                 this.where('ia_prompt.created_by', user_id)
+                    .orWhere('ia_prompt.share', 'OCULTO')
                     .orWhere('ia_prompt.share', 'PADRAO')
                     .orWhere('ia_prompt.share', 'PUBLICO')
                     .orWhere('ia_prompt.share', 'BETA_TESTE')
