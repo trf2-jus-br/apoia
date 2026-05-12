@@ -16,9 +16,10 @@ import { ListaDeProdutos } from "@/components/slots/lista-produtos-client";
 import { PromptParaCopiar } from "./prompt-to-copy";
 import { buildFooterFromPieces } from "@/lib/utils/footer";
 import { formatDateTime } from "@/lib/utils/date";
-import { serverBuildRequests } from "@/lib/ai/prompt-actions";
+
 import { usePromptContext } from "./context/PromptContext";
 import Listen from "@/components/slots/listen";
+import devLog from "@/lib/utils/log";
 
 // Helper function to check confidentiality level on client side
 const isNivelDeSigiloPermitidoClient = (maxConfidentialityLevel: number, nivel: string): boolean => {
@@ -126,7 +127,25 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         }
         setPieceContent(contents)
         setLoadingPiecesProgress(-1)
-        setRequests(await serverBuildRequests(prompt, selectedLibraryDocuments?.map(d => d.id.toString()), dadosDoProcesso.numeroDoProcesso, selectedPieces, contents))
+        devLog('Will build requests')
+        const buildResp = await fetch('/api/v1/build-requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                documentosDaBiblioteca: selectedLibraryDocuments?.map(d => d.id.toString()),
+                numeroDoProcesso: dadosDoProcesso.numeroDoProcesso,
+                selectedPieces,
+                contents,
+            }),
+        })
+        if (!buildResp.ok) {
+            const err = await buildResp.json().catch(() => ({}))
+            throw new Error(err.errormsg || 'Erro ao montar requisições')
+        }
+        const reqs = await buildResp.json()
+        devLog('Built requests')
+        setRequests(reqs)
         if (prompt.name === 'Chat') setChoosingPieces(false)
     }
 

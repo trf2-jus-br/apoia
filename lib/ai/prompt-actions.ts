@@ -11,11 +11,8 @@
  * dynamically at runtime (e.g., in event handlers).
  */
 import { getPromptDefinition, getPromptDefinitionByUuid } from './prompt-store'
-import { PromptDataType, PromptDefinitionType, GeneratedContent } from './prompt-types'
-import { IAPrompt } from '../db/mysql-types'
-import { PecaType } from '../proc/process-types'
+import { PromptDataType, PromptDefinitionType } from './prompt-types'
 import { promptExecuteBuilder } from './prompt'
-import { buildRequests } from './build-requests'
 
 /**
  * Resolve a prompt definition by slug. Callable from client components.
@@ -47,16 +44,3 @@ export async function serverPromptExecuteBuilder(
     }
 }
 
-/**
- * Server action wrapper for buildRequests.
- * Callable from client components that need to resolve prompt definitions for request building.
- */
-export async function serverBuildRequests(
-    prompt: IAPrompt,
-    documentosDaBiblioteca: string[] | undefined,
-    numeroDoProcesso: string,
-    selectedPieces: PecaType[],
-    contents?: { [key: number]: string }
-): Promise<GeneratedContent[]> {
-    return buildRequests(prompt, documentosDaBiblioteca, numeroDoProcesso, selectedPieces, contents)
-}
