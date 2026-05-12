@@ -33,44 +33,57 @@ const isWhiteSpaceOrSpecialChar = (word: string): boolean => {
  */
 export function anonymizeNames(text: string): { text: string; substitutions: number } {
   // Brazilian name connectives
-  const connectives = ['de', 'da', 'das', 'do', 'dos']
+  const connectives = new Set(['de', 'da', 'das', 'do', 'dos'])
 
   const words = breakIntoWords(text)
-
-  let result = []
+  const result: string[] = []
   let substitutions = 0
+  let i = 0
 
-  while (words.length > 0) {
-    while (words.length > 0 && !isValidFirstName(words[0])) {
-      result.push(words.shift())
+  while (i < words.length) {
+    // Skip tokens that are not a valid first name
+    if (!isValidFirstName(words[i])) {
+      result.push(words[i++])
       continue
     }
 
-    const names: string[] = []
-    while (words.length > 0) {
-      const current: string = words.shift()
-      // Replace word with initial followed by period
-      if (isValidName(current))
-        names.push(current)
-      else if (isWhiteSpaceOrSpecialChar(current))
-        names.push(current)
-      else if (words.length > 2 && connectives.includes(current.toLowerCase()) && isValidName(words[1]))
-        names.push(current)
-      else {
-        words.unshift(current)
+    // Collect a name sequence starting at i using a lookahead index j
+    const nameTokens: string[] = []
+    let j = i
+
+    while (j < words.length) {
+      const current = words[j]
+      if (isValidName(current)) {
+        nameTokens.push(current)
+        j++
+      } else if (isWhiteSpaceOrSpecialChar(current)) {
+        nameTokens.push(current)
+        j++
+      } else if (
+        j + 2 < words.length &&
+        connectives.has(current.toLowerCase()) &&
+        isValidName(words[j + 2])
+      ) {
+        nameTokens.push(current)
+        j++
+      } else {
         break
       }
     }
-    if (names.length > 0) {
-      substitutions++
-      // While names and with something that is not a isValidName, remove from names and unshift to words
-      while (names.length > 0 && !isValidName(names[names.length - 1])) {
-        const name = names.pop()
-        if (name) words.unshift(name)
-      }
-      const formatedNames = names.filter(name => !/\s+/.test(name) && !connectives.includes(name.toLowerCase())).map(name => `${name[0]}.`)
-      result.push(...formatedNames)
+
+    // Trim trailing non-name tokens, walking j back for each one removed
+    while (nameTokens.length > 0 && !isValidName(nameTokens[nameTokens.length - 1])) {
+      nameTokens.pop()
+      j--
     }
+
+    substitutions++
+    const formatedNames = nameTokens
+      .filter(name => !/\s+/.test(name) && !connectives.has(name.toLowerCase()))
+      .map(name => `${name[0]}.`)
+    result.push(...formatedNames)
+    i = j
   }
+
   return { text: result.join(''), substitutions }
 }
