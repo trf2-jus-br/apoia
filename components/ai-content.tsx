@@ -256,6 +256,20 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                         setCurrent(text);
                     }
                 }
+                if ((text || '').startsWith('ERRO:')) {
+                    reportError(text.replace('ERRO:', '').trim(), payload)
+                    return
+                } else if (text || text.startsWith('{')) {
+                    // try to parse as JSON and find a errorMessage field
+                    try {
+                        const json = JSON.parse(text)
+                        if (json.errorMessage) {
+                            reportError(json.errorMessage.replace('ERRO:', '').trim(), payload)
+                            return
+                        }
+                    } catch (e) { }
+
+                }
                 reportReady(text, payload)
             } catch (error) {
                 console.error('Error fetching stream:', error);

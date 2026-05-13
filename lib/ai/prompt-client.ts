@@ -20,8 +20,19 @@ export const formatText = (txt: TextoType, limit?: number) => {
         // O arquivo será anexado separadamente no processamento das mensagens
         s += `:\n<${txt.slug}${txt.event ? ` event="${txt.event}"` : ''}${txt.idOrigem ? ` id="${txt.idOrigem}"` : ''}${txt.label ? ` label="${txt.label}"` : ''}>\n[ARQUIVO_ANEXADO]\n</${txt.slug}>\n\n`
     } else {
+        // Verificar se o texto contém conteúdo externo não confiável
+        if (txt.texto?.includes('<conteudo_externo_nao_confiavel>') || txt.texto?.includes('</conteudo_externo_nao_confiavel>')) {
+            throw new Error(`Conteúdo externo não confiável detectado em ${txt.label} (${txt.descr})`)
+        }
+
+        // Limitar o texto se necessário (evita estouro de janela de contexto e melhora performance)
+        let textoPreprocessado = txt.texto
+        if (limit) {
+            textoPreprocessado = textoPreprocessado?.substring(0, limit)
+        }
+
         // Processamento normal para texto
-        s += `:\n<${txt.slug}${txt.event ? ` event="${txt.event}"` : ''}${txt.idOrigem ? ` id="${txt.idOrigem}"` : ''}${txt.label ? ` label="${txt.label}"` : ''}>\n${limit ? txt.texto?.substring(0, limit) : txt.texto}\n</${txt.slug}>\n\n`
+        s += `:\n<${txt.slug}${txt.event ? ` event="${txt.event}"` : ''}${txt.idOrigem ? ` id="${txt.idOrigem}"` : ''}${txt.label ? ` label="${txt.label}"` : ''}>\n${textoPreprocessado}\n</${txt.slug}>\n\n`
     }
 
     return s

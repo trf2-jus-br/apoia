@@ -35,7 +35,7 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
     const lines = instructionsMd.split(/\r?\n/)
 
     const headingRegex = /^(?<hashes>#{3,6})\s+(?<name>[^#].*?)\s*(?:\s+-\s+(?<label>[^\s].*[^\s]))?\s*$/
-    
+
 
     const roots: PromptVariableType[] = []
     const stack: PromptVariableType[] = []
@@ -126,7 +126,7 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
                 errors.push(`Heading nível 6 deve ser variável primitiva: ${node.label}`)
             }
         }
-            if (node.properties) {
+        if (node.properties) {
             // Verifica duplicados no mesmo nível
             const seen = new Set<string>()
             for (const child of node.properties) {
@@ -276,6 +276,9 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
     for (const root of roots) {
         properties[root.name] = nodeToSchema(root)
     }
+
+    // campo para retorno de mensagens de erro, caso o modelo queira retornar erros relacionados à segurança ou validação
+    properties['errorMessage'] = { type: 'string' }
 
     const schema: any = {
         $schema: 'http://json-schema.org/draft-04/schema#',
