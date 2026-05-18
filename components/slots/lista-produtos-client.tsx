@@ -34,7 +34,7 @@ const onReady = (Frm: FormHelper, requests: GeneratedContent[], idx: number, con
     Frm.set(`generated[${idx}]`, content)
 
     // Frm.set(`flow.ready[${idx}]`, content)
-    if ((requests[idx].promptSlug === 'pedidos-fundamentacoes-e-dispositivos' || requests[idx].promptSlug === 'juizo-viabilidade-recurso') && content.json) {
+    if ((['pedidos-fundamentacoes-e-dispositivos', 'juizo-viabilidade-recurso', 'juizo-viabilidade-recurso-especial', 'juizo-viabilidade-recurso-extraordinario'].includes(requests[idx].promptSlug)) && content.json) {
         Frm.set('pedidos', content.json)
     }
     if (content.json && isInformationExtractionPrompt(requests[idx].internalPrompt?.prompt)) {
@@ -103,7 +103,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
                 </Row>}
             </article>
         }
-    } else if (request.promptSlug === 'juizo-viabilidade-recurso') {
+    } else if (['juizo-viabilidade-recurso', 'juizo-viabilidade-recurso-especial', 'juizo-viabilidade-recurso-extraordinario'].includes(request.promptSlug)) {
         console.log('requestSlot.PEDIDOS_VIABILIDADE_RECURSO', { request, pedidos })
         if (pedidos) {
             return <article key={idx}>
@@ -151,8 +151,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
 
     const ctrls = []
     for (let idx = 0; idx < requests.length; idx++) {
-        if (idx > 0 && requests[idx - 1].promptSlug === 'pedidos-fundamentacoes-e-dispositivos') continue
-        if (idx > 0 && requests[idx - 1].promptSlug === 'juizo-viabilidade-recurso') continue
+        if (idx > 0 && ['pedidos-fundamentacoes-e-dispositivos', 'juizo-viabilidade-recurso', 'juizo-viabilidade-recurso-especial', 'juizo-viabilidade-recurso-extraordinario'].includes(requests[idx - 1].promptSlug)) continue
         if (previousArePending(Frm, requests, idx)) break
         const ctrl = requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model, sidekick, promptButtons, sinkFromURL, sinkButtonText, sourcePayload, dadosDoProcesso)
         if (ctrl === null) break
