@@ -207,7 +207,7 @@ const pecasRelevantesViabilidadeDeRecursoExtraordinario = [
 
 const subpadraoEmbargosDeDeclaracaoEmAcordao = [
     ANY({
-        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
     }),
     PHASE('Embargos de Declaração em Acórdão'),
     EXACT(T.ACORDAO),
@@ -226,7 +226,7 @@ const padraoEmbargosDeDeclaracaoEmAcordao = [
 
 const subpadraoViabilidadeDeRecursoExtraordinario = [
     ANY({
-        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
     }),
     PHASE('Viabilidade de Recurso Extraordinário'),
     EXACT(T.ACORDAO),
@@ -253,7 +253,7 @@ export const padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao = [
 
 const subpadraoViabilidadeDeRecursoEspecial = [
     ANY({
-        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
     }),
     PHASE('Viabilidade de Recurso Especial'),
     EXACT(T.ACORDAO),
@@ -277,11 +277,23 @@ export const padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao = [
     ...subpadraoViabilidadeDeRecursoEspecial
 ]
 
-export const padroesViabilidadeDeRecursosExtraordinarioEEspecial = [
+export const padroesViabilidadeDeRecursoEspecial = [
+    padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao,
+    padraoViabilidadeDeRecursoEspecial,
+]
+
+
+export const padroesViabilidadeDeRecursoExtraordinario = [
+    padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao,
     padraoViabilidadeDeRecursoExtraordinario,
+]
+
+
+export const padroesViabilidadeDeRecursosExtraordinarioEEspecial = [
+    padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao,
     padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao,
     padraoViabilidadeDeRecursoEspecial,
-    padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao,
+    padraoViabilidadeDeRecursoExtraordinario,
 ]
 
 export const padraoAgravoInterno = [
@@ -516,8 +528,8 @@ const PieceStrategyArray = [
     { id: 1, name: 'MAIS_RELEVANTES_SEGUNDA_INSTANCIA', descr: 'Peças mais relevantes para 2ª Instância', pattern: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado] },
     { id: 1, name: 'APELACAO_E_TRIAGEM', descr: 'Apelação e triagem', pattern: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento] },
     { id: 1, name: 'CONHECIMENTO', descr: 'Fase de conhecimento', pattern: padroesConhecimento },
-    { id: 1, name: 'VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Viabilidade de recurso extraordinário', pattern: [padraoViabilidadeDeRecursoExtraordinario] },
-    { id: 1, name: 'VIABILIDADE_RECURSO_ESPECIAL', descr: 'Viabilidade de recurso especial', pattern: [padraoViabilidadeDeRecursoEspecial] },
+    { id: 1, name: 'VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Viabilidade de recurso extraordinário', pattern: padroesViabilidadeDeRecursoExtraordinario },
+    { id: 1, name: 'VIABILIDADE_RECURSO_ESPECIAL', descr: 'Viabilidade de recurso especial', pattern: padroesViabilidadeDeRecursoEspecial },
     { id: 2, name: 'PETICAO_INICIAL', descr: 'Petição inicial', pattern: [[ANY(), EXACT(T.PETICAO_INICIAL), ANY()]] },
     { id: 2, name: 'PETICAO_INICIAL_E_ANEXOS', descr: 'Petição inicial e anexos', pattern: [[ANY(), EXACT(T.PETICAO_INICIAL, true), ANY()]] },
     { id: 2, name: 'PPP', descr: 'Perfil Profissiográfico Previdenciário', pattern: [[ANY({ capture: [T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO], greedy: true })]] },

@@ -106,7 +106,7 @@ interface PedidosViabilidadeRecursoProps {
     dadosDoProcesso?: DadosDoProcessoType;
 }
 
-export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossierCode, onBusy, onReady, dadosDoProcesso }: PedidosViabilidadeRecursoProps) => {
+export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextRequest, Frm, dossierCode, onBusy, onReady, dadosDoProcesso }: PedidosViabilidadeRecursoProps) => {
     const [resolvedDef, setResolvedDef] = useState<PromptDefinitionType | null>(null)
     const pedidosAnalisados = Frm.get('pedidosAnalisados')
     const slug = nextRequest.promptSlug
@@ -133,20 +133,20 @@ export const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, 
         { id: 'DESERCAO', name: 'Deserção' },
         { id: 'IRREGULARIDADE_REPRESENTACAO', name: 'Irregularidade da Representação Processual' },
         { id: 'INTEMPESTIVIDADE', name: 'Intempestividade' },
-        { id: 'ILEGITIMIDADE', name: 'Ilegitimidade' },
+        { id: 'ILEGITIMIDADE', name: 'Ilegitimidade Recursal' },
         { id: 'FALTA_DE_INTERESSE_RECURSAL', name: 'Falta de Interesse Recursal' },
-        { id: 'NAO_EXAURIMENTO', name: 'Súmula 281/STF (Não exaurimento)' },
-        { id: 'AUSENCIA_PREQUESTIONAMENTO', name: 'Súmulas 282/STF e 356/STF; e 211/STJ (Ausência Prequestionamento)' },
-        { id: 'FUNDAMENTO_CONSTITUCIONAL_AUTONOMO', name: 'Súmula 126/STJ (Fundamento constitucional autônomo não impugnado)' },
-        { id: 'DEFICIENCIA_FUNDAMENTACAO', name: 'Súmula 284/STF (Deficiência fundamentação)' },
-        { id: 'FUNDAMENTO_AUTONOMO', name: 'Súmula 283/STF (Fundamento autônomo)' },
-        { id: 'FALTA_DE_COTEJO_ANALITICO', name: 'Falta de Cotejo Analítico (divergência jurisprudencial — alínea \'c\')' },
+        { id: 'NAO_EXAURIMENTO', name: 'Não Exaurimento das Instâncias Ordinárias - Súmula 281/STF' },
+        { id: 'AUSENCIA_PREQUESTIONAMENTO', name: 'Ausência de Prequestionamento - Súmulas 282/STF, 356/STF e Súmula 211/STJ' },
+        { id: 'FUNDAMENTO_CONSTITUCIONAL_AUTONOMO', name: 'Fundamento constitucional autônomo não impugnado - Súmula 126/STJ' },
+        { id: 'DEFICIENCIA_FUNDAMENTACAO', name: 'Deficiência de Fundamentação - Súmula 284/STF' },
+        { id: 'FUNDAMENTO_AUTONOMO', name: 'Fundamento autônomo suficiente não impugnado - Súmula 283/STF' },
+        { id: 'FALTA_DE_COTEJO_ANALITICO', name: 'Falta de cotejo analítico - divergência jurisprudencial - alínea \'c\'' },
         { id: 'AUSENCIA_COMPROVACAO_DISSIDIO', name: 'Ausência de comprovação do dissídio jurisprudencial' },
-        { id: 'FATICA_PROBATORIA', name: 'Súmula 7/STJ e Súmula 279/STF (Fático-probatório)' },
-        { id: 'CONFORMIDADE_JURISPRUDENCIA', name: 'Súmula 83/STJ (Conformidade Jurisprudência)' },
-        { id: 'CLAUSULA_CONTRATUAL', name: 'Súmula 5/STJ (Cláusula Contratual)' },
+        { id: 'FATICA_PROBATORIA', name: 'Reexame Fático-Probatório - Súmula 7/STJ' },
+        { id: 'CONFORMIDADE_JURISPRUDENCIA', name: 'Conformidade com a Jurisprudência do STJ - Súmula 83/STJ' },
+        { id: 'CLAUSULA_CONTRATUAL', name: 'Interpretação de cláusula contratual - Súmula 5/STJ' },
         { id: 'ATOS_NORMATIVOS_INFRALEGAIS', name: 'Atos Normativos Infralegais' },
-        { id: 'DIREITO_LOCAL', name: 'Súmula 280/STF (Direito Local)' },
+        { id: 'DIREITO_LOCAL', name: 'Direito Local - Súmula 280/STF' },
         { id: 'QUESTAO_EXCLUSIVAMENTE_CONSTITUCIONAL', name: 'Questão Exclusivamente Constitucional' },
     ]
     if (nextRequest?.promptSlug === 'decisao_viabilidade_recurso_especial')

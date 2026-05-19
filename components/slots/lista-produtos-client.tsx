@@ -21,6 +21,25 @@ import { SinkFromURLType, SourcePayloadType } from '@/lib/utils/messaging'
 import { sendApproveMessageToParent } from '@/lib/utils/messaging-helper'
 import { usePromptContext } from '@/app/(main)/prompts/context/PromptContext'
 import { PedidosViabilidadeRecurso } from './pedidos-viabilidade-recurso'
+import { PedidosViabilidadeRecursoEspecial } from './pedidos-viabilidade-recurso-especial'
+
+type PedidosComponentProps = {
+    pedidos: { proximoPrompt: string; pedidos: any[] };
+    request: GeneratedContent;
+    nextRequest: GeneratedContent;
+    Frm: FormHelper;
+    dossierCode: string;
+    onBusy?: () => void;
+    onReady?: (content: ContentType) => void;
+    dadosDoProcesso?: DadosDoProcessoType;
+}
+
+const PEDIDOS_COMPONENT_BY_SLUG: Record<string, React.ComponentType<PedidosComponentProps>> = {
+    'pedidos-fundamentacoes-e-dispositivos': PedidosFundamentacoesEDispositivos,
+    'juizo-viabilidade-recurso': PedidosViabilidadeRecurso,
+    'juizo-viabilidade-recurso-especial': PedidosViabilidadeRecursoEspecial,
+    'juizo-viabilidade-recurso-extraordinario': PedidosViabilidadeRecursoEspecial,
+}
 
 const Frm = new FormHelper(true)
 
@@ -94,33 +113,26 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
     const pedidos = Frm.get('pedidos')
     if (request.promptSlug === 'pedidos-de-peticao-inicial' && pedidos) {
         return <Pedidos pedidos={pedidos} request={request} Frm={Frm} key={idx} />
-    } else if (request.promptSlug === 'pedidos-fundamentacoes-e-dispositivos') {
-        if (pedidos) {
-            return <article key={idx}>
-                <PedidosFundamentacoesEDispositivos pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
-                {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx + 1}]`) && <Row className="h-print mb-3">
-                    <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx + 1}]`), sourcePayload, slugify(requests[idx + 1]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
-                </Row>}
-            </article>
-        }
-    } else if (['juizo-viabilidade-recurso', 'juizo-viabilidade-recurso-especial', 'juizo-viabilidade-recurso-extraordinario'].includes(request.promptSlug)) {
-        console.log('requestSlot.PEDIDOS_VIABILIDADE_RECURSO', { request, pedidos })
-        if (pedidos) {
-            return <article key={idx}>
-                <PedidosViabilidadeRecurso pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
-                {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx + 1}]`) && <Row className="h-print mb-3">
-                    <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx + 1}]`), sourcePayload, slugify(requests[idx + 1]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
-                </Row>}
-            </article>
-        }
-    } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction && !sidekick) {
+    } else {
+        const PedidosComponent = PEDIDOS_COMPONENT_BY_SLUG[request.promptSlug]
+        if (PedidosComponent) {
+            if (pedidos) {
+                return <article key={idx}>
+                    <PedidosComponent pedidos={pedidos} request={requestComTextosAnteriores} nextRequest={requests[idx + 1]} Frm={Frm} dossierCode={dossierCode} onBusy={() => onBusy(Frm, requests, idx + 1)} onReady={(content) => onReady(Frm, requests, idx + 1, content)} dadosDoProcesso={dadosDoProcesso} />
+                    {!!sidekick && sinkFromURL === 'to-parent' && Frm.get(`generated[${idx + 1}]`) && <Row className="h-print mb-3">
+                        <Col><Button variant="success" onClick={() => sendApproveMessageToParent(Frm.get(`generated[${idx + 1}]`), sourcePayload, slugify(requests[idx + 1]?.internalPrompt?.kind || ''), 'PROCESSO')} className="float-end">{sinkButtonText || 'Aprovar'}</Button></Col>
+                    </Row>}
+                </article>
+            }
+        } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction && !sidekick) {
         return <article key={idx}>
             <AiTitle request={request} />
             <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />
         </article>
-    } else if (request.promptSlug === 'chat' || request?.title.toLowerCase().startsWith('chat ')) {
-        if (previousArePending(Frm, requests, idx)) return null
-        return <Chat definition={request.internalPrompt} data={requestComTextosAnteriores.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
+        } else if (request.promptSlug === 'chat' || request?.title.toLowerCase().startsWith('chat ')) {
+            if (previousArePending(Frm, requests, idx)) return null
+            return <Chat definition={request.internalPrompt} data={requestComTextosAnteriores.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
+        }
     }
 
     return <article key={idx}>
