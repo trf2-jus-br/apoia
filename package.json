@@ -13,7 +13,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "copy-lamejs": "node -e \"require('fs').copyFileSync('node_modules/lamejs/lame.min.js', 'public/lame.min.js')\""
+    "copy-lamejs": "node -e \"require('fs').copyFileSync('node_modules/lamejs/lame.min.js', 'public/lame.min.js')\"",
+    "prepare": "node -e \"const fs=require('fs'); const src='scripts/pre-commit'; const dst='.git/hooks/pre-commit'; try { fs.copyFileSync(src, dst); fs.chmodSync(dst, 0o755); } catch(e) { /* skip outside git repo */ }\""
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^4.0.2",

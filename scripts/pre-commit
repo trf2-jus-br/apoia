@@ -1,0 +1,27 @@
+#!/bin/sh
+# Bloqueia commits que contenham o marcador NO""COMMIT
+# Use // NO""COMMIT ou # NO""COMMIT para marcar código de debug
+
+MARKER="NO""COMMIT"
+
+# Busca o marcador nos arquivos staged (apenas adições/modificações)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+MATCHES=$(echo "$STAGED_FILES" | xargs git grep -n "$MARKER" 2>/dev/null)
+
+if [ -n "$MATCHES" ]; then
+  echo ""
+  echo "COMMIT BLOQUEADO: marcador '$MARKER' encontrado nos arquivos staged:"
+  echo ""
+  echo "$MATCHES" | while IFS= read -r line; do
+    echo "  $line"
+  done
+  echo ""
+  echo "Remova ou comente o marcador '$MARKER' antes de comitar."
+  echo ""
+  exit 1
+fi
+
+exit 0
