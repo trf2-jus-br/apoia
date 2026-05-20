@@ -20,6 +20,7 @@ import { formatDateTime } from "@/lib/utils/date";
 import { usePromptContext } from "./context/PromptContext";
 import Listen from "@/components/slots/listen";
 import devLog from "@/lib/utils/log";
+import { slugify } from "@/lib/utils/utils";
 
 // Helper function to check confidentiality level on client side
 const isNivelDeSigiloPermitidoClient = (maxConfidentialityLevel: number, nivel: string): boolean => {
@@ -195,7 +196,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         if (!allLibraryDocuments || !Array.isArray(allLibraryDocuments) || allLibraryDocuments.length === 0) return
 
         // Compute automatic default selection for baseline (documents with inclusion === SIM)
-        const autoDefault = allLibraryDocuments.filter(d => d.inclusion === IALibraryInclusion.SIM)
+        const autoDefault = allLibraryDocuments.filter(d => d.inclusion === IALibraryInclusion.SIM  || prompt?.slug === slugify(d.title))
         setDefaultLibraryDocumentIds(autoDefault.map(d => d.id.toString()))
 
         // If URL has explicit 'library' IDs (hyphen-separated), prefer them over automatic selection

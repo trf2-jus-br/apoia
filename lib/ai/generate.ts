@@ -21,6 +21,7 @@ import devLog, { isDev } from '../utils/log'
 import * as Sentry from '@sentry/nextjs'
 import { getLibraryDocumentsForPrompt } from './library'
 import { calculateModelUsage, checkModelSupportsAudioVideo, checkModelSupportsPdf } from './model-metadata-server'
+import { slugify } from '../utils/utils'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await GenerationDao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -131,7 +132,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const { model: modelPreSelected } = await getModel({ structuredOutputs: false, overrideModel: definition.model })
     data.textos = await clipPieces(modelPreSelected, data.textos)
 
-    const libraryPrompt = await getLibraryDocumentsForPrompt(data.documentosDaBiblioteca)
+    const libraryPrompt = await getLibraryDocumentsForPrompt(slugify(definition.name), data.documentosDaBiblioteca)
     const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
     const messages = exec.message
     const structuredOutputs = exec.params?.structuredOutputs
@@ -330,7 +331,7 @@ export async function evaluate(definition: PromptDefinitionType, data: PromptDat
 
     const { model } = await getModel()
     await waitForTexts(data)
-    const libraryPrompt = await getLibraryDocumentsForPrompt(data.documentosDaBiblioteca)
+    const libraryPrompt = await getLibraryDocumentsForPrompt(slugify(definition.name), data.documentosDaBiblioteca)
     const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
     const messages = exec.message
     const sha256 = calcSha256(messages)

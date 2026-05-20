@@ -1,5 +1,6 @@
 import { LibraryDao } from "../db/dao"
 import { IALibrary, IALibraryInclusion } from "../db/mysql-types"
+import { slugify } from "../utils/utils"
 
 /**
  * Obtém e formata os documentos da biblioteca do usuário atual para inclusão em prompts.
@@ -9,9 +10,9 @@ import { IALibrary, IALibraryInclusion } from "../db/mysql-types"
  * 
  * @returns String formatada com os documentos da biblioteca
  */
-export async function getLibraryDocumentsForPrompt(ids: string[] | undefined): Promise<string> {
+export async function getLibraryDocumentsForPrompt(promptSlug?: string, ids?: string[]): Promise<string> {
     try {
-        const lib = await getLibraryDocuments(ids)
+        const lib = await getLibraryDocuments(promptSlug, ids)
 
         let result = `# Biblioteca de Documentos do Usuário \n\n`
 
@@ -45,7 +46,7 @@ export type LibraryDocumentsType = {
     available: string
 }
 
-export async function getLibraryDocuments(ids: string[] | undefined): Promise<LibraryDocumentsType> {
+export async function getLibraryDocuments(promptSlug?: string, ids?: string[]): Promise<LibraryDocumentsType> {
     try {
         const numericIds = ids ? ids.map(id => parseInt(id)).filter(id => !isNaN(id)) : undefined
         const safeNumericIds = numericIds || []
@@ -58,7 +59,7 @@ export async function getLibraryDocuments(ids: string[] | undefined): Promise<Li
 
         // Separa documentos por tipo de inclusão
         const alwaysInclude = validDocuments.filter(doc =>
-            (doc.inclusion === IALibraryInclusion.SIM && ids === undefined) || safeNumericIds.includes(doc.id)
+            ((doc.inclusion === IALibraryInclusion.SIM || promptSlug === slugify(doc.title)) && ids === undefined) || safeNumericIds.includes(doc.id)
         )
 
         const contextualDocuments = validDocuments.filter(doc =>
