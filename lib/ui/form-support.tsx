@@ -295,7 +295,7 @@ export class FormHelper {
 
     public colClass = (width?: string | number) => `${this.compact ? 'mb-0' : 'mt-3'} col ${typeof width === 'string' ? width : `col-12 col-md-${width || 12}`}`
 
-    public Input = ({ label, name, validator, width, visible, explanation }: { label: string, name: string, visible?: boolean, explanation?: string, validator?: (value: string, name: string) => string | undefined, width?: number | string }) => {
+    public Input = ({ label, name, validator, width, visible, explanation, maxLength }: { label: string, name: string, visible?: boolean, explanation?: string, validator?: (value: string, name: string) => string | undefined, width?: number | string, maxLength?: number }) => {
         return (
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
@@ -305,6 +305,7 @@ export class FormHelper {
                     value={this.get(name) ?? ''} 
                     onChange={e => { this.set(name, e.target.value); validator && validator(e.target.value, name) }} 
                     placeholder="" 
+                    maxLength={maxLength}
                     key={name} />
                 <FieldError formState={this.formState} name={name} />
                 {explanation && <Form.Text className="text-body-tertiary">{explanation}</Form.Text>}

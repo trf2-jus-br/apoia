@@ -164,8 +164,8 @@ export default function PromptForm(props) {
                     </Modal.Body>
                 </Modal>
                 <div className="row mb-5">
-                    <Frm.Input label="Nome" name="name" width={3} explanation="Use maiúsculas e minúsculas." />
-                    <Frm.Input label="Autor" name="content.author" width={3} explanation="Use maiúsculas e minúsculas." />
+                    <Frm.Input label="Nome" name="name" width={3} explanation="Use maiúsculas e minúsculas." maxLength={64} />
+                    <Frm.Input label="Autor" name="content.author" width={3} explanation="Use maiúsculas e minúsculas." maxLength={64} />
                     <Frm.MultiSelect label="Segmento" name="content.scope" options={scopeOptions} width={2} />
                     <Frm.MultiSelect label="Instância" name="content.instance" options={instanceOptions} width={2} />
                     <Frm.MultiSelect label="Natureza" name="content.matter" options={matterOptions} width={2} />
