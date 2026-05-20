@@ -366,7 +366,7 @@ export class FormHelper {
         )
     }
 
-    public MultiSelect = ({ label, name, options, width, visible }: { label: string, name: string, options: { id: number | string, name: string, disabled?: boolean }[], visible?: boolean, width?: number | string }) => {
+    public MultiSelect = ({ label, name, options, width, visible, displayCount }: { label: string, name: string, options: { id: number | string, name: string, disabled?: boolean }[], visible?: boolean, width?: number | string, displayCount?: number }) => {
 
         const change = (event) => {
             const id = event.target.value;
@@ -379,18 +379,31 @@ export class FormHelper {
             }
         };
 
+        const getDisplayText = () => {
+            const selectedIds = this.get(name) || [];
+            if (selectedIds.length === 0) return 'Selecione';
+            if (selectedIds.length === options.length && options.length > 0) return 'Todos';
+            
+            if (displayCount && displayCount > 0) {
+                const selectedNames = selectedIds.map((id: any) => options.find(o => o.id == id)?.name).filter(Boolean);
+                const namesToShow = selectedNames.slice(0, displayCount).join(', ');
+                const remaining = selectedIds.length - displayCount;
+                
+                if (remaining > 0) {
+                    return `${namesToShow} + ${remaining}`;
+                }
+                return namesToShow;
+            }
+            
+            return `${selectedIds.length} selecionado${selectedIds.length > 1 ? 's' : ''}`;
+        };
+
         return (
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
                 <Dropdown>
                     <Dropdown.Toggle as='span' variant="light" id="dropdown-basic" className='form-control'>
-                        {(this.get(name) || []).length === 0
-                            ? 'Selecione'
-                            : this.get(name).length === options.length
-                                ? 'Todos'
-                                : `${this.get(name).length} selecionado${this.get(name).length > 1 ? 's' : ''}`
-                            // options.find(o => o.id === this.get(name)[0])?.name
-                        }
+                        {getDisplayText()}
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu className="ps-2" style={{ maxHeight: '200px', overflowY: 'auto' }}>

@@ -131,6 +131,8 @@ export const convertBrazilianValueToNumber = (value) => {
 }
 
 export const slugify = (str: string): string => {
+  if (!str) return str
+  
   str = str.replace(/^\s+|\s+$/g, ''); // trim
   str = str.toLowerCase();
 

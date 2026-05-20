@@ -129,7 +129,6 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
     ]
 
     const motivoDaInadimissao = [
-        { id: '', name: '' },
         { id: 'DESERCAO', name: 'Deserção' },
         { id: 'IRREGULARIDADE_REPRESENTACAO', name: 'Irregularidade da Representação Processual' },
         { id: 'INTEMPESTIVIDADE', name: 'Intempestividade' },
@@ -149,8 +148,8 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
         { id: 'DIREITO_LOCAL', name: 'Direito Local - Súmula 280/STF' },
         { id: 'QUESTAO_EXCLUSIVAMENTE_CONSTITUCIONAL', name: 'Questão Exclusivamente Constitucional' },
     ]
-    if (nextRequest?.promptSlug === 'decisao_viabilidade_recurso_especial')
-        motivoDaInadimissao.push({ id: 'MATERIA_DE_INDOLE_CONSTITUCIONAL', name: 'Matéria de Índole Constitucional' })
+    // if (nextRequest?.promptSlug === 'decisao_viabilidade_recurso_especial')
+    //     motivoDaInadimissao.push({ id: 'MATERIA_DE_INDOLE_CONSTITUCIONAL', name: 'Matéria de Índole Constitucional' })
 
     // pedidos com tema.id mas sem tema.questao, obter o tema completo via busca semântica pela id
     useEffect(() => {
@@ -241,6 +240,9 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
                     return 'Selecione um tema para todos os pedidos que requerem.'
                 }
             }
+            if (pedido.dispositivo === 'INADIMITIR' && (!pedido.motivo || pedido.motivo.length === 0)) {
+                return 'Selecione um motivo de inadmissão para todos os pedidos que requerem.'
+            }
             // varre os argumentos do pedido e verifica se algum tem decisão igual a SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO
             for (let j = 0; j < (pedido.argumentos || []).length; j++) {
                 const argumento = pedido.argumentos[j]
@@ -250,7 +252,7 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
                         return 'Selecione um tema para todos os argumentos que requerem.'
                     }
                 }
-                if (argumento.dispositivo === 'INADIMITIR' && !argumento.motivo) {
+                if (argumento.dispositivo === 'INADIMITIR' && (!argumento.motivo || argumento.motivo.length === 0)) {
                     return 'Selecione um motivo de inadmissão para todos os argumentos que requerem.'
                 }
             }
@@ -290,7 +292,7 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
                     </div> */}
                     <div className="row mt-1 mb-3">
                         {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
-                        {Frm.get(`pedidos.pedidos[${i}].dispositivo`) === 'INADIMITIR' && <Frm.Select label="Motivo" name={`pedidos.pedidos[${i}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
+                        {Frm.get(`pedidos.pedidos[${i}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].motivo`} options={motivoDaInadimissao} width={'col-12'} displayCount={1} />}
                         {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].dispositivo`)) &&
                             <Frm.AsyncSelect<SemanticSearchResultItem>
                                 label="Tema"
@@ -311,7 +313,7 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
                             <div className="col col-11 offset-1">
                                 <div className="row mt-1 mb-3">
                                     {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
-                                    {Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`) === 'INADIMITIR' && <Frm.Select label="Motivo" name={`pedidos.pedidos[${i}].argumentos[${j}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
+                                    {Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].argumentos[${j}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
                                     {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`)) &&
                                         <Frm.AsyncSelect<SemanticSearchResultItem>
                                             label="Tema"

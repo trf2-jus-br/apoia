@@ -144,6 +144,30 @@ describe('auto-json parser & schema', () => {
     expect(() => parsePromptVariablesFromMarkdown(md)).toThrow(/duplicado/i)
   })
 
+  test('primitive array (array of strings)', () => {
+    const md = build(`### Nomes[]\nDescrição dos nomes`)
+    const roots = parsePromptVariablesFromMarkdown(md)!
+    expect(roots).toHaveLength(1)
+    const arr = roots[0]
+    expect(arr.type).toBe('array-string')
+    expect(arr.name).toBe('Nomes')
+    
+    const schemaJson = promptJsonSchemaFromPromptMarkdown(md)!
+    const schema = JSON.parse(schemaJson)
+    expect(schema.properties.Nomes.type).toBe('array')
+    expect(schema.properties.Nomes.items.type).toBe('string')
+  })
+
+  test('primitive array (array of numbers)', () => {
+    const md = build(`### NrValores[]\nLista de números`)
+    const roots = parsePromptVariablesFromMarkdown(md)!
+    expect(roots[0].type).toBe('array-number')
+    
+    const schema = JSON.parse(promptJsonSchemaFromPromptMarkdown(md)!)
+    expect(schema.properties.NrValores.type).toBe('array')
+    expect(schema.properties.NrValores.items.type).toBe('number')
+  })
+
   // ---------------- Schema Snapshot Tests ----------------
   test('schema snapshot: mixed objects and arrays', () => {
     const md = build(`### Processo\n#### Juizo\n##### NmJuizo\n##### DtDistribuicao\n#### Partes[]\n##### Parte\n###### NmParte\n###### TpParte\n### Movimentacoes[]\n#### Mov\n##### DtMov`)
@@ -206,9 +230,10 @@ describe('auto-json parser & schema', () => {
             },
             required: ['Mov']
           }
-        }
+        },
+        errorMessage: { type: 'string' }
       },
-      required: ['Processo','Movimentacoes']
+      required: ['Processo','Movimentacoes','errorMessage']
     })
   })
 
@@ -231,9 +256,10 @@ describe('auto-json parser & schema', () => {
             },
             required: ['NmParte','TpParte']
           }
-        }
+        },
+        errorMessage: { type: 'string' }
       },
-      required: ['Partes']
+      required: ['Partes', 'errorMessage']
     })
   })
 

@@ -9,7 +9,7 @@ export type PromptVariableType = {
     separatorName?: string // Nome do separador (usado apenas no flatten e somente na primeira variável de um grupo)
     name: string // nome sanitizado (sem [] )
     label?: string // rótulo original (pode conter [])
-    type: 'object' | 'array-object' | 'string' | 'number' | 'boolean' | 'date' | 'string-long'
+    type: 'object' | 'array-object' | 'string' | 'number' | 'boolean' | 'date' | 'string-long' | 'array-string' | 'array-number' | 'array-boolean' | 'array-date' | 'array-string-long'
     description: string
     properties?: PromptVariableType[] // filhos (object) ou definição de item (array-object)
     headingLevel: number // nível do heading (3..6)
@@ -108,7 +108,9 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
     const visit = (node: PromptVariableType) => {
         if (node.type === 'array-object') {
             if (!node.properties || node.properties.length === 0) {
-                errors.push(`Array "${node.label}" não possui filhos.`)
+                // Se for um array mas não tiver filhos, tratamos como array de tipos primitivos.
+                node.type = `array-${typeFromName(node.name)}` as any
+                delete node.properties
             }
         } else {
             // Diferenciar field de object
@@ -256,6 +258,10 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
             }
             const arrSchema: any = { type: 'array', items: itemsObj }
             return arrSchema
+        }
+        if (node.type.startsWith('array-')) {
+            const primitiveType = node.type.replace('array-', '')
+            return { type: 'array', items: { type: mapTypeToJsonSchema(primitiveType) } }
         }
         if (node.type === 'object') {
             const obj: any = { type: 'object', properties: {}, additionalProperties: false }
