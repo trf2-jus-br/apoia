@@ -230,20 +230,28 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
         }
 
         const buscarTemasCompletos = async () => {
-            const promessas = aPedidos.map(async (pedido: any, index: number) => {
+            const promessas: Promise<any>[] = []
+
+            aPedidos.forEach((pedido: any, indexPedido: number) => {
                 if (pedido.tema && typeof pedido.tema === 'string') {
                     const idTema = pedido.tema
-                    try {
-                        console.log(`Buscando tema completo para pedido ${index + 1}...`)
-                        const temas = await semanticSearchDeTemas(idTema)
-                        const temaCompleto = temas.find(t => t.id === idTema)
-                        return { index, temaCompleto }
-                    } catch (error) {
-                        console.error('Erro ao buscar tema completo:', error)
-                        return null
-                    }
+                    const p = semanticSearchDeTemas(idTema)
+                        .then(temas => ({ tipo: 'pedido', indexPedido, temaCompleto: temas.find(t => t.id === idTema) }))
+                        .catch(error => { console.error('Erro ao buscar tema completo:', error); return null })
+                    promessas.push(p)
                 }
-                return null
+
+                if (pedido.argumentos && Array.isArray(pedido.argumentos)) {
+                    pedido.argumentos.forEach((argumento: any, indexArgumento: number) => {
+                        if (argumento.tema && typeof argumento.tema === 'string') {
+                            const idTema = argumento.tema
+                            const p = semanticSearchDeTemas(idTema)
+                                .then(temas => ({ tipo: 'argumento', indexPedido, indexArgumento, temaCompleto: temas.find(t => t.id === idTema) }))
+                                .catch(error => { console.error('Erro ao buscar tema completo:', error); return null })
+                            promessas.push(p)
+                        }
+                    })
+                }
             })
 
             const resultados = await Promise.all(promessas)
@@ -251,7 +259,11 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
 
             resultados.forEach(resultado => {
                 if (resultado && resultado.temaCompleto) {
-                    pedidosAtualizados[resultado.index].tema = resultado.temaCompleto
+                    if (resultado.tipo === 'pedido') {
+                        pedidosAtualizados[resultado.indexPedido].tema = resultado.temaCompleto
+                    } else if (resultado.tipo === 'argumento') {
+                        pedidosAtualizados[resultado.indexPedido].argumentos[resultado.indexArgumento].tema = resultado.temaCompleto
+                    }
                 }
             })
 
