@@ -60,6 +60,7 @@ interface SemanticSearchResponse {
     total: number
 }
 import { calcMd5 } from "@/lib/utils/hash"
+import devLog from "@/lib/utils/log"
 import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
 import { useEffect, useState } from "react"
 import { Button, Spinner } from "react-bootstrap"
@@ -128,13 +129,16 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
         { id: 'DESCONSIDERAR', name: 'Desconsiderar' },
     ]
 
-    const motivoDaInadimissao = [
+    const motivoGeralDeInadmissao = [
         { id: 'DESERCAO', name: 'Deserção' },
         { id: 'IRREGULARIDADE_REPRESENTACAO', name: 'Irregularidade da Representação Processual' },
-        { id: 'INTEMPESTIVIDADE', name: 'Intempestividade' },
         { id: 'ILEGITIMIDADE', name: 'Ilegitimidade Recursal' },
+        { id: 'INTEMPESTIVIDADE', name: 'Intempestividade' },
         { id: 'FALTA_DE_INTERESSE_RECURSAL', name: 'Falta de Interesse Recursal' },
         { id: 'NAO_EXAURIMENTO', name: 'Não Exaurimento das Instâncias Ordinárias - Súmula 281/STF' },
+    ]
+
+    const motivoDaInadimissao = [
         { id: 'AUSENCIA_PREQUESTIONAMENTO', name: 'Ausência de Prequestionamento - Súmulas 282/STF, 356/STF e Súmula 211/STJ' },
         { id: 'FUNDAMENTO_CONSTITUCIONAL_AUTONOMO', name: 'Fundamento constitucional autônomo não impugnado - Súmula 126/STJ' },
         { id: 'DEFICIENCIA_FUNDAMENTACAO', name: 'Deficiência de Fundamentação - Súmula 284/STF' },
@@ -151,11 +155,79 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
     // if (nextRequest?.promptSlug === 'decisao_viabilidade_recurso_especial')
     //     motivoDaInadimissao.push({ id: 'MATERIA_DE_INDOLE_CONSTITUCIONAL', name: 'Matéria de Índole Constitucional' })
 
+    const limparCamposDesnecessarios = () => {
+        const pedidos = Frm.get('pedidos').pedidos
+        let atualizados = false
+
+        // Limpar campos "dispositivo" dos pedidos quando há motivoGeral de inadmissão preenchido, pois 
+        // nesse caso o motivo geral de inadmissão é suficiente para justificar a inadmissão do recurso, 
+        // e os dispositivos dos pedidos ficam irrelevantes
+        const motivoGeral = Frm.get('pedidos').motivoGeral
+        if (motivoGeral && motivoGeral.length > 0) {
+            const pedidosLimpos = pedidos.map((pedido: any) => {
+                if (pedido.dispositivo) {
+                    pedido.dispositivo = null
+                    atualizados = true
+                }
+                const argumentos = pedido.argumentos.map((argumento: any) => {
+                    if (argumento.dispositivo) {
+                        argumento.dispositivo = null
+                        atualizados = true
+                    }
+                    return argumento
+                })
+                return { ...pedido, argumentos }
+            })
+        }
+
+        // Limpar campos de tema e motivo de inadmissão para pedidos que não requerem
+        const pedidosLimpos = pedidos.map((pedido: any) => {
+            let atualizado = false
+            if (!DISPOSITIVOS_COM_TEMA.includes(pedido.dispositivo) && pedido.tema) {
+                pedido.tema = null
+                atualizado = true
+            }
+            if (pedido.dispositivo !== 'INADIMITIR' && pedido.motivo) {
+                pedido.motivo = null
+                atualizado = true
+            }
+            const argumentos = pedido.argumentos.map((argumento: any) => {
+                let argAtualizado = false
+                if (!DISPOSITIVOS_COM_TEMA.includes(argumento.dispositivo) && argumento.tema) {
+                    argumento.tema = null
+                    argAtualizado = true
+                }
+                if (argumento.dispositivo !== 'INADIMITIR' && argumento.motivo) {
+                    argumento.motivo = null
+                    argAtualizado = true
+                }
+                if (argAtualizado) atualizado = true
+                return argumento
+            })
+            if (atualizado) {
+                return { ...pedido, argumentos }
+            }
+            return pedido
+        })
+
+        // Se houve alguma atualização, salvar os pedidos limpos no formulário
+        if (atualizados) {
+            Frm.set('pedidos.pedidos', pedidosLimpos)
+        }
+
+        return atualizados
+    }
+
     // pedidos com tema.id mas sem tema.questao, obter o tema completo via busca semântica pela id
     useEffect(() => {
         console.log('Verificando pedidos para completar temas via busca semântica...')
         const aPedidos = Frm.get('pedidos').pedidos
         if (!aPedidos || aPedidos.length === 0) return
+
+        if (limparCamposDesnecessarios()) {
+            devLog('Campos desnecessários limpos. Pedidos atualizados:', Frm.get('pedidos').pedidos)
+            return
+        }
 
         const buscarTemasCompletos = async () => {
             const promessas = aPedidos.map(async (pedido: any, index: number) => {
@@ -191,9 +263,18 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
         buscarTemasCompletos()
     }, [Frm, pedidos])
 
+    useEffect(() => {
+        console.log('Verificando pedidos para limpeza...')
+        if (limparCamposDesnecessarios()) {
+            devLog('Campos desnecessários limpos. Pedidos atualizados:', Frm.get('pedidos').pedidos)
+            return
+        }
+    }, [Frm.data])
+
     if (pedidosAnalisados) {
         if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
-        const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
+        const frmData = Frm.get('pedidos')
+        const aPedidos = [...frmData.pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         const data = { ...request.data }
         data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0', event: '-', label: 'Informação extraída do formulário preenchido pelo usuário' }]
         const aiContentKey = `prompt: ${slug}, data: ${calcMd5(data)}}`
@@ -202,17 +283,28 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
             <h2>{maiusculasEMinusculas(request.title)}</h2>
             <div className="mb-3">
                 <div className="alert alert-success pt-4 pb-2">
-                    <ol>
+                    {frmData.motivoGeral && frmData.motivoGeral.length > 0 ? (
+                        <p>Motivo Geral de Inadmissão: {frmData.motivoGeral.join(', ')}</p>
+                    ) : <ol>
                         {aPedidos.map((pedido, i) =>
                             <li className={`mb-1 ${!pedido.dispositivo ? 'opacity-25' : ''}`} key={i}>
                                 <span>{pedido.texto}</span>
                                 <span> <b>{tiposDeDispositivo.find(o => o.id === pedido.dispositivo)?.name}</b></span>
-                                {pedido.tema && <span> - {formatarTemaSelecionado(pedido.tema)}</span>}
-                                {pedido.fundamentacoes && pedido.fundamentacoes.filter(f => f.selecionada).length > 0 && <span> - {pedido.fundamentacoes.filter(f => f.selecionada).map(f => f.texto).join(' - ')}</span>}
-                                {pedido.fundamentacao && <span> - {pedido.fundamentacao}</span>}
+                                {pedido.tema && <strong> - {formatarTemaSelecionado(pedido.tema)}</strong>}
+                                {pedido.motivo && <strong> - {pedido.motivo.map(m => motivoDaInadimissao.find(o => o.id === m)?.name).join(', ')}</strong>}
+                                <ul>
+                                    {pedido.argumentos.map((argumento, j) =>
+                                        <li key={j} className={`${!argumento.dispositivo ? 'opacity-25' : ''}`}>
+                                            <span>{argumento.texto}</span>
+                                            <span> <b>{tiposDeDispositivo.find(o => o.id === argumento.dispositivo)?.name}</b></span>
+                                            {argumento.tema && <strong> - {formatarTemaSelecionado(argumento.tema)}</strong>}
+                                            {argumento.motivo && <strong> - {argumento.motivo.map(m => motivoDaInadimissao.find(o => o.id === m)?.name).join(', ')}</strong>}
+                                        </li>
+                                    )}
+                                </ul>
                             </li>
                         )}
-                    </ol>
+                    </ol>}
                 </div>
             </div>
             <div className="row h-print mb-3">
@@ -228,8 +320,13 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
     }
 
     const disabledReason = ((): string => {
-        const pedidos = Frm.get('pedidos')?.pedidos
+        const data = Frm.get('pedidos')
+        const pedidos = data?.pedidos
         let enougth = false
+
+        if (data.motivoGeral && data.motivoGeral.length > 0) {
+            return ''
+        }
 
         // varre todos os pedidos e verifica se algum tem decisão igual a SUSPENDER, NEGAR_SEGUIMENTO ou ENCAMINHAR_PARA_RETRATACAO
         for (let i = 0; i < pedidos.length; i++) {
@@ -281,57 +378,64 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
     return <>
         <h2>{maiusculasEMinusculas(request.title)}</h2>
         <div className="alert alert-warning pt-2 pb-0 mb-0">
-            {pedidos.pedidos.map((pedido, i) =>
-                <div className="mb-3" key={i}>
-                    <div className="row mt-1">
-                        <div className="col col-12 col-sm-9"><span><strong>{i + 1}{')'}</strong></span>{` ${Frm.get(`pedidos.pedidos[${i}].texto`)}`}</div>
-                        <Frm.Select label="Decisão" name={`pedidos.pedidos[${i}].dispositivo`} options={tiposDeDispositivo} width={'col-12 col-sm-3'} />
-                    </div>
-                    {/* <div className="row">
+            <h5 className="mt-1">Verificação Preliminar</h5>
+            <div className="mb-3">
+                <Frm.MultiSelect label="Motivo de Inadmissão" name={`pedidos.motivoGeral`} options={motivoGeralDeInadmissao} width={'col-12'} displayCount={1} />
+            </div>
+            <div className={`${Frm.get('pedidos.motivoGeral') && Frm.get('pedidos.motivoGeral').length > 0 ? 'd-none' : ''}`}>
+                <h5 className="mt-3">Viabilidade dos Pedidos e Argumentos</h5>
+                {pedidos.pedidos.map((pedido, i) =>
+                    <div className="mb-3" key={i}>
+                        <div className="row mt-1">
+                            <div className="col col-12 col-sm-9"><span><strong>{i + 1}{')'}</strong></span>{` ${Frm.get(`pedidos.pedidos[${i}].texto`)}`}</div>
+                            <Frm.Select label="Decisão" name={`pedidos.pedidos[${i}].dispositivo`} options={tiposDeDispositivo} width={'col-12 col-sm-3'} />
+                        </div>
+                        {/* <div className="row">
                         <Frm.TextArea label={`${i + 1}) Pedido`} name={`pedidos.pedidos[${i}].texto`} width={''} />
                     </div> */}
-                    <div className="row mt-1 mb-3">
-                        {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
-                        {Frm.get(`pedidos.pedidos[${i}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].motivo`} options={motivoDaInadimissao} width={'col-12'} displayCount={1} />}
-                        {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].dispositivo`)) &&
-                            <Frm.AsyncSelect<SemanticSearchResultItem>
-                                label="Tema"
-                                name={`pedidos.pedidos[${i}].tema`}
-                                searchFn={semanticSearchDeTemas}
-                                formatOption={formatarOpcaoTema}
-                                formatSelected={formatarTemaSelecionado}
-                                minSearchLength={1}
-                                width={'col-12'}
-                                explanation="Digite para buscar temas de repercussão geral ou recursos repetitivos"
-                            />
-                        }
-                    </div>
-                    {pedido.argumentos.map((argumento, j) =>
-                        <div key={j} className="row mt-1">
-                            <div className="col col-12 col-sm-8 offset-1"><span><strong>{i + 1}.{j + 1}{')'}</strong></span>{` ${Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].texto`)}`}</div>
-                            <Frm.Select label="Decisão" name={`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`} options={tiposDeDispositivo} width={'col-12 col-sm-3'} />
-                            <div className="col col-11 offset-1">
-                                <div className="row mt-1 mb-3">
-                                    {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
-                                    {Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].argumentos[${j}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
-                                    {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`)) &&
-                                        <Frm.AsyncSelect<SemanticSearchResultItem>
-                                            label="Tema"
-                                            name={`pedidos.pedidos[${i}].argumentos[${j}].tema`}
-                                            searchFn={semanticSearchDeTemas}
-                                            formatOption={formatarOpcaoTema}
-                                            formatSelected={formatarTemaSelecionado}
-                                            minSearchLength={1}
-                                            width={'col-12'}
-                                            explanation="Digite para buscar temas de repercussão geral ou recursos repetitivos"
-                                        />
-                                    }
+                        <div className="row mt-1 mb-3">
+                            {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
+                            {Frm.get(`pedidos.pedidos[${i}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].motivo`} options={motivoDaInadimissao} width={'col-12'} displayCount={1} />}
+                            {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].dispositivo`)) &&
+                                <Frm.AsyncSelect<SemanticSearchResultItem>
+                                    label="Tema"
+                                    name={`pedidos.pedidos[${i}].tema`}
+                                    searchFn={semanticSearchDeTemas}
+                                    formatOption={formatarOpcaoTema}
+                                    formatSelected={formatarTemaSelecionado}
+                                    minSearchLength={1}
+                                    width={'col-12'}
+                                    explanation="Digite para buscar temas de repercussão geral ou recursos repetitivos"
+                                />
+                            }
+                        </div>
+                        {pedido.argumentos.map((argumento, j) =>
+                            <div key={j} className="row mt-1">
+                                <div className="col col-12 col-sm-8 offset-1"><span><strong>{i + 1}.{j + 1}{')'}</strong></span>{` ${Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].texto`)}`}</div>
+                                <Frm.Select label="Decisão" name={`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`} options={tiposDeDispositivo} width={'col-12 col-sm-3'} />
+                                <div className="col col-11 offset-1">
+                                    <div className="row mt-1 mb-3">
+                                        {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
+                                        {Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].argumentos[${j}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
+                                        {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`)) &&
+                                            <Frm.AsyncSelect<SemanticSearchResultItem>
+                                                label="Tema"
+                                                name={`pedidos.pedidos[${i}].argumentos[${j}].tema`}
+                                                searchFn={semanticSearchDeTemas}
+                                                formatOption={formatarOpcaoTema}
+                                                formatSelected={formatarTemaSelecionado}
+                                                minSearchLength={1}
+                                                width={'col-12'}
+                                                explanation="Digite para buscar temas de repercussão geral ou recursos repetitivos"
+                                            />
+                                        }
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            )}
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
         <span className="text-muted text-small">{disabledReason}</span>
         {Frm.get('pedidos')?.pedidos.length > 0 &&

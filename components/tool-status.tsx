@@ -3,7 +3,7 @@ import { UIMessage, UIMessagePart } from "ai"
 import { joinWithAnd } from "@/lib/utils/utils"
 
 export default function ToolUsage({ m }: { m: UIMessage }) {
-    return m?.parts?.find((part) => part.type.startsWith('tool-')) && (<div className="mb-1">
+    return m?.parts?.find((part) => part.type.startsWith('tool-')) && (<div className="mb-1 h-print">
         {m?.parts?.filter((part) => part.type.startsWith('tool-'))?.map((part, index) => (
             <div key={index} className="mb-0">
                 <div className={`text-wrap mb-0 chat-tool`}>
