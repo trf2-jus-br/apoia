@@ -11,7 +11,8 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
     const user = await assertCurrentUser()
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
 
-    await PromptDao.resetFavorite(parseInt(params.id), user_id)
+    const idStr = params.id
+    await PromptDao.resetFavoriteByUuid(idStr, user_id)
 
     redirect('/prompts')
     return null

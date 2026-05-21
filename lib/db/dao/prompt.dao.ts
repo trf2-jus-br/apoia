@@ -358,6 +358,35 @@ export class PromptDao {
         await knex('ia_favorite').where({ prompt_id: promptId, user_id: userId }).delete()
     }
 
+    static async retrieveLatestPromptByUuid(uuid: string): Promise<mysqlTypes.IAPrompt | undefined> {
+        if (!knex) return
+        const result = await knex.select().from<mysqlTypes.IAPrompt>('ia_prompt').where({ uuid, is_latest: 1 }).first()
+        if (result) {
+            this.hydratatePromptContent(result.content)
+        }
+        return result
+    }
+
+    static async setFavoriteByUuid(uuid: string, userId: number): Promise<void> {
+        if (!knex) return
+        const prompt = await this.retrieveLatestPromptByUuid(uuid)
+        if (!prompt || !prompt.base_id) return
+        await knex('ia_favorite')
+            .insert({ prompt_id: prompt.base_id, prompt_uuid: uuid, user_id: userId })
+            .onConflict()
+            .ignore()
+    }
+
+    static async resetFavoriteByUuid(uuid: string, userId: number): Promise<void> {
+        if (!knex) return
+        const prompt = await this.retrieveLatestPromptByUuid(uuid)
+        if (!prompt || !prompt.base_id) return
+        await knex('ia_favorite')
+            .where({ prompt_uuid: uuid, user_id: userId })
+            .orWhere({ prompt_id: prompt.base_id, user_id: userId })
+            .delete()
+    }
+
     static async setPrivate(promptId: number): Promise<void> {
         if (!knex) return
         await knex('ia_prompt').update({ share: 'PRIVADO' }).where({ id: promptId })

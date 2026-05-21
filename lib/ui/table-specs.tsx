@@ -55,10 +55,10 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                         const isFavorite = data.row.original.is_favorite;
 
                         return isFavorite
-                            ? <span role="button" className="text-primary" onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, action: 'reset' })}>
+                            ? <span role="button" className="text-primary" onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, uuid: data.row.original.uuid, action: 'reset' })}>
                                 <FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUserSolid : faHeartSolid} />
                             </span>
-                            : <span role="button" className="text-secondary opacity-50" onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, action: 'set' })}>
+                            : <span role="button" className="text-secondary opacity-50" onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, uuid: data.row.original.uuid, action: 'set' })}>
                                 <FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUser : faHeart} />
                             </span>
                     }
@@ -66,7 +66,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 {
                     header: 'Prompt', accessorKey: 'name', enableSorting: true, cell: data => <>
                         <span className="text-primary" style={{ cursor: 'pointer' }} onClick={() => onClick('executar', data.row.original)}><u>{data.row.original.name}</u></span>
-                        <Dropdown style={{ display: "inline", cursor: 'pointer' }}>
+                        <Dropdown style={{ display: 'inline', cursor: 'pointer' }}>
                             <Dropdown.Toggle as="a" className="m-1" id={data.row.original.name} />
                             <Dropdown.Menu>
                                 <Dropdown.Item onClick={() => onClick('executar', data.row.original)}>Executar</Dropdown.Item>
@@ -74,9 +74,9 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                                 <Dropdown.Item onClick={() => onClick('copiar link para favoritar', data.row.original)}>Copiar link para adicionar aos favoritos</Dropdown.Item>
                                 {!data.row.original.origin && <Dropdown.Item href={`/prompts/prompt/${data.row.original.id}/edit`} disabled={!data.row.original.is_mine && !options?.isModerator}>Editar</Dropdown.Item>}
                                 {!data.row.original.origin && <Dropdown.Item href={`/prompts/prompt/new?copyFrom=${data.row.original.id}`}>Fazer uma cópia</Dropdown.Item>}
-                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}`}>Informações sobre o prompt</Dropdown.Item>
-                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/set-favorite`}>Adicionar aos favoritos</Dropdown.Item>
-                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/reset-favorite`}>Remover dos favoritos</Dropdown.Item>
+                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.uuid}`}>Informações sobre o prompt</Dropdown.Item>
+                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.uuid}/set-favorite`}>Adicionar aos favoritos</Dropdown.Item>
+                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.uuid}/reset-favorite`}>Remover dos favoritos</Dropdown.Item>
                                 {!data.row.original.origin && <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/remove`} disabled={!data.row.original.is_mine}>Remover</Dropdown.Item>}
                             </Dropdown.Menu>
                         </Dropdown>

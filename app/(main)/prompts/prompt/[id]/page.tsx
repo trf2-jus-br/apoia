@@ -9,12 +9,17 @@ import { assertCurrentUser, isUserModerator } from '@/lib/user'
 import { getPromptDefinition, getPromptDefinitionByUuid, getFirstProductSlug } from '@/lib/ai/prompt-store'
 import { slugify } from '@/lib/utils/utils'
 
-export default async function Home(props: { params: Promise<{ id: number }> }) {
+export default async function Home(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     noStore()
     const user = await assertCurrentUser()
     const isModerator = await isUserModerator(user)
-    let prompt = await PromptDao.retrieveLatestPromptByBaseId(params.id)
+
+    const idStr = params.id
+    const isNum = !isNaN(Number(idStr))
+    let prompt = isNum
+        ? await PromptDao.retrieveLatestPromptByBaseId(Number(idStr))
+        : await PromptDao.retrieveLatestPromptByUuid(idStr)
 
     if (prompt?.origin) {
         let def = null

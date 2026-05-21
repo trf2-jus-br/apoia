@@ -19,18 +19,18 @@ export async function POST(
   try {
     const user = await assertCurrentUser()
     const params = await props.params
-    const baseId = parseInt(params.base_id)
+    const baseIdStr = params.base_id
 
-    if (isNaN(baseId)) {
+    if (!baseIdStr) {
       return NextResponse.json(
-        { error: 'ID do prompt inválido' },
+        { error: 'Identificador do prompt inválido' },
         { status: 400 }
       )
     }
 
     const userId = await UserDao.assertIAUserId(user.preferredUsername || user.name)
 
-    await PromptDao.setFavorite(baseId, userId)
+    await PromptDao.setFavoriteByUuid(baseIdStr, userId)
 
     return NextResponse.json({
       success: true,
@@ -59,18 +59,18 @@ export async function DELETE(
   try {
     const user = await assertCurrentUser()
     const params = await props.params
-    const baseId = parseInt(params.base_id)
+    const baseIdStr = params.base_id
 
-    if (isNaN(baseId)) {
+    if (!baseIdStr) {
       return NextResponse.json(
-        { error: 'ID do prompt inválido' },
+        { error: 'Identificador do prompt inválido' },
         { status: 400 }
       )
     }
 
     const userId = await UserDao.assertIAUserId(user.preferredUsername || user.name)
 
-    await PromptDao.resetFavorite(baseId, userId)
+    await PromptDao.resetFavoriteByUuid(baseIdStr, userId)
 
     return NextResponse.json({
       success: true,

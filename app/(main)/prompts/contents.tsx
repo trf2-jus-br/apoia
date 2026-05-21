@@ -70,15 +70,15 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
                 toastMessage('Prompt copiado para a área de transferência', 'success')
                 break
             case 'copiar link para favoritar':
-                navigator.clipboard.writeText(`Clique no link abaixo para adicionar o prompt ${row.name} aos favoritos:\n\n${window.location.origin}/prompts/prompt/${row.base_id}/set-favorite`)
+                navigator.clipboard.writeText(`Clique no link abaixo para adicionar o prompt ${row.name} aos favoritos:\n\n${window.location.origin}/prompts/prompt/${row.uuid || row.base_id}/set-favorite`)
                 toastMessage('Link copiado para a área de transferência', 'success')
                 break
             case 'favoritar':
                 try {
                     if (row.action === 'set') {
-                        await axios.post(`/api/v1/prompt/${row.base_id}/favorite`)
+                        await axios.post(`/api/v1/prompt/${row.uuid}/favorite`)
                     } else if (row.action === 'reset') {
-                        await axios.delete(`/api/v1/prompt/${row.base_id}/favorite`)
+                        await axios.delete(`/api/v1/prompt/${row.uuid}/favorite`)
                     }
 
                     setPromptsState(prevPrompts =>
