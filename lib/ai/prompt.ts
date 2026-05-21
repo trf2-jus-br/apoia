@@ -92,6 +92,13 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
         }
     }
 
+    // aglutinar os system prompts em um só, para evitar que o modelo reclame que o system prompt não é a primeira mensagem
+    if (message.length > 1) {
+        const combinedContent = message.map(msg => msg.content).join('\n\n')
+        message.length = 0
+        message.push({ role: 'system', content: combinedContent } as ModelMessage)
+    }
+
     // add {{textos}} to the prompt if it doesn't have it
     let prompt = definition.prompt
     if (prompt && !prompt.includes('{{') && (!definition.systemPrompt || !definition.systemPrompt.includes('{{')))
