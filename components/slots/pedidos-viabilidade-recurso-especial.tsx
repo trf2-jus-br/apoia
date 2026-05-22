@@ -147,6 +147,7 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
         { id: 'AUSENCIA_COMPROVACAO_DISSIDIO', name: 'Ausência de comprovação do dissídio jurisprudencial' },
         { id: 'FATICA_PROBATORIA', name: 'Reexame Fático-Probatório - Súmula 7/STJ' },
         { id: 'CONFORMIDADE_JURISPRUDENCIA', name: 'Conformidade com a Jurisprudência do STJ - Súmula 83/STJ' },
+        { id: 'CONFORMIDADE_JURISPRUDENCIA_AUSENCIA_OMISSAO', name: 'Conformidade com a Jurisprudência do STJ - Súmula 83/STJ. Ausência de Omissão' },
         { id: 'CLAUSULA_CONTRATUAL', name: 'Interpretação de cláusula contratual - Súmula 5/STJ' },
         { id: 'ATOS_NORMATIVOS_INFRALEGAIS', name: 'Atos Normativos Infralegais' },
         { id: 'DIREITO_LOCAL', name: 'Direito Local - Súmula 280/STF' },

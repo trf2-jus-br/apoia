@@ -4,13 +4,18 @@ import auto_json from './auto-json.md'
 export const INFORMATION_EXTRACTION_TITLE = '## FIELDS'
 export const INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE = '## FIELDS READONLY'
 
+type PromptPrimitiveType = 'string' | 'number' | 'boolean' | 'date' | 'string-long'
+type PromptVariableKind = 'object' | 'array-object' | PromptPrimitiveType | 'array-string' | 'array-number' | 'array-boolean' | 'array-date' | 'array-string-long'
+
 // Tipo para representar as variáveis do prompt
 export type PromptVariableType = {
     separatorName?: string // Nome do separador (usado apenas no flatten e somente na primeira variável de um grupo)
     name: string // nome sanitizado (sem [] )
     label?: string // rótulo original (pode conter [])
-    type: 'object' | 'array-object' | 'string' | 'number' | 'boolean' | 'date' | 'string-long' | 'array-string' | 'array-number' | 'array-boolean' | 'array-date' | 'array-string-long'
+    type: PromptVariableKind
     description: string
+    optional?: boolean // Quando true, a propriedade continua obrigatória no schema, mas aceita null
+    enumValues?: string[] // Lista de valores permitidos para campos primitivos ou arrays primitivos
     properties?: PromptVariableType[] // filhos (object) ou definição de item (array-object)
     headingLevel: number // nível do heading (3..6)
 }
@@ -18,6 +23,96 @@ export type PromptVariableType = {
 export const isInformationExtractionPrompt = (prompt: string): boolean => {
     if (!prompt) return false
     return prompt.includes(INFORMATION_EXTRACTION_TITLE) && !prompt.includes(INFORMATION_EXTRACTION_TITLE_NOT_EDITABLE)
+}
+
+const typeFromName = (name: string): PromptPrimitiveType => {
+    if (/^Dt[A-Z0-9_]/.test(name)) return 'date'
+    if (/^Ev[A-Z0-9_]/.test(name)) return 'string'
+    if (/^Nr[A-Z0-9_]/.test(name)) return 'number'
+    if (/^Lo[A-Z0-9_]/.test(name)) return 'boolean'
+    if (/^Tx[A-Z0-9_]/.test(name)) return 'string'
+    if (/^Tg[A-Z0-9_]/.test(name)) return 'string-long'
+    const lower = name.toLowerCase()
+    if (lower.includes('texto') || lower.includes('resumo') || lower.includes('conclusão')) return 'string-long'
+    return 'string'
+}
+
+function parseHeadingName(rawName: string) {
+    const trimmed = rawName.trim()
+    const metadataMatch = trimmed.match(/^(?<base>.*?)(?:\s*\((?<metadata>[^()]*)\))?\s*$/)
+    if (!metadataMatch?.groups?.base) {
+        throw new Error(`Heading inválido: ${rawName}`)
+    }
+
+    let base = metadataMatch.groups.base.trim()
+    const metadataRaw = metadataMatch.groups.metadata?.trim()
+    let optional = false
+    let isArray = false
+    let enumValues: string[] | undefined
+
+    if (base.endsWith('[]')) {
+        isArray = true
+        base = base.slice(0, -2).trim()
+    }
+
+    if (!base) {
+        throw new Error(`Heading inválido: ${rawName}`)
+    }
+
+    if (metadataRaw) {
+        const metadataItems = metadataRaw
+            .split(',')
+            .map(item => item.trim())
+            .filter(Boolean)
+
+        for (let index = 0; index < metadataItems.length; index++) {
+            const item = metadataItems[index]
+            const normalized = removeAccents(item).toLowerCase()
+            if (normalized === 'opcional') {
+                optional = true
+                continue
+            }
+            if (normalized.startsWith('opcoes:') || normalized.startsWith('opcoes :')) {
+                const [, firstValue = ''] = item.split(/:/, 2)
+                const optionParts = [firstValue.trim(), ...metadataItems.slice(index + 1)]
+                const values = optionParts.map(value => value.trim()).filter(Boolean)
+                if (values.length === 0) {
+                    throw new Error(`Enum inválido no heading: ${rawName}`)
+                }
+                enumValues = values
+                break
+            }
+            throw new Error(`Metadado inválido no heading: ${item}`)
+        }
+    }
+
+    return { baseName: base, isArray, optional, enumValues }
+}
+
+function coerceEnumValue(value: string, type: PromptPrimitiveType) {
+    if (type === 'number') {
+        const asNumber = Number(value)
+        if (!Number.isFinite(asNumber)) {
+            throw new Error(`Valor de enum inválido para number: ${value}`)
+        }
+        return asNumber
+    }
+    if (type === 'boolean') {
+        const normalized = value.toLowerCase()
+        if (normalized === 'true') return true
+        if (normalized === 'false') return false
+        throw new Error(`Valor de enum inválido para boolean: ${value}`)
+    }
+    return value
+}
+
+function requiredChildrenOf(node: PromptVariableType): string[] {
+    return (node.properties || []).map(child => child.name)
+}
+
+function nullableSchema(baseSchema: any, optional?: boolean) {
+    if (!optional) return baseSchema
+    return { anyOf: [baseSchema, { type: 'null' }] }
 }
 
 // Função para extrair a estrutura de variáveis do markdown
@@ -39,21 +134,6 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
 
     const roots: PromptVariableType[] = []
     const stack: PromptVariableType[] = []
-
-    const typeFromName = (name: string): 'string' | 'number' | 'boolean' | 'date' | 'string-long' => {
-        if (/^Dt[A-Z0-9_]/.test(name)) return 'date'
-        if (/^Ev[A-Z0-9_]/.test(name)) return 'string'
-        if (/^Nr[A-Z0-9_]/.test(name)) return 'number'
-        if (/^Lo[A-Z0-9_]/.test(name)) return 'boolean'
-        if (/^Tx[A-Z0-9_]/.test(name)) return 'string'
-        if (/^Tg[A-Z0-9_]/.test(name)) return 'string-long'
-        const lower = name.toLowerCase()
-        if (lower.includes('texto') || lower.includes('resumo') || lower.includes('conclusão')) return 'string-long'
-        return 'string'
-    }
-
-    const allNodes: PromptVariableType[] = []
-
     let lastNode: PromptVariableType | undefined
 
     for (let i = 0; i < lines.length; i++) {
@@ -63,19 +143,19 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
             const hashes = headingMatch.groups.hashes
             const rawName = headingMatch.groups.name.trim() // parte antes de " - descrição"
             const level = hashes.length
-            const rawHasArray = /\[\]$/.test(rawName)
-            if (level === 6 && rawHasArray) {
+            const parsedName = parseHeadingName(rawName)
+            if (level === 6 && parsedName.isArray) {
                 throw new Error(`Heading nível 6 não pode ser array: ${rawName}`)
             }
-            const isArray = rawHasArray && level <= 5
-            const baseName = rawName.replace(/\[\]$/, '')
-            const name = fixVariableName(baseName)
-            const displayLabel = headingMatch.groups.label || (isArray ? baseName : baseName)
+            const name = fixVariableName(parsedName.baseName)
+            const displayLabel = headingMatch.groups.label || parsedName.baseName
             const node: PromptVariableType = {
                 name,
                 label: displayLabel,
-                type: isArray ? 'array-object' : 'object',
+                type: parsedName.isArray ? 'array-object' : 'object',
                 description: '',
+                optional: parsedName.optional || undefined,
+                enumValues: parsedName.enumValues,
                 properties: [],
                 headingLevel: level
             }
@@ -92,7 +172,6 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
                 parent.properties.push(node)
             }
             stack.push(node)
-            allNodes.push(node)
             lastNode = node
         } else if (line.trim() && !/^#{1,6}\s/.test(line)) {
             // Descrição: primeira linha não-heading para o último node sem descrição
@@ -109,7 +188,7 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
         if (node.type === 'array-object') {
             if (!node.properties || node.properties.length === 0) {
                 // Se for um array mas não tiver filhos, tratamos como array de tipos primitivos.
-                node.type = `array-${typeFromName(node.name)}` as any
+                node.type = `array-${typeFromName(node.name)}` as PromptVariableKind
                 delete node.properties
             }
         } else {
@@ -122,6 +201,9 @@ export const parsePromptVariablesFromMarkdown = (md: string): PromptVariableType
                 node.type = typeFromName(node.name)
                 delete node.properties
             }
+        }
+        if (node.enumValues && (node.type === 'object' || node.type === 'array-object')) {
+            errors.push(`Enum só pode ser usado em variável primitiva ou array primitivo: ${node.label}`)
         }
         if (node.headingLevel === 6) {
             if (node.type === 'object' || node.type === 'array-object') {
@@ -170,6 +252,8 @@ export const flatternPromptVariables = (variables: PromptVariableType[] | undefi
         label: v.label,
         type: v.type,
         description: v.description,
+        optional: v.optional,
+        enumValues: v.enumValues ? [...v.enumValues] : undefined,
         headingLevel: v.headingLevel,
         properties: v.properties ? [...v.properties] : undefined
     })
@@ -253,15 +337,19 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
                 for (const child of node.properties) {
                     itemsObj.properties[child.name] = nodeToSchema(child)
                 }
-                const req = Object.keys(itemsObj.properties)
+                const req = requiredChildrenOf(node)
                 if (req.length) itemsObj.required = req
             }
             const arrSchema: any = { type: 'array', items: itemsObj }
-            return arrSchema
+            return nullableSchema(arrSchema, node.optional)
         }
         if (node.type.startsWith('array-')) {
-            const primitiveType = node.type.replace('array-', '')
-            return { type: 'array', items: { type: mapTypeToJsonSchema(primitiveType) } }
+            const primitiveType = node.type.replace('array-', '') as PromptPrimitiveType
+            const items: any = { type: mapTypeToJsonSchema(primitiveType) }
+            if (node.enumValues?.length) {
+                items.enum = node.enumValues.map(value => coerceEnumValue(value, primitiveType))
+            }
+            return nullableSchema({ type: 'array', items }, node.optional)
         }
         if (node.type === 'object') {
             const obj: any = { type: 'object', properties: {}, additionalProperties: false }
@@ -269,13 +357,17 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
                 for (const child of node.properties) {
                     obj.properties[child.name] = nodeToSchema(child)
                 }
-                const req = Object.keys(obj.properties)
+                const req = requiredChildrenOf(node)
                 if (req.length) obj.required = req
             }
-            return obj
+            return nullableSchema(obj, node.optional)
         }
         // field
-        return { type: mapTypeToJsonSchema(node.type) }
+        const fieldSchema: any = { type: mapTypeToJsonSchema(node.type) }
+        if (node.enumValues?.length) {
+            fieldSchema.enum = node.enumValues.map(value => coerceEnumValue(value, node.type as PromptPrimitiveType))
+        }
+        return nullableSchema(fieldSchema, node.optional)
     }
 
     const properties: Record<string, any> = {}
@@ -284,7 +376,7 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
     }
 
     // campo para retorno de mensagens de erro, caso o modelo queira retornar erros relacionados à segurança ou validação
-    properties['errorMessage'] = { type: 'string' }
+    properties['errorMessage'] = nullableSchema({ type: 'string' }, true)
 
     const schema: any = {
         $schema: 'http://json-schema.org/draft-04/schema#',
@@ -292,7 +384,7 @@ export const promptJsonSchemaFromPromptMarkdown = (md: string, flatten: boolean 
         additionalProperties: false,
         properties
     }
-    const rootReq = Object.keys(properties)
+    const rootReq = [...roots.map(root => root.name), 'errorMessage']
     if (rootReq.length) schema.required = rootReq
 
     const json = JSON.stringify(schema, null, 2)

@@ -168,6 +168,76 @@ describe('auto-json parser & schema', () => {
     expect(schema.properties.NrValores.items.type).toBe('number')
   })
 
+  test('primitive enum field with optional syntax', () => {
+    const md = build(`###### Status (opcional, opções: ATIVO, INATIVO, PENDENTE) - Situação atual\nEscolha uma situação`) 
+    const roots = parsePromptVariablesFromMarkdown(md)!
+    expect(roots).toHaveLength(1)
+    expect(roots[0].type).toBe('string')
+    expect(roots[0].optional).toBe(true)
+    expect(roots[0].enumValues).toEqual(['ATIVO', 'INATIVO', 'PENDENTE'])
+
+    const schema = JSON.parse(promptJsonSchemaFromPromptMarkdown(md)!)
+    expect(schema.properties.Status.anyOf).toEqual([
+      { type: 'string', enum: ['ATIVO', 'INATIVO', 'PENDENTE'] },
+      { type: 'null' }
+    ])
+    expect(schema.required).toEqual(['Status', 'errorMessage'])
+  })
+
+  test('primitive enum array supports optional property and item enum', () => {
+    const md = build(`### Statuses[] (opcional, opções: ATIVO, INATIVO, PENDENTE)\nLista de situações permitidas`)
+    const roots = parsePromptVariablesFromMarkdown(md)!
+    expect(roots).toHaveLength(1)
+    expect(roots[0].type).toBe('array-string')
+    expect(roots[0].optional).toBe(true)
+    expect(roots[0].enumValues).toEqual(['ATIVO', 'INATIVO', 'PENDENTE'])
+
+    const schema = JSON.parse(promptJsonSchemaFromPromptMarkdown(md)!)
+    expect(schema.properties.Statuses.anyOf).toEqual([
+      {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: ['ATIVO', 'INATIVO', 'PENDENTE']
+        }
+      },
+      { type: 'null' }
+    ])
+    expect(schema.required).toEqual(['Statuses', 'errorMessage'])
+  })
+
+  test('optional nested field becomes required but nullable', () => {
+    const md = build(`### Processo\n#### Status (opcional, opções: ATIVO, INATIVO)\n#### NmParte`)
+    const schema = JSON.parse(promptJsonSchemaFromPromptMarkdown(md)!)
+    expect(schema.properties.Processo.required).toEqual(['Status', 'NmParte'])
+    expect(schema.properties.Processo.properties.Status.anyOf).toEqual([
+      { type: 'string', enum: ['ATIVO', 'INATIVO'] },
+      { type: 'null' }
+    ])
+  })
+
+  test('enum is rejected for array-object headings', () => {
+    const md = build(`### Partes[] (opções: AUTOR, REU)\n#### NmParte`)
+    expect(() => parsePromptVariablesFromMarkdown(md)).toThrow(/enum só pode/i)
+  })
+
+  test('optional object syntax in portuguese becomes required but nullable', () => {
+    const md = build(`### Processo (opcional)\n#### NmParte`)
+    const schema = JSON.parse(promptJsonSchemaFromPromptMarkdown(md)!)
+    expect(schema.required).toEqual(['Processo', 'errorMessage'])
+    expect(schema.properties.Processo.anyOf).toEqual([
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          NmParte: { type: 'string' }
+        },
+        required: ['NmParte']
+      },
+      { type: 'null' }
+    ])
+  })
+
   // ---------------- Schema Snapshot Tests ----------------
   test('schema snapshot: mixed objects and arrays', () => {
     const md = build(`### Processo\n#### Juizo\n##### NmJuizo\n##### DtDistribuicao\n#### Partes[]\n##### Parte\n###### NmParte\n###### TpParte\n### Movimentacoes[]\n#### Mov\n##### DtMov`)
@@ -231,7 +301,12 @@ describe('auto-json parser & schema', () => {
             required: ['Mov']
           }
         },
-        errorMessage: { type: 'string' }
+        errorMessage: {
+          anyOf: [
+            { type: 'string' },
+            { type: 'null' }
+          ]
+        }
       },
       required: ['Processo','Movimentacoes','errorMessage']
     })
@@ -257,7 +332,12 @@ describe('auto-json parser & schema', () => {
             required: ['NmParte','TpParte']
           }
         },
-        errorMessage: { type: 'string' }
+        errorMessage: {
+          anyOf: [
+            { type: 'string' },
+            { type: 'null' }
+          ]
+        }
       },
       required: ['Partes', 'errorMessage']
     })

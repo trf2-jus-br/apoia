@@ -589,6 +589,32 @@ O tipo primitivo de cada campo H6 é inferido pelo **prefixo do nome**:
 
 O texto em itálico após o traço no nome do heading (`### PPP[] - Perfis Profissiográficos`) vira o rótulo de exibição; o texto antes do traço vira o nome do campo no JSON.
 
+### Campos opcionais e enums
+
+Os headings também aceitam metadados opcionais entre parênteses, em português:
+
+| Sintaxe | Significado | Exemplo |
+|--------|-------------|---------|
+| `(opcional)` | Campo anulável: a propriedade continua no JSON, mas pode vir como `null` | `###### Status (opcional)` |
+| `(opções: A, B, C)` | Enum: restringe os valores permitidos | `###### Status (opções: ATIVO, INATIVO)` |
+
+Esses modificadores podem ser combinados:
+
+| Sintaxe | Semântica |
+|--------|-----------|
+| `###### Status (opcional, opções: ATIVO, INATIVO)` | Campo primitivo opcional com enum |
+| `### Statuses[] (opções: ATIVO, INATIVO)` | Array obrigatório cujos itens devem estar no enum |
+| `### Statuses[] (opcional, opções: ATIVO, INATIVO)` | Array opcional; se vier, cada item deve estar no enum |
+| `### Processo (opcional)` | Objeto opcional |
+
+Regras práticas:
+
+- Sem `opcional`, a propriedade entra em `required` no JSON Schema do pai e não aceita `null`.
+- Com `opcional`, a propriedade continua em `required`, mas aceita `null`.
+- Arrays continuam podendo vir vazios por padrão; `[]` vazio é diferente de `null`.
+- O enum só é suportado para campos primitivos e arrays primitivos.
+- Arrays de objetos como `### Partes[]` não aceitam enum no heading.
+
 ### Exemplo — campo simples e array
 
 ```markdown
@@ -626,6 +652,62 @@ Isso gera automaticamente o JSON schema equivalente a:
   "Partes": [
     { "Tx_Nome": "...", "Tx_Polo": "..." }
   ]
+}
+```
+
+### Exemplo com enum e opcionalidade
+
+```markdown
+## FIELDS
+
+### Processo
+
+###### Status (opcional, opções: ATIVO, INATIVO, PENDENTE) - Situação do Processo
+- Informe apenas se o texto indicar uma dessas situações.
+
+### Tags[] (opcional, opções: URGENTE, SIGILOSO, PRIORITARIO) - Etiquetas
+- Se não houver etiquetas identificáveis, retorne `null`. Se houver mas a lista estiver vazia, retorne `[]`.
+```
+
+Isso gera um schema equivalente a:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "Processo": {
+      "type": "object",
+      "properties": {
+        "Status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": ["ATIVO", "INATIVO", "PENDENTE"]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["Status"]
+    },
+    "Tags": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["URGENTE", "SIGILOSO", "PRIORITARIO"]
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": ["Processo", "Tags"]
 }
 ```
 
