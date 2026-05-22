@@ -11,7 +11,12 @@ Familiarize-se com esta estrutura, pois você precisará preenchê-la com as inf
 - Leia cada documento cuidadosamente, buscando informações relevantes para cada campo do JSON.
 - Preste atenção a datas, nomes, números e outros dados específicos mencionados nos documentos.
 - Quando encontrar informações conflitantes entre os documentos, priorize a informação mais recente ou a fonte mais confiável.
-- Se uma informação não puder ser encontrada, deixe o campo correspondente vazio no JSON.
+- Todos os campos definidos no JSON devem ser preenchidos e retornados.
+- Quando um campo aceitar `null` no schema e a informação não puder ser encontrada com segurança, preencha esse campo com `null`.
+- Não omita campos do JSON. Mesmo campos anuláveis devem ser retornados explicitamente.
+- Use string vazia `""` apenas quando a instrução do próprio campo exigir isso explicitamente.
+- Use array vazio `[]` apenas quando a informação indicar que o campo existe, mas não há itens a listar.
+- `null` é diferente de `[]` e de `""`: use `null` para ausência ou impossibilidade de preenchimento em campos anuláveis.
 - Todas as datas devem ser informadas no formato dd/mm/yyyy.
 - Datas:
   - Todos os campos que são prefixados com "Dt_" são datas.
@@ -25,12 +30,12 @@ Familiarize-se com esta estrutura, pois você precisará preenchê-la com as inf
 - Eventos:
   - Todos os campos que são prefixados com "Ev_" são eventos.
   - O evento deve ser preenchido apenas com o número do evento.
-  - Caso o evento não seja localizado, preencher com "".
+  - Caso o evento não seja localizado, preencher com `null` se o schema permitir; caso contrário, seguir a instrução específica do campo.
 - Texto Pequeno:
   - Todos os campos que são prefixados com "Tx_" são textos de uma linha (strings).
   - Estes campos deve sem preenchidos com um texto de no máximo 300 caracteres.
 - Texto Grande:
   - Todos os campos que são prefixados com "Tg_" são textos grandes e podem conter múltiplas linhas.
 - Informações faltantes:
-  - Caso não encontre alguma informação nos documentos fornecidos, deixe o campo em branco.
+  - Caso não encontre alguma informação nos documentos fornecidos, use `null` quando o schema permitir isso.
   - Nunca invente informações. Use apenas as que estiverem disponíveis nos documentos fornecidos.
