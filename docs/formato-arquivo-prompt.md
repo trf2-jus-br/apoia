@@ -557,6 +557,8 @@ O recurso **auto-json** permite definir a estrutura dos campos de extração dir
 
 O resultado é que o autor do prompt escreve apenas uma vez — as descrições dos campos servem simultaneamente como instrução para o modelo e como definição do schema JSON.
 
+Além dos campos declarados pelo autor, o sistema sempre adiciona um campo técnico chamado `errorMessage`. Ele deve ser usado quando houver alguma situação que impeça o preenchimento confiável do resultado. Quando `errorMessage` vier preenchido, a aplicação descarta o restante do JSON e apresenta ao usuário apenas essa mensagem.
+
 **Diferença entre os dois títulos:**
 
 | Título | Comportamento |
@@ -614,6 +616,8 @@ Regras práticas:
 - Arrays continuam podendo vir vazios por padrão; `[]` vazio é diferente de `null`.
 - O enum só é suportado para campos primitivos e arrays primitivos.
 - Arrays de objetos como `### Partes[]` não aceitam enum no heading.
+- `errorMessage` sempre existe no schema e deve ficar como `null` quando a extração puder ser concluída normalmente.
+- Se houver bloqueio real para a extração, o modelo deve preencher `errorMessage` com a explicação e a aplicação usará apenas esse campo para feedback ao usuário.
 
 ### Exemplo — campo simples e array
 

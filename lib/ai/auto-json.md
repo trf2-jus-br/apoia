@@ -7,6 +7,13 @@ A estrutura do JSON que você deve preencher está definida na variável:
 
 Familiarize-se com esta estrutura, pois você precisará preenchê-la com as informações extraídas dos documentos.
 
+## Campo `errorMessage`
+- O JSON sempre contém o campo `errorMessage`.
+- Se houver qualquer situação que impeça o preenchimento confiável do resultado, preencha `errorMessage` com uma mensagem curta, clara e objetiva explicando o problema.
+- Quando `errorMessage` estiver preenchido, ele será tratado como a saída principal para o usuário. Nessa situação, os demais campos do JSON não serão aproveitados pela aplicação.
+- Use `errorMessage` para relatar bloqueios reais de preenchimento, por exemplo: documentos insuficientes, conteúdo ilegível, conflito incontornável entre fontes, ausência total de base documental ou qualquer outra condição que impeça uma extração confiável.
+- Não use `errorMessage` apenas para observações secundárias. Se o preenchimento puder ser feito com segurança, preencha os campos normalmente e deixe `errorMessage` como `null`.
+
 ## Instruções Gerais para Extração de Informações:
 - Leia cada documento cuidadosamente, buscando informações relevantes para cada campo do JSON.
 - Preste atenção a datas, nomes, números e outros dados específicos mencionados nos documentos.
@@ -14,6 +21,7 @@ Familiarize-se com esta estrutura, pois você precisará preenchê-la com as inf
 - Todos os campos definidos no JSON devem ser preenchidos e retornados.
 - Quando um campo aceitar `null` no schema e a informação não puder ser encontrada com segurança, preencha esse campo com `null`.
 - Não omita campos do JSON. Mesmo campos anuláveis devem ser retornados explicitamente.
+- Se houver bloqueio real que inviabilize o preenchimento confiável do resultado, preencha `errorMessage` e mantenha os demais campos apenas como valores compatíveis com o schema.
 - Use string vazia `""` apenas quando a instrução do próprio campo exigir isso explicitamente.
 - Use array vazio `[]` apenas quando a informação indicar que o campo existe, mas não há itens a listar.
 - `null` é diferente de `[]` e de `""`: use `null` para ausência ou impossibilidade de preenchimento em campos anuláveis.
