@@ -550,14 +550,14 @@
         text-decoration-thickness: 2px; */
     }
 
-    span.nao-citacao {
-        /* color: #000;
-        background-color: #fffacdb0; */
+    /* span.nao-citacao {
+        color: #000;
+        background-color: #fffacdb0;
 
-        /* text-decoration: underline;
+        text-decoration: underline;
         text-decoration-color: #e6db01;
-        text-decoration-thickness: 2px; */
-    }
+        text-decoration-thickness: 2px;
+    } */
 
     span.widgetlinkdocumento {
          cursor: pointer;
