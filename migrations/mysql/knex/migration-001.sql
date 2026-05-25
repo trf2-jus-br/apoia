@@ -1,5 +1,3 @@
-create schema apoia;
-
 use apoia;
 
 CREATE TABLE ia_content_source (

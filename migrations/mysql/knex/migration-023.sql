@@ -4,6 +4,9 @@
 -- 3. Rename kind → category (nullable)
 -- 4. Set all category to NULL
 
+SET @OLD_SQL_SAFE_UPDATES = @@SQL_SAFE_UPDATES;
+SET SQL_SAFE_UPDATES = 0;
+
 -- 1. Move workflow into content (merge JSON objects)
 UPDATE `apoia`.`ia_prompt`
 SET content = JSON_MERGE_PATCH(content, JSON_OBJECT('workflow', CAST(workflow AS JSON)))
@@ -17,3 +20,5 @@ ALTER TABLE `apoia`.`ia_prompt` CHANGE COLUMN `kind` `category` VARCHAR(128) NUL
 
 -- 4. Set all category to NULL
 UPDATE `apoia`.`ia_prompt` SET `category` = NULL;
+
+SET SQL_SAFE_UPDATES = @OLD_SQL_SAFE_UPDATES;

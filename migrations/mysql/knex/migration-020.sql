@@ -1,9 +1,9 @@
 -- F1: Unificacao de Prompts - Novas colunas para uuid, library, workflow
 -- Ref: REFACTOR-PLAN.md
 
---------------------------------------------------
+-- --------------------------------------------------
 -- 1. ia_prompt: uuid, library, library_version, workflow
---------------------------------------------------
+-- --------------------------------------------------
 
 -- 1a. Add uuid column (nullable initially for backfill)
 ALTER TABLE `apoia`.`ia_prompt` ADD COLUMN `uuid` CHAR(36) NULL;
@@ -43,9 +43,9 @@ ALTER TABLE `apoia`.`ia_prompt` ADD COLUMN `library_version` VARCHAR(64) NULL;
 -- 1g. Add workflow column (JSON)
 ALTER TABLE `apoia`.`ia_prompt` ADD COLUMN `workflow` JSON NULL;
 
---------------------------------------------------
+-- --------------------------------------------------
 -- 2. ia_generation: execution_id, aggregator_prompt_id
---------------------------------------------------
+-- --------------------------------------------------
 
 -- 2a. execution_id groups all generations from a single workflow run
 ALTER TABLE `apoia`.`ia_generation` ADD COLUMN `execution_id` CHAR(36) NULL;
@@ -63,9 +63,9 @@ ALTER TABLE `apoia`.`ia_generation`
 ALTER TABLE `apoia`.`ia_generation` ADD INDEX `idx_ia_generation_execution_id` (`execution_id`);
 ALTER TABLE `apoia`.`ia_generation` ADD INDEX `idx_ia_generation_aggregator` (`aggregator_prompt_id`);
 
---------------------------------------------------
+-- --------------------------------------------------
 -- 3. ia_favorite: add prompt_uuid (dual-write period)
---------------------------------------------------
+-- --------------------------------------------------
 
 ALTER TABLE `apoia`.`ia_favorite` ADD COLUMN `prompt_uuid` CHAR(36) NULL;
 
@@ -79,9 +79,9 @@ SET SQL_SAFE_UPDATES = 1;
 
 ALTER TABLE `apoia`.`ia_favorite` ADD INDEX `idx_ia_favorite_prompt_uuid` (`prompt_uuid`);
 
---------------------------------------------------
+-- --------------------------------------------------
 -- 4. ia_prompt_rating: add prompt_uuid (dual-write period)
---------------------------------------------------
+-- --------------------------------------------------
 
 ALTER TABLE `apoia`.`ia_prompt_rating` ADD COLUMN `prompt_uuid` CHAR(36) NULL;
 

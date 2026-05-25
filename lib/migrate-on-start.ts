@@ -49,6 +49,10 @@ export async function migrateIfNeeded() {
     if (process.env.SPRING_FLYWAY_USER) cfg.connection.user = process.env.SPRING_FLYWAY_USER
     if (process.env.SPRING_FLYWAY_PASSWORD) cfg.connection.password = process.env.SPRING_FLYWAY_PASSWORD
     if (process.env.DB_HOST) cfg.connection.host = process.env.DB_HOST
+    if (client === 'mysql2') {
+        // SQL migrations are stored as full scripts with multiple statements.
+        cfg.connection.multipleStatements = true
+    }
     const source = new SqlMigrationSource(sqlDir)
     const db = Knex(cfg)
     const start = Date.now()

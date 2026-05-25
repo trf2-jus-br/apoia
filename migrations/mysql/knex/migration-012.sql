@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS apoia.ia_batch_index_map (
   CONSTRAINT fk_ia_batch_index_map_batch FOREIGN KEY (batch_id) REFERENCES apoia.ia_batch(id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
 
-CREATE UNIQUE INDEX uk_index_map_batch_from_to ON apoia.ia_batch_index_map (batch_id, descr_from, descr_to);
+CREATE UNIQUE INDEX uk_index_map_batch_from_to ON apoia.ia_batch_index_map (batch_id, descr_from(383), descr_to(383));
 CREATE INDEX ix_index_map_batch ON apoia.ia_batch_index_map (batch_id);
 
 -- Add prompt_base_id to ia_batch (MySQL)
