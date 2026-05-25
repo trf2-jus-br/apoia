@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { useRouter } from 'next/navigation';
-import { enumSorted, Model, ModelProvider, parseOpenRouterModels } from '@/lib/ai/model-types';
+import { enumSorted, Model, ModelProvider, parseOpenRouterModels, parseOnPremisesModels } from '@/lib/ai/model-types';
 import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support';
 import { addGenericCookie } from '../prompts/add-cookie';
 
@@ -22,6 +22,7 @@ export default function PrefsForm(params) {
     Frm.update(data, setData, formState)
 
     const configuredOpenRouterModels = parseOpenRouterModels(data?.env?.[ModelProvider.OPENROUTER.models] || params.openRouterModels)
+    const configuredOnPremisesModels = parseOnPremisesModels(data?.env?.[ModelProvider.ON_PREMISES.models] || params.onPremisesModels)
 
     const handleClick = (e) => {
         setProcessing(true);
@@ -50,6 +51,9 @@ export default function PrefsForm(params) {
         }
         if (data.env?.[ModelProvider.OPENROUTER.apiKey] && configuredOpenRouterModels[0]) {
             return configuredOpenRouterModels[0].name
+        }
+        if (data.env?.[ModelProvider.ON_PREMISES.apiKey] && configuredOnPremisesModels[0]) {
+            return configuredOnPremisesModels[0].name
         }
         // if (params.defaultModel) return params.defaultModel
         // for (const m of enumSorted(Model)) {
@@ -90,6 +94,13 @@ export default function PrefsForm(params) {
             hidden: !data.env?.[ModelProvider.OPENROUTER.apiKey],
             visible: params.statusDeLancamento >= ModelProvider.OPENROUTER.status,
         })))
+        .concat(configuredOnPremisesModels.map(model => ({
+            id: model.name,
+            name: model.name,
+            disabled: !data.env?.[ModelProvider.ON_PREMISES.apiKey],
+            hidden: !data.env?.[ModelProvider.ON_PREMISES.apiKey],
+            visible: params.statusDeLancamento >= ModelProvider.ON_PREMISES.status,
+        })))
         .sort((a, b) => a.disabled ? 1 : b.disabled ? -1 : 0)
     // .filter(e => e.visible)
 
@@ -124,9 +135,9 @@ export default function PrefsForm(params) {
                             <div key={refreshCount}>
                                 {enumSorted(ModelProvider).map((provider) => (
                                     <div className="row mb-2" key={provider.value.name} hidden={params.statusDeLancamento < provider.value.status}>
-                                        <Frm.Input label={`${provider.value.name}: ${provider.value.name === 'LM Studio' ? 'Chave da API (opcional)' : 'Chave da API'}`} name={`env['${provider.value.apiKey}']`} validator={(value: string, name: string) => validator(value, name, provider.value.apiKeyRegex)} width={provider.value.resourceName ? 8 : provider.value.accessKeyId ? 4 : 12} />
+                                        <Frm.Input label={`${provider.value.name}: ${provider.value.name === 'On-premises' ? 'Chave da API (opcional)' : 'Chave da API'}`} name={`env['${provider.value.apiKey}']`} validator={(value: string, name: string) => validator(value, name, provider.value.apiKeyRegex)} width={provider.value.resourceName ? 8 : provider.value.accessKeyId ? 4 : 12} />
                                         {provider.value.resourceName &&
-                                            <Frm.Input label={provider.value.name === 'LM Studio' ? 'URL do Servidor' : `Nome do Recurso/URL`} name={`env['${provider.value.resourceName}']`} width="4" />
+                                            <Frm.Input label={provider.value.name === 'On-premises' ? 'URL do Servidor' : `Nome do Recurso/URL`} name={`env['${provider.value.resourceName}']`} width="4" />
                                         }
                                         {provider.value.accessKeyId && <>
                                             <Frm.Input label={`Id Chave`} name={`env['${provider.value.accessKeyId}']`} width="4" />
@@ -134,10 +145,12 @@ export default function PrefsForm(params) {
                                         </>}
                                         {provider.value.models && (
                                             <Frm.TextArea
-                                                label="Modelos OpenRouter"
+                                                label={provider.value.name === 'On-premises' ? 'Modelos On-premises' : 'Modelos OpenRouter'}
                                                 name={`env['${provider.value.models}']`}
                                                 width="12"
-                                                explanation="Use ';' para separar modelos. Formato: modelId ou modelId,inputPrice,outputPrice,cacheReadPrice,totalContext,supports. Ex.: openai/gpt-5.2; google/gemini-2.5-pro,2.5,15,0.25,1000,pdf|audio|video"
+                                                explanation={provider.value.name === 'On-premises'
+                                                    ? "Use ';' para separar modelos. Formato: modelId ou modelId,inputPrice,outputPrice,cacheReadPrice,totalContext,supports. Ex.: llama3.2; mistral-small,0,0,0,32768"
+                                                    : "Use ';' para separar modelos. Formato: modelId ou modelId,inputPrice,outputPrice,cacheReadPrice,totalContext,supports. Ex.: openai/gpt-5.2; google/gemini-2.5-pro,2.5,15,0.25,1000,pdf|audio|video"}
                                             />
                                         )}
                                     </div>

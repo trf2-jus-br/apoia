@@ -17,7 +17,7 @@ export default async function Home() {
   if (prefs)
     initialState = prefs
 
-  const { availableApiKeys, defaultModel, userMayChangeModel, selectableModels, openRouterModels } = await getSelectedModelParams()
+  const { availableApiKeys, defaultModel, userMayChangeModel, selectableModels, openRouterModels, onPremisesModels } = await getSelectedModelParams()
 
   const statusCookie = (await cookies()).get('beta-tester')?.value
   const statusDeLancamento = statusCookie ? JSON.parse(statusCookie) : StatusDeLancamento.PUBLICO
@@ -25,7 +25,7 @@ export default async function Home() {
 
   return (<>
     <Container fluid={false}>
-      <PrefsForm initialState={initialState} availableApiKeys={availableApiKeys} defaultModel={defaultModel} selectableModels={selectableModels} userMayChangeModel={userMayChangeModel} statusDeLancamento={statusDeLancamento} openRouterModels={openRouterModels} />
+      <PrefsForm initialState={initialState} availableApiKeys={availableApiKeys} defaultModel={defaultModel} selectableModels={selectableModels} userMayChangeModel={userMayChangeModel} statusDeLancamento={statusDeLancamento} openRouterModels={openRouterModels} onPremisesModels={onPremisesModels} />
     </Container>
   </>)
 }

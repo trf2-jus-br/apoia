@@ -5,7 +5,7 @@ import { EMPTY_PREFS_COOKIE } from '@/lib/utils/prefs-types'
 import { assertCourtId, getCurrentUser } from '../user'
 import { envStringPrefixed } from '../utils/env'
 import { getPrefs } from '../utils/prefs'
-import { getModelDetails, FileTypeEnum, modelCalcUsage, ModelUsageResult, parseOpenRouterModels, ConfiguredModelValueType, ModelProvider } from './model-types'
+import { getModelDetails, FileTypeEnum, modelCalcUsage, ModelUsageResult, parseOpenRouterModels, parseOnPremisesModels, ConfiguredModelValueType, ModelProvider } from './model-types'
 import { UsageType } from './prompt-types'
 
 export async function getOpenRouterModelsFromPrefs(): Promise<string> {
@@ -21,8 +21,24 @@ export async function getConfiguredOpenRouterModelsFromPrefs(): Promise<Configur
     return parseOpenRouterModels(await getOpenRouterModelsFromPrefs())
 }
 
+export async function getOnPremisesModelsFromPrefs(): Promise<string> {
+    const prefs = await getPrefs()
+    const user = await getCurrentUser()
+    const seqTribunalPai = user ? '' + assertCourtId(user) : undefined
+    const envKey = ModelProvider.ON_PREMISES.models as string
+
+    return prefs?.env?.[envKey] || envStringPrefixed(envKey, seqTribunalPai) || ''
+}
+
+export async function getConfiguredOnPremisesModelsFromPrefs(): Promise<ConfiguredModelValueType[]> {
+    return parseOnPremisesModels(await getOnPremisesModelsFromPrefs())
+}
+
 async function getModelDetailsFromPrefs(modelName: string) {
-    const configuredModels = await getConfiguredOpenRouterModelsFromPrefs()
+    const configuredModels = [
+        ...await getConfiguredOpenRouterModelsFromPrefs(),
+        ...await getConfiguredOnPremisesModelsFromPrefs(),
+    ]
     return getModelDetails(modelName, configuredModels)
 }
 
@@ -62,6 +78,9 @@ export async function getModelClipLimit(modelName: string): Promise<number | und
 }
 
 export async function calculateModelUsage(modelName: string, usage: UsageType): Promise<ModelUsageResult> {
-    const configuredModels = await getConfiguredOpenRouterModelsFromPrefs()
+    const configuredModels = [
+        ...await getConfiguredOpenRouterModelsFromPrefs(),
+        ...await getConfiguredOnPremisesModelsFromPrefs(),
+    ]
     return modelCalcUsage(modelName, usage, configuredModels)
 }

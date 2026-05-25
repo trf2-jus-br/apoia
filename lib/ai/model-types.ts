@@ -29,7 +29,7 @@ const ModelProviderArray = [
     { id: 5, name: 'Groq', apiKey: 'GROQ_API_KEY', apiKeyRegex: /^gsk_[a-zA-Z0-9]{52}$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
     { id: 6, name: 'DeepSeek', apiKey: 'DEEPSEEK_API_KEY', apiKeyRegex: /^sk-[a-zA-Z0-9]{32}$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
     { id: 9, name: 'OpenRouter', apiKey: 'OPENROUTER_API_KEY', models: 'OPENROUTER_MODELS', apiKeyRegex: /^sk-or-v1-[a-zA-Z0-9_-]+$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
-    { id: 8, name: 'LM Studio', apiKey: 'LM_STUDIO_API_KEY', resourceName: 'LM_STUDIO_URL', apiKeyRegex: /.*/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
+    { id: 8, name: 'On-premises', apiKey: 'ON_PREMISES_API_KEY', resourceName: 'ON_PREMISES_URL', models: 'ON_PREMISES_MODELS', apiKeyRegex: /.*/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
 ]
 
 export type ModelProviderValueType = EnumOfObjectsValueType & { apiKey: string, resourceName?: string, region?: string, accessKeyId?: string, models?: string, apiKeyRegex: RegExp, status: StatusDeLancamento }
@@ -125,7 +125,6 @@ const ModelArray: ModelArrayType[] = [
     // { id: 22, name: 'aws-anthropic.claude-3-haiku-20240307-v1:0', provider: ModelProvider.AWS, status: StatusDeLancamento.PUBLICO },
     { id: 22, name: 'aws-us.anthropic.claude-3-5-haiku-20241022-v1:0', provider: ModelProvider.AWS, cachedInputTokenPPM: 0.08, inputTokenPPM: 0.8, outputTokenPPM: 4, status: StatusDeLancamento.PUBLICO, supportedFileTypes: [FileTypeEnum.PDF] },
     { id: 22, name: 'aws-us.anthropic.claude-sonnet-4-20250514-v1:0', provider: ModelProvider.AWS, cachedInputTokenPPM: 0.3, inputTokenPPM: 3, outputTokenPPM: 15, status: StatusDeLancamento.PUBLICO, supportedFileTypes: [FileTypeEnum.PDF] },
-    { id: 23, name: 'lm-studio', provider: ModelProvider.LM_STUDIO, cachedInputTokenPPM: 0, inputTokenPPM: 0, outputTokenPPM: 0, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
 ]
 
 export type ModelValueType = EnumOfObjectsValueType & { provider: ModelProviderValueType, cachedInputTokenPPM: number, inputTokenPPM: number, outputTokenPPM: number, status: StatusDeLancamento, clip?: number, supportedFileTypes?: FileTypeEnum[] }
@@ -184,6 +183,33 @@ function parseSupportedFileTypes(value?: string): FileTypeEnum[] | undefined {
 
 export function normalizeOpenRouterModelName(modelName: string): string {
     return modelName.startsWith('openrouter-') ? modelName : `openrouter-${modelName}`
+}
+
+export function normalizeOnPremisesModelName(modelName: string): string {
+    return modelName.startsWith('onpremises-') ? modelName : `onpremises-${modelName}`
+}
+
+export function parseOnPremisesModels(modelsConfig?: string): ConfiguredModelValueType[] {
+    if (!modelsConfig?.trim()) return []
+
+    const parsedModels: ConfiguredModelValueType[] = []
+
+    for (const entry of modelsConfig.split(';').map(item => item.trim()).filter(Boolean)) {
+            const [rawModelName, inputTokenPPM, outputTokenPPM, cachedInputTokenPPM, clip, supportedFileTypes] = entry.split(',').map(part => part.trim())
+            if (!rawModelName) continue
+
+            parsedModels.push({
+                name: normalizeOnPremisesModelName(rawModelName),
+                provider: ModelProvider.ON_PREMISES,
+                inputTokenPPM: parseOptionalNumber(inputTokenPPM),
+                outputTokenPPM: parseOptionalNumber(outputTokenPPM),
+                cachedInputTokenPPM: parseOptionalNumber(cachedInputTokenPPM),
+                clip: parseOptionalNumber(clip),
+                supportedFileTypes: parseSupportedFileTypes(supportedFileTypes),
+            })
+    }
+
+    return parsedModels
 }
 
 export function parseOpenRouterModels(modelsConfig?: string): ConfiguredModelValueType[] {
