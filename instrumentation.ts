@@ -10,6 +10,11 @@ export async function register() {
         await import('./sentry.edge.config');
     }
     if (process.env.NEXT_RUNTIME === 'nodejs') {
+        if (process.env.IGNORE_SSL_ERRORS === 'true') {
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+            console.warn('[security] NODE_TLS_REJECT_UNAUTHORIZED=0: SSL certificate verification is disabled (IGNORE_SSL_ERRORS=true)')
+        }
+
         const { migrateIfNeeded } = await import('./lib/migrate-on-start')
         await migrateIfNeeded()
 
