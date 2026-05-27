@@ -28,7 +28,9 @@ function resolveModelSelection(params: { overrideModel?: string, profile?: Model
     if (profile === 'PADRAO') return selectedModel
 
     const parsedConfig = parseModelConfig(tribunalConfig)
-    return resolveProfileModel(profile, parsedConfig.profileModels) || selectedModel
+    const resolvedModel = resolveProfileModel(profile, parsedConfig.profileModels) || selectedModel
+    devLog(`Resolved model for profile ${profile}: ${resolvedModel} (selectedModel: ${selectedModel}`)
+    return resolvedModel
 }
 
 function getEnvKeyByModel(model: string): string {

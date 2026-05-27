@@ -2,9 +2,9 @@ import { getModelProfileFallbackOrder, parseModelConfig, resolveProfileModel } f
 
 describe('model profile config', () => {
     test('parses mixed selectable and profile models', () => {
-        const parsed = parseModelConfig('gemini-3.1-flash-lite;gemini-3-pro;EFICIENTE:gemini-3.1-flash-lite;EFICIENTE_MP3:gemini-2.5-flash-lite')
+        const parsed = parseModelConfig('gemini-3.1-flash-lite;gemini-3.1-pro;EFICIENTE:gemini-3.1-flash-lite;EFICIENTE_MP3:gemini-2.5-flash-lite')
 
-        expect(parsed.selectableModels).toEqual(['gemini-3.1-flash-lite', 'gemini-3-pro'])
+        expect(parsed.selectableModels).toEqual(['gemini-3.1-flash-lite', 'gemini-3.1-pro'])
         expect(parsed.defaultModel).toBe('gemini-3.1-flash-lite')
         expect(parsed.profileModels.EFICIENTE).toBe('gemini-3.1-flash-lite')
         expect(parsed.profileModels.EFICIENTE_MP3).toBe('gemini-2.5-flash-lite')
@@ -26,7 +26,7 @@ describe('model profile config', () => {
     })
 
     test('ignores invalid legacy profile names', () => {
-        const parsed = parseModelConfig('BAIXO_AUDIO:gemini-2.5-flash-lite;ALTO:gemini-3-pro;gemini-3-pro')
+        const parsed = parseModelConfig('BAIXO_AUDIO:gemini-2.5-flash-lite;ALTO:gemini-3.1-pro-preview;gemini-3-pro')
 
         expect(parsed.profileModels).toEqual({})
         expect(parsed.selectableModels).toEqual(['gemini-3-pro'])
