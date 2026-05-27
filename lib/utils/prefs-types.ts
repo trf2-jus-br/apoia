@@ -1,2 +1,2 @@
-export const EMPTY_PREFS_COOKIE: PrefsCookieType = { model: '', env: {} }
-export type PrefsCookieType = { model: string, env: { [key: string]: string } }
+export const EMPTY_PREFS_COOKIE: PrefsCookieType = { model: '', useModelInAllSituations: false, env: {} }
+export type PrefsCookieType = { model: string, useModelInAllSituations?: boolean, env: { [key: string]: string } }

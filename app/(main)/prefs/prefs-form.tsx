@@ -23,6 +23,9 @@ export default function PrefsForm(params) {
 
     const configuredOpenRouterModels = parseOpenRouterModels(data?.env?.[ModelProvider.OPENROUTER.models] || params.openRouterModels)
     const configuredOnPremisesModels = parseOnPremisesModels(data?.env?.[ModelProvider.ON_PREMISES.models] || params.onPremisesModels)
+    const hasUserProvidedApiKey = enumSorted(ModelProvider).some(provider => !!data?.env?.[provider.value.apiKey])
+    const singleTribunalSelectableModel = (params.selectableModels?.length || 0) === 1
+    const tribunalOnlyMode = singleTribunalSelectableModel && !hasUserProvidedApiKey
 
     const handleClick = (e) => {
         setProcessing(true);
@@ -105,6 +108,15 @@ export default function PrefsForm(params) {
     // .filter(e => e.visible)
 
     useEffect(() => {
+        if (!tribunalOnlyMode) return
+        if (!data.model && !data.useModelInAllSituations) return
+
+        document.cookie = `prefs=; path=/;`
+        setData({ ...data, model: '', useModelInAllSituations: false })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tribunalOnlyMode, data.model, data.useModelInAllSituations])
+
+    useEffect(() => {
         const oldData = data
         const newData = { ...data, model: getAvailableModel() }
         for (const model of enumSorted(Model)) {
@@ -163,15 +175,28 @@ export default function PrefsForm(params) {
                                     </div>
                                     </div>
                                     </div> */}
-                                <div className="row mb-2">
-                                    <Frm.Select label="Modelo Padrão" name="model" options={[{ id: '', name: '[Selecionar]' }, ...modelOptions]} />
-                                </div>
+                                {!tribunalOnlyMode
+                                    ? <>
+                                        <div className="row mb-2">
+                                            <Frm.Select label="Modelo Padrão" name="model" options={[{ id: '', name: '[Selecionar]' }, ...modelOptions]} />
+                                        </div>
+                                        <div className="row mb-2">
+                                            <Frm.Checkbox label="Usar meu modelo em todas as situações" name="useModelInAllSituations" width="12" />
+                                        </div>
+                                    </>
+                                    : <div className="row mb-2">
+                                        <div className="col">
+                                            <div className="alert alert-light mb-0">
+                                                Este tribunal opera apenas com seus modelos e perfis default. Informe uma chave de API própria para escolher um modelo padrão.
+                                            </div>
+                                        </div>
+                                    </div>}
                                 <div className="row pt-3">
                                     <div className="col">
                                         <button onClick={handleClear} className="btn btn-warning" style={{ width: '10em' }}>Limpar</button>
                                     </div>
                                     <div className="col">
-                                        <button onClick={handleClick} disabled={processing || !data.model} className="btn btn-primary float-end" style={{ width: '10em' }}>{processing
+                                        <button onClick={handleClick} disabled={processing || (!data.model && !tribunalOnlyMode)} className="btn btn-primary float-end" style={{ width: '10em' }}>{processing
                                             ? (<span className="spinner-border text-white opacity-50" style={{ width: '1em', height: '1em' }} role="status"><span className="visually-hidden">Loading...</span></span>)
                                             : 'Salvar'}</button>
 

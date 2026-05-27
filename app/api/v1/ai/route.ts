@@ -4,6 +4,7 @@ import { promptDefinitionFromDefinitionAndOptions } from '@/lib/ai/prompt'
 import { getPromptDefinition as getPromptDefinitionFromStore } from '@/lib/ai/prompt-store'
 import { PromptDao, UserDao } from '@/lib/db/dao'
 import { IAPrompt } from '@/lib/db/mysql-types'
+import { normalizeModelProfile } from '@/lib/ai/model-types'
 import { assertApiUser } from '@/lib/user'
 import { preprocessTemplate } from '@/lib/ai/template'
 import { createUIMessageStream, createUIMessageStreamResponse, StreamTextResult, ToolSet, UIMessage } from 'ai'
@@ -75,6 +76,7 @@ async function resolveApiPrompt(kind: string, promptSlug?: string, promptId?: nu
             dbId: prompt.id,
             metadata: {
                 target: prompt.content.target || undefined,
+                profile: normalizeModelProfile(prompt.content.profile),
             }
         } : await getPromptDefinitionFromStore(kind)
 
@@ -250,14 +252,14 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
                 writer.write({ type: 'text-delta', delta: ret.cached, id: '1' });
                 writer.write({ type: 'text-end', id: '1' });
                 writer.write({ type: 'finish-step' });
-                writer.write({
-                    type: 'finish',
-                    messageMetadata: {
-                        model: ret.model,
-                        usage: ret.usage,
-                        messages: executionResults.messages
-                    },
-                });
+                    writer.write({
+                        type: 'finish',
+                        messageMetadata: {
+                            model: ret.model,
+                            usage: ret.usage,
+                            messages: executionResults.messages
+                        },
+                    });
             }
         })
         return createUIMessageStreamResponse({ stream });

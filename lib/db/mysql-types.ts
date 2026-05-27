@@ -134,6 +134,7 @@ export type IAPrompt = {
         matter?: string[]
 
         target?: string
+        profile?: string
         editor_label?: string
         piece_strategy?: string
         piece_descr?: string[]
@@ -186,6 +187,7 @@ export type IAPromptToInsert = {
         matter?: string[]
 
         target?: string
+        profile?: string
         editor_label?: string
         piece_strategy?: string
         piece_descr?: string
@@ -224,6 +226,7 @@ export type IAPromptList = {
         matter?: string[]
 
         target?: string
+        profile?: string
         editor_label?: string
         piece_strategy?: string
         piece_descr?: string[]

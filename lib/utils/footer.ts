@@ -3,7 +3,23 @@ import { identificarSituacaoDaPeca } from "../proc/process-types"
 import { PecaType } from "../proc/process-types"
 import { slugify } from "./utils"
 
-export const buildFooterFromPieces = (model: string, selectedPieces: PecaType[]): string => {
+const normalizeModels = (model: string | string[]): string[] => Array.from(new Set((Array.isArray(model) ? model : [model]).filter(Boolean)))
+
+const joinWithAnd = (items: string[]): string => {
+    if (items.length <= 1) return items[0] || ''
+    if (items.length === 2) return `${items[0]} e ${items[1]}`
+    const last = items[items.length - 1]
+    return `${items.slice(0, -1).join(', ')} e ${last}`
+}
+
+const buildModelInfo = (model: string | string[]): string => {
+    const models = normalizeModels(model)
+    if (models.length === 0) return 'Utilizou um modelo não informado'
+    if (models.length === 1) return `Utilizou o modelo ${models[0]}`
+    return `Utilizou os modelos ${joinWithAnd(models)}`
+}
+
+export const buildFooterFromPieces = (model: string | string[], selectedPieces: PecaType[]): string => {
     const pecasComConteudo: TextoType[] = []
     for (const peca of selectedPieces) {
         const slug = slugify(peca.descr)
@@ -12,7 +28,7 @@ export const buildFooterFromPieces = (model: string, selectedPieces: PecaType[])
     return buildFooter(model, pecasComConteudo)
 }
 
-export const buildFooter = (model: string, pecasComConteudo: TextoType[]): string => {
+export const buildFooter = (model: string | string[], pecasComConteudo: TextoType[]): string => {
     let pecasStr = ''
     if (pecasComConteudo?.length) {
         const pecasNomes = pecasComConteudo.map(p => {
@@ -26,7 +42,7 @@ export const buildFooter = (model: string, pecasComConteudo: TextoType[]): strin
             pecasStr = `${pecasNomes.join(', ')} e ${last}`;
         }
     }
-    const info = `Utilizou o modelo ${model}${pecasStr ? ` e acessou as peças: ${pecasStr}` : ''}.`
+    const info = `${buildModelInfo(model)}${pecasStr ? ` e acessou as peças: ${pecasStr}` : ''}.`
     return info
 }
 

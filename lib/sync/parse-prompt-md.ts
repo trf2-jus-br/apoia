@@ -9,6 +9,7 @@ import { ParsedPrompt, WorkflowRef } from './types'
 import { slugify } from '../utils/utils'
 import { Share, Target, Scope, Instance, Matter } from '../proc/process-types'
 import { PieceStrategy, Plugin, T } from '../proc/combinacoes'
+import { normalizeModelProfile } from '../ai/model-types'
 
 /**
  * Build a lookup map that accepts both the canonical form (e.g. 'MAIS_RELEVANTES')
@@ -179,6 +180,15 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
         const resolved = resolveEnumArray(metadata.piece_descr, pieceDescrLookup, 'piece_descr', relativePath)
         if (resolved) metadata.piece_descr = resolved
         else delete metadata.piece_descr
+    }
+    if (metadata.profile != null) {
+        const resolved = normalizeModelProfile(String(metadata.profile))
+        if (resolved) metadata.profile = resolved
+        else {
+            console.warn(`[sync] '${relativePath}': valor inválido '${metadata.profile}' para o campo 'profile'`)
+            metadata.__invalid_profile = String(metadata.profile)
+            delete metadata.profile
+        }
     }
     if (metadata.summary != null) {
         metadata.summary = normalizeSummary(metadata.summary)

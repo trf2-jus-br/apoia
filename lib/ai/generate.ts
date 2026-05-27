@@ -129,7 +129,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     })
 
     // Get the model so that we can clip the pieces if necessary
-    const { model: modelPreSelected } = await getModel({ structuredOutputs: false, overrideModel: definition.model })
+    const { model: modelPreSelected } = await getModel({ structuredOutputs: false, profile: definition.metadata?.profile })
     data.textos = await clipPieces(modelPreSelected, data.textos)
 
     const libraryPrompt = await getLibraryDocumentsForPrompt(slugify(definition.name), data.documentosDaBiblioteca)
@@ -137,7 +137,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const messages = exec.message
     const structuredOutputs = exec.params?.structuredOutputs
 
-    const { model, modelRef, apiKeyFromEnv } = await getModel({ structuredOutputs: !!structuredOutputs, overrideModel: definition.model })
+    const { model, modelRef, apiKeyFromEnv } = await getModel({ structuredOutputs: !!structuredOutputs, profile: definition.metadata?.profile })
 
     if (results) results.model = model
     const sha256 = calcSha256(messages)

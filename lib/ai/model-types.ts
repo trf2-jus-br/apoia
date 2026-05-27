@@ -20,6 +20,58 @@ export enum FileTypeEnum {
 export type EnumOfObjectsValueType = { id: number, name: string, sort: number }
 export type EnumOfObjectsType = { [key: string]: EnumOfObjectsValueType }
 
+const ModelProfileArray = [
+    { key: 'PADRAO', name: 'Padrão' },
+    { key: 'PADRAO_MP3', name: 'Padrão com MP3' },
+    { key: 'PADRAO_PDF', name: 'Padrão com PDF' },
+    { key: 'PADRAO_MP3_PDF', name: 'Padrão com MP3 e PDF' },
+    { key: 'PREMIUM', name: 'Premium' },
+    { key: 'PREMIUM_MP3', name: 'Premium com MP3' },
+    { key: 'PREMIUM_PDF', name: 'Premium com PDF' },
+    { key: 'PREMIUM_MP3_PDF', name: 'Premium com MP3 e PDF' },
+    { key: 'VERSATIL', name: 'Versátil' },
+    { key: 'VERSATIL_MP3', name: 'Versátil com MP3' },
+    { key: 'VERSATIL_PDF', name: 'Versátil com PDF' },
+    { key: 'VERSATIL_MP3_PDF', name: 'Versátil com MP3 e PDF' },
+    { key: 'EFICIENTE', name: 'Eficiente' },
+    { key: 'EFICIENTE_MP3', name: 'Eficiente com MP3' },
+    { key: 'EFICIENTE_PDF', name: 'Eficiente com PDF' },
+    { key: 'EFICIENTE_MP3_PDF', name: 'Eficiente com MP3 e PDF' },
+] as const
+
+type ModelProfileTier = 'PADRAO' | 'PREMIUM' | 'VERSATIL' | 'EFICIENTE'
+
+export type ModelProfileKey = typeof ModelProfileArray[number]['key']
+export type ModelProfileValueType = EnumOfObjectsValueType & {
+    key: ModelProfileKey
+    tier: ModelProfileTier
+    requiresMp3: boolean
+    requiresPdf: boolean
+}
+export type ModelProfileType = { [key in ModelProfileKey]: ModelProfileValueType }
+
+export const ModelProfile: ModelProfileType = ModelProfileArray.reduce((acc, item, idx) => {
+    const { key, name } = item
+    const parts = key.split('_')
+    const tier = parts[0] as ModelProfileTier
+    acc[key] = {
+        key,
+        id: idx + 1,
+        name,
+        sort: idx + 1,
+        tier,
+        requiresMp3: parts.includes('MP3'),
+        requiresPdf: parts.includes('PDF'),
+    }
+    return acc
+}, {} as ModelProfileType)
+
+export type ParsedModelConfigType = {
+    selectableModels: string[]
+    profileModels: Partial<Record<ModelProfileKey, string>>
+    defaultModel?: string
+}
+
 const ModelProviderArray = [
     { id: 2, name: 'OpenAI', apiKey: 'OPENAI_API_KEY', apiKeyRegex: /^sk-proj-[a-zA-Z0-9_]{48,164}$/, status: StatusDeLancamento.PUBLICO },
     { id: 1, name: 'Anthropic', apiKey: 'ANTHROPIC_API_KEY', apiKeyRegex: /^sk-[a-zA-Z0-9_-]{100,110}$/, status: StatusDeLancamento.PUBLICO },
@@ -147,6 +199,70 @@ export type ConfiguredModelValueType = {
 
 const AUDIO_FILE_TYPES = [FileTypeEnum.MP3, FileTypeEnum.WMA, FileTypeEnum.WAV, FileTypeEnum.AIFF, FileTypeEnum.AAC, FileTypeEnum.OGG, FileTypeEnum.FLAC]
 const VIDEO_FILE_TYPES = [FileTypeEnum.MP4, FileTypeEnum.WMV]
+
+export function normalizeModelProfile(value?: string): ModelProfileKey | undefined {
+    if (!value) return undefined
+    const normalized = slugify(value).replaceAll('-', '_').toUpperCase()
+    return ModelProfileArray.find(profile => profile.key === normalized)?.key
+}
+
+export function isModelProfile(value?: string): value is ModelProfileKey {
+    return !!normalizeModelProfile(value)
+}
+
+export function getModelProfileFallbackOrder(requestedProfile: ModelProfileKey): ModelProfileKey[] {
+    const requested = ModelProfile[requestedProfile]
+    const matchesTier = (profile: ModelProfileValueType, tier: ModelProfileTier) => profile.tier === tier
+    const supportsRequested = (profile: ModelProfileValueType) => {
+        if (requested.requiresMp3 && !profile.requiresMp3) return false
+        if (requested.requiresPdf && !profile.requiresPdf) return false
+        return true
+    }
+
+    const sameTier = ModelProfileArray.map(profile => profile.key)
+        .filter(key => matchesTier(ModelProfile[key], requested.tier) && supportsRequested(ModelProfile[key]))
+    const defaultTier = requested.tier === 'PADRAO'
+        ? []
+        : ModelProfileArray.map(profile => profile.key).filter(key => matchesTier(ModelProfile[key], 'PADRAO') && supportsRequested(ModelProfile[key]))
+    const fallback = [...sameTier, ...defaultTier, 'PADRAO']
+    return Array.from(new Set(fallback)) as ModelProfileKey[]
+}
+
+export function parseModelConfig(modelsConfig?: string): ParsedModelConfigType {
+    const parsed: ParsedModelConfigType = { selectableModels: [], profileModels: {} }
+    if (!modelsConfig?.trim()) return parsed
+
+    for (const entry of modelsConfig.split(';').map(item => item.trim()).filter(Boolean)) {
+        const separatorIndex = entry.indexOf(':')
+        const profileCandidate = separatorIndex >= 0 ? entry.slice(0, separatorIndex).trim() : undefined
+        const maybeProfile = profileCandidate ? normalizeModelProfile(profileCandidate) : undefined
+        if (maybeProfile) {
+            const modelName = entry.slice(separatorIndex + 1).trim()
+            if (modelName) parsed.profileModels[maybeProfile] = modelName
+            continue
+        }
+
+        if (profileCandidate && /^[A-Za-z_\-]+$/.test(profileCandidate)) {
+            console.warn(`Ignoring invalid model profile '${profileCandidate}' in MODEL config`)
+            continue
+        }
+
+        for (const modelName of entry.split(',').map(item => item.trim()).filter(Boolean)) {
+            parsed.selectableModels.push(modelName)
+        }
+    }
+
+    parsed.defaultModel = parsed.selectableModels[0] || resolveProfileModel('PADRAO', parsed.profileModels)
+    return parsed
+}
+
+export function resolveProfileModel(requestedProfile: ModelProfileKey, profileModels: Partial<Record<ModelProfileKey, string>>): string | undefined {
+    for (const profile of getModelProfileFallbackOrder(requestedProfile)) {
+        const modelName = profileModels[profile]
+        if (modelName) return modelName
+    }
+    return undefined
+}
 
 function parseOptionalNumber(value?: string): number | undefined {
     if (!value) return undefined

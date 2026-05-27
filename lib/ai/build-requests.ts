@@ -3,6 +3,7 @@ import { PecaType } from "../proc/process-types"
 import { Plugin } from "../proc/combinacoes"
 import { slugify } from "../utils/utils"
 import devLog from "../utils/log"
+import { normalizeModelProfile } from "./model-types"
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "./prompt-types"
 import { getPromptDefinition, getPromptDefinitionByUuid } from "./prompt-store"
 
@@ -78,6 +79,9 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
             template: prompt.content.template,
             cacheControl: true,
             dbId: prompt.id,
+            metadata: {
+                profile: normalizeModelProfile(prompt.content.profile),
+            },
         }
         const req: GeneratedContent = {
             documentCode: null,

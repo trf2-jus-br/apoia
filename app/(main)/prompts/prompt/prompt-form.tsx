@@ -12,7 +12,7 @@ import cloneDeep from 'lodash/cloneDeep'
 import isEqual from 'lodash/isEqual'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAdd, faRemove } from '@fortawesome/free-solid-svg-icons'
-import { enumSorted } from '@/lib/ai/model-types'
+import { enumSorted, ModelProfile } from '@/lib/ai/model-types'
 import { Instance, Matter, Scope, Target } from '@/lib/proc/process-types'
 import { PieceDescr, PieceStrategy, Plugin } from '@/lib/proc/combinacoes'
 import { findUnclosedMarking } from '@/lib/ai/template'
@@ -85,6 +85,9 @@ export default function PromptForm(props) {
             setPending(true)
             // Clean up workflow: remove entries with empty uuid, nullify if both lists are empty
             const saveData = cloneDeep(data)
+            if (!saveData.content?.profile) {
+                delete saveData.content.profile
+            }
             if (saveData.content?.workflow) {
                 const preds = (saveData.content.workflow.predecessors || []).filter(p => p.uuid)
                 const succs = (saveData.content.workflow.successors || []).filter(s => s.uuid)
@@ -122,6 +125,7 @@ export default function PromptForm(props) {
         const targetOptions = enumSorted(Target).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceStrategyOptions = enumSorted(PieceStrategy).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceDescrOptions = enumSorted(PieceDescr).map(e => ({ id: e.value.name, name: e.value.descr }))
+        const modelOptions = [{ id: '', name: 'Padrão' }, ...enumSorted(ModelProfile).map(e => ({ id: e.key, name: e.value.name }))]
         const summaryOptions = [{ id: 'NAO', name: 'Não' }, { id: 'SIM', name: 'Sim' }]
         const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'BETA_TESTE', name: 'Beta Teste' }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }, ...(data?.share === 'OCULTO' ? [{ id: 'OCULTO', name: 'Oculto', disabled: true }] : [])]
         const pluginOptions = Object.entries(Plugin).map(([key, value]) => ({ id: key, name: value }))
@@ -175,6 +179,7 @@ export default function PromptForm(props) {
                     <Frm.Select label="Seleção de Peças" name="content.piece_strategy" options={pieceStrategyOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
                     <Frm.MultiSelect label="Tipos de Peças" name="content.piece_descr" options={pieceDescrOptions} width={2} visible={Target.PROCESSO.name === data.content.target && PieceStrategy.TIPOS_ESPECIFICOS.name === data.content.piece_strategy} />
                     <Frm.Select label="Resumir Selecionadas" name="content.summary" options={summaryOptions} width={2} visible={Target.PROCESSO.name === data.content.target && showAdvancedOptions} />
+                    <Frm.Select label="Perfil" name="content.profile" options={modelOptions} width={3} visible={showAdvancedOptions} />
                     <Frm.Select label="Compartilhamento" name="share" options={shareOptions} width={2} />
                     <Frm.Checkbox label="Lote" name="content.batch_report" width={2} visible={showAdvancedOptions} />
                     <Frm.MultiSelect label="Plugins" name="content.plugins" options={pluginOptions} width={2} visible={showAdvancedOptions && data.content.batch_report} />

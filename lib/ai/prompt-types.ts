@@ -2,6 +2,7 @@ import { ModelMessage } from "ai";
 import { IAGenerated } from "../db/mysql-types";
 import { Plugin, T } from "../proc/combinacoes";
 import { PecaConteudoType } from "../proc/process-types";
+import { ModelProfileKey } from "./model-types";
 
 // A ideia aqui é que existe uma definição de prompt (PromptDefinitionType) que pode vir do banco de dados ou 
 // de um arquivo markdown.
@@ -40,6 +41,7 @@ export type PromptDefinitionMetadataType = {
     author?: string
     description?: string
     target?: string
+    profile?: ModelProfileKey
 }
 
 // Tipo que define os textos que serão passados para um prompt
@@ -106,6 +108,7 @@ export type ContentType = {
     raw: string
     formatted: string
     json: any
+    model?: string
 }
 
 

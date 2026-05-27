@@ -82,6 +82,11 @@ export function validatePromptFiles(files: { path: string; content: string }[]):
             result.errors.push(`Invalid UUID format: '${parsed.uuid}'`)
         }
 
+        if (parsed.metadata?.__invalid_profile) {
+            result.valid = false
+            result.errors.push(`Invalid prompt profile: '${parsed.metadata.__invalid_profile}'`)
+        }
+
         // Duplicate UUID check
         const existingPath = uuidToPath.get(parsed.uuid)
         if (existingPath) {

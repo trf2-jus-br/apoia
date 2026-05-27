@@ -119,6 +119,55 @@ Test prompt with workflow
         expect(result!.successors![0]).toEqual({ path: 'chat' })
     })
 
+    test('parses prompt profile from front matter', () => {
+        const md = `---
+uuid: 11111111-2222-3333-4444-555555555556
+profile: EFICIENTE_MP3
+---
+
+# PROMPT
+
+Prompt with model profile
+`
+        const result = parsePromptMarkdown('prompt-com-modelo', md, 'prompt-com-modelo.md')
+
+        expect(result).not.toBeNull()
+        expect(result!.metadata.profile).toBe('EFICIENTE_MP3')
+    })
+
+    test('normalizes prompt profile from front matter', () => {
+        const md = `---
+uuid: 11111111-2222-3333-4444-555555555557
+profile: eficiente-mp3-pdf
+---
+
+# PROMPT
+
+Prompt with normalized model profile
+`
+        const result = parsePromptMarkdown('prompt-com-modelo-normalizado', md, 'prompt-com-modelo-normalizado.md')
+
+        expect(result).not.toBeNull()
+        expect(result!.metadata.profile).toBe('EFICIENTE_MP3_PDF')
+    })
+
+    test('rejects legacy prompt profile names from front matter', () => {
+        const md = `---
+uuid: 11111111-2222-3333-4444-555555555558
+profile: baixo-audio
+---
+
+# PROMPT
+
+Prompt with legacy model profile
+`
+        const result = parsePromptMarkdown('prompt-com-modelo-legado', md, 'prompt-com-modelo-legado.md')
+
+        expect(result).not.toBeNull()
+        expect(result!.metadata.profile).toBeUndefined()
+        expect((result!.metadata as any).__invalid_profile).toBe('baixo-audio')
+    })
+
     test('parses multiple predecessors with optional flag', () => {
         const md = `---
 uuid: 22222222-3333-4444-5555-666666666666
@@ -560,6 +609,23 @@ Hello
         }])
         expect(result.valid).toBe(false)
         expect(result.files[0].errors[0]).toContain('Invalid UUID format')
+    })
+
+    test('rejects file with concrete model in profile front matter', () => {
+        const result = validatePromptFiles([{
+            path: 'bad-model.md',
+            content: `---
+uuid: 9c8f98fb-0679-4f2a-9722-91c2e1b35601
+profile: gemini-3.1-flash-lite
+---
+
+# PROMPT
+
+Hello
+`,
+        }])
+        expect(result.valid).toBe(false)
+    expect(result.files[0].errors).toContain("Invalid prompt profile: 'gemini-3.1-flash-lite'")
     })
 
     test('detects duplicate UUIDs', () => {

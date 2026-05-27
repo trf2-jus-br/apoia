@@ -45,6 +45,7 @@ piece_strategy: mais-relevantes-segunda-instancia
 instance: [segundo-grau]
 matter: [civel]
 scope: [justica-federal]
+profile: versatil
 author: Nome do Autor
 grupo:
   slug: minutas-segunda-instancia
@@ -101,6 +102,39 @@ Texto livre com o nome do autor ou equipe responsável pelo prompt.
 ```yaml
 author: Caroline Tauk/JFRJ
 ```
+
+---
+
+### `profile` _(opcional)_
+
+Define o perfil de modelo a ser usado por este prompt. O front matter aceita apenas os perfis abstratos abaixo, nunca nomes concretos de modelos como `gemini-2.5-pro` ou `gpt-4.1`.
+
+Perfis aceitos:
+
+| Valor | Descrição |
+|-------|-----------|
+| `padrao` | Perfil padrão do tribunal para prompts gerais |
+| `padrao-mp3` | Perfil padrão para prompts que exigem arquivo MP3 |
+| `padrao-pdf` | Perfil padrão para prompts que exigem PDF |
+| `padrao-mp3-pdf` | Perfil padrão para prompts que exigem MP3 e PDF |
+| `premium` | Perfil de maior capacidade geral |
+| `premium-mp3` | Perfil premium com suporte a MP3 |
+| `premium-pdf` | Perfil premium com suporte a PDF |
+| `premium-mp3-pdf` | Perfil premium com suporte a MP3 e PDF |
+| `versatil` | Perfil intermediário de uso geral |
+| `versatil-mp3` | Perfil versátil com suporte a MP3 |
+| `versatil-pdf` | Perfil versátil com suporte a PDF |
+| `versatil-mp3-pdf` | Perfil versátil com suporte a MP3 e PDF |
+| `eficiente` | Perfil mais econômico/eficiente |
+| `eficiente-mp3` | Perfil eficiente com suporte a MP3 |
+| `eficiente-pdf` | Perfil eficiente com suporte a PDF |
+| `eficiente-mp3-pdf` | Perfil eficiente com suporte a MP3 e PDF |
+
+```yaml
+profile: versatil
+```
+
+> Use apenas os nomes acima. Valores legados como `alto`, `medio`, `baixo` ou sufixos com `audio` não são aceitos.
 
 ---
 

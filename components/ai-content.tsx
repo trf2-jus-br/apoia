@@ -112,7 +112,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         })
     }
 
-    const reportReady = (text: string, payload: any) => {
+    const reportReady = (text: string, payload: any, modelUsed?: string) => {
         let json: any = undefined
         try {
             json = JSON.parse(text)
@@ -121,7 +121,8 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
             params.onReady({
                 raw: text,
                 formatted: preprocess(text, params.definition, params.data, complete, visualizationId, params.diffSource).text,
-                json
+                json,
+                model: modelUsed || payload.modelSlug,
             })
 
         trackAIComplete({
@@ -242,11 +243,12 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                 const uiMessageStream = readUIMessageStream({
                     stream: chunkStream, onError: (err) => { reportError(err, payload); }
                 });
-                const assistantMessageId = Date.now().toString();
                 let parts: UIMessage['parts'] = [];
                 let text: string = ''
+                let lastMessage: UIMessage | undefined = undefined
                 // Iterate over the stream and process each chunk
                 for await (const message of uiMessageStream) {
+                    lastMessage = message
                     setCurrentMessage(message)
                     devLog('Received message parts:', message.parts);
                     parts = message.parts;
@@ -270,7 +272,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                     } catch (e) { }
 
                 }
-                reportReady(text, payload)
+                reportReady(text, payload, (lastMessage?.metadata as any)?.model)
             } catch (error) {
                 console.error('Error fetching stream:', error);
             } finally {

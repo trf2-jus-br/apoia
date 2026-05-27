@@ -1,7 +1,7 @@
 'use server'
 
 import { redirect } from "next/navigation"
-import { enumSortById, enumSorted, Model, ModelProvider, ModelProviderType, ModelProviderValueType } from "./model-types"
+import { enumSortById, enumSorted, isModelProfile, Model, ModelProfileKey, ModelProvider, ModelProviderType, ModelProviderValueType, parseModelConfig, resolveProfileModel } from "./model-types"
 import { getPrefs } from "../utils/prefs"
 import { envStringPrefixed, getEnvStringPrefixedIfUserIsAllowed } from "../utils/env"
 import { createAnthropic } from "@ai-sdk/anthropic"
@@ -17,6 +17,19 @@ import { assertCourtId, getCurrentUser } from "../user"
 import { LanguageModelV3 } from "@ai-sdk/provider"
 import devLog from "../utils/log"
 import { getConfiguredOpenRouterModelsFromPrefs, getConfiguredOnPremisesModelsFromPrefs, getOpenRouterModelsFromPrefs, getOnPremisesModelsFromPrefs } from "./model-metadata-server"
+
+function resolveModelSelection(params: { overrideModel?: string, profile?: ModelProfileKey }, selectedModel: string | undefined, tribunalConfig: string | undefined, forceModelInAllSituations?: boolean): string | undefined {
+    const { overrideModel, profile } = params
+    if (forceModelInAllSituations && selectedModel) return selectedModel
+
+    if (overrideModel) return overrideModel
+    if (!profile) return selectedModel
+
+    if (profile === 'PADRAO') return selectedModel
+
+    const parsedConfig = parseModelConfig(tribunalConfig)
+    return resolveProfileModel(profile, parsedConfig.profileModels) || selectedModel
+}
 
 function getEnvKeyByModel(model: string): string {
     if (!model) throw new Error('Model is required')
@@ -57,7 +70,7 @@ export const assertModel = async () => {
     }
 }
 
-export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, selectableModels?: string[], userMayChangeModel: boolean, azureResourceName: string, onPremisesUrl?: string, awsRegion?: string, awsAccessKeyId?: string, openRouterModels?: string, onPremisesModels?: string }
+export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, selectableModels?: string[], userMayChangeModel: boolean, forceModelInAllSituations: boolean, azureResourceName: string, onPremisesUrl?: string, awsRegion?: string, awsAccessKeyId?: string, openRouterModels?: string, onPremisesModels?: string }
 export async function getSelectedModelParams(): Promise<ModelParams> {
     const prefs = await getPrefs()
     const user = await getCurrentUser()
@@ -70,23 +83,13 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     let awsAccessKeyId: string
     let openRouterModels: string
     let onPremisesModels: string
+    const forceModelInAllSituations = !!prefs?.useModelInAllSituations
 
-    let defaultModel = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, 'MODEL', seqTribunalPai) as string
-    let selectableModels = undefined as string[]
-    let userMayChangeModel = false
-
-    // user may change model if the MODEL env variable ends with * or if it is a list of models
-    // if it is a list of models, the first one is the default model
-    if (defaultModel?.includes(',')) {
-        selectableModels = defaultModel.split(',')
-        defaultModel = selectableModels[0]
-    }
-
-    // if it is a single model, the user may change it if it ends with *
-    if (defaultModel?.endsWith('*')) {
-        defaultModel = defaultModel.slice(0, -1)
-        userMayChangeModel = true
-    }
+    const tribunalModelConfig = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, 'MODEL', seqTribunalPai) as string
+    const parsedModelConfig = parseModelConfig(tribunalModelConfig)
+    let defaultModel = parsedModelConfig.defaultModel
+    let selectableModels = parsedModelConfig.selectableModels.length > 0 ? parsedModelConfig.selectableModels : undefined
+    let userMayChangeModel = !!selectableModels?.length
 
     azureResourceName = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.AZURE.resourceName, seqTribunalPai) as string
     onPremisesUrl = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.ON_PREMISES.resourceName, seqTribunalPai) as string
@@ -153,16 +156,19 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
         const envKey = getEnvKeyByModel(model)
         apiKeyFromEnv = apiKey === getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, envKey, seqTribunalPai)
     }
-    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, selectableModels, userMayChangeModel, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, openRouterModels, onPremisesModels }
+    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, selectableModels, userMayChangeModel, forceModelInAllSituations, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, openRouterModels, onPremisesModels }
 }
 
 export async function getSelectedModelName(): Promise<string> {
     return (await getSelectedModelParams()).model
 }
 
-export async function getModel(params?: { structuredOutputs: boolean, overrideModel?: string }): Promise<{ model: string, modelRef: LanguageModelV3, apiKeyFromEnv: boolean }> {
-    let { model, apiKey, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, apiKeyFromEnv } = await getSelectedModelParams()
-    if (params?.overrideModel) model = params.overrideModel
+export async function getModel(params?: { structuredOutputs: boolean, overrideModel?: string, profile?: ModelProfileKey }): Promise<{ model: string, modelRef: LanguageModelV3, apiKeyFromEnv: boolean }> {
+    let { model, apiKey, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, apiKeyFromEnv, forceModelInAllSituations } = await getSelectedModelParams()
+    const user = await getCurrentUser()
+    const seqTribunalPai = user ? '' + (assertCourtId(user)) : undefined
+    const tribunalModelConfig = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, 'MODEL', seqTribunalPai) as string
+    model = resolveModelSelection({ overrideModel: params?.overrideModel, profile: params?.profile }, model, tribunalModelConfig, forceModelInAllSituations)
 
     if (!model) throw new Error('Nenhum modelo de IA configurado. Por favor, acesse /prefs para configurar um modelo.')
 
