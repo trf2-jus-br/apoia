@@ -67,7 +67,7 @@ data:
 
 
   # TJBA
-  TRIBUNAL_12_MODEL: "gemini-2.5-flash,aws-us.anthropic.claude-3-5-haiku-20241022-v1:0,azure-gpt-4.1-mini"
+  TRIBUNAL_12_MODEL: "gemini-2.5-flash;aws-us.anthropic.claude-3-5-haiku-20241022-v1:0;azure-gpt-4.1-mini"
   TRIBUNAL_12_GOOGLE_API_KEY_ENCRYPTED: "78a8ed67400ac02158b1cd09fc32c7cb91a5f44edc16b6cf643151d7b2ec5c82610f4e99bce769afb1f990c840f6acdd706462d6e7da39ae5fa6f8fc180f660f0996f06eb5dbface8c010369cf026d8f1ec288a7a5ba9a66cbab90dc5426593c97826de4f33fd63a5ac7d8d6ad51ca236549e3a3ad1f35dd12b93c9b3e66e2a3735e618f7597d6"
   TRIBUNAL_12_AZURE_API_KEY_ENCRYPTED: "55151d3fc5cdc80b8bece7343c4d08377356cc1b1bcfec0bff1360dc551b8e9310c104b83043ba357b8f699506c49d3ad402ae4d954149fabd32a82c5c13b10b4fddef074f8f80c3b2f15c2f45cdf7f1829f783960d8e98e5cfc2276ccc811f967c25a87b8a82409089d6c748a2e31365432b0221f77a21e76bd04dcc17ac1ca2922fb6bd79c2c963efb199173dcacd0bd3a0cb2fd016fb65b000f76207d66f4d5b991f72f3c49cddd7cc754866a099768ab2f20"
   TRIBUNAL_12_AZURE_RESOURCE_NAME: "https://apoiatjba-dev-eus2-openai.openai.azure.com/openai/deployments"
