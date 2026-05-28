@@ -5,7 +5,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { useRouter } from 'next/navigation';
 import { enumSorted, Model, ModelProvider, parseOpenRouterModels, parseOnPremisesModels } from '@/lib/ai/model-types';
 import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support';
-import { addGenericCookie } from '../prompts/add-cookie';
+import { addGenericCookie, removeGenericCookie } from '../prompts/add-cookie';
 
 const Frm = new FormHelper()
 
@@ -37,9 +37,9 @@ export default function PrefsForm(params) {
         // setProcessing(false);
     }
 
-    const handleClear = (e) => {
+    const handleClear = async (e) => {
         e.preventDefault();
-        document.cookie = `prefs=; path=/;`
+        await removeGenericCookie('prefs')
         setData(JSON.parse(JSON.stringify(params.initialState)))
         setFormState(JSON.parse(JSON.stringify(EMPTY_FORM_STATE)))
         setRefreshCount(refreshCount + 1)
@@ -69,8 +69,8 @@ export default function PrefsForm(params) {
     const isDisabled = (model): boolean => {
         const providerApiKey = model.value.provider.apiKey
         const enabled = data.env && !!data.env[providerApiKey]
-            || ((params.userMayChangeModel || !params.defaultModel) && params.availableApiKeys.includes(providerApiKey))
-            || (!params.userMayChangeModel && (model.value.name === params.defaultModel || params.selectableModels?.includes(model.value.name)))
+            || (params.selectableModels?.includes(model.value.name))
+            || (!params.defaultModel && params.availableApiKeys.includes(providerApiKey))
         return !enabled
     }
 
@@ -111,7 +111,7 @@ export default function PrefsForm(params) {
         if (!tribunalOnlyMode) return
         if (!data.model && !data.useModelInAllSituations) return
 
-        document.cookie = `prefs=; path=/;`
+        removeGenericCookie('prefs')
         setData({ ...data, model: '', useModelInAllSituations: false })
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tribunalOnlyMode, data.model, data.useModelInAllSituations])
@@ -179,9 +179,7 @@ export default function PrefsForm(params) {
                                     ? <>
                                         <div className="row mb-2">
                                             <Frm.Select label="Modelo Padrão" name="model" options={[{ id: '', name: '[Selecionar]' }, ...modelOptions]} />
-                                        </div>
-                                        <div className="row mb-2">
-                                            <Frm.Checkbox label="Usar meu modelo em todas as situações" name="useModelInAllSituations" width="12" />
+                                            <Frm.Checkbox label="Usar meu modelo em todas as situações" name="useModelInAllSituations" width="12" topLabel="" />
                                         </div>
                                     </>
                                     : <div className="row mb-2">

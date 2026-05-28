@@ -5,6 +5,7 @@ import PrefsForm from './prefs-form'
 import { cookies } from 'next/headers';
 import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { getSelectedModelParams } from '@/lib/ai/model-server'
+import devLog from '@/lib/utils/log';
 
 // export const runtime = 'edge'
 export const preferredRegion = 'home'
@@ -18,10 +19,8 @@ export default async function Home() {
     initialState = prefs
 
   const { availableApiKeys, defaultModel, userMayChangeModel, selectableModels, openRouterModels, onPremisesModels, forceModelInAllSituations } = await getSelectedModelParams()
-
   const statusCookie = (await cookies()).get('beta-tester')?.value
   const statusDeLancamento = statusCookie ? JSON.parse(statusCookie) : StatusDeLancamento.PUBLICO
-
 
   return (<>
     <Container fluid={false}>

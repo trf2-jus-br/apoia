@@ -246,12 +246,10 @@ export function parseModelConfig(modelsConfig?: string): ParsedModelConfigType {
             console.warn(`Ignoring invalid model profile '${profileCandidate}' in MODEL config`)
             continue
         }
-
-        for (const modelName of entry.split(',').map(item => item.trim()).filter(Boolean)) {
-            parsed.selectableModels.push(modelName)
-        }
+        parsed.selectableModels.push(entry)
     }
 
+    
     parsed.defaultModel = parsed.selectableModels[0] || resolveProfileModel('PADRAO', parsed.profileModels)
     return parsed
 }

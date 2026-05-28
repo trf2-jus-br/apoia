@@ -123,15 +123,15 @@ interface AsyncSelectComponentProps<T> {
     formState: FormState
 }
 
-function AsyncSelectComponent<T>({ 
-    label, 
-    name, 
-    searchFn, 
-    formatOption, 
-    formatSelected, 
-    minSearchLength = 3, 
-    width, 
-    visible, 
+function AsyncSelectComponent<T>({
+    label,
+    name,
+    searchFn,
+    formatOption,
+    formatSelected,
+    minSearchLength = 3,
+    width,
+    visible,
     explanation,
     getValue,
     setValue,
@@ -299,12 +299,12 @@ export class FormHelper {
         return (
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
-                <Form.Control 
-                    name={name} 
-                    type="text" 
-                    value={this.get(name) ?? ''} 
-                    onChange={e => { this.set(name, e.target.value); validator && validator(e.target.value, name) }} 
-                    placeholder="" 
+                <Form.Control
+                    name={name}
+                    type="text"
+                    value={this.get(name) ?? ''}
+                    onChange={e => { this.set(name, e.target.value); validator && validator(e.target.value, name) }}
+                    placeholder=""
                     maxLength={maxLength}
                     key={name} />
                 <FieldError formState={this.formState} name={name} />
@@ -313,10 +313,10 @@ export class FormHelper {
         )
     }
 
-    public Checkbox = ({ label, name, width, visible, explanation }: { label: string, name: string, width?: number | string, visible?: boolean, explanation?: string }) => {
+    public Checkbox = ({ label, name, width, visible, explanation, topLabel = '&nbsp;' }: { label: string, name: string, width?: number | string, visible?: boolean, explanation?: string, topLabel?: string }) => {
         return (
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
-                <Form.Label className={this.compact ? 'mb-0' : ''}>&nbsp;</Form.Label>
+                {topLabel != '' && <Form.Label className={this.compact ? 'mb-0' : ''}>{topLabel}</Form.Label>}
                 <Form.Check
                     type="checkbox"
                     id={name}
@@ -383,18 +383,18 @@ export class FormHelper {
             const selectedIds = this.get(name) || [];
             if (selectedIds.length === 0) return 'Selecione';
             if (selectedIds.length === options.length && options.length > 0) return 'Todos';
-            
+
             if (displayCount && displayCount > 0) {
                 const selectedNames = selectedIds.map((id: any) => options.find(o => o.id == id)?.name).filter(Boolean);
                 const namesToShow = selectedNames.slice(0, displayCount).join(', ');
                 const remaining = selectedIds.length - displayCount;
-                
+
                 if (remaining > 0) {
                     return `${namesToShow} + ${remaining}`;
                 }
                 return namesToShow;
             }
-            
+
             return `${selectedIds.length} selecionado${selectedIds.length > 1 ? 's' : ''}`;
         };
 

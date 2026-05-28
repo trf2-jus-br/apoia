@@ -20,6 +20,12 @@ export async function addGenericCookie(nome: string, valor: string, maxAgeSecond
     return null
 }
 
+export async function removeGenericCookie(nome: string) {
+    const cookieStore = await cookies()
+    cookieStore.delete(nome)
+    return null
+}
+
 export async function getCookieValue(nome: string): Promise<string | undefined> {
     const cookieStore = await cookies()
     const cookie = cookieStore.get(nome)
