@@ -1,4 +1,4 @@
-import { getAlternativeDefaultProfileFallbackOrder, getModelProfileFallbackOrder, parseModelConfig, resolveAlternativeDefaultProfileModel, resolveProfileModel } from '@/lib/ai/model-types'
+import { acceptSelectableModel, getAlternativeDefaultProfileFallbackOrder, getModelProfileFallbackOrder, getSelectableModelsForApiKey, mergeSelectableModelLists, ModelProvider, parseModelConfig, resolveAlternativeDefaultProfileModel, resolveProfileModel } from '@/lib/ai/model-types'
 
 describe('model profile config', () => {
     test('parses mixed selectable and profile models', () => {
@@ -109,5 +109,43 @@ describe('model profile fallback', () => {
         })
 
         expect(resolved).toBe('gemini-2.5-pro')
+    })
+})
+
+describe('selectable model helpers', () => {
+    test('lists all static models for a provider api key', () => {
+        const selectableModels = getSelectableModelsForApiKey(ModelProvider.OPENAI.apiKey)
+
+        expect(selectableModels).toContain('gpt-5.5')
+        expect(selectableModels).toContain('gpt-4.1')
+    })
+
+    test('uses configured openrouter models for openrouter api key', () => {
+        const selectableModels = getSelectableModelsForApiKey(ModelProvider.OPENROUTER.apiKey, [
+            { name: 'openrouter-google/gemini-2.5-pro', provider: ModelProvider.OPENROUTER },
+            { name: 'openrouter-openai/gpt-5.2', provider: ModelProvider.OPENROUTER },
+        ])
+
+        expect(selectableModels).toEqual([
+            'openrouter-google/gemini-2.5-pro',
+            'openrouter-openai/gpt-5.2',
+        ])
+    })
+
+    test('merges selectable model lists without changing the original tribunal list meaning', () => {
+        expect(mergeSelectableModelLists(
+            ['gemini-2.5-flash-lite'],
+            ['gpt-5.5', 'gemini-2.5-flash-lite'],
+            ['claude-sonnet-4-5-20250929'],
+        )).toEqual([
+            'gemini-2.5-flash-lite',
+            'gpt-5.5',
+            'claude-sonnet-4-5-20250929',
+        ])
+    })
+
+    test('accepts preferred model only when it is present in the union list', () => {
+        expect(acceptSelectableModel('gpt-5.5', ['gpt-5.5', 'gpt-4.1'])).toBe('gpt-5.5')
+        expect(acceptSelectableModel('claude-sonnet-4-5-20250929', ['gpt-5.5', 'gpt-4.1'])).toBeUndefined()
     })
 })

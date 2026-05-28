@@ -25,7 +25,6 @@ export default function PrefsForm(params) {
     const configuredOnPremisesModels = parseOnPremisesModels(data?.env?.[ModelProvider.ON_PREMISES.models] || params.onPremisesModels)
     const hasUserProvidedApiKey = enumSorted(ModelProvider).some(provider => !!data?.env?.[provider.value.apiKey])
     const singleTribunalSelectableModel = (params.selectableModels?.length || 0) === 1
-    console.log('Selectable models:', params.selectableModels, 'configuredOpenRouterModels:', configuredOpenRouterModels, 'configuredOnPremisesModels:', configuredOnPremisesModels)
     const tribunalOnlyMode = singleTribunalSelectableModel && !hasUserProvidedApiKey
 
     const handleClick = (e) => {
@@ -70,9 +69,15 @@ export default function PrefsForm(params) {
     const isDisabled = (model): boolean => {
         const providerApiKey = model.value.provider.apiKey
         const enabled = data.env && !!data.env[providerApiKey]
-            || (params.selectableModels?.includes(model.value.name))
+            || (params.availableSelectableModels?.includes(model.value.name))
             || (!params.defaultModel && params.availableApiKeys.includes(providerApiKey))
         return !enabled
+    }
+
+    const isConfiguredModelEnabled = (modelName: string, providerApiKey: string): boolean => {
+        return !!data.env?.[providerApiKey]
+            || !!params.availableSelectableModels?.includes(modelName)
+            || (!params.defaultModel && params.availableApiKeys.includes(providerApiKey))
     }
 
     const validator = (value: string, name: string, regex: RegExp): string | undefined => {
@@ -94,15 +99,15 @@ export default function PrefsForm(params) {
         .concat(configuredOpenRouterModels.map(model => ({
             id: model.name,
             name: model.name,
-            disabled: !data.env?.[ModelProvider.OPENROUTER.apiKey],
-            hidden: !data.env?.[ModelProvider.OPENROUTER.apiKey],
+            disabled: !isConfiguredModelEnabled(model.name, ModelProvider.OPENROUTER.apiKey),
+            hidden: !isConfiguredModelEnabled(model.name, ModelProvider.OPENROUTER.apiKey),
             visible: params.statusDeLancamento >= ModelProvider.OPENROUTER.status,
         })))
         .concat(configuredOnPremisesModels.map(model => ({
             id: model.name,
             name: model.name,
-            disabled: !data.env?.[ModelProvider.ON_PREMISES.apiKey],
-            hidden: !data.env?.[ModelProvider.ON_PREMISES.apiKey],
+            disabled: !isConfiguredModelEnabled(model.name, ModelProvider.ON_PREMISES.apiKey),
+            hidden: !isConfiguredModelEnabled(model.name, ModelProvider.ON_PREMISES.apiKey),
             visible: params.statusDeLancamento >= ModelProvider.ON_PREMISES.status,
         })))
         .sort((a, b) => a.disabled ? 1 : b.disabled ? -1 : 0)

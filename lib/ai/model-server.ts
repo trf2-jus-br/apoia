@@ -1,7 +1,7 @@
 'use server'
 
 import { redirect } from "next/navigation"
-import { enumSortById, enumSorted, isModelProfile, Model, ModelProfileKey, ModelProvider, ModelProviderType, ModelProviderValueType, parseModelConfig, resolveProfileModel } from "./model-types"
+import { acceptSelectableModel, enumSortById, enumSorted, getSelectableModelsForApiKey, mergeSelectableModelLists, Model, ModelProfileKey, ModelProvider, ModelProviderType, ModelProviderValueType, parseModelConfig, parseOnPremisesModels, parseOpenRouterModels, resolveProfileModel } from "./model-types"
 import { getPrefs } from "../utils/prefs"
 import { envStringPrefixed, getEnvStringPrefixedIfUserIsAllowed } from "../utils/env"
 import { createAnthropic } from "@ai-sdk/anthropic"
@@ -29,7 +29,7 @@ function resolveModelSelection(params: { overrideModel?: string, profile?: Model
 
     const parsedConfig = parseModelConfig(tribunalConfig)
     const resolvedModel = resolveProfileModel(profile, parsedConfig.profileModels) || selectedModel
-    devLog(`Resolved model for profile ${profile}: ${resolvedModel} (selectedModel: ${selectedModel}`)
+    devLog(`Resolved model for profile ${profile}: ${resolvedModel} (selectedModel: ${selectedModel})`)
     return resolvedModel
 }
 
@@ -72,7 +72,7 @@ export const assertModel = async () => {
     }
 }
 
-export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, selectableModels?: string[], userMayChangeModel: boolean, forceModelInAllSituations: boolean, azureResourceName: string, onPremisesUrl?: string, awsRegion?: string, awsAccessKeyId?: string, openRouterModels?: string, onPremisesModels?: string }
+export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, selectableModels?: string[], availableSelectableModels?: string[], userMayChangeModel: boolean, forceModelInAllSituations: boolean, azureResourceName: string, onPremisesUrl?: string, awsRegion?: string, awsAccessKeyId?: string, openRouterModels?: string, onPremisesModels?: string }
 export async function getSelectedModelParams(): Promise<ModelParams> {
     const prefs = await getPrefs()
     const user = await getCurrentUser()
@@ -90,9 +90,8 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     const tribunalModelConfig = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, 'MODEL', seqTribunalPai) as string
     const parsedModelConfig = parseModelConfig(tribunalModelConfig)
     let defaultModel = parsedModelConfig.defaultModel
-    let selectableModels = parsedModelConfig.selectableModels.length > 0 ? parsedModelConfig.selectableModels : undefined
-    if (!selectableModels && defaultModel) selectableModels = [defaultModel]
-    let userMayChangeModel = !!selectableModels?.length
+    const selectableModels = parsedModelConfig.selectableModels.length > 0 ? parsedModelConfig.selectableModels : undefined
+    const userMayChangeModel = !!selectableModels?.length
 
     azureResourceName = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.AZURE.resourceName, seqTribunalPai) as string
     onPremisesUrl = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.ON_PREMISES.resourceName, seqTribunalPai) as string
@@ -101,7 +100,20 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     openRouterModels = await getOpenRouterModelsFromPrefs()
     onPremisesModels = await getOnPremisesModelsFromPrefs()
 
-    if (prefs?.model) model = prefs.model
+    const configuredOpenRouterModels = parseOpenRouterModels(openRouterModels)
+    const configuredOnPremisesModels = parseOnPremisesModels(onPremisesModels)
+    const availableSelectableModels = mergeSelectableModelLists(
+        selectableModels,
+        defaultModel ? [defaultModel] : undefined,
+        ...Object.values(ModelProvider)
+            .filter(provider => !!prefs?.env?.[provider.apiKey])
+            .map(provider => getSelectableModelsForApiKey(provider.apiKey, configuredOpenRouterModels, configuredOnPremisesModels)),
+    )
+
+    model = acceptSelectableModel(prefs?.model, availableSelectableModels)
+    if (prefs?.model && !model) {
+        devLog(`Ignoring unavailable preferred model: ${prefs.model}`)
+    }
     if (prefs?.env[ModelProvider.AZURE.resourceName]) azureResourceName = prefs.env[ModelProvider.AZURE.resourceName]
     if (prefs?.env[ModelProvider.ON_PREMISES.resourceName]) onPremisesUrl = prefs.env[ModelProvider.ON_PREMISES.resourceName]
     if (prefs?.env[ModelProvider.AWS.region]) awsRegion = prefs.env[ModelProvider.AWS.region]
@@ -134,13 +146,11 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
         // try to find a model for the api key
         if (apiKey) {
             if (provider.apiKey === ModelProvider.OPENROUTER.apiKey) {
-                const configuredOpenRouterModels = await getConfiguredOpenRouterModelsFromPrefs()
                 if (configuredOpenRouterModels.length > 0) {
                     model = configuredOpenRouterModels[0].name
                 }
             }
             if (provider.apiKey === ModelProvider.ON_PREMISES.apiKey) {
-                const configuredOnPremisesModels = await getConfiguredOnPremisesModelsFromPrefs()
                 if (configuredOnPremisesModels.length > 0) {
                     model = configuredOnPremisesModels[0].name
                 }
@@ -159,7 +169,7 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
         const envKey = getEnvKeyByModel(model)
         apiKeyFromEnv = apiKey === getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, envKey, seqTribunalPai)
     }
-    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, selectableModels, userMayChangeModel, forceModelInAllSituations, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, openRouterModels, onPremisesModels }
+    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, selectableModels, availableSelectableModels, userMayChangeModel, forceModelInAllSituations, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, openRouterModels, onPremisesModels }
 }
 
 export async function getSelectedModelName(): Promise<string> {

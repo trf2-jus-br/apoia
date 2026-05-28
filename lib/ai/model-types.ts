@@ -197,6 +197,33 @@ export type ConfiguredModelValueType = {
     supportedFileTypes?: FileTypeEnum[]
 }
 
+export function getSelectableModelsForApiKey(
+    apiKey: string,
+    configuredOpenRouterModels: ConfiguredModelValueType[] = [],
+    configuredOnPremisesModels: ConfiguredModelValueType[] = [],
+): string[] {
+    if (apiKey === ModelProvider.OPENROUTER.apiKey) {
+        return configuredOpenRouterModels.map(model => model.name)
+    }
+    if (apiKey === ModelProvider.ON_PREMISES.apiKey) {
+        return configuredOnPremisesModels.map(model => model.name)
+    }
+    return enumSorted(Model)
+        .filter(model => model.value.provider.apiKey === apiKey)
+        .map(model => model.value.name)
+}
+
+export function mergeSelectableModelLists(...modelGroups: Array<string[] | undefined>): string[] | undefined {
+    const merged = Array.from(new Set(modelGroups.flatMap(group => group || []).filter(Boolean)))
+    return merged.length > 0 ? merged : undefined
+}
+
+export function acceptSelectableModel(model: string | undefined, selectableModels?: string[]): string | undefined {
+    if (!model) return undefined
+    if (!selectableModels?.length) return model
+    return selectableModels.includes(model) ? model : undefined
+}
+
 const AUDIO_FILE_TYPES = [FileTypeEnum.MP3, FileTypeEnum.WMA, FileTypeEnum.WAV, FileTypeEnum.AIFF, FileTypeEnum.AAC, FileTypeEnum.OGG, FileTypeEnum.FLAC]
 const VIDEO_FILE_TYPES = [FileTypeEnum.MP4, FileTypeEnum.WMV]
 
