@@ -18,13 +18,25 @@ export default async function Home() {
   if (prefs)
     initialState = prefs
 
-  const { availableApiKeys, defaultModel, userMayChangeModel, selectableModels, availableSelectableModels, openRouterModels, onPremisesModels, forceModelInAllSituations } = await getSelectedModelParams()
+  const {
+    availableApiKeys,
+    defaultModel,
+    userMayChangeModel,
+    configuredSelectableModels,
+    combinedSelectableModels,
+    openRouterModels,
+    onPremisesModels,
+    forceModelInAllSituations } = await getSelectedModelParams()
   const statusCookie = (await cookies()).get('beta-tester')?.value
   const statusDeLancamento = statusCookie ? JSON.parse(statusCookie) : StatusDeLancamento.PUBLICO
 
   return (<>
     <Container fluid={false}>
-      <PrefsForm initialState={initialState} availableApiKeys={availableApiKeys} defaultModel={defaultModel} selectableModels={selectableModels} availableSelectableModels={availableSelectableModels} userMayChangeModel={userMayChangeModel} forceModelInAllSituations={forceModelInAllSituations} statusDeLancamento={statusDeLancamento} openRouterModels={openRouterModels} onPremisesModels={onPremisesModels} />
+      <PrefsForm initialState={initialState} availableApiKeys={availableApiKeys} defaultModel={defaultModel}
+        configuredSelectableModels={configuredSelectableModels} combinedSelectableModels={combinedSelectableModels}
+        userMayChangeModel={userMayChangeModel} forceModelInAllSituations={forceModelInAllSituations}
+        statusDeLancamento={statusDeLancamento} openRouterModels={openRouterModels}
+        onPremisesModels={onPremisesModels} />
     </Container>
   </>)
 }

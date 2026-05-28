@@ -72,8 +72,8 @@ export const assertModel = async () => {
     }
 }
 
-export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, selectableModels?: string[], availableSelectableModels?: string[], userMayChangeModel: boolean, forceModelInAllSituations: boolean, azureResourceName: string, onPremisesUrl?: string, awsRegion?: string, awsAccessKeyId?: string, openRouterModels?: string, onPremisesModels?: string }
-export async function getSelectedModelParams(): Promise<ModelParams> {
+export type ModelParams = { model: string, apiKey: string, availableApiKeys: string[], apiKeyFromEnv: boolean, defaultModel?: string, configuredSelectableModels?: string[], combinedSelectableModels?: string[], userMayChangeModel: boolean, forceModelInAllSituations: boolean, azureResourceName: string, onPremisesUrl?: string, awsRegion?: string, awsAccessKeyId?: string, openRouterModels?: string, onPremisesModels?: string }
+export async function getSelectedModelParams(forcedModel?: string): Promise<ModelParams> {
     const prefs = await getPrefs()
     const user = await getCurrentUser()
     const seqTribunalPai = user ? '' + (assertCourtId(user)) : undefined
@@ -90,8 +90,8 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     const tribunalModelConfig = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, 'MODEL', seqTribunalPai) as string
     const parsedModelConfig = parseModelConfig(tribunalModelConfig)
     let defaultModel = parsedModelConfig.defaultModel
-    const selectableModels = parsedModelConfig.selectableModels.length > 0 ? parsedModelConfig.selectableModels : undefined
-    const userMayChangeModel = !!selectableModels?.length
+    const configuredSelectableModels = parsedModelConfig.selectableModels.length > 0 ? parsedModelConfig.selectableModels : defaultModel ? [defaultModel] : undefined
+    const userMayChangeModel = !!configuredSelectableModels?.length
 
     azureResourceName = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.AZURE.resourceName, seqTribunalPai) as string
     onPremisesUrl = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.ON_PREMISES.resourceName, seqTribunalPai) as string
@@ -102,15 +102,18 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
 
     const configuredOpenRouterModels = parseOpenRouterModels(openRouterModels)
     const configuredOnPremisesModels = parseOnPremisesModels(onPremisesModels)
-    const availableSelectableModels = mergeSelectableModelLists(
-        selectableModels,
+    const combinedSelectableModels = mergeSelectableModelLists(
+        configuredSelectableModels,
         defaultModel ? [defaultModel] : undefined,
         ...Object.values(ModelProvider)
             .filter(provider => !!prefs?.env?.[provider.apiKey])
             .map(provider => getSelectableModelsForApiKey(provider.apiKey, configuredOpenRouterModels, configuredOnPremisesModels)),
     )
 
-    model = acceptSelectableModel(prefs?.model, availableSelectableModels)
+    if (forcedModel)
+        model = forcedModel
+    if (!model)
+        model = acceptSelectableModel(prefs?.model, combinedSelectableModels)
     if (prefs?.model && !model) {
         devLog(`Ignoring unavailable preferred model: ${prefs.model}`)
     }
@@ -169,7 +172,7 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
         const envKey = getEnvKeyByModel(model)
         apiKeyFromEnv = apiKey === getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, envKey, seqTribunalPai)
     }
-    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, selectableModels, availableSelectableModels, userMayChangeModel, forceModelInAllSituations, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, openRouterModels, onPremisesModels }
+    return { model, apiKey, availableApiKeys, apiKeyFromEnv, defaultModel, configuredSelectableModels, combinedSelectableModels, userMayChangeModel, forceModelInAllSituations, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, openRouterModels, onPremisesModels }
 }
 
 export async function getSelectedModelName(): Promise<string> {
@@ -177,11 +180,13 @@ export async function getSelectedModelName(): Promise<string> {
 }
 
 export async function getModel(params?: { structuredOutputs: boolean, overrideModel?: string, profile?: ModelProfileKey }): Promise<{ model: string, modelRef: LanguageModelV3, apiKeyFromEnv: boolean }> {
-    let { model, apiKey, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, apiKeyFromEnv, forceModelInAllSituations } = await getSelectedModelParams()
+    let { model: modelSelected, forceModelInAllSituations: modelForced } = await getSelectedModelParams()
     const user = await getCurrentUser()
     const seqTribunalPai = user ? '' + (assertCourtId(user)) : undefined
     const tribunalModelConfig = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, 'MODEL', seqTribunalPai) as string
-    model = resolveModelSelection({ overrideModel: params?.overrideModel, profile: params?.profile }, model, tribunalModelConfig, forceModelInAllSituations)
+    const modelResolved = resolveModelSelection({ overrideModel: params?.overrideModel, profile: params?.profile }, modelSelected, tribunalModelConfig, modelForced)
+    let { model, apiKey, azureResourceName, onPremisesUrl, awsRegion, awsAccessKeyId, apiKeyFromEnv, forceModelInAllSituations } = await getSelectedModelParams(modelResolved)
+
 
     if (!model) throw new Error('Nenhum modelo de IA configurado. Por favor, acesse /prefs para configurar um modelo.')
 

@@ -114,19 +114,19 @@ describe('model profile fallback', () => {
 
 describe('selectable model helpers', () => {
     test('lists all static models for a provider api key', () => {
-        const selectableModels = getSelectableModelsForApiKey(ModelProvider.OPENAI.apiKey)
+        const configuredSelectableModels = getSelectableModelsForApiKey(ModelProvider.OPENAI.apiKey)
 
-        expect(selectableModels).toContain('gpt-5.5')
-        expect(selectableModels).toContain('gpt-4.1')
+        expect(configuredSelectableModels).toContain('gpt-5.5')
+        expect(configuredSelectableModels).toContain('gpt-4.1')
     })
 
     test('uses configured openrouter models for openrouter api key', () => {
-        const selectableModels = getSelectableModelsForApiKey(ModelProvider.OPENROUTER.apiKey, [
+        const configuredSelectableModels = getSelectableModelsForApiKey(ModelProvider.OPENROUTER.apiKey, [
             { name: 'openrouter-google/gemini-2.5-pro', provider: ModelProvider.OPENROUTER },
             { name: 'openrouter-openai/gpt-5.2', provider: ModelProvider.OPENROUTER },
         ])
 
-        expect(selectableModels).toEqual([
+        expect(configuredSelectableModels).toEqual([
             'openrouter-google/gemini-2.5-pro',
             'openrouter-openai/gpt-5.2',
         ])

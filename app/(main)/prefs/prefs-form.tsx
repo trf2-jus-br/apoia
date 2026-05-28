@@ -24,7 +24,7 @@ export default function PrefsForm(params) {
     const configuredOpenRouterModels = parseOpenRouterModels(data?.env?.[ModelProvider.OPENROUTER.models] || params.openRouterModels)
     const configuredOnPremisesModels = parseOnPremisesModels(data?.env?.[ModelProvider.ON_PREMISES.models] || params.onPremisesModels)
     const hasUserProvidedApiKey = enumSorted(ModelProvider).some(provider => !!data?.env?.[provider.value.apiKey])
-    const singleTribunalSelectableModel = (params.selectableModels?.length || 0) === 1
+    const singleTribunalSelectableModel = (params.configuredSelectableModels?.length || 0) === 1
     const tribunalOnlyMode = singleTribunalSelectableModel && !hasUserProvidedApiKey
 
     const handleClick = (e) => {
@@ -69,14 +69,14 @@ export default function PrefsForm(params) {
     const isDisabled = (model): boolean => {
         const providerApiKey = model.value.provider.apiKey
         const enabled = data.env && !!data.env[providerApiKey]
-            || (params.availableSelectableModels?.includes(model.value.name))
+            || (params.configuredSelectableModels?.includes(model.value.name))
             || (!params.defaultModel && params.availableApiKeys.includes(providerApiKey))
         return !enabled
     }
 
     const isConfiguredModelEnabled = (modelName: string, providerApiKey: string): boolean => {
         return !!data.env?.[providerApiKey]
-            || !!params.availableSelectableModels?.includes(modelName)
+            || !!params.configuredSelectableModels?.includes(modelName)
             || (!params.defaultModel && params.availableApiKeys.includes(providerApiKey))
     }
 
@@ -197,8 +197,9 @@ export default function PrefsForm(params) {
                                         <div className="col">
                                             <div className="alert alert-light mb-0">
                                                 {tribunalOnlyMode
-                                                    ? `Este tribunal opera por padrão com o modelo ${singleSelectableModelName}. Informe uma chave de API própria para escolher outro modelo padrão.`
-                                                    : `Há apenas um modelo disponível no momento${singleSelectableModelName ? `: ${singleSelectableModelName}` : ''}, por isso não há seleção de modelo padrão.`}
+                                                    ? `Este tribunal opera por padrão com o modelo ${singleSelectableModelName}.`
+                                                    : `Há apenas um modelo padrão disponível no momento${singleSelectableModelName ? `: ${singleSelectableModelName}` : ''}, por isso não há seleção de modelo padrão.`}
+                                                {!hasUserProvidedApiKey && ` Informe uma chave de API própria para escolher outro modelo padrão.`}
                                             </div>
                                         </div>
                                     </div>}
