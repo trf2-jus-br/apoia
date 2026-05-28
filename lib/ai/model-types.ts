@@ -228,6 +228,12 @@ export function getModelProfileFallbackOrder(requestedProfile: ModelProfileKey):
     return Array.from(new Set(fallback)) as ModelProfileKey[]
 }
 
+export function getAlternativeDefaultProfileFallbackOrder(): ModelProfileKey[] {
+    const tierOrder: ModelProfileTier[] = ['PADRAO', 'EFICIENTE', 'VERSATIL', 'PREMIUM']
+    return tierOrder.flatMap(tier => ModelProfileArray.map(profile => profile.key)
+        .filter(key => ModelProfile[key].tier === tier))
+}
+
 export function parseModelConfig(modelsConfig?: string): ParsedModelConfigType {
     const parsed: ParsedModelConfigType = { selectableModels: [], profileModels: {} }
     if (!modelsConfig?.trim()) return parsed
@@ -249,13 +255,20 @@ export function parseModelConfig(modelsConfig?: string): ParsedModelConfigType {
         parsed.selectableModels.push(entry)
     }
 
-    
-    parsed.defaultModel = parsed.selectableModels[0] || resolveProfileModel('PADRAO', parsed.profileModels)
+    parsed.defaultModel = parsed.selectableModels[0] || resolveAlternativeDefaultProfileModel(parsed.profileModels)
     return parsed
 }
 
 export function resolveProfileModel(requestedProfile: ModelProfileKey, profileModels: Partial<Record<ModelProfileKey, string>>): string | undefined {
     for (const profile of getModelProfileFallbackOrder(requestedProfile)) {
+        const modelName = profileModels[profile]
+        if (modelName) return modelName
+    }
+    return undefined
+}
+
+export function resolveAlternativeDefaultProfileModel(profileModels: Partial<Record<ModelProfileKey, string>>): string | undefined {
+    for (const profile of getAlternativeDefaultProfileFallbackOrder()) {
         const modelName = profileModels[profile]
         if (modelName) return modelName
     }

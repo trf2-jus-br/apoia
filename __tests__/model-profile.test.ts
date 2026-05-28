@@ -1,4 +1,4 @@
-import { getModelProfileFallbackOrder, parseModelConfig, resolveProfileModel } from '@/lib/ai/model-types'
+import { getAlternativeDefaultProfileFallbackOrder, getModelProfileFallbackOrder, parseModelConfig, resolveAlternativeDefaultProfileModel, resolveProfileModel } from '@/lib/ai/model-types'
 
 describe('model profile config', () => {
     test('parses mixed selectable and profile models', () => {
@@ -16,6 +16,14 @@ describe('model profile config', () => {
         expect(parsed.selectableModels).toEqual([])
         expect(parsed.defaultModel).toBe('gemini-3.1-flash-lite')
         expect(parsed.profileModels.PADRAO_MP3_PDF).toBe('gemini-3.1-flash-lite')
+    })
+
+    test('uses alternative default profile order when PADRAO is not configured', () => {
+        const parsed = parseModelConfig('EFICIENTE_MP3:gemini-2.5-flash-lite;PREMIUM:gemini-3.1-pro-preview')
+
+        expect(parsed.selectableModels).toEqual([])
+        expect(parsed.defaultModel).toBe('gemini-2.5-flash-lite')
+        expect(parsed.profileModels.EFICIENTE_MP3).toBe('gemini-2.5-flash-lite')
     })
 
     test('supports aws model names with colon as selectable models', () => {
@@ -71,5 +79,35 @@ describe('model profile fallback', () => {
         })
 
         expect(resolved).toBe('gemini-3.1-flash-lite')
+    })
+
+    test('builds alternative default order from PADRAO to PREMIUM', () => {
+        expect(getAlternativeDefaultProfileFallbackOrder()).toEqual([
+            'PADRAO',
+            'PADRAO_MP3',
+            'PADRAO_PDF',
+            'PADRAO_MP3_PDF',
+            'EFICIENTE',
+            'EFICIENTE_MP3',
+            'EFICIENTE_PDF',
+            'EFICIENTE_MP3_PDF',
+            'VERSATIL',
+            'VERSATIL_MP3',
+            'VERSATIL_PDF',
+            'VERSATIL_MP3_PDF',
+            'PREMIUM',
+            'PREMIUM_MP3',
+            'PREMIUM_PDF',
+            'PREMIUM_MP3_PDF',
+        ])
+    })
+
+    test('resolves alternative default profile through higher tiers when PADRAO is missing', () => {
+        const resolved = resolveAlternativeDefaultProfileModel({
+            VERSATIL_PDF: 'gemini-2.5-pro',
+            PREMIUM: 'claude-sonnet-4-5-20250929',
+        })
+
+        expect(resolved).toBe('gemini-2.5-pro')
     })
 })

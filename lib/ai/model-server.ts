@@ -91,6 +91,7 @@ export async function getSelectedModelParams(): Promise<ModelParams> {
     const parsedModelConfig = parseModelConfig(tribunalModelConfig)
     let defaultModel = parsedModelConfig.defaultModel
     let selectableModels = parsedModelConfig.selectableModels.length > 0 ? parsedModelConfig.selectableModels : undefined
+    if (!selectableModels && defaultModel) selectableModels = [defaultModel]
     let userMayChangeModel = !!selectableModels?.length
 
     azureResourceName = getEnvStringPrefixedIfUserIsAllowed(user?.preferredUsername, ModelProvider.AZURE.resourceName, seqTribunalPai) as string

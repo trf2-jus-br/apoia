@@ -25,6 +25,7 @@ export default function PrefsForm(params) {
     const configuredOnPremisesModels = parseOnPremisesModels(data?.env?.[ModelProvider.ON_PREMISES.models] || params.onPremisesModels)
     const hasUserProvidedApiKey = enumSorted(ModelProvider).some(provider => !!data?.env?.[provider.value.apiKey])
     const singleTribunalSelectableModel = (params.selectableModels?.length || 0) === 1
+    console.log('Selectable models:', params.selectableModels, 'configuredOpenRouterModels:', configuredOpenRouterModels, 'configuredOnPremisesModels:', configuredOnPremisesModels)
     const tribunalOnlyMode = singleTribunalSelectableModel && !hasUserProvidedApiKey
 
     const handleClick = (e) => {
@@ -107,6 +108,11 @@ export default function PrefsForm(params) {
         .sort((a, b) => a.disabled ? 1 : b.disabled ? -1 : 0)
     // .filter(e => e.visible)
 
+    const selectableModelOptions = modelOptions.filter(option => option.visible && !option.hidden && !option.disabled)
+    const singleSelectableModelName = selectableModelOptions.length === 1 ? selectableModelOptions[0].name : undefined
+    const shouldShowModelSelect = !tribunalOnlyMode && selectableModelOptions.length > 1
+    const shouldShowUseModelInAllSituations = shouldShowModelSelect && !!data.model
+
     useEffect(() => {
         if (!tribunalOnlyMode) return
         if (!data.model && !data.useModelInAllSituations) return
@@ -175,17 +181,19 @@ export default function PrefsForm(params) {
                                     </div>
                                     </div>
                                     </div> */}
-                                {!tribunalOnlyMode
-                                    ? <>
-                                        <div className="row mb-2">
-                                            <Frm.Select label="Modelo Padrão" name="model" options={[{ id: '', name: '[Selecionar]' }, ...modelOptions]} />
+                                {!tribunalOnlyMode && shouldShowModelSelect
+                                    ? <div className="row mb-2">
+                                        <Frm.Select label="Modelo Padrão" name="model" options={[{ id: '', name: '[Selecionar]' }, ...modelOptions]} />
+                                        {shouldShowUseModelInAllSituations &&
                                             <Frm.Checkbox label="Usar meu modelo em todas as situações" name="useModelInAllSituations" width="12" topLabel="" />
-                                        </div>
-                                    </>
+                                        }
+                                    </div>
                                     : <div className="row mb-2">
                                         <div className="col">
                                             <div className="alert alert-light mb-0">
-                                                Este tribunal opera apenas com seus modelos e perfis default. Informe uma chave de API própria para escolher um modelo padrão.
+                                                {tribunalOnlyMode
+                                                    ? `Este tribunal opera por padrão com o modelo ${singleSelectableModelName}. Informe uma chave de API própria para escolher outro modelo padrão.`
+                                                    : `Há apenas um modelo disponível no momento${singleSelectableModelName ? `: ${singleSelectableModelName}` : ''}, por isso não há seleção de modelo padrão.`}
                                             </div>
                                         </div>
                                     </div>}
