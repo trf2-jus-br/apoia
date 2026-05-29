@@ -14,6 +14,7 @@ import { useMemo, useState, useEffect } from "react"
 import { usePromptContext } from "../context/PromptContext"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faExternalLink } from "@fortawesome/free-solid-svg-icons"
+import { SuggestionCards } from "./SuggestionCards"
 
 interface SidekickViewProps {
     apiKeyProvided: boolean
@@ -39,6 +40,7 @@ export function SidekickView({
         setPrompt,
         setNumber,
         promptInitialized,
+        faseAtual,
     } = usePromptContext()
     const [urlNovaAba, setUrlNovaAba] = useState('')
 
@@ -72,6 +74,10 @@ export function SidekickView({
             </div>
         )
     }, [promptsSidekick, prompt, setPrompt])
+
+    const handleSuggestionClick = (selectedPrompt: IAPromptList) => {
+        setPrompt(selectedPrompt)
+    }
 
     if (!promptInitialized) {
         return null
@@ -161,6 +167,15 @@ export function SidekickView({
                             resetProcess()
                         }}
                     />
+                    {faseAtual && (
+                        <div className="ps-3 pe-3 pb-3">
+                            <SuggestionCards
+                                faseAtual={faseAtual}
+                                prompts={promptsSidekick}
+                                onPromptClick={handleSuggestionClick}
+                            />
+                        </div>
+                    )}
                     {/* <p className="text-center mt-3 ms-3 me-3">
                         Selecione um dos seus prompts favoritos ou lance a Apoia em uma{' '}
                         <a href={urlNovaAba} target="_blank" rel="noopener noreferrer">nova aba</a>.

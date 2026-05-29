@@ -55,7 +55,9 @@ export function usePromptState(
     setIdxProcesso: (idx: number) => void,
     setTramFromUrl: (tram: number | null) => void,
     maxConfidentialityLevel: number,
-    sidekick?: boolean
+    sidekick?: boolean,
+    faseAtual?: string,
+    dadosDoProcesso?: any
 ): UsePromptStateResult {
     const currentSearchParams = useSearchParams()
     const router = useRouter()
@@ -208,6 +210,34 @@ export function usePromptState(
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [prompt])
+
+    // Fase 5: Seleção automática de prompt baseada na fase processual
+    useEffect(() => {
+        // Só executa se temos dados do processo e fase detectada
+        if (!dadosDoProcesso || !faseAtual || !promptInitialized) return
+
+        // Não seleciona automaticamente se já há um prompt selecionado que não seja o padrão
+        if (prompt && prompt.slug && prompt.slug !== 'resumo') return
+
+        // Busca o primeiro prompt que tenha a fase atual no campo phase
+        const promptParaFase = prompts.find(p => {
+            const phases = p.content?.phase
+            return phases && Array.isArray(phases) && phases.includes(faseAtual)
+        })
+
+        if (prompt?.slug === 'resumo') {
+            if (promptParaFase) {
+                setPrompt(promptParaFase)
+            } else {
+                // Fallback: usa o prompt "resumo" se não encontrar nenhum para a fase
+                const promptResumo = prompts.find(p => p.slug === 'resumo')
+                if (promptResumo) {
+                    setPrompt(promptResumo)
+                }
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [faseAtual, dadosDoProcesso, promptInitialized])
 
     useEffect(() => {
         if (!promptInitialized) return

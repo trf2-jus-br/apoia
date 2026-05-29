@@ -32,6 +32,9 @@ const promptSchema = z.object({
         piece_descr: z.string().array().nullable().optional(),
         summary: z.string().nullable().optional(),
 
+        profile: z.string().nullable().optional(),
+        phase: z.string().array().nullable().optional(),
+
         sort: numericString(z.number()).nullable().optional(),
         batch_report: z.boolean().nullable().optional(),
         plugins: z.string().array().nullable().optional(),

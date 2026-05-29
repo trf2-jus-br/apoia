@@ -8,7 +8,7 @@ import yamlps from 'js-yaml'
 import { ParsedPrompt, WorkflowRef } from './types'
 import { slugify } from '../utils/utils'
 import { Share, Target, Scope, Instance, Matter } from '../proc/process-types'
-import { PieceStrategy, Plugin, T } from '../proc/combinacoes'
+import { PieceStrategy, Plugin, T, FaseProcessual } from '../proc/combinacoes'
 import { normalizeModelProfile } from '../ai/model-types'
 
 /**
@@ -32,6 +32,7 @@ const instanceLookup = buildEnumLookup(Instance)
 const matterLookup = buildEnumLookup(Matter)
 const pieceStrategyLookup = buildEnumLookup(PieceStrategy)
 const pieceDescrLookup = buildEnumLookup(T)
+const faseProcessualLookup = buildEnumLookup(FaseProcessual)
 
 /**
  * Build a lookup that resolves to enum **values** instead of keys.
@@ -180,6 +181,11 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
         const resolved = resolveEnumArray(metadata.piece_descr, pieceDescrLookup, 'piece_descr', relativePath)
         if (resolved) metadata.piece_descr = resolved
         else delete metadata.piece_descr
+    }
+    if (metadata.phase != null) {
+        const resolved = resolveEnumArray(metadata.phase, faseProcessualLookup, 'phase', relativePath)
+        if (resolved) metadata.phase = resolved
+        else delete metadata.phase
     }
     if (metadata.profile != null) {
         const resolved = normalizeModelProfile(String(metadata.profile))

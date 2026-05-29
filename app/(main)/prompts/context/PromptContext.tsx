@@ -18,6 +18,8 @@ interface PromptContextValue {
     setDadosDoProcesso: (dados: DadosDoProcessoType | null) => void
     number: string
     setNumber: (number: string) => void
+    faseAtual: string | undefined
+    fases: string[] | undefined
 
     // Prompt State
     prompts: IAPromptList[]
@@ -74,7 +76,9 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setDadosDoProcesso,
         number,
         setNumber,
-        setTramFromUrl
+        setTramFromUrl,
+        faseAtual,
+        fases
     } = processData
 
     const promptState = usePromptState(
@@ -89,7 +93,9 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setIdxProcesso,
         setTramFromUrl,
         maxConfidentialityLevel,
-        sidekick
+        sidekick,
+        faseAtual,
+        dadosDoProcesso
     )
 
     const value = useMemo(() => ({
@@ -103,6 +109,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setDadosDoProcesso,
         number,
         setNumber,
+        faseAtual,
+        fases,
 
         // Prompt State
         ...promptState
@@ -116,6 +124,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setDadosDoProcesso,
         number,
         setNumber,
+        faseAtual,
+        fases,
         promptState
     ])
 

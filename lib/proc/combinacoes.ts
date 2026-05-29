@@ -55,6 +55,29 @@ export enum Plugin {
     PALAVRAS_CHAVE_JSON = 'Palavras-Chave JSON',
 }
 
+// Enum com as fases processuais
+const FaseProcessualArray = [
+    { id: 1, name: 'CONHECIMENTO_ABERTA', descr: 'Conhecimento Aberta' },
+    { id: 2, name: 'CONHECIMENTO_FECHADA', descr: 'Conhecimento Fechada' },
+    { id: 3, name: 'APELACAO_ABERTA', descr: 'Apelação Aberta' },
+    { id: 4, name: 'APELACAO_FECHADA', descr: 'Apelação Fechada' },
+    { id: 5, name: 'AGRAVO_ABERTA', descr: 'Agravo Aberta' },
+    { id: 6, name: 'AGRAVO_FECHADA', descr: 'Agravo Fechada' },
+    { id: 7, name: 'TURMA_RECURSAL_ABERTA', descr: 'Turma Recursal Aberta' },
+    { id: 8, name: 'TURMA_RECURSAL_FECHADA', descr: 'Turma Recursal Fechada' },
+    { id: 9, name: 'VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Viabilidade de Recurso Extraordinário' },
+    { id: 10, name: 'VIABILIDADE_RECURSO_ESPECIAL', descr: 'Viabilidade de Recurso Especial' },
+    { id: 11, name: 'EMBARGOS_DE_DECLARACAO_EM_ACORDAO', descr: 'Embargos de Declaração em Acórdão' },
+    { id: 12, name: 'AGRAVO_INTERNO', descr: 'Agravo Interno' },
+]
+
+export type FaseProcessualValueType = EnumOfObjectsValueType & { descr: string }
+export type FaseProcessualType = { [key: string]: FaseProcessualValueType }
+export const FaseProcessual: FaseProcessualType = FaseProcessualArray.reduce((acc, cur, idx) => {
+    acc[cur.name] = { ...cur, sort: idx + 1 }
+    return acc
+}, {} as FaseProcessualType)
+
 // Grupos de Síntese - agrupam tipos de síntese relacionados
 export interface GrupoDeSinteseType {
     slug: string
@@ -209,7 +232,7 @@ const subpadraoEmbargosDeDeclaracaoEmAcordao = [
     ANY({
         capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
     }),
-    PHASE('Embargos de Declaração em Acórdão'),
+    PHASE(FaseProcessual.EMBARGOS_DE_DECLARACAO_EM_ACORDAO.name),
     EXACT(T.ACORDAO),
     ANY({
         greedy: false, except: pecasQueFinalizamFases
@@ -228,7 +251,7 @@ const subpadraoViabilidadeDeRecursoExtraordinario = [
     ANY({
         capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
     }),
-    PHASE('Viabilidade de Recurso Extraordinário'),
+    PHASE(FaseProcessual.VIABILIDADE_RECURSO_EXTRAORDINARIO.name),
     EXACT(T.ACORDAO),
     ANY({
         greedy: false, except: pecasQueFinalizamFases
@@ -255,7 +278,7 @@ const subpadraoViabilidadeDeRecursoEspecial = [
     ANY({
         capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
     }),
-    PHASE('Viabilidade de Recurso Especial'),
+    PHASE(FaseProcessual.VIABILIDADE_RECURSO_ESPECIAL.name),
     EXACT(T.ACORDAO),
     ANY({
         greedy: false, except: pecasQueFinalizamFases
@@ -301,7 +324,7 @@ export const padraoAgravoInterno = [
     ANY({
         capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
     }),
-    PHASE('Agravo Interno'),
+    PHASE(FaseProcessual.AGRAVO_INTERNO.name),
     EXACT(T.ACORDAO),
     ANY({
         greedy: false, except: pecasQueFinalizamFases
@@ -316,7 +339,7 @@ export const padraoAgravoAberta = [
     ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
     EXACT(T.DESPACHO_DECISAO),
     ANY(),
-    PHASE('Agravo Aberto'),
+    PHASE(FaseProcessual.AGRAVO_ABERTA.name),
     OR(...pecasQueRepresentamAgravoPara2aInstancia),
     ANY({
         capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFases
@@ -325,7 +348,7 @@ export const padraoAgravoAberta = [
 
 export const padraoAgravoFechada = [
     ...padraoAgravoAberta,
-    PHASE('Agravo Fechado'),
+    PHASE(FaseProcessual.AGRAVO_FECHADA.name),
     EXACT(T.ACORDAO),
     ANY({ except: pecasQueIniciamFases })
 ]
@@ -337,14 +360,14 @@ export const padroesAgravo = [
 
 export const padraoAgravoForcado = [
     ...padraoAgravoAberta,
-    PHASE('Conhecimento Fechada'),
+    PHASE(FaseProcessual.CONHECIMENTO_FECHADA.name),
     EXACT(T.ACORDAO),
     ANY(),
 ]
 
 export const padraoAgravoSemConhecimento = [
     ANY(),
-    PHASE('Agravo Aberto'),
+    PHASE(FaseProcessual.AGRAVO_ABERTA.name),
     OR(...pecasQueRepresentamAgravoPara2aInstancia),
     ANY({
         capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFases
@@ -353,7 +376,7 @@ export const padraoAgravoSemConhecimento = [
 
 export const padraoAgravoForcadoSemConhecimento = [
     ...padraoAgravoSemConhecimento,
-    PHASE('Agravo Fechada'),
+    PHASE(FaseProcessual.AGRAVO_FECHADA.name),
     EXACT(T.ACORDAO),
     ANY(),
 ]
@@ -362,7 +385,7 @@ export const padraoApelacaoAberta = [
     ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
     EXACT(T.SENTENCA),
     ANY(),
-    PHASE('Apelação Aberta'),
+    PHASE(FaseProcessual.APELACAO_ABERTA.name),
     OR(...pecasQueRepresentamRecursoPara2aInstancia),
     ANY({
         capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFases
@@ -371,7 +394,7 @@ export const padraoApelacaoAberta = [
 
 export const padraoApelacaoFechada = [
     ...padraoApelacaoAberta,
-    PHASE('Apelação Fechada'),
+    PHASE(FaseProcessual.APELACAO_FECHADA.name),
     EXACT(T.ACORDAO),
     ANY({ except: pecasQueIniciamFases })
 ]
@@ -383,7 +406,7 @@ export const padroesApelacao = [
 
 export const padraoApelacaoForcado = [
     ...padraoApelacaoAberta,
-    PHASE('Conhecimento Fechada'),
+    PHASE(FaseProcessual.CONHECIMENTO_FECHADA.name),
     EXACT(T.ACORDAO),
     ANY(),
 ]
@@ -394,7 +417,7 @@ export const padraoTurmaRecursalAberta = [
     EXACT(T.PETICAO_INICIAL),
     ANY({ capture: [...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
     EXACT(T.SENTENCA),
-    PHASE('Turma Recursal Aberta'),
+    PHASE(FaseProcessual.TURMA_RECURSAL_ABERTA.name),
     OR(...pecasQueIniciamFaseDeTurmaRecursal),
     ANY({
         capture: pecasRelevantes2aInstanciaRecursos, greedy: true, except: pecasQueFinalizamFaseDeTurmaRecursal
@@ -403,7 +426,7 @@ export const padraoTurmaRecursalAberta = [
 
 export const padraoTurmaRecursalFechada = [
     ...padraoTurmaRecursalAberta,
-    PHASE('Turma Recursal Fechada'),
+    PHASE(FaseProcessual.TURMA_RECURSAL_FECHADA.name),
     EXACT(T.ACORDAO),
     ANY({ except: pecasQueIniciamFases })
 ]
@@ -415,23 +438,23 @@ export const padroesTurmaRecursal = [
 
 export const padraoConhecimentoAberta = [
     ANY({ capture: [...pecasRelevantes1aInstancia] }),
-    PHASE('Conhecimento Aberta'),
+    PHASE(FaseProcessual.CONHECIMENTO_ABERTA.name),
     EXACT(T.PETICAO_INICIAL),
     ANY({ capture: [...pecasRelevantes1aInstancia], except: pecasQueIniciamFases }),
 ]
 
 export const padraoConhecimentoFechada = [
     ...padraoConhecimentoAberta,
-    PHASE('Conhecimento Fechada'),
+    PHASE(FaseProcessual.CONHECIMENTO_FECHADA.name),
     EXACT(T.SENTENCA),
     ANY({ except: pecasQueIniciamFases })
 ]
 
 export const padraoConhecimentoForcado = [
     ...padraoConhecimentoAberta,
-    PHASE('Conhecimento Fechada'),
+    PHASE(FaseProcessual.CONHECIMENTO_FECHADA.name),
     EXACT(T.SENTENCA),
-    PHASE('Conhecimento Fechada'),
+    PHASE(FaseProcessual.CONHECIMENTO_FECHADA.name),
     ANY(),
 ]
 
@@ -512,6 +535,30 @@ export const padroesSuspensao = [
     padraoSuspensaoDecisaoAnterior2Pecas,
     padraoSuspensaoDecisaoAnterior,
 ]
+
+/**
+ * Detecta a fase processual atual de um processo com base nas peças e movimentos.
+ * Usa um "super pattern" que combina todos os padrões existentes para identificar
+ * em qual fase o processo se encontra.
+ * 
+ * @param pecas - Array de peças do processo
+ * @param movimentosEDocumentos - Array opcional de movimentos e documentos do processo
+ * @returns Objeto com faseAtual (string) e fases (array de strings) detectadas
+ */
+export const detectarFaseDoProcesso = (
+    pecas: PecaType[], 
+    movimentosEDocumentos?: InteropMovimentoComDocumentosType[]
+): { faseAtual?: string; fases?: string[] } => {
+    // Usa o super pattern que combina todos os padrões básicos e forçados
+    const superPattern = padroesBasicosEForcados
+    
+    const resultado = selecionarPecasPorPadraoComFase(pecas, superPattern, movimentosEDocumentos)
+    
+    return {
+        faseAtual: resultado.faseAtual,
+        fases: resultado.fases
+    }
+}
 
 export interface TipoDeSinteseValido {
     id: number,

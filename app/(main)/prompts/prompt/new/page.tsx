@@ -26,6 +26,7 @@ export default async function New(
             editor_label: "Texto",
             piece_strategy: "MAIS_RELEVANTES",
             piece_descr: [],
+            phase: [],
             summary: "NAO",
         }
     }

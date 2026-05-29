@@ -4,6 +4,7 @@ import PromptsTable from "../prompts-table"
 import Link from "next/link"
 import { ProcessFilters } from "./ProcessFilters"
 import { usePromptContext } from "../context/PromptContext"
+import { SuggestionCards } from "./SuggestionCards"
 
 interface MainViewProps {
     promptsPrincipais: IAPromptList[]
@@ -20,7 +21,12 @@ export function MainView({
     isModerator,
     apiKeyProvided
 }: MainViewProps) {
-    const { activeTab, setActiveTab, setNumeroDoProcesso } = usePromptContext()
+    const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual } = usePromptContext()
+    
+    const handleSuggestionClick = (prompt: IAPromptList) => {
+        promptOnClick('executar', prompt)
+    }
+    
     return (
         <>
             <ProcessFilters />
@@ -30,6 +36,12 @@ export function MainView({
                         Execute os prompts diretamente na Apoia, cadastrando sua <Link href="/prefs">Chave de API</Link>.
                     </p>
                 )}
+
+                <SuggestionCards 
+                    faseAtual={faseAtual}
+                    prompts={[...promptsPrincipais, ...promptsComunidade]}
+                    onPromptClick={handleSuggestionClick}
+                />
 
                 <Tabs
                     activeKey={activeTab}

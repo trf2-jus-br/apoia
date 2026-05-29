@@ -135,6 +135,8 @@ export type IAPrompt = {
 
         target?: string
         profile?: string
+        phase?: string[]
+
         editor_label?: string
         piece_strategy?: string
         piece_descr?: string[]
@@ -188,6 +190,8 @@ export type IAPromptToInsert = {
 
         target?: string
         profile?: string
+        phase?: string[]
+
         editor_label?: string
         piece_strategy?: string
         piece_descr?: string
@@ -227,6 +231,8 @@ export type IAPromptList = {
 
         target?: string
         profile?: string
+        phase?: string[]
+        
         editor_label?: string
         piece_strategy?: string
         piece_descr?: string[]

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
+import { detectarFaseDoProcesso } from "@/lib/proc/combinacoes"
 
 export interface UseProcessDataResult {
     numeroDoProcesso: string | null
@@ -14,6 +15,8 @@ export interface UseProcessDataResult {
     tramFromUrl: number | null
     setTramFromUrl: (tram: number | null) => void
     toastMessage: (message: string, variant: string) => void
+    faseAtual: string | undefined
+    fases: string[] | undefined
 }
 
 export function useProcessData(
@@ -25,6 +28,8 @@ export function useProcessData(
     const [dadosDoProcesso, setDadosDoProcesso] = useState<DadosDoProcessoType | null>(null)
     const [number, setNumber] = useState<string>('')
     const [tramFromUrl, setTramFromUrl] = useState<number | null>(null)
+    const [faseAtual, setFaseAtual] = useState<string | undefined>(undefined)
+    const [fases, setFases] = useState<string[] | undefined>(undefined)
 
     useEffect(() => {
         if (number?.length === 20) {
@@ -67,7 +72,11 @@ export function useProcessData(
     }, [numeroDoProcesso])
 
     useEffect(() => {
-        if (!dadosDoProcesso) return
+        if (!dadosDoProcesso) {
+            setFaseAtual(undefined)
+            setFases(undefined)
+            return
+        }
         
         if (tramFromUrl !== null && arrayDeDadosDoProcesso?.length > 1) {
             if (tramFromUrl >= 0 && tramFromUrl < arrayDeDadosDoProcesso.length) {
@@ -76,6 +85,14 @@ export function useProcessData(
             }
             setTramFromUrl(null)
         }
+
+        // Detectar fase processual quando dadosDoProcesso estiver disponível
+        const resultado = detectarFaseDoProcesso(
+            dadosDoProcesso.pecas,
+            dadosDoProcesso.movimentosEDocumentos
+        )
+        setFaseAtual(resultado.faseAtual)
+        setFases(resultado.fases)
     }, [arrayDeDadosDoProcesso, dadosDoProcesso, tramFromUrl])
 
     return {
@@ -90,6 +107,8 @@ export function useProcessData(
         setNumber,
         tramFromUrl,
         setTramFromUrl,
-        toastMessage
+        toastMessage,
+        faseAtual,
+        fases
     }
 }

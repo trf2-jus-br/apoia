@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAdd, faRemove } from '@fortawesome/free-solid-svg-icons'
 import { enumSorted, ModelProfile } from '@/lib/ai/model-types'
 import { Instance, Matter, Scope, Target } from '@/lib/proc/process-types'
-import { PieceDescr, PieceStrategy, Plugin } from '@/lib/proc/combinacoes'
+import { PieceDescr, PieceStrategy, Plugin, FaseProcessual } from '@/lib/proc/combinacoes'
 import { findUnclosedMarking } from '@/lib/ai/template'
 import dynamic from 'next/dynamic'
 import AiContent from '@/components/ai-content'
@@ -125,6 +125,7 @@ export default function PromptForm(props) {
         const targetOptions = enumSorted(Target).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceStrategyOptions = enumSorted(PieceStrategy).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceDescrOptions = enumSorted(PieceDescr).map(e => ({ id: e.value.name, name: e.value.descr }))
+        const phaseOptions = enumSorted(FaseProcessual).map(e => ({ id: e.value.name, name: e.value.descr }))
         const modelOptions = [{ id: '', name: 'Padrão' }, ...enumSorted(ModelProfile).map(e => ({ id: e.key, name: e.value.name, disabled: e.key.startsWith('PREMIUM') }))] 
         const summaryOptions = [{ id: 'NAO', name: 'Não' }, { id: 'SIM', name: 'Sim' }]
         const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'BETA_TESTE', name: 'Beta Teste', disabled: true }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }, ...(data?.share === 'OCULTO' ? [{ id: 'OCULTO', name: 'Oculto', disabled: true }] : [])]
@@ -178,6 +179,7 @@ export default function PromptForm(props) {
                     <Frm.Input label="Nome do Campo" name="content.editor_label" width={3} visible={[Target.TEXTO.name, Target.REFINAMENTO.name].includes(data.content.target)} />
                     <Frm.Select label="Seleção de Peças" name="content.piece_strategy" options={pieceStrategyOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
                     <Frm.MultiSelect label="Tipos de Peças" name="content.piece_descr" options={pieceDescrOptions} width={2} visible={Target.PROCESSO.name === data.content.target && PieceStrategy.TIPOS_ESPECIFICOS.name === data.content.piece_strategy} />
+                    <Frm.MultiSelect label="Fases Processuais" name="content.phase" options={phaseOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
                     <Frm.Select label="Resumir Selecionadas" name="content.summary" options={summaryOptions} width={2} visible={Target.PROCESSO.name === data.content.target && showAdvancedOptions} />
                     <Frm.Select label="Perfil" name="content.profile" options={modelOptions} width={3} visible={showAdvancedOptions} />
                     <Frm.Select label="Compartilhamento" name="share" options={shareOptions} width={2} />
