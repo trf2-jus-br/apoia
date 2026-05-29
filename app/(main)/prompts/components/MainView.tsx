@@ -21,7 +21,7 @@ export function MainView({
     isModerator,
     apiKeyProvided
 }: MainViewProps) {
-    const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual } = usePromptContext()
+    const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual, suggestedPrompts } = usePromptContext()
 
     const handleSuggestionClick = (prompt: IAPromptList) => {
         promptOnClick('executar', prompt)
@@ -38,11 +38,18 @@ export function MainView({
                 </Container>
             )}
 
-            <SuggestionCards
-                faseAtual={faseAtual}
-                prompts={[...promptsPrincipais, ...promptsComunidade]}
-                onPromptClick={handleSuggestionClick}
-            />
+            {faseAtual && suggestedPrompts.length > 0 && (
+                <div className="bg-warning bg-opacity-25 pb-3 pt-3">
+                    <Container className="" fluid={false}>
+                        <SuggestionCards
+                            faseAtual={faseAtual}
+                            promptsSugeridos={suggestedPrompts}
+                            onPromptClick={handleSuggestionClick}
+                        />
+                    </Container>
+                </div>
+            )}
+
             <Container className="mt-2 mb-3" fluid={false}>
                 <Tabs
                     activeKey={activeTab}

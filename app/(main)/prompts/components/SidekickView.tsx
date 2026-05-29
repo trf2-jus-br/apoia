@@ -41,6 +41,7 @@ export function SidekickView({
         setNumber,
         promptInitialized,
         faseAtual,
+        suggestedPrompts,
     } = usePromptContext()
     const [urlNovaAba, setUrlNovaAba] = useState('')
 
@@ -167,11 +168,11 @@ export function SidekickView({
                             resetProcess()
                         }}
                     />
-                    {faseAtual && (
+                    {faseAtual && suggestedPrompts.length > 0 && (
                         <div className="ps-3 pe-3 pb-3">
                             <SuggestionCards
                                 faseAtual={faseAtual}
-                                prompts={promptsSidekick}
+                                promptsSugeridos={suggestedPrompts}
                                 onPromptClick={handleSuggestionClick}
                             />
                         </div>

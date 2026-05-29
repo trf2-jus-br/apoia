@@ -41,6 +41,7 @@ export interface UsePromptStateResult {
     setGroup: (group: string | null) => void
     action: string | null
     setAction: (action: string | null) => void
+    suggestedPrompts: IAPromptList[]
 }
 
 export function usePromptState(
@@ -79,6 +80,7 @@ export function usePromptState(
     const [sourcePayload, setSourcePayload] = useState<SourcePayloadType | null>(null)
     const [group, setGroup] = useState<string | null>(null)
     const [action, setAction] = useState<string | null>(null)
+    const [suggestedPrompts, setSuggestedPrompts] = useState<IAPromptList[]>([])
     const hasRunSource = useRef(false)
     const hasRunSink = useRef(false)
     const hasRunPrompts = useRef(false)
@@ -214,16 +216,25 @@ export function usePromptState(
     // Fase 5: Seleção automática de prompt baseada na fase processual
     useEffect(() => {
         // Só executa se temos dados do processo e fase detectada
-        if (!dadosDoProcesso || !faseAtual || !promptInitialized) return
+        if (!dadosDoProcesso || !faseAtual || !promptInitialized) {
+            if (suggestedPrompts.length > 0) setSuggestedPrompts([])
+            return
+        }
+
+        // Descobre os prompts sugeridos
+        const promptsSugeridos = prompts.filter(p => {
+            const phases = p.content?.phase
+            return phases && Array.isArray(phases) && phases.includes(faseAtual)
+        }).slice(0, 3)
+
+        // Atualiza o estado
+        setSuggestedPrompts(promptsSugeridos)
 
         // Não seleciona automaticamente se já há um prompt selecionado que não seja o padrão
         if (prompt && prompt.slug && prompt.slug !== 'resumo') return
 
         // Busca o primeiro prompt que tenha a fase atual no campo phase
-        const promptParaFase = prompts.find(p => {
-            const phases = p.content?.phase
-            return phases && Array.isArray(phases) && phases.includes(faseAtual)
-        })
+        const promptParaFase = promptsSugeridos.length > 0 ? promptsSugeridos[0] : null
 
         if (prompt?.slug === 'resumo') {
             if (promptParaFase) {
@@ -237,7 +248,7 @@ export function usePromptState(
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [faseAtual, dadosDoProcesso, promptInitialized])
+    }, [faseAtual, dadosDoProcesso, promptInitialized, prompts])
 
     useEffect(() => {
         if (!promptInitialized) return
@@ -394,6 +405,7 @@ export function usePromptState(
         group,
         setGroup,
         action,
-        setAction
+        setAction,
+        suggestedPrompts
     }
 }

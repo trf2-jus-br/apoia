@@ -52,6 +52,7 @@ interface PromptContextValue {
     setGroup: (group: string | null) => void
     action: string | null
     setAction: (action: string | null) => void
+    suggestedPrompts: IAPromptList[]
 }
 
 const PromptContext = createContext<PromptContextValue | undefined>(undefined)
