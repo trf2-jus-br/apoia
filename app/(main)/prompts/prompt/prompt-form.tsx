@@ -125,9 +125,9 @@ export default function PromptForm(props) {
         const targetOptions = enumSorted(Target).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceStrategyOptions = enumSorted(PieceStrategy).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceDescrOptions = enumSorted(PieceDescr).map(e => ({ id: e.value.name, name: e.value.descr }))
-        const modelOptions = [{ id: '', name: 'Padrão' }, ...enumSorted(ModelProfile).map(e => ({ id: e.key, name: e.value.name }))]
+        const modelOptions = [{ id: '', name: 'Padrão' }, ...enumSorted(ModelProfile).map(e => ({ id: e.key, name: e.value.name, disabled: e.key.startsWith('PREMIUM') }))] 
         const summaryOptions = [{ id: 'NAO', name: 'Não' }, { id: 'SIM', name: 'Sim' }]
-        const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'BETA_TESTE', name: 'Beta Teste' }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }, ...(data?.share === 'OCULTO' ? [{ id: 'OCULTO', name: 'Oculto', disabled: true }] : [])]
+        const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'BETA_TESTE', name: 'Beta Teste', disabled: true }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }, ...(data?.share === 'OCULTO' ? [{ id: 'OCULTO', name: 'Oculto', disabled: true }] : [])]
         const pluginOptions = Object.entries(Plugin).map(([key, value]) => ({ id: key, name: value }))
 
         if (data?.share === 'EM_ANALISE') {
