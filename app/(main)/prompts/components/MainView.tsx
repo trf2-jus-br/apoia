@@ -22,37 +22,38 @@ export function MainView({
     apiKeyProvided
 }: MainViewProps) {
     const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual } = usePromptContext()
-    
+
     const handleSuggestionClick = (prompt: IAPromptList) => {
         promptOnClick('executar', prompt)
     }
-    
+
     return (
         <>
             <ProcessFilters />
-            <Container className="mt-2 mb-3" fluid={false}>
-                {!apiKeyProvided && (
+            {!apiKeyProvided && (
+                <Container className="mt-2 mb-3" fluid={false}>
                     <p className="text-center mt-3 mb-3">
                         Execute os prompts diretamente na Apoia, cadastrando sua <Link href="/prefs">Chave de API</Link>.
                     </p>
-                )}
+                </Container>
+            )}
 
-                <SuggestionCards 
-                    faseAtual={faseAtual}
-                    prompts={[...promptsPrincipais, ...promptsComunidade]}
-                    onPromptClick={handleSuggestionClick}
-                />
-
+            <SuggestionCards
+                faseAtual={faseAtual}
+                prompts={[...promptsPrincipais, ...promptsComunidade]}
+                onPromptClick={handleSuggestionClick}
+            />
+            <Container className="mt-2 mb-3" fluid={false}>
                 <Tabs
                     activeKey={activeTab}
                     onSelect={(k) => setActiveTab(k || 'principal')}
                     className="mt-3"
                 >
                     <Tab eventKey="principal" title="Principais">
-                        <PromptsTable 
-                            prompts={promptsPrincipais} 
-                            onClick={promptOnClick} 
-                            onProcessNumberChange={setNumeroDoProcesso} 
+                        <PromptsTable
+                            prompts={promptsPrincipais}
+                            onClick={promptOnClick}
+                            onProcessNumberChange={setNumeroDoProcesso}
                             isModerator={isModerator}
                         >
                             {CriarNovo()}
@@ -60,10 +61,10 @@ export function MainView({
                     </Tab>
 
                     <Tab eventKey="comunidade" title="Prompts Não Avaliados">
-                        <PromptsTable 
-                            prompts={promptsComunidade} 
-                            onClick={promptOnClick} 
-                            onProcessNumberChange={setNumeroDoProcesso} 
+                        <PromptsTable
+                            prompts={promptsComunidade}
+                            onClick={promptOnClick}
+                            onProcessNumberChange={setNumeroDoProcesso}
                             isModerator={isModerator}
                         >
                             {CriarNovo()}

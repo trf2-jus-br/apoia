@@ -20,7 +20,8 @@ const promptSchema = z.object({
     share: z.string().nullable().optional(),
     created_by: numericString(z.number()).nullable().optional(),
     content: z.object({
-        author: z.string(),
+        author: z.string().nullable().optional(),
+        description: z.string().nullable().optional(),
 
         scope: z.string().array().nullable().optional(),
         instance: z.string().array().nullable().optional(),

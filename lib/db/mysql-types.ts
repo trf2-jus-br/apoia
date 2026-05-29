@@ -128,6 +128,7 @@ export type IAPrompt = {
     origin_version?: string | null
     content: {
         author?: string
+        description?: string
 
         scope?: string[]
         instance?: string[]
@@ -183,6 +184,7 @@ export type IAPromptToInsert = {
         template?: string
 
         author?: string
+        description?: string
 
         scope?: string[]
         instance?: string[]
@@ -224,6 +226,7 @@ export type IAPromptList = {
     origin_version?: string | null
     content: {
         author?: string
+        description?: string
 
         scope?: string[]
         instance?: string[]
@@ -232,7 +235,7 @@ export type IAPromptList = {
         target?: string
         profile?: string
         phase?: string[]
-        
+
         editor_label?: string
         piece_strategy?: string
         piece_descr?: string[]

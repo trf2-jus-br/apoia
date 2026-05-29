@@ -44,6 +44,8 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
         ...(parsed.metadata?.summary ? { summary: parsed.metadata.summary } : {}),
         ...(parsed.metadata?.editor_label ? { editor_label: parsed.metadata.editor_label } : {}),
         ...(parsed.metadata?.piece_descr ? { piece_descr: parsed.metadata.piece_descr } : {}),
+        ...(parsed.metadata?.phase ? { phase: parsed.metadata.phase } : {}),
+        ...(parsed.metadata?.description ? { description: parsed.metadata.description } : {}),
     }
 }
 

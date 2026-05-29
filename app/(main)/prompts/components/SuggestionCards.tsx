@@ -30,33 +30,34 @@ export function SuggestionCards({ faseAtual, prompts, onPromptClick }: Suggestio
     const faseDescricao = faseInfo?.descr || faseAtual
 
     return (
-        <div className="mb-4">
-            <h5 className="mb-3">
-                <i className="fas fa-lightbulb text-warning me-2"></i>
-                Sugestões para fase: <strong>{faseDescricao}</strong>
-            </h5>
-            <Row>
+        <div>
+            <h5 className="mb-2">Prompts sugeridos para a fase {faseDescricao}</h5>
+            <Row className="row row-cols-1 row-cols-md-1 g-4">
                 {promptsSugeridos.map((prompt) => (
-                    <Col key={prompt.id} md={4} className="mb-3">
-                        <Card 
-                            className="h-100 shadow-sm border-primary"
+                    <Col key={prompt.id} md={4}>
+                        <Card
+                            className="h-100 shadow-sm border-primary btn btn-outline-primary"
                             style={{ cursor: 'pointer' }}
                             onClick={() => onPromptClick(prompt)}
                         >
-                            <Card.Body>
-                                <Card.Title className="h6 mb-2">
+                            <Card.Header className="bg-transparent border-0 pt-1 pb-0">
+                                <Card.Title className="h6 mb-0">
                                     {prompt.name}
                                 </Card.Title>
-                                <Card.Text className="small text-muted mb-2">
-                                    <strong>Autor:</strong> {prompt.content?.author || 'Desconhecido'}
-                                </Card.Text>
-                                {prompt.content?.prompt && (
+                            </Card.Header>
+                            <Card.Body className="p-1">
+                                {prompt.content?.description && (
                                     <Card.Text className="small">
-                                        {prompt.content.prompt.substring(0, 100)}
-                                        {prompt.content.prompt.length > 100 ? '...' : ''}
+                                        {prompt.content.description.substring(0, 100)}
+                                        {prompt.content.description.length > 100 ? '...' : ''}
                                     </Card.Text>
                                 )}
                             </Card.Body>
+                            {/* <Card.Footer className="bg-transparent border-0 pt-0 pb-0">
+                                <Card.Text className="small text-muted mb-2">
+                                    {prompt.content?.author || 'Desconhecido'}
+                                </Card.Text>
+                            </Card.Footer> */}
                         </Card>
                     </Col>
                 ))}

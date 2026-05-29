@@ -174,7 +174,7 @@ export default function PromptForm(props) {
                     <Frm.MultiSelect label="Segmento" name="content.scope" options={scopeOptions} width={2} />
                     <Frm.MultiSelect label="Instância" name="content.instance" options={instanceOptions} width={2} />
                     <Frm.MultiSelect label="Natureza" name="content.matter" options={matterOptions} width={2} />
-                    {/* <Frm.Input label="Descrição" name="content.descr" width={12} /> */}
+                    <Frm.Input label="Descrição (opcional)" name="content.description" width={12} />
                     <Frm.Select label="Fonte dos Dados" name="content.target" options={targetOptions} width={3} />
                     <Frm.Input label="Nome do Campo" name="content.editor_label" width={3} visible={[Target.TEXTO.name, Target.REFINAMENTO.name].includes(data.content.target)} />
                     <Frm.Select label="Seleção de Peças" name="content.piece_strategy" options={pieceStrategyOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
