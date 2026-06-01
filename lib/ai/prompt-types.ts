@@ -42,6 +42,8 @@ export type PromptDefinitionMetadataType = {
     description?: string
     target?: string
     profile?: ModelProfileKey
+    phase?: string[]
+    group?: { slug: string, title: string, description: string }
 }
 
 // Tipo que define os textos que serão passados para um prompt

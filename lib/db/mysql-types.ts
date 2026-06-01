@@ -146,7 +146,7 @@ export type IAPrompt = {
         // Aggregator metadata (from sync engine, stored in content JSON)
         sort?: number
         context?: Record<string, any>
-        grupo?: Record<string, any>
+        group?: Record<string, any>
         batch_report?: boolean
         plugins?: string[]
 
@@ -201,6 +201,7 @@ export type IAPromptToInsert = {
 
         sort?: number
         batch_report?: boolean
+        group?: Record<string, any>
         plugins?: string[]
 
         // Workflow (predecessors/successors)
@@ -244,7 +245,7 @@ export type IAPromptList = {
         // Aggregator metadata (from sync engine, stored in content JSON)
         sort?: number
         context?: Record<string, any>
-        grupo?: Record<string, any>
+        group?: Record<string, any>
         batch_report?: boolean
         plugins?: string[]
 

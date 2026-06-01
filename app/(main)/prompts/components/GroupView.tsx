@@ -6,6 +6,7 @@ import { GrupoDeSinteseMap } from "@/lib/proc/combinacoes"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faArrowLeft, faFileAlt } from "@fortawesome/free-solid-svg-icons"
 import { useRouter } from "next/navigation"
+import devLog from "@/lib/utils/log"
 
 interface GroupViewProps {
     groupSlug: string
@@ -30,8 +31,10 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
     // Filtra os prompts que pertencem a este grupo
     const groupPrompts = prompts.filter(p => {
         if (!p.origin) return false
-        const grupo = p.content?.grupo as any
-        return grupo?.slug === groupSlug
+        const group = p.content?.group as any
+        if (group) 
+            devLog('Prompt', p.name, 'pertence ao grupo', group.slug)
+        return group?.slug === groupSlug
     }).sort((a, b) => {
         const sortA = a.content?.sort ?? 0
         const sortB = b.content?.sort ?? 0
@@ -46,8 +49,8 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
         <Container className="mt-4" fluid={false}>
             {/* Header */}
             <div className="mb-4">
-                <h1 className="mb-1">{group.titulo}</h1>
-                <p className="text-muted mb-0">{group.descricao}</p>
+                <h1 className="mb-1">{group.title}</h1>
+                <p className="text-muted mb-0">{group.description}</p>
             </div>
 
             {/* Cards dos prompts do grupo */}

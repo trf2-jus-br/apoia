@@ -10,12 +10,12 @@ describe('match with phase markers', () => {
     const pattern = [
       ANY(),
       OR(T.APELACAO, T.RECURSO, T.RECURSO_INOMINADO),
-      PHASE('APELACAO_ABERTA'),
+      PHASE('APELACAO'),
       ANY_EXCEPT(T.VOTO, T.ACORDAO)
     ]
   const r = matchFull(docs, pattern)
     expect(r).not.toBeNull()
-    expect(r!.lastPhase?.phase).toBe('APELACAO_ABERTA')
+    expect(r!.lastPhase?.phase).toBe('APELACAO')
   })
 
   test('apelação fechada phase', () => {
@@ -25,12 +25,12 @@ describe('match with phase markers', () => {
       OR(T.APELACAO, T.RECURSO, T.RECURSO_INOMINADO),
       ANY(),
       OR(T.VOTO, T.ACORDAO),
-      PHASE('APELACAO_FECHADA'),
+      PHASE('APELACAO_CONCLUIDA'),
       ANY()
     ]
   const r = matchFull(docs, pattern)
     expect(r).not.toBeNull()
-    expect(r!.lastPhase?.phase).toBe('APELACAO_FECHADA')
+    expect(r!.lastPhase?.phase).toBe('APELACAO_CONCLUIDA')
   })
 
   test('prefer later phase marker when multiple', () => {

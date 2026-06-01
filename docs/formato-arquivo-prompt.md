@@ -47,9 +47,9 @@ matter: [civel]
 scope: [justica-federal]
 profile: versatil
 author: Nome do Autor
-grupo:
+group:
   slug: minutas-segunda-instancia
-  titulo: Minutas de Segunda Instância
+  title: Minutas de Segunda Instância
 context:
   action: minuta-editar
   instance: segundo-grau
@@ -261,18 +261,18 @@ matter: [civel]
 
 ---
 
-### `grupo` _(opcional)_
+### `group` _(opcional)_
 
-Agrupa prompts relacionados em uma seção visual na interface. Todos os prompts com o mesmo `slug` aparecem juntos sob o mesmo `titulo`.
+Agrupa prompts relacionados em uma seção visual na interface. Todos os prompts com o mesmo `slug` aparecem juntos sob o mesmo `title`.
 
 ```yaml
-grupo:
+group:
   slug: admissibilidade-de-recursos
-  titulo: Admissibilidade de Recursos
+  title: Admissibilidade de Recursos
 ```
 
 - `slug`: identificador do grupo (letras minúsculas, hífens, sem acentos)
-- `titulo`: texto exibido como cabeçalho do grupo na interface
+- `title`: texto exibido como cabeçalho do grupo na interface
 
 ---
 
@@ -881,9 +881,9 @@ name: Minuta de Decisão de Viabilidade de Recurso Especial
 sort: 3
 share: beta-teste
 piece_strategy: viabilidade-recurso-especial
-grupo:
+group:
   slug: admissibilidade-de-recursos
-  titulo: Admissibilidade de Recursos
+  title: Admissibilidade de Recursos
 predecessors:
   - path: pedidos-viabilidade-recurso
   - path: pesquisa-de-temas

@@ -37,7 +37,7 @@ function buildContentJson(parsed: ParsedPrompt): Record<string, any> {
         ...(parsed.metadata?.sort != null ? { sort: parsed.metadata.sort } : {}),
         ...((parsed.metadata?.piece_strategy || ((parsed.metadata?.target || 'PROCESSO') === 'PROCESSO')) ? { piece_strategy: parsed.metadata.piece_strategy || 'MAIS_RELEVANTES' } : {}),
         ...(parsed.metadata?.context ? { context: parsed.metadata.context } : {}),
-        ...(parsed.metadata?.grupo ? { grupo: parsed.metadata.grupo } : {}),
+        ...(parsed.metadata?.group ? { group: parsed.metadata.group } : {}),
         ...(parsed.metadata?.batch_report != null ? { batch_report: parsed.metadata.batch_report } : {}),
         ...(parsed.metadata?.plugins ? { plugins: parsed.metadata.plugins } : {}),
         ...(parsed.metadata?.profile ? { profile: parsed.metadata.profile } : {}),
@@ -57,7 +57,7 @@ function contentHasChanged(dbContent: Record<string, any>, newContent: Record<st
     return JSON.stringify(canonicalize(dbContent)) !== JSON.stringify(canonicalize(newContent))
     const keys = ['system_prompt', 'prompt', 'json_schema', 'format', 'template',
         'author', 'target', 'scope', 'instance', 'matter',
-        'sort', 'piece_strategy', 'context', 'grupo', 'batch_report', 'plugins',
+        'sort', 'piece_strategy', 'context', 'group', 'batch_report', 'plugins',
         'workflow']
     for (const key of keys) {
         const dbVal = dbContent?.[key] ?? null
