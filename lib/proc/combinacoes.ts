@@ -57,14 +57,14 @@ export enum Plugin {
 
 // Enum com as fases processuais
 const FaseProcessualArray = [
-    { id: 1, name: 'CONHECIMENTO_ABERTA', descr: 'Conhecimento Aberta' },
-    { id: 2, name: 'CONHECIMENTO_FECHADA', descr: 'Conhecimento Fechada' },
-    { id: 3, name: 'APELACAO_ABERTA', descr: 'Apelação Aberta' },
-    { id: 4, name: 'APELACAO_FECHADA', descr: 'Apelação Fechada' },
-    { id: 5, name: 'AGRAVO_ABERTA', descr: 'Agravo Aberta' },
-    { id: 6, name: 'AGRAVO_FECHADA', descr: 'Agravo Fechada' },
-    { id: 7, name: 'TURMA_RECURSAL_ABERTA', descr: 'Turma Recursal Aberta' },
-    { id: 8, name: 'TURMA_RECURSAL_FECHADA', descr: 'Turma Recursal Fechada' },
+    { id: 1, name: 'CONHECIMENTO_ABERTA', descr: 'Conhecimento' },
+    { id: 2, name: 'CONHECIMENTO_FECHADA', descr: 'Conhecimento (concluída)' },
+    { id: 3, name: 'APELACAO_ABERTA', descr: 'Apelação' },
+    { id: 4, name: 'APELACAO_FECHADA', descr: 'Apelação (concluída)' },
+    { id: 5, name: 'AGRAVO_ABERTA', descr: 'Agravo' },
+    { id: 6, name: 'AGRAVO_FECHADA', descr: 'Agravo (concluída)' },
+    { id: 7, name: 'TURMA_RECURSAL_ABERTA', descr: 'Turma Recursal' },
+    { id: 8, name: 'TURMA_RECURSAL_FECHADA', descr: 'Turma Recursal (concluída)' },
     { id: 9, name: 'VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Viabilidade de Recurso Extraordinário' },
     { id: 10, name: 'VIABILIDADE_RECURSO_ESPECIAL', descr: 'Viabilidade de Recurso Especial' },
     { id: 11, name: 'EMBARGOS_DE_DECLARACAO_EM_ACORDAO', descr: 'Embargos de Declaração em Acórdão' },
