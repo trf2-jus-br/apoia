@@ -47,6 +47,10 @@ export default async function PromptInfoContents({ prompt, isModerator }: { prom
                         <Form.Label>Tipos de Peças</Form.Label>
                         <Form.Control className="form-control" readOnly defaultValue={prompt.content.piece_descr} />
                     </Col>}
+                    {prompt?.content?.profile && <Col md={3}>
+                        <Form.Label>Perfil</Form.Label>
+                        <Form.Control className="form-control" readOnly defaultValue={prompt.content.profile} />
+                    </Col>}
                 </Row>
                 <Row className="mb-3">
                     {prompt?.content?.summary && <Col md={2}>
