@@ -56,19 +56,24 @@ export function SidekickView({
         return (
             <div className="d-flex flex-wrap gap-2 justify-content-center">
                 {promptsSidekick && promptsSidekick.length > 0 ? (
-                    promptsSidekick.filter(p => p.is_hidden !== undefined ? !p.is_hidden : p.is_auto_hidden === false).filter(p => p?.slug !== prompt?.slug || p?.origin !== prompt?.origin).map((p, i) => (
-                        <Button
-                            key={p.base_id ?? `${p.slug}-${i}`}
-                            onClick={() => setPrompt(p)}
-                            variant="light"
-                            style={{
-                                borderColor: `hsl(${30 + ((i % 14) / 13) * (330 - 30)}, 85%, 40%)`,
-                                color: `hsl(${30 + ((i % 14) / 13) * (330 - 30)}, 85%, 30%)`,
-                            }}
-                        >
-                            {p.name}
-                        </Button>
-                    ))
+                    promptsSidekick
+                        .filter(p => p.is_hidden !== undefined ? !p.is_hidden : p.is_auto_hidden === false)
+                        .filter(p => p?.slug !== prompt?.slug || p?.origin !== prompt?.origin)
+                        .filter(p => !suggestedPrompts.some(sp => sp?.slug === p?.slug && sp?.origin === p?.origin))
+                        .map((p, i) => (
+                            <Button
+                                key={p.base_id ?? `${p.slug}-${i}`}
+                                onClick={() => setPrompt(p)}
+                                variant="light"
+                                style={{
+                                    borderColor: `hsl(${30 + ((i % 14) / 13) * (330 - 30)}, 85%, 40%)`,
+                                    color: `hsl(${30 + ((i % 14) / 13) * (330 - 30)}, 85%, 30%)`,
+                                }}
+                                title={p?.content?.description}
+                            >
+                                {p.name}
+                            </Button>
+                        ))
                 ) : (
                     <div className="text-muted">Nenhum prompt favorito disponível.</div>
                 )}
