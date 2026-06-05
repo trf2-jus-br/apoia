@@ -50,6 +50,7 @@ interface PromptContextValue {
     setGroup: (group: string | null) => void
     action: string | null
     setAction: (action: string | null) => void
+    execution_id: string
 }
 
 const PromptContext = createContext<PromptContextValue | undefined>(undefined)
@@ -63,6 +64,7 @@ interface PromptProviderProps {
 }
 
 export function PromptProvider({ children, originalPrompts, toastMessage, maxConfidentialityLevel, sidekick }: PromptProviderProps) {
+    const execution_id = useMemo(() => crypto.randomUUID(), [])
     const processData = useProcessData(toastMessage)
     const {
         numeroDoProcesso,
@@ -105,7 +107,9 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setNumber,
 
         // Prompt State
-        ...promptState
+        ...promptState,
+
+        execution_id,
     }), [
         numeroDoProcesso,
         setNumeroDoProcesso,
@@ -116,7 +120,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         setDadosDoProcesso,
         number,
         setNumber,
-        promptState
+        promptState,
+        execution_id,
     ])
 
     return (
@@ -132,4 +137,14 @@ export function usePromptContext() {
         throw new Error('usePromptContext must be used within a PromptProvider')
     }
     return context
+}
+
+/** Returns the execution_id from PromptContext, or null if not inside a PromptProvider. */
+export function useExecutionId(): string | null {
+    return useContext(PromptContext)?.execution_id ?? null
+}
+
+/** Returns the id of the currently selected (aggregator) prompt, or null if not inside a PromptProvider. */
+export function useSelectedPromptId(): number | null {
+    return useContext(PromptContext)?.prompt?.id ?? null
 }

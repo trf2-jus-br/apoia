@@ -66,6 +66,8 @@ export async function getPiecesWithContent(dadosDoProcesso: DadosDoProcessoType,
 export const promptDefinitionFromDefinitionAndOptions = (definition: PromptDefinitionType, options: PromptOptionsType): PromptDefinitionType => {
     return {
         kind: definition.kind,
+        dbId: definition.dbId,
+        uuid: definition.uuid,
         systemPrompt: options.overrideSystemPrompt !== undefined ? options.overrideSystemPrompt : definition.systemPrompt,
         prompt: options.overridePrompt !== undefined ? options.overridePrompt : definition.prompt,
         jsonSchema: options.overrideJsonSchema !== undefined ? options.overrideJsonSchema : definition.jsonSchema,

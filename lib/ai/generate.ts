@@ -43,7 +43,9 @@ async function saveLog(user: UserType, additionalInformation: PromptAdditionalIn
         prompt_payload: JSON.stringify(messages), dossier_id, document_id: null,
         cached_input_tokens: usage.cachedInputTokens || 0, input_tokens: usage.inputTokens || 0, output_tokens: usage.outputTokens || 0, reasoning_tokens: usage.reasoningTokens || 0,
         approximate_cost: calculedUsage.approximate_cost,
-        prompt_id: prompt_id ?? null
+        prompt_id: prompt_id ?? null,
+        execution_id: additionalInformation?.execution_id ?? null,
+        aggregator_prompt_id: additionalInformation?.aggregator_prompt_id ?? null,
     })
     return generationId
 }
@@ -61,9 +63,9 @@ function writeResponseToFile(kind: string, messages: ModelMessage[], text: strin
     }
 }
 
-export async function generateContent(definition: PromptDefinitionType, data: PromptDataType, tools?: Record<string, any>): Promise<IAGenerated> {
+export async function generateContent(definition: PromptDefinitionType, data: PromptDataType, tools?: Record<string, any>, additionalInformation?: PromptAdditionalInformationType): Promise<IAGenerated> {
     const results: PromptExecutionResultsType = {}
-    const ret = await streamContent(definition, data, results, undefined, tools)
+    const ret = await streamContent(definition, data, results, additionalInformation, tools)
     const stream = ret.textStream ? await ret.textStream : ret.objectStream ? await ret.objectStream : ret.cached ? ret.cached : undefined
 
     let text: string
@@ -199,6 +201,11 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
     // } else {
     const { processedMessagesModel, processedMessagesLog } = await processMessages(model, messages)
     if (results) results.messages = processedMessagesLog
+    // Ensure every generation has an execution_id; callers like analyze() may already provide one
+    const effectiveAdditionalInfo: PromptAdditionalInformationType = {
+        ...additionalInformation,
+        execution_id: additionalInformation?.execution_id ?? crypto.randomUUID(),
+    }
     const pResult = streamText({
         model: modelRef as LanguageModel,
         messages: processedMessagesModel,
@@ -216,7 +223,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             if (apiKeyFromEnv)
                 writeUsage(usage, model, user_id, court_id, modelUsage)
             if (cacheControl !== false) {
-                const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, processedMessagesLog, modelUsage, prompt_id)
+                const generationId = await saveLog(user, effectiveAdditionalInfo, model, usage, sha256, kind, text, attempt, processedMessagesLog, modelUsage, prompt_id)
                 if (results) results.generationId = generationId
             }
             writeResponseToFile(kind, processedMessagesLog, text)

@@ -133,7 +133,9 @@ export type GeneratedContent = {
 
 export type PromptAdditionalInformationType = {
     dossierCode?: string,
-    documentId?: string
+    documentId?: string,
+    execution_id?: string,
+    aggregator_prompt_id?: number | null,
 }
 
 export type UsageType = {

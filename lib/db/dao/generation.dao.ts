@@ -46,12 +46,15 @@ export class GenerationDao {
                 }
             }
         }
+
+        const execution_id: string | null = data.execution_id ?? null
+        const aggregator_prompt_id: number | null = data.aggregator_prompt_id ?? null
         
         const [inserted] = await knex('ia_generation').insert({
             model, prompt, sha256, prompt_payload, generation, attempt,
             dossier_id, document_id,
             cached_input_tokens, input_tokens, output_tokens, reasoning_tokens, approximate_cost, created_by,
-            prompt_id
+            prompt_id, execution_id, aggregator_prompt_id
         }).returning('id')
         const result = await knex('ia_generation').select<mysqlTypes.IAGenerated>('*').where('id', getId(inserted)).first()
         return result

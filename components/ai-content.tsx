@@ -10,6 +10,7 @@ import { ContentType, PromptConfigType, PromptDataType, PromptDefinitionType, Pr
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCopy, faThumbsDown } from '@fortawesome/free-regular-svg-icons'
 import { faRefresh, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { useExecutionId, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext'
 import { Form } from 'react-bootstrap'
 import devLog from '@/lib/utils/log'
 import { readUIMessageStream, UIMessage } from 'ai'
@@ -95,6 +96,11 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const [copySuccess, setCopySuccess] = useState(false)
     const initialized = useRef(false)
     const contentRef = useRef<HTMLDivElement>(null);
+    const executionId = useExecutionId()
+    const selectedPromptId = useSelectedPromptId()
+    const aggregatorPromptId = selectedPromptId !== null && params.definition.dbId !== selectedPromptId
+        ? selectedPromptId
+        : null
 
     const reportError = (err: any, payload: any) => {
         if (err && typeof err === 'object' && 'message' in err && (err as Error).message === 'NEXT_REDIRECT') throw err
@@ -201,6 +207,8 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
             promptSlug: params.config?.prompt_slug,
             extra: params.config?.extra,
             dossierCode: params.dossierCode,
+            execution_id: executionId,
+            aggregator_prompt_id: aggregatorPromptId,
         }
 
         if (params.onBusy) params.onBusy()
