@@ -6,6 +6,7 @@ import { getPromptDefinitionById } from '@/lib/ai/prompt-store'
 import { assertApiUser } from '@/lib/user'
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, StreamTextResult, ToolSet, UIMessage } from 'ai'
 import { withErrorHandler } from '@/lib/utils/api-error'
+import { calcSha256 } from '@/lib/utils/hash'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60
@@ -59,14 +60,18 @@ async function POST_HANDLER(req: Request) {
         }
     }
 
+    const modelMessages = await convertToModelMessages(messages)
+
+    const sha256 = calcSha256(modelMessages)
+
     const ret = await generateAndStreamContent(
         model,
         undefined, // structuredOutputs
         true, // cacheControl
         chatKind, // kind
         modelRef,
-        await convertToModelMessages(messages),
-        '', // sha256
+        modelMessages,
+        sha256, // sha256
         { dossierCode: dossierCode || undefined, execution_id: execution_id || undefined, aggregator_prompt_id: aggregator_prompt_id ?? null }, // additionalInformation
         {}, // results
         null, // attempt
@@ -75,6 +80,29 @@ async function POST_HANDLER(req: Request) {
         await getTools(pUser),
         promptId, // prompt_id
     )
+
+    if (ret.cached) {
+        const stream = createUIMessageStream<UIMessage>({
+            execute: async ({ writer }) => {
+                writer.write({ type: 'start', messageId: crypto.randomUUID() });
+                writer.write({ type: 'start-step' });
+                writer.write({ type: 'text-start', id: '1' });
+                writer.write({ type: 'text-delta', delta: ret.cached, id: '1' });
+                writer.write({ type: 'text-end', id: '1' });
+                writer.write({ type: 'finish-step' });
+                writer.write({
+                    type: 'finish',
+                    messageMetadata: {
+                        model: ret.model,
+                        usage: ret.usage,
+                        messages: modelMessages
+                    },
+                });
+            }
+        })
+        return createUIMessageStreamResponse({ stream });
+        // return new Response(ret.cached, { status: 200 })
+    }
 
     if (typeof ret === 'string') {
         return new Response(ret, { status: 200 })

@@ -16,7 +16,6 @@ export class StatsDao {
     static async getTotalExecutions(): Promise<number> {
         if (!knex) return 0
         const result = await knex('ia_generation')
-            .whereNotNull('prompt_id')
             .count('id as total')
             .first()
         return Number(result?.total) || 0
@@ -32,7 +31,6 @@ export class StatsDao {
 
         const result = await knex('ia_generation')
             .whereNotNull('created_by')
-            .whereNotNull('prompt_id')
             .andWhere('created_at', '>=', dateLimit.toISOString().split('T')[0] + ' 00:00:00')
             .countDistinct('created_by as count')
             .first()
@@ -60,7 +58,6 @@ export class StatsDao {
         const stats = await knex('ia_generation as g')
             .join('ia_user as u', 'u.id', 'g.created_by')
             .whereNotNull('u.court_id')
-            .whereNotNull('g.prompt_id')
             .groupBy('u.court_id')
             .select(
                 'u.court_id as courtId',
@@ -269,7 +266,7 @@ export class StatsDao {
         const users = await knex('ia_generation as g')
             .join('ia_user as u', 'u.id', 'g.created_by')
             .leftJoin('ia_court as c', 'c.id', 'u.court_id')
-            .whereNotNull('g.prompt_id')
+            // .whereNotNull('g.prompt_id')
             .andWhere('g.created_at', '>=', dateLimit.toISOString().split('T')[0] + ' 00:00:00')
             .groupBy('u.id', 'u.name', 'u.username', 'c.sigla')
             .select(
@@ -328,7 +325,7 @@ export class StatsDao {
         if (!knex) return 0
         const result = await knex('ia_generation')
             .where('created_by', userId)
-            .whereNotNull('prompt_id')
+            // .whereNotNull('prompt_id')
             .count('id as total')
             .first()
         return Number(result?.total) || 0
@@ -387,7 +384,7 @@ export class StatsDao {
 
         const results = await knex('ia_generation')
             .where('created_by', userId)
-            .whereNotNull('prompt_id')
+            // .whereNotNull('prompt_id')
             .andWhere('created_at', '>=', dateLimit.toISOString().split('T')[0] + ' 00:00:00')
             .select(
                 knex.raw('EXTRACT(YEAR FROM created_at) as "year"'),
@@ -423,7 +420,7 @@ export class StatsDao {
         // Badge: Iniciante - Executou pelo menos 1 prompt
         const hasExecution = await knex('ia_generation')
             .where('created_by', userId)
-            .whereNotNull('prompt_id')
+            // .whereNotNull('prompt_id')
             .first()
         const inicipiante = !!hasExecution
 

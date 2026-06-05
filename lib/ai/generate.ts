@@ -120,7 +120,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const cookiesList = await (cookies());
     const anonymize = cookiesList.get('anonymize')?.value !== 'false'
     data.textos = data.textos.map((texto: TextoType) => {
-        if (texto.texto?.startsWith('data:') && texto.texto.includes(';base64,')) 
+        if (texto.texto?.startsWith('data:') && texto.texto.includes(';base64,'))
             return texto
         if (anonymize || assertAnonimizacaoAutomatica(texto.sigilo)) {
             devLog(`Anonymizing piece ${texto.id} (${texto.descr}) with confidentiality level ${texto.sigilo}`)
@@ -150,9 +150,18 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
         return { model, messages: JSON.stringify(messages) }
     }
 
+    // writeResponseToFile(definition, messages, "antes de executar")
+    // if (1 == 1) throw new Error('Interrupted')
+
+    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, additionalInformation, results, attempt, apiKeyFromEnv, tools, definition?.dbId)
+}
+
+export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>, prompt_id?: number | null):
+    Promise<PromptReturnType> {
+
     // try to retrieve cached generations
-    if (definition?.cacheControl !== false) {
-        const cached = await retrieveFromCache(sha256, model, definition.kind, attempt)
+    if (cacheControl !== false) {
+        const cached = await retrieveFromCache(sha256, model, kind, attempt)
         if (cached) {
             // Ensure downstream code receives the persisted generation id
             if (results) {
@@ -165,14 +174,6 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
         }
     }
 
-    // writeResponseToFile(definition, messages, "antes de executar")
-    // if (1 == 1) throw new Error('Interrupted')
-
-    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, additionalInformation, results, attempt, apiKeyFromEnv, tools, definition?.dbId)
-}
-
-export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>, prompt_id?: number | null):
-    Promise<PromptReturnType> {
     const pUser = assertCurrentUser()
     const user = await pUser
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
@@ -232,10 +233,10 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             }
         },
         // tools: structuredOutputs ? undefined : tools, // Gemini models don't support tools when structured outputs are used
-        tools: tools, 
+        tools: tools,
         stopWhen: stepCountIs(10),
         providerOptions: {
-             google: {
+            google: {
                 thinkingConfig: {
                     // thinkingBudget: 2024, // Set a budget (0 to disable, up to 24576 for Flash)
                     includeThoughts: true, // Crucial to include the thinking process in the response
