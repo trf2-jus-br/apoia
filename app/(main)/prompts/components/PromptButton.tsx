@@ -18,6 +18,36 @@ interface PromptButtonProps {
 }
 
 /**
+ * Quebra o texto em linhas de até `maxLen` caracteres, sempre em
+ * fronteiras de palavra (espaço). Se uma palavra isolada for maior
+ * que `maxLen`, ela é mantida inteira na sua própria linha.
+ */
+function wrapTitle(text: string | undefined, maxLen: number = 30): string {
+    if (!text) return ""
+    const words = text.split(/\s+/).filter(Boolean)
+    if (words.length === 0) return ""
+
+    const lines: string[] = []
+    let current = ""
+
+    for (const word of words) {
+        if (!current) {
+            current = word
+            continue
+        }
+        // +1 para o espaço separador
+        if (current.length + 1 + word.length <= maxLen) {
+            current += " " + word
+        } else {
+            lines.push(current)
+            current = word
+        }
+    }
+    if (current) lines.push(current)
+    return lines.join("\n")
+}
+
+/**
  * Botão de prompt no padrão visual usado no sidekick.
  * Recebe um índice para gerar uma cor HSL estável e única para o botão.
  */
@@ -41,7 +71,7 @@ export function PromptButton({ prompt, index, onClick, variant = "default" }: Pr
                 borderColor: `hsl(${hue}, ${saturation}%, ${borderLightness}%)`,
                 color: `hsl(${hue}, ${saturation}%, ${textLightness}%)`,
             }}
-            title={prompt?.content?.description}
+            title={wrapTitle(prompt?.content?.description)}
         >
             {prompt.name}
         </Button>
