@@ -83,6 +83,7 @@ export function SidekickView({
                                     prompt={p}
                                     index={i}
                                     onClick={setPrompt}
+                                    variant="suggested"
                                 />
                             ))}
                         </div>
