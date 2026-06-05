@@ -254,7 +254,7 @@ function AsyncSelectComponent<T>({
                 </div>
             )}
             <FieldError formState={formState} name={name} />
-            {explanation && <Form.Text className="text-body-tertiary">{explanation}</Form.Text>}
+            {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
         </Form.Group>
     )
 }
@@ -308,7 +308,7 @@ export class FormHelper {
                     maxLength={maxLength}
                     key={name} />
                 <FieldError formState={this.formState} name={name} />
-                {explanation && <Form.Text className="text-body-tertiary">{explanation}</Form.Text>}
+                {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
             </Form.Group>
         )
     }
@@ -325,7 +325,7 @@ export class FormHelper {
                     onChange={e => this.set(name, e.target.checked)}
                 />
                 <FieldError formState={this.formState} name={name} />
-                {explanation && <Form.Text className="text-body-tertiary">{explanation}</Form.Text>}
+                {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
             </Form.Group>
         )
     }
@@ -336,7 +336,7 @@ export class FormHelper {
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
                 <ReactTextareaAutosize className="form-control" name={name} value={this.get(name)} onChange={e => this.set(name, e.target.value)} placeholder="" key={name} />
                 <FieldError formState={this.formState} name={name} />
-                {explanation && <Form.Text className="text-body-tertiary">{explanation}</Form.Text>}
+                {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
             </Form.Group>
         )
     }
@@ -349,7 +349,7 @@ export class FormHelper {
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
                 <Editor markdown={this.get(name) || ''} onChange={e => this.set(name, e)} key={name} />
                 <FieldError formState={this.formState} name={name} />
-                {explanation && <Form.Text className="text-body-tertiary">{explanation}</Form.Text>}
+                {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
             </Form.Group>
         )
     }

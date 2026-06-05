@@ -126,7 +126,7 @@ export default function PromptForm(props) {
         const pieceStrategyOptions = enumSorted(PieceStrategy).map(e => ({ id: e.value.name, name: e.value.descr }))
         const pieceDescrOptions = enumSorted(PieceDescr).map(e => ({ id: e.value.name, name: e.value.descr }))
         const phaseOptions = enumSorted(FaseProcessual).map(e => ({ id: e.value.name, name: e.value.descr }))
-        const modelOptions = [{ id: '', name: 'Padrão' }, ...enumSorted(ModelProfile).map(e => ({ id: e.key, name: e.value.name, disabled: e.key.startsWith('PREMIUM') }))] 
+        const modelOptions = [{ id: '', name: 'Padrão' }, ...enumSorted(ModelProfile).map(e => ({ id: e.key, name: e.value.name, disabled: e.key.startsWith('PREMIUM') }))]
         const summaryOptions = [{ id: 'NAO', name: 'Não' }, { id: 'SIM', name: 'Sim' }]
         const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'BETA_TESTE', name: 'Beta Teste', disabled: true }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }, ...(data?.share === 'OCULTO' ? [{ id: 'OCULTO', name: 'Oculto', disabled: true }] : [])]
         const pluginOptions = Object.entries(Plugin).map(([key, value]) => ({ id: key, name: value }))
@@ -174,7 +174,7 @@ export default function PromptForm(props) {
                     <Frm.MultiSelect label="Segmento" name="content.scope" options={scopeOptions} width={2} />
                     <Frm.MultiSelect label="Instância" name="content.instance" options={instanceOptions} width={2} />
                     <Frm.MultiSelect label="Natureza" name="content.matter" options={matterOptions} width={2} />
-                    <Frm.Input label="Descrição (opcional)" name="content.description" width={12} />
+                    <Frm.Input label="Descrição (opcional)" name="content.description" explanation="Escreva uma explicação no imperativo, ex.: 'Gere um relatório do processo...' ou 'Analise as peças selecionadas...'." width={12} />
                     <Frm.Select label="Fonte dos Dados" name="content.target" options={targetOptions} width={3} />
                     <Frm.Input label="Nome do Campo" name="content.editor_label" width={3} visible={[Target.TEXTO.name, Target.REFINAMENTO.name].includes(data.content.target)} />
                     <Frm.Select label="Seleção de Peças" name="content.piece_strategy" options={pieceStrategyOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
