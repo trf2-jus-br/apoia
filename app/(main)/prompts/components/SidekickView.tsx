@@ -1,4 +1,4 @@
-import { Container, Button } from "react-bootstrap"
+import { Container } from "react-bootstrap"
 import { IAPromptList } from "@/lib/db/mysql-types"
 import ProcessNumberForm from "../process-number-form"
 import ProcessContents from "../process-contents"
@@ -8,13 +8,13 @@ import TargetText from "../target-text"
 import { VisualizationEnum } from "@/lib/ui/preprocess"
 import ErrorMessage from "@/components/error-message"
 import Chat from "@/components/slots/chat"
-import { slugify } from "@/lib/utils/utils"
 import BreadCrumbs from "../breadcrumbs"
 import { useMemo, useState, useEffect } from "react"
 import { usePromptContext } from "../context/PromptContext"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faExternalLink } from "@fortawesome/free-solid-svg-icons"
-import { SuggestionCards } from "./SuggestionCards"
+import { PromptButton } from "./PromptButton"
+import { PromptDivider } from "./PromptDivider"
 
 interface SidekickViewProps {
     apiKeyProvided: boolean
@@ -52,38 +52,60 @@ export function SidekickView({
         setUrlNovaAba(url)
     }, [numeroDoProcesso])
 
+    // Lista de prompts "demais" (favoritos) com os sugeridos já filtrados
+    const demaisPrompts = useMemo(() => {
+        if (!promptsSidekick || promptsSidekick.length === 0) return []
+        return promptsSidekick
+            .filter(p => p.is_hidden !== undefined ? !p.is_hidden : p.is_auto_hidden === false)
+            .filter(p => p?.slug !== prompt?.slug || p?.origin !== prompt?.origin)
+            .filter(p => !suggestedPrompts.some(sp => sp?.slug === p?.slug && sp?.origin === p?.origin))
+    }, [promptsSidekick, prompt, suggestedPrompts])
+
+    // Bloco renderizado: mostra sugeridos com divisor (se houver) e,
+    // em seguida, demais prompts também com divisor (se houver).
     const promptButtons = useMemo(() => {
+        const hasSugeridos = !!faseAtual && suggestedPrompts.length > 0
+        const hasDemais = demaisPrompts.length > 0
+
+        if (!hasSugeridos && !hasDemais) {
+            return <div className="text-muted text-center">Nenhum prompt disponível.</div>
+        }
+
         return (
-            <div className="d-flex flex-wrap gap-2 justify-content-center">
-                {promptsSidekick && promptsSidekick.length > 0 ? (
-                    promptsSidekick
-                        .filter(p => p.is_hidden !== undefined ? !p.is_hidden : p.is_auto_hidden === false)
-                        .filter(p => p?.slug !== prompt?.slug || p?.origin !== prompt?.origin)
-                        .filter(p => !suggestedPrompts.some(sp => sp?.slug === p?.slug && sp?.origin === p?.origin))
-                        .map((p, i) => (
-                            <Button
-                                key={p.base_id ?? `${p.slug}-${i}`}
-                                onClick={() => setPrompt(p)}
-                                variant="light"
-                                style={{
-                                    borderColor: `hsl(${30 + ((i % 14) / 13) * (330 - 30)}, 85%, 40%)`,
-                                    color: `hsl(${30 + ((i % 14) / 13) * (330 - 30)}, 85%, 30%)`,
-                                }}
-                                title={p?.content?.description}
-                            >
-                                {p.name}
-                            </Button>
-                        ))
-                ) : (
-                    <div className="text-muted">Nenhum prompt favorito disponível.</div>
+            <div className="d-flex flex-column align-items-center w-100 gap-0">
+                {hasSugeridos && (
+                    <>
+                        <PromptDivider label="Prompts Sugeridos" />
+                        <div className="d-flex flex-wrap gap-2 justify-content-center w-100">
+                            {suggestedPrompts.map((p, i) => (
+                                <PromptButton
+                                    key={p.base_id ?? `${p.slug}-${i}`}
+                                    prompt={p}
+                                    index={i}
+                                    onClick={setPrompt}
+                                />
+                            ))}
+                        </div>
+                    </>
+                )}
+                {hasDemais && (
+                    <>
+                        {hasSugeridos ? <PromptDivider label="Demais Prompts" /> : <div className="mb-3" />}
+                        <div className="d-flex flex-wrap gap-2 justify-content-center w-100">
+                            {demaisPrompts.map((p, i) => (
+                                <PromptButton
+                                    key={p.base_id ?? `${p.slug}-${i}`}
+                                    prompt={p}
+                                    index={i}
+                                    onClick={setPrompt}
+                                />
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
         )
-    }, [promptsSidekick, prompt, setPrompt])
-
-    const handleSuggestionClick = (selectedPrompt: IAPromptList) => {
-        setPrompt(selectedPrompt)
-    }
+    }, [faseAtual, suggestedPrompts, demaisPrompts, setPrompt])
 
     if (!promptInitialized) {
         return null
@@ -173,15 +195,6 @@ export function SidekickView({
                             resetProcess()
                         }}
                     />
-                    {faseAtual && suggestedPrompts.length > 0 && (
-                        <div className="ps-3 pe-3 pb-3">
-                            <SuggestionCards
-                                faseAtual={faseAtual}
-                                promptsSugeridos={suggestedPrompts}
-                                onPromptClick={handleSuggestionClick}
-                            />
-                        </div>
-                    )}
                     {/* <p className="text-center mt-3 ms-3 me-3">
                         Selecione um dos seus prompts favoritos ou lance a Apoia em uma{' '}
                         <a href={urlNovaAba} target="_blank" rel="noopener noreferrer">nova aba</a>.

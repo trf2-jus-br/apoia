@@ -78,6 +78,7 @@ export const ClientIFrameTest = (props: { baseUrl: string; callbackUrl: string }
     // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025114%26instance=primeiro-grau`
     // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50016349520244025114%26instance=segundo-grau%26action=minuta_editar`
     const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50283654220254025001%26instance=primeiro-grau%26action=processo_selecionar`
+    // const src = `${props.baseUrl}/auth/keycloak-iframe?redirect=/sidekick?process=50839986820214025101%26instance=primeiro-grau%26action=processo_selecionar`
 
     return <Container className="mt-3 text-center">
         <h1>Keycloak Authentication Test Page</h1>
