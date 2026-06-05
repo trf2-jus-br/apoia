@@ -43,7 +43,9 @@ async function saveLog(user: UserType, additionalInformation: PromptAdditionalIn
         prompt_payload: JSON.stringify(messages), dossier_id, document_id: null,
         cached_input_tokens: usage.cachedInputTokens || 0, input_tokens: usage.inputTokens || 0, output_tokens: usage.outputTokens || 0, reasoning_tokens: usage.reasoningTokens || 0,
         approximate_cost: calculedUsage.approximate_cost,
-        prompt_id: prompt_id ?? null
+        prompt_id: prompt_id ?? null,
+        execution_id: additionalInformation?.execution_id ?? null,
+        aggregator_prompt_id: additionalInformation?.aggregator_prompt_id ?? null,
     })
     return generationId
 }
@@ -61,9 +63,9 @@ function writeResponseToFile(kind: string, messages: ModelMessage[], text: strin
     }
 }
 
-export async function generateContent(definition: PromptDefinitionType, data: PromptDataType, tools?: Record<string, any>): Promise<IAGenerated> {
+export async function generateContent(definition: PromptDefinitionType, data: PromptDataType, tools?: Record<string, any>, additionalInformation?: PromptAdditionalInformationType): Promise<IAGenerated> {
     const results: PromptExecutionResultsType = {}
-    const ret = await streamContent(definition, data, results, undefined, tools)
+    const ret = await streamContent(definition, data, results, additionalInformation, tools)
     const stream = ret.textStream ? await ret.textStream : ret.objectStream ? await ret.objectStream : ret.cached ? ret.cached : undefined
 
     let text: string
@@ -118,7 +120,7 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     const cookiesList = await (cookies());
     const anonymize = cookiesList.get('anonymize')?.value !== 'false'
     data.textos = data.textos.map((texto: TextoType) => {
-        if (texto.texto?.startsWith('data:') && texto.texto.includes(';base64,')) 
+        if (texto.texto?.startsWith('data:') && texto.texto.includes(';base64,'))
             return texto
         if (anonymize || assertAnonimizacaoAutomatica(texto.sigilo)) {
             devLog(`Anonymizing piece ${texto.id} (${texto.descr}) with confidentiality level ${texto.sigilo}`)
@@ -148,9 +150,18 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
         return { model, messages: JSON.stringify(messages) }
     }
 
+    // writeResponseToFile(definition, messages, "antes de executar")
+    // if (1 == 1) throw new Error('Interrupted')
+
+    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, additionalInformation, results, attempt, apiKeyFromEnv, tools, definition?.dbId)
+}
+
+export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>, prompt_id?: number | null):
+    Promise<PromptReturnType> {
+
     // try to retrieve cached generations
-    if (definition?.cacheControl !== false) {
-        const cached = await retrieveFromCache(sha256, model, definition.kind, attempt)
+    if (cacheControl !== false) {
+        const cached = await retrieveFromCache(sha256, model, kind, attempt)
         if (cached) {
             // Ensure downstream code receives the persisted generation id
             if (results) {
@@ -163,14 +174,6 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
         }
     }
 
-    // writeResponseToFile(definition, messages, "antes de executar")
-    // if (1 == 1) throw new Error('Interrupted')
-
-    return generateAndStreamContent(model, structuredOutputs, definition?.cacheControl, definition?.kind, modelRef, messages, sha256, additionalInformation, results, attempt, apiKeyFromEnv, tools, definition?.dbId)
-}
-
-export async function generateAndStreamContent(model: string, structuredOutputs: any, cacheControl: number | boolean, kind: string, modelRef: LanguageModel, messages: ModelMessage[], sha256: string, additionalInformation: PromptAdditionalInformationType, results?: PromptExecutionResultsType, attempt?: number | null, apiKeyFromEnv?: boolean, tools?: Record<string, any>, prompt_id?: number | null):
-    Promise<PromptReturnType> {
     const pUser = assertCurrentUser()
     const user = await pUser
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
@@ -199,6 +202,11 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
     // } else {
     const { processedMessagesModel, processedMessagesLog } = await processMessages(model, messages)
     if (results) results.messages = processedMessagesLog
+    // Ensure every generation has an execution_id; callers like analyze() may already provide one
+    const effectiveAdditionalInfo: PromptAdditionalInformationType = {
+        ...additionalInformation,
+        execution_id: additionalInformation?.execution_id ?? crypto.randomUUID(),
+    }
     const pResult = streamText({
         model: modelRef as LanguageModel,
         messages: processedMessagesModel,
@@ -216,7 +224,7 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             if (apiKeyFromEnv)
                 writeUsage(usage, model, user_id, court_id, modelUsage)
             if (cacheControl !== false) {
-                const generationId = await saveLog(user, additionalInformation, model, usage, sha256, kind, text, attempt, processedMessagesLog, modelUsage, prompt_id)
+                const generationId = await saveLog(user, effectiveAdditionalInfo, model, usage, sha256, kind, text, attempt, processedMessagesLog, modelUsage, prompt_id)
                 if (results) results.generationId = generationId
             }
             writeResponseToFile(kind, processedMessagesLog, text)
@@ -225,10 +233,10 @@ export async function generateAndStreamContent(model: string, structuredOutputs:
             }
         },
         // tools: structuredOutputs ? undefined : tools, // Gemini models don't support tools when structured outputs are used
-        tools: tools, 
+        tools: tools,
         stopWhen: stepCountIs(10),
         providerOptions: {
-             google: {
+            google: {
                 thinkingConfig: {
                     // thinkingBudget: 2024, // Set a budget (0 to disable, up to 24576 for Flash)
                     includeThoughts: true, // Crucial to include the thinking process in the response

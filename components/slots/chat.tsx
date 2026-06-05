@@ -18,7 +18,7 @@ import type { SuggestionContext } from '@/components/suggestions/context'
 import { Suggestion } from '../suggestions/base';
 import MessageStatus from '../message-status';
 import MessageFooter from '../message-footer';
-import { usePromptContext } from '@/app/(main)/prompts/context/PromptContext';
+import { useExecutionId, usePromptContext, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext';
 import { InstanceKeyType } from '@/lib/proc/process-types';
 
 const converter = new showdown.Converter({ tables: true })
@@ -87,6 +87,12 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         instance = context.instance
     } catch (error) { }
 
+    const executionId = useExecutionId()
+    const selectedPromptId = useSelectedPromptId()
+    const aggregatorPromptId = selectedPromptId !== null && params.definition?.dbId !== selectedPromptId
+        ? selectedPromptId
+        : null
+
     const handleProcessNumberChange = (number: string) => {
         setProcessNumber(number)
         if (params.setProcessNumber) params.setProcessNumber(number)
@@ -94,7 +100,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
     const { messages, setMessages, sendMessage, error, clearError } =
         useChat({
-            transport: new DefaultChatTransport({ api: `/api/v1/chat${params.withTools ? '?withTools=true' : ''}` }),
+            transport: new DefaultChatTransport({ api: `/api/v1/chat?withTools=${params.withTools ? 'true' : 'false'}${params.definition?.dbId ? `&promptId=${params.definition.dbId}` : ''}`, body: { execution_id: executionId, aggregator_prompt_id: aggregatorPromptId, dossierCode: processNumber || undefined } }),
             // messages: fetchedMessages,
         })
 

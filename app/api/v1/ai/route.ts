@@ -201,6 +201,8 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
     // Get context to be submitted to the streamContent function and be used in the logs
     const dossierCode = body.dossierCode
     const documentId = body.documentId
+    const execution_id: string | undefined = body.execution_id || undefined
+    const aggregator_prompt_id: number | null = body.aggregator_prompt_id ?? null
 
     trace.step(`resolveApiPrompt:${kind}`)
     const definition = await resolveApiPrompt(kind, promptSlug, promptId)
@@ -233,7 +235,7 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
 
     trace.step('streamContent')
     const executionResults: PromptExecutionResultsType = { messagesOnly }
-    const ret = await streamContent(definitionWithOptions, data, executionResults, { dossierCode }, tools)
+    const ret = await streamContent(definitionWithOptions, data, executionResults, { dossierCode, execution_id, aggregator_prompt_id }, tools)
 
     trace.step(`streamContent:done:cached=${!!ret.cached}:textStream=${!!ret.textStream}:objectStream=${!!ret.objectStream}:messages=${!!ret.messages}`)
 

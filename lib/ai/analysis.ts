@@ -115,8 +115,16 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
 
         // Retrieve from cache or generate
+        const execution_id = crypto.randomUUID()
+        const aggregatorId = promptFromDB?.id ?? null
+        const tools = await getTools(pUser)
         for (const req of requests) {
-            req.result = generateContent(req.internalPrompt, req.data, await getTools(pUser))
+            const isAggregator = req.internalPrompt?.dbId === aggregatorId
+            const additionalInformation = {
+                execution_id,
+                aggregator_prompt_id: isAggregator ? null : aggregatorId,
+            }
+            req.result = generateContent(req.internalPrompt, req.data, tools, additionalInformation)
         }
 
         let model: string | undefined = undefined

@@ -2,9 +2,11 @@ import { generateAndStreamContent } from '@/lib/ai/generate'
 import { getModel } from '@/lib/ai/model-server'
 import { getTools } from '@/lib/ai/tools'
 import { UserDao } from '@/lib/db/dao'
+import { getPromptDefinitionById } from '@/lib/ai/prompt-store'
 import { assertApiUser } from '@/lib/user'
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, StreamTextResult, ToolSet, UIMessage } from 'ai'
 import { withErrorHandler } from '@/lib/utils/api-error'
+import { calcSha256 } from '@/lib/utils/hash'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60
@@ -32,7 +34,7 @@ async function POST_HANDLER(req: Request) {
     const pUser = assertApiUser()
     const user = await pUser
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
-    const { messages } = await req.json()
+    const { messages, execution_id, aggregator_prompt_id, dossierCode } = await req.json()
     const { model, modelRef, apiKeyFromEnv } = await getModel()
 
     // const anonymize = req.headers.get('cookie')?.includes('anonymize=true')
@@ -46,22 +48,61 @@ async function POST_HANDLER(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const withTools = searchParams.get('withTools') === 'true'
+    const promptId = searchParams.get('promptId') ? parseInt(searchParams.get('promptId')!, 10) : null
+
+    let chatKind = 'chat'
+    if (promptId) {
+        try {
+            const def = await getPromptDefinitionById(promptId)
+            chatKind = def.kind
+        } catch {
+            // prompt not found, fall back to 'chat'
+        }
+    }
+
+    const modelMessages = await convertToModelMessages(messages)
+
+    const sha256 = calcSha256(modelMessages)
 
     const ret = await generateAndStreamContent(
         model,
         undefined, // structuredOutputs
         true, // cacheControl
-        'chat', // kind
+        chatKind, // kind
         modelRef,
-        await convertToModelMessages(messages),
-        '', // sha256
-        {}, // additionalInformation
+        modelMessages,
+        sha256, // sha256
+        { dossierCode: dossierCode || undefined, execution_id: execution_id || undefined, aggregator_prompt_id: aggregator_prompt_id ?? null }, // additionalInformation
         {}, // results
         null, // attempt
         apiKeyFromEnv,
         //withTools ? await getTools(pUser) : undefined
-        await getTools(pUser)
+        await getTools(pUser),
+        promptId, // prompt_id
     )
+
+    if (ret.cached) {
+        const stream = createUIMessageStream<UIMessage>({
+            execute: async ({ writer }) => {
+                writer.write({ type: 'start', messageId: crypto.randomUUID() });
+                writer.write({ type: 'start-step' });
+                writer.write({ type: 'text-start', id: '1' });
+                writer.write({ type: 'text-delta', delta: ret.cached, id: '1' });
+                writer.write({ type: 'text-end', id: '1' });
+                writer.write({ type: 'finish-step' });
+                writer.write({
+                    type: 'finish',
+                    messageMetadata: {
+                        model: ret.model,
+                        usage: ret.usage,
+                        messages: modelMessages
+                    },
+                });
+            }
+        })
+        return createUIMessageStreamResponse({ stream });
+        // return new Response(ret.cached, { status: 200 })
+    }
 
     if (typeof ret === 'string') {
         return new Response(ret, { status: 200 })
