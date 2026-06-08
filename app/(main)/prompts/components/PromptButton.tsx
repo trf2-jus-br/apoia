@@ -22,7 +22,7 @@ interface PromptButtonProps {
  * fronteiras de palavra (espaço). Se uma palavra isolada for maior
  * que `maxLen`, ela é mantida inteira na sua própria linha.
  */
-function wrapTitle(text: string | undefined, maxLen: number = 30): string {
+export function wrapTitle(text: string | undefined, maxLen: number = 30): string {
     if (!text) return ""
     const words = text.split(/\s+/).filter(Boolean)
     if (words.length === 0) return ""

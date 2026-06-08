@@ -8,6 +8,7 @@ import { Instance, Matter, Scope, Share } from "../proc/process-types"
 import { formatDateTime, formatDuration } from "../utils/date"
 import { RatingCell } from "@/components/RatingCell"
 import devLog from "../utils/log"
+import { wrapTitle } from "@/app/(main)/prompts/components/PromptButton"
 
 
 const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void, options?: any) => {
@@ -65,7 +66,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 },
                 {
                     header: 'Prompt', accessorKey: 'name', enableSorting: true, cell: data => <>
-                        <span className="text-primary" style={{ cursor: 'pointer' }} onClick={() => onClick('executar', data.row.original)} title={data.row.original?.content?.description}><u>{data.row.original.name}</u></span>
+                        <span className="text-primary" style={{ cursor: 'pointer' }} onClick={() => onClick('executar', data.row.original)} title={wrapTitle(data.row.original?.content?.description)}><u>{data.row.original.name}</u></span>
                         <Dropdown style={{ display: 'inline', cursor: 'pointer' }}>
                             <Dropdown.Toggle as="a" className="m-1" id={data.row.original.name} />
                             <Dropdown.Menu>
