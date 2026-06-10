@@ -289,7 +289,7 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
         const frmData = Frm.get('pedidos')
         const aPedidos = [...frmData.pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         const data = { ...request.data }
-        data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0', event: '-', label: 'Informação extraída do formulário preenchido pelo usuário' }]
+        data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify({...frmData, pedidos: aPedidos}), sigilo: '0', event: '-', label: 'Informação extraída do formulário preenchido pelo usuário' }]
         const aiContentKey = `prompt: ${slug}, data: ${calcMd5(data)}}`
 
         return <>
@@ -318,6 +318,8 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
                             </li>
                         )}
                     </ol>}
+
+                    <p><strong>Comandos Adicionais:</strong> {frmData.Tg_ComandosAdicionais}</p>
                 </div>
             </div>
             <div className="row h-print mb-3">
@@ -448,6 +450,9 @@ export const PedidosViabilidadeRecursoEspecial = ({ pedidos, request, nextReques
                         )}
                     </div>
                 )}
+                <div className="row mb-3">
+                    <Frm.TextArea label="Comandos adicionais para a redação da decisão (opcional)" name={`pedidos.Tg_ComandosAdicionais`} width={''} maxRows={4} />
+                </div>
             </div>
         </div>
         <span className="text-muted text-small">{disabledReason}</span>
