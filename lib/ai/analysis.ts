@@ -1,19 +1,19 @@
 import { getPiecesWithContent } from '@/lib/ai/prompt'
-import { getPromptDefinition, getAggregatorByKind } from '@/lib/ai/prompt-store'
-import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from '@/lib/ai/prompt-types'
+import { getPromptDefinition } from '@/lib/ai/prompt-store'
+import { GeneratedContent, PromptDataType, PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { CargaDeConteudoEnum, obterDadosDoProcesso } from '@/lib/proc/process'
 import { assertCurrentUser } from '@/lib/user'
-import { T, Plugin, PieceStrategy, selecionarPecasPorPadraoComFase } from '@/lib/proc/combinacoes'
+import { T, PieceStrategy, selecionarPecasPorPadraoComFase } from '@/lib/proc/combinacoes'
 import { IAGenerated, IAPrompt } from '@/lib/db/mysql-types'
-import { PromptDao, SystemDao, BatchDao, DossierDao, DocumentDao, EnumDao } from '@/lib/db/dao'
-import { getTriagem, getNormas, getPalavrasChave } from '@/lib/fix'
+import { PromptDao, SystemDao, BatchDao, DossierDao, DocumentDao } from '@/lib/db/dao'
 import { generateContent } from '@/lib/ai/generate'
 import { DadosDoProcessoType, identificarSituacaoDaPeca } from '../proc/process-types'
 import { buildFooter } from '../utils/footer'
 import { clipPieces } from './clip-pieces'
-import { buildRequests } from './build-requests'
 import devLog from '../utils/log'
 import { getTools } from './tools'
+import { WorkflowEngine } from './workflow-engine'
+import { processPlugins } from './plugins'
 
 export async function summarize(dossierNumber: string, pieceNumber: string): Promise<{ dossierData: any, generatedContent: GeneratedContent }> {
     const pUser = assertCurrentUser()
@@ -50,9 +50,8 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
         let dadosDoProcesso: DadosDoProcessoType = await obterDadosDoProcesso({ numeroDoProcesso: dossierNumber, pUser, completo: complete, kind: undefined, conteudoDasPecasSelecionadas: CargaDeConteudoEnum.NAO })
         if (dadosDoProcesso.errorMsg) throw new Error(dadosDoProcesso.errorMsg)
-        // if (!dadosDoProcesso?.tipoDeSintese) throw new Error(`${dossierNumber}: Nenhum tipo de síntese válido`)
-        let promptFromDB: IAPrompt | null = null
 
+        let promptFromDB: IAPrompt | null = null
         const promptId = Number(kind)
 
         // Obter prompt (e versão mais recente, se aplicável)
@@ -60,6 +59,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
         if (promptFromDB?.base_id && !promptFromDB?.is_latest) {
             promptFromDB = await PromptDao.retrieveLatestPromptByBaseId(promptFromDB.base_id)
         }
+        if (!promptFromDB) throw new Error('Prompt não encontrado')
 
         // Se o prompt atuar sobre PROCESSO e tiver estratégia de peças, aplica seleção e recarrega conteúdo
         const target = promptFromDB?.content?.target
@@ -85,7 +85,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
             // Carrega novamente os dados do processo APENAS com as peças selecionadas e com conteúdo síncrono
             const dadosComPecasSelecionados = await obterDadosDoProcesso({ numeroDoProcesso: dossierNumber, pUser, pieces: selectedIds, conteudoDasPecasSelecionadas: CargaDeConteudoEnum.SINCRONO })
             if (dadosComPecasSelecionados.errorMsg) throw new Error(dadosComPecasSelecionados.errorMsg)
-            // Preserva metadados (tipoDeSintese, produtos) da primeira chamada e substitui as peças carregadas
+            // Preserva metadados da primeira chamada e substitui as peças carregadas
             dadosDoProcesso = { ...dadosDoProcesso, pecasSelecionadas: dadosComPecasSelecionados.pecasSelecionadas }
         }
 
@@ -96,57 +96,30 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
         if (!pecasComConteudo.find(p => !identificarSituacaoDaPeca(p.texto).problematica))
             throw new Error(`${dossierNumber}: Todas as peças estão com problemas (sigilosas, inacessíveis, vazias ou parciais)`)
 
-        let requests: GeneratedContent[]
-        requests = (await buildRequests(promptFromDB, undefined, dossierNumber, dadosDoProcesso.pecasSelecionadas)).filter(r => r && r.promptSlug !== 'chat')
+        // Workflow execution
+        const engine = new WorkflowEngine(await pUser)
+        const executionResults = await engine.execute(promptFromDB, {
+            numeroDoProcesso: dossierNumber,
+            textos: pecasComConteudo
+        })
 
-        // Auto-detect plugins from prompt content markers
-        for (const req of requests) {
-            if (!req.plugins) req.plugins = []
-            if (req.internalPrompt?.prompt?.includes('# Triagem')) {
-                if (!req.plugins.includes(Plugin.TRIAGEM)) req.plugins.push(Plugin.TRIAGEM)
-            }
-            if (req.internalPrompt?.prompt?.includes('# Normas/Jurisprudência Invocadas')) {
-                if (!req.plugins.includes(Plugin.NORMAS)) req.plugins.push(Plugin.NORMAS)
-            }
-            if (req.internalPrompt?.prompt?.includes('# Palavras-Chave')) {
-                if (!req.plugins.includes(Plugin.PALAVRAS_CHAVE)) req.plugins.push(Plugin.PALAVRAS_CHAVE)
-            }
-        }
-
-
-        // Retrieve from cache or generate
-        const execution_id = crypto.randomUUID()
-        const aggregatorId = promptFromDB?.id ?? null
-        const tools = await getTools(pUser)
-        for (const req of requests) {
-            const isAggregator = req.internalPrompt?.dbId === aggregatorId
-            const additionalInformation = {
-                execution_id,
-                aggregator_prompt_id: isAggregator ? null : aggregatorId,
-            }
-            req.result = generateContent(req.internalPrompt, req.data, tools, additionalInformation)
-        }
-
-        let model: string | undefined = undefined
-        for (const req of requests) {
-            const result = await req.result as IAGenerated
-            if (!model) model = result.model
-            req.generated = result.generation
-            req.id = result.id
-            if (!req.generated || !req.id) {
-                console.error('Error generating content')
-                throw new Error('Error generating content')
-            }
-        }
+        // Filter out chat results from the list returned to the main process view
+        const requests = executionResults
+            .map(r => r.content)
+            .filter(c => c.promptSlug !== 'chat' && c.promptSlug !== 'chat-standalone')
 
         if (batchName) {
             const user = await pUser
             const systemCode = user?.system || 'PDPJ'
             const systemId = await SystemDao.assertSystemId(systemCode)
+
+            let model: string | undefined = undefined
+            if (executionResults.length > 0) model = executionResults[0].generated.model
+
             const textosParaClipagem = JSON.parse(JSON.stringify(pecasComConteudo))
             const textosClipados = await clipPieces(model, textosParaClipagem)
             const footer = buildFooter(model || '-', textosClipados)
-            storeBatchItem(systemId, batchName, dossierNumber, requests, dadosDoProcesso, footer)
+            storeBatchItem(systemId, batchName, dossierNumber, requests, dadosDoProcesso, footer, engine.getExecutionId())
         }
 
         return { dossierData: dadosDoProcesso, generatedContent: requests }
@@ -158,7 +131,7 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
 
 // Insert into database as part of a batch
-async function storeBatchItem(systemId: number, batchName: string, dossierNumber: string, requests: GeneratedContent[], dadosDoProcesso: any, footer: string) {
+async function storeBatchItem(systemId: number, batchName: string, dossierNumber: string, requests: GeneratedContent[], dadosDoProcesso: any, footer: string, executionId?: string) {
     const batch_id = await BatchDao.assertIABatchId(batchName)
     const dossier_id = await DossierDao.assertIADossierId(dossierNumber, systemId, dadosDoProcesso.codigoDaClasse, dadosDoProcesso.ajuizamento)
     await BatchDao.deleteIABatchDossierId(batch_id, dossier_id)
@@ -169,76 +142,13 @@ async function storeBatchItem(systemId: number, batchName: string, dossierNumber
         await BatchDao.insertIABatchDossierItem({ batch_dossier_id, document_id, generation_id: req.id as number, descr: req.title, seq })
         seq++
 
-        // process plugins
-        if (!req.plugins || !req.plugins.length) continue
-        for (const plugin of req.plugins) {
-            switch (plugin) {
-                case Plugin.TRIAGEM: {
-                    const triage = getTriagem(req.generated)
-                    if (!triage) throw new Error('Triagem não encontrada')
-                    const enum_id = await EnumDao.assertIAEnumId(Plugin.TRIAGEM)
-                    const enum_item_id = await EnumDao.assertIAEnumItemId(triage, enum_id)
-                    await BatchDao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
-                    break
-                }
-                case Plugin.TRIAGEM_JSON: {
-                    if (req.generated) {
-                        const triage = JSON.parse(req.generated).triagem
-                        if (triage) {
-                            const enum_id = await EnumDao.assertIAEnumId(Plugin.TRIAGEM)
-                            const enum_item_id = await EnumDao.assertIAEnumItemId(triage, enum_id)
-                            await BatchDao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
-                            break
-                        } else {
-                            throw new Error('Triagem não encontrada')
-                        }
-                    }
-                }
-                case Plugin.NORMAS: {
-                    const normas = getNormas(req.generated)
-                    const enum_id = await EnumDao.assertIAEnumId(Plugin.NORMAS)
-                    for (const norma of normas) {
-                        const enum_item_id = await EnumDao.assertIAEnumItemId(norma, enum_id)
-                        await BatchDao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
-                    }
-                    break
-                }
-                case Plugin.NORMAS_JSON: {
-                    if (req.generated) {
-                        const normas = JSON.parse(req.generated).normas
-                        if (normas) {
-                            const enum_id = await EnumDao.assertIAEnumId(Plugin.NORMAS)
-                            for (const norma of normas) {
-                                const enum_item_id = await EnumDao.assertIAEnumItemId(norma, enum_id)
-                                await BatchDao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
-                            }
-                            break
-                        }
-                    }
-                }
-                case Plugin.PALAVRAS_CHAVE: {
-                    const palavrasChave = getPalavrasChave(req.generated)
-                    const enum_id = await EnumDao.assertIAEnumId(Plugin.PALAVRAS_CHAVE)
-                    for (const palavraChave of palavrasChave) {
-                        const enum_item_id = await EnumDao.assertIAEnumItemId(palavraChave, enum_id)
-                        await BatchDao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
-                    }
-                    break
-                }
-                case Plugin.PALAVRAS_CHAVE_JSON: {
-                    if (req.generated) {
-                        const palavrasChave = JSON.parse(req.generated).palavrasChave
-                        if (palavrasChave) {
-                            const enum_id = await EnumDao.assertIAEnumId(Plugin.PALAVRAS_CHAVE)
-                            for (const palavraChave of palavrasChave) {
-                                const enum_item_id = await EnumDao.assertIAEnumItemId(palavraChave, enum_id)
-                                await BatchDao.assertIABatchDossierEnumItemId(batch_dossier_id, enum_item_id)
-                            }
-                            break
-                        }
-                    }
-                }
-            }
+        // process plugins using the decoupled system
+        if (req.plugins && req.plugins.length > 0 && req.generated) {
+            await processPlugins(req.plugins, req.generated, {
+                execution_id: executionId,
+                batch_dossier_id,
+                document_id
+            });
         }
     }
 }
