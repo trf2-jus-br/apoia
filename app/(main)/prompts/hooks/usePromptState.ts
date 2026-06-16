@@ -216,6 +216,7 @@ export function usePromptState(
     // Fase 5: Seleção automática de prompt baseada na fase processual
     useEffect(() => {
         // Só executa se temos dados do processo e fase detectada
+        devLog('Running prompt suggestion effect', { faseAtual, dadosDoProcesso, promptInitialized })
         if (!dadosDoProcesso || !faseAtual || !promptInitialized) {
             if (suggestedPrompts.length > 0) setSuggestedPrompts([])
             return
@@ -226,6 +227,8 @@ export function usePromptState(
             const phases = p.content?.phase
             return phases && Array.isArray(phases) && phases.includes(faseAtual)
         })
+
+        devLog('Prompts candidatos para fase', { faseAtual, candidatosCount: candidatosPorFase.length })
 
         // const promptsSugeridos = candidatosPorFase
 

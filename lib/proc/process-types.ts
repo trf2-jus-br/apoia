@@ -90,6 +90,8 @@ const MatterArray = [
     { id: 1, name: 'CIVEL', descr: 'Cível', acronym: 'Cív' },
     { id: 2, name: 'CRIMINAL', descr: 'Criminal', acronym: 'Cri' },
     { id: 3, name: 'ELEITORAL', descr: 'Eleitoral', acronym: 'Ele' },
+    { id: 5, name: 'EXECUCAO_FISCAL', descr: 'Execução Fiscal', acronym: 'EF' },
+    { id: 6, name: 'PREVIDENCIARIA', descr: 'Previdenciária', acronym: 'Prev' },
     { id: 4, name: 'TRABALHISTA', descr: 'Trabalhista', acronym: 'Trab' },
 ]
 export type MatterValueType = EnumOfObjectsValueType & { descr: string, acronym: string }
@@ -157,7 +159,7 @@ export const identificarSituacaoDaPeca = (texto: string): { sigilosa: boolean, i
     const sigilosa = texto === TEXTO_PECA_SIGILOSA
     const inacessivel = texto?.startsWith(TEXTO_PECA_COM_ERRO) || texto === TEXTO_PECA_PDF_OCR_ERRO
     let explicacao = ''
-    if (inacessivel) 
+    if (inacessivel)
         explicacao = texto?.replace(TEXTO_PECA_COM_ERRO, '').replace(TEXTO_PECA_PDF_OCR_ERRO, '').trim() || ''
     const vazia = !texto || texto === TEXTO_PECA_IMAGEM_JPEG || texto === TEXTO_PECA_IMAGEM_PNG || texto === TEXTO_PECA_AUDIO_XMS_WMA || texto === TEXTO_PECA_VIDEO_XMS_WMV || texto === TEXTO_PECA_VIDEO_MP4 || texto === TEXTO_PECA_PDF_OCR_VAZIO
     const parcial = texto?.endsWith(TEXTO_INDICACAO_PARCIAL)

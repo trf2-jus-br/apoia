@@ -2,6 +2,7 @@ import { IAPromptList } from "@/lib/db/mysql-types"
 import { Instance, Matter, Scope } from "@/lib/proc/process-types"
 import { slugify } from "@/lib/utils/utils"
 import { enumSorted } from "@/lib/ai/model-types"
+import devLog from "@/lib/utils/log"
 
 export interface PromptFilters {
     scope?: string
@@ -13,12 +14,16 @@ export function filterPrompts(
     prompts: IAPromptList[],
     filters: PromptFilters
 ): IAPromptList[] {
-    return prompts.filter((p) => {
+    devLog('filterPrompts', { filters, promptsCount: prompts.length })
+    const filtered = prompts.filter((p) => {
+        devLog('filterPrompts - checking prompt', { promptId: p.id, promptName: p.name, contentScope: p.content?.scope, contentInstance: p.content?.instance, contentMatter: p.content?.matter })
         if (filters.scope && !p.content.scope?.includes(filters.scope)) return false
         if (filters.instance && !p.content.instance?.includes(filters.instance)) return false
         if (filters.matter && !p.content.matter?.includes(filters.matter)) return false
         return true
     })
+    devLog('filterPrompts - filtered prompts count', { filteredCount: filtered.length })
+    return filtered
 }
 
 export function getPromptsPrincipais(prompts: IAPromptList[]): IAPromptList[] {
