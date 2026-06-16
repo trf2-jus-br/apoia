@@ -37,27 +37,25 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
         }
 
         if (def) {
-            // Convert PromptDefinitionType to IAPrompt content structure
+            // Converte PromptDefinitionType para IAPrompt content structure.
+            // Preserva os campos originais do prompt do DB (scope, instance, matter,
+            // phase, description, etc.) e sobrescreve apenas os campos que vêm do `def`
+            // (system_prompt, prompt, json_schema, format, template). Os demais campos
+            // do content (incluindo `phase`) permanecem do registro original, que pode
+            // ter sido populado pelo sync engine ou manualmente.
             prompt = {
-                id: 0,
-                base_id: 0,
-                uuid: '',
-                created_by: user.id,
-                model_id: null,
-                testset_id: null,
-                is_latest: 1,
-                created_at: null,
-                category: null,
+                ...prompt,
                 name: name,
                 slug: slugify(def.kind),
                 content: {
+                    ...(prompt.content || {}),
                     system_prompt: def.systemPrompt ?? null,
                     prompt: def.prompt ?? null,
                     json_schema: def.jsonSchema ?? null,
                     format: def.format ?? null,
                     template: def.template ?? null,
                 }
-            }
+            } as typeof prompt
         }
     }
 

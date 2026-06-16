@@ -33,6 +33,8 @@ function dbRecordToDefinition(record: IAPrompt): PromptDefinitionType {
             target: content?.target || undefined,
             profile: content?.profile || undefined,
             group: content?.group || undefined,
+            phase: content?.phase || undefined,
+            description: content?.description || undefined,
         },
         cacheControl: true,
         dbId: record.id,
