@@ -2,6 +2,14 @@ import { Form, FormGroup, FormLabel, FormSelect, Row, Spinner, Container } from 
 import { enumSorted } from "@/lib/ai/model-types"
 import { Instance, InstanceKeyType, Matter, Scope } from "@/lib/proc/process-types"
 import { usePromptContext } from "../context/PromptContext"
+import { FaseProcessual } from "@/lib/proc/combinacoes"
+
+const Fase = ({ fase }: { fase: string | undefined }) => {
+    if (!fase) return null
+    const faseInfo = Object.values(FaseProcessual).find(f => f.name === fase)
+    const faseDescricao = faseInfo?.descr || fase
+    return <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>({faseDescricao?.toLocaleLowerCase()})</span>
+}
 
 export function ProcessFilters() {
     const {
@@ -18,7 +26,8 @@ export function ProcessFilters() {
         instance,
         setInstance,
         matter,
-        setMatter
+        setMatter,
+        faseAtual,
     } = usePromptContext()
     return (
         <div className="bg-primary text-white">
@@ -47,7 +56,7 @@ export function ProcessFilters() {
                     )}
                     {numeroDoProcesso && arrayDeDadosDoProcesso && arrayDeDadosDoProcesso.length > 1 && (
                         <div className="col col-auto">
-                            <FormLabel className="mb-0">Tramitação</FormLabel>
+                            <FormLabel className="mb-0">Tramitação <Fase fase={faseAtual} /></FormLabel>
                             <FormSelect 
                                 value={idxProcesso} 
                                 onChange={(e) => { 

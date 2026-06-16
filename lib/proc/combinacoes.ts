@@ -462,7 +462,6 @@ export const padraoConhecimentoForcado = [
     ...padraoConhecimentoAberta,
     PHASE(FaseProcessual.CONHECIMENTO_CONCLUIDA.name),
     EXACT(T.SENTENCA),
-    PHASE(FaseProcessual.CONHECIMENTO_CONCLUIDA.name),
     ANY(),
 ]
 
@@ -482,17 +481,25 @@ const padroesMinimosSegundaInstancia = [
     ...padroesConhecimento,
 ]
 
-const padroesBasicos = [
+// Ordem de prioridade: padrões mais específicos/raros primeiro.
+// Viabilidade de Recursos Extraordinário/Especial tem prioridade máxima
+// (são os casos mais raros e específicos), seguida de Embargos de Declaração
+// em Acórdão, depois Apelação/Agravo, Turma Recursal, Conhecimento e, por
+// último, os padrões forçados (fallbacks).
+//
+// Observação: `selecionarPecasPorPadraoComFase` retorna no PRIMEIRO match
+// (`break` no loop), então a posição no array = prioridade de detecção.
+const padroesPorPrioridade = [
     ...padroesViabilidadeDeRecursosExtraordinarioEEspecial,
     ...padroesBasicosSegundaInstancia,
     ...padroesTurmaRecursal,
-    ...padroesConhecimento
+    ...padroesConhecimento,
 ]
 
-const padroesBasicosEForcados = [
-    ...padroesBasicosSegundaInstancia,
-    ...padroesTurmaRecursal,
-    ...padroesConhecimento,
+// Mesma ordem de prioridade, mas inclui os padrões "forçados" como fallback
+// no final (só serão tentados se nenhum padrão natural casar).
+const padroesPorPrioridadeComFallback = [
+    ...padroesPorPrioridade,
     padraoAgravoForcado,
     padraoApelacaoForcado,
     padraoConhecimentoForcado,
@@ -557,8 +564,9 @@ export const detectarFaseDoProcesso = (
     pecas: PecaType[], 
     movimentosEDocumentos?: InteropMovimentoComDocumentosType[]
 ): { faseAtual?: string; fases?: string[] } => {
-    // Usa o super pattern que combina todos os padrões básicos e forçados
-    const superPattern = padroesBasicosEForcados
+    // Usa o super pattern que combina todos os padrões por ordem de prioridade,
+    // incluindo os forçados como fallback.
+    const superPattern = padroesPorPrioridadeComFallback
     
     const resultado = selecionarPecasPorPadraoComFase(pecas, superPattern, movimentosEDocumentos)
     
@@ -578,7 +586,7 @@ export interface TipoDeSinteseValido {
 }
 
 const PieceStrategyArray = [
-    { id: 1, name: 'MAIS_RELEVANTES', descr: 'Peças mais relevantes', pattern: padroesBasicos },
+    { id: 1, name: 'MAIS_RELEVANTES', descr: 'Peças mais relevantes', pattern: padroesPorPrioridade },
     { id: 1, name: 'MAIS_RELEVANTES_PRIMEIRA_INSTANCIA', descr: 'Peças mais relevantes para 1ª Instância', pattern: [...padroesConhecimento, padraoConhecimentoForcado] },
     { id: 1, name: 'MAIS_RELEVANTES_SEGUNDA_INSTANCIA', descr: 'Peças mais relevantes para 2ª Instância', pattern: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado] },
     { id: 1, name: 'APELACAO_E_TRIAGEM', descr: 'Triagem de Apelação ou Agravo', pattern: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento] },

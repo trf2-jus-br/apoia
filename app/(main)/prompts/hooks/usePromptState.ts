@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { IAPromptList, IALibrary } from "@/lib/db/mysql-types"
 import { slugify } from "@/lib/utils/utils"
-import { decodeEnumParam, findPromptFromParam } from "../utils/promptFilters"
+import { decodeEnumParam, filterPrompts, findPromptFromParam } from "../utils/promptFilters"
 import { Instance, InstanceKeyType, Matter, Scope } from "@/lib/proc/process-types"
 import { html2md } from "@/lib/utils/html2md"
 import { SOURCE_PARAM_THAT_INDICATES_TO_RETRIEVE_USING_MESSAGE_TO_PARENT, SourceMessageFromParentType, SourceMessageToParentType, SinkFromURLType, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT, SINK_PARAM_THAT_INDICATES_TO_SEND_AS_A_MESSAGE_TO_PARENT_AUTOMATICALLY, SinkMessageToParentType, SinkMessageFromParentType, SourcePayloadType, PromptsMessageToParentType, PromptsMessageFromParentType } from "@/lib/utils/messaging"
@@ -221,11 +221,28 @@ export function usePromptState(
             return
         }
 
-        // Descobre os prompts sugeridos
-        const promptsSugeridos = prompts.filter(p => {
+        // Filtra prompts pela fase processual
+        const candidatosPorFase = prompts.filter(p => {
             const phases = p.content?.phase
             return phases && Array.isArray(phases) && phases.includes(faseAtual)
-        }).slice(0, 3)
+        })
+
+        // const promptsSugeridos = candidatosPorFase
+
+        // Para [Processos Agregados] (classe === '[Processos Agregados]'), não aplicamos
+        // o filtro de scope/instance/matter, pois os dados são combinados de múltiplos
+        // processos e não há um valor único significativo para esses atributos.
+        const isProcessoAgregado = dadosDoProcesso.classe === '[Processos Agregados]'
+
+        const promptsFiltrados = isProcessoAgregado
+            ? candidatosPorFase
+            : filterPrompts(candidatosPorFase, {
+                scope: dadosDoProcesso.segmento,
+                instance: dadosDoProcesso.instancia as InstanceKeyType | undefined,
+                matter: dadosDoProcesso.materia
+            })
+
+        const promptsSugeridos = promptsFiltrados.slice(0, 3)
 
         // Atualiza o estado
         setSuggestedPrompts(promptsSugeridos)

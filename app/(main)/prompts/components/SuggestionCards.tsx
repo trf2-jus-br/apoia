@@ -9,7 +9,7 @@ interface SuggestionCardsProps {
 }
 
 export function SuggestionCards({ faseAtual, promptsSugeridos, onPromptClick }: SuggestionCardsProps) {
-    if (!faseAtual || promptsSugeridos.length === 0) {
+    if (!faseAtual || promptsSugeridos?.length === 0) {
         return null
     }
 
@@ -19,7 +19,6 @@ export function SuggestionCards({ faseAtual, promptsSugeridos, onPromptClick }: 
 
     return (
         <div>
-            <h6 className="mb-2"><strong>{faseDescricao}</strong> - Prompts Sugeridos:</h6>
             <Row className="row row-cols-1 row-cols-md-1 g-4">
                 {promptsSugeridos.map((prompt) => (
                     <Col key={prompt.id} md={4}>
