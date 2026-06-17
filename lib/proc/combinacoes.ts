@@ -1,7 +1,7 @@
 import { sub } from "@mdxeditor/editor"
 import { EnumOfObjectsValueType } from "../ai/model-types"
 import { maiusculasEMinusculas, slugify } from "../utils/utils"
-import { ANY, Documento, Evento, SequenceItem, isDocumento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE, EVENT, EventMatch } from "./pattern"
+import { ANY, Documento, Evento, SequenceItem, isDocumento, EXACT, matchFull, MatchOperator, MatchFullResult, OR, SOME, PHASE, EVENT, EventMatch, ALT } from "./pattern"
 import { PecaType } from "./process-types"
 import { InteropMovimentoComDocumentosType } from "../interop/interop-types"
 
@@ -240,7 +240,7 @@ const subpadraoEmbargosDeDeclaracaoEmAcordao = [
     }),
     EXACT(T.EMBARGOS_DE_DECLARACAO),
     ANY({
-        capture: [T.EMBARGOS_DE_DECLARACAO,T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.EMBARGOS_DE_DECLARACAO, T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
     }),
 ]
 
@@ -337,9 +337,13 @@ export const padraoAgravoInterno = [
 ]
 
 export const padraoAgravoAberta = [
-    ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia] }),
-    EXACT(T.DESPACHO_DECISAO),
-    ANY(),
+    ALT([
+        ANY({ capture: [T.PETICAO_INICIAL, ...pecasRelevantesDaFaseDeConhecimentoPara2aInstancia], greedy: true }),
+        EXACT(T.DESPACHO_DECISAO),
+        ANY(),
+    ], [
+        ANY(),
+    ]),
     PHASE(FaseProcessual.AGRAVO.name),
     OR(...pecasQueRepresentamAgravoPara2aInstancia),
     ANY({
@@ -561,15 +565,15 @@ export const padroesSuspensao = [
  * @returns Objeto com faseAtual (string) e fases (array de strings) detectadas
  */
 export const detectarFaseDoProcesso = (
-    pecas: PecaType[], 
+    pecas: PecaType[],
     movimentosEDocumentos?: InteropMovimentoComDocumentosType[]
 ): { faseAtual?: string; fases?: string[] } => {
     // Usa o super pattern que combina todos os padrões por ordem de prioridade,
     // incluindo os forçados como fallback.
     const superPattern = padroesPorPrioridadeComFallback
-    
+
     const resultado = selecionarPecasPorPadraoComFase(pecas, superPattern, movimentosEDocumentos)
-    
+
     return {
         faseAtual: resultado.faseAtual,
         fases: resultado.fases

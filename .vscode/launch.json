@@ -8,6 +8,12 @@
             "command": "npm test"
         },
         {
+            "name": "Jest debug.test.ts",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm test debug"
+        },
+        {
             "name": "Next.js: debug server-side",
             "type": "node-terminal",
             "request": "launch",

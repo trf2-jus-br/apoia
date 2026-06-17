@@ -74,13 +74,18 @@ export type MatchOperator =
   | { type: 'OR'; docTypes: T[]; phase?: string }
   | { type: 'ANY'; options?: MatchOptions; phase?: string }
   | { type: 'SOME'; options?: MatchOptions; phase?: string }
-  | { type: 'EVENT'; criteria: EventMatch; phase?: string };
+  | { type: 'EVENT'; criteria: EventMatch; phase?: string }
+  | { type: 'ALT'; options: MatchOperator[][]; phase?: string };
 
 export const EXACT = (docType: T, captureAllInSameEvent?: boolean, phase?: string) => ({ type: 'EXACT' as const, docType, captureAllInSameEvent, phase })
 export const OR = (...docTypes: T[]) => ({ type: 'OR' as const, docTypes })
 export const ANY = (options?: MatchOptions, phase?: string) => ({ type: 'ANY' as const, options, phase })
 export const SOME = (options?: MatchOptions, phase?: string) => ({ type: 'SOME' as const, options, phase })
 export const EVENT = (criteria: EventMatch, phase?: string) => ({ type: 'EVENT' as const, criteria, phase })
+// ALT: alternativa posicional. Tenta cada opção em ordem; a primeira que casar vence.
+// Use ALT(A, []) para tornar A opcional. PHASEs dentro da opção vencedora são
+// preservados em phasesMatched.
+export const ALT = (...alternatives: MatchOperator[][]) => ({ type: 'ALT' as const, options: alternatives })
 // Versões explícitas que setam greedy em options
 export const ANY_GREEDY = (options?: MatchOptions, phase?: string) => ANY({ ...options, greedy: true }, phase)
 export const SOME_GREEDY = (options?: MatchOptions, phase?: string) => SOME({ ...options, greedy: true }, phase)
@@ -282,6 +287,37 @@ function matchFromIndex(
           cand.nextItemIdx,
           [matchItem, ...matched],
           newPhases
+        )
+        if (attempt) return attempt
+      }
+      return null
+    }
+    case 'ALT': {
+      // Tenta cada alternativa em ordem; a primeira que casa vence.
+      //
+      if (operator.options.length === 0) return null
+
+      const basePhases = [...phases]
+
+      for (const alt of operator.options) {
+        // Caso especial: alternativa vazia no início da pattern, força o retorno do encontrado até agora.
+        if (alt.length === 0 && patternIdx === 0) {
+          return matchFromIndex(items, pattern, -1, -1, matched, phases)
+        }
+
+        const patternAlt = [...pattern.slice(0, patternIdx), ...alt]
+        const patternIdxAlt = patternAlt.length - 1
+        const itemIdxAlt = itemIdx
+        const matchedAlt: MatchResultItem[] = [...matched]
+        const phasesAlt = operator.phase ? addPhase(basePhases, operator, patternIdx, matchedAlt, items) : basePhases
+
+        const attempt = matchFromIndex(
+          items,
+          patternAlt,
+          patternIdxAlt,
+          itemIdxAlt,
+          matchedAlt,
+          phasesAlt
         )
         if (attempt) return attempt
       }

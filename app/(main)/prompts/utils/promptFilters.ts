@@ -14,15 +14,12 @@ export function filterPrompts(
     prompts: IAPromptList[],
     filters: PromptFilters
 ): IAPromptList[] {
-    devLog('filterPrompts', { filters, promptsCount: prompts.length })
     const filtered = prompts.filter((p) => {
-        devLog('filterPrompts - checking prompt', { promptId: p.id, promptName: p.name, contentScope: p.content?.scope, contentInstance: p.content?.instance, contentMatter: p.content?.matter })
         if (filters.scope && !p.content.scope?.includes(filters.scope)) return false
         if (filters.instance && !p.content.instance?.includes(filters.instance)) return false
         if (filters.matter && !p.content.matter?.includes(filters.matter)) return false
         return true
     })
-    devLog('filterPrompts - filtered prompts count', { filteredCount: filtered.length })
     return filtered
 }
 

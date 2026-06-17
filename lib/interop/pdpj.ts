@@ -390,9 +390,27 @@ export function aggregateProcessos(resp: DadosDoProcessoType[]) {
         })
         const combinado = resp.reduce((acc, p) => {
             acc.pecas.push(...p.pecas.map(peca => ({ ...peca, numeroDoEvento: peca.numeroDoEvento + (Instance[p.instancia] ? `, ${Instance[p.instancia].acronym} Grau` : '') })))
+            const instanciaLabel = Instance[p.instancia] ? `, ${Instance[p.instancia].acronym} Grau` : ''
+            if (p.movimentosEDocumentos?.length) {
+                for (const mov of p.movimentosEDocumentos) {
+                    acc.movimentosEDocumentos.push({
+                        ...mov,
+                        sequencia: Number(mov.sequencia) || 0,
+                        descricao: (mov.descricao || '') + instanciaLabel,
+                        documentos: (mov.documentos || []).map(d => ({ ...d })),
+                    })
+                }
+            }
             return acc
-        }, { ...resp[0], classe: `[Processos Agregados]`, pecas: [] })
+        }, { ...resp[0], classe: `[Processos Agregados]`, pecas: [], movimentosEDocumentos: [] })
         combinado.pecas.sort((a, b) => a.dataHora.getTime() - b.dataHora.getTime())
+        if (combinado.movimentosEDocumentos?.length) {
+            combinado.movimentosEDocumentos.sort((a, b) => {
+                const da = a.dataHora ? Date.parse(a.dataHora) : 0
+                const db = b.dataHora ? Date.parse(b.dataHora) : 0
+                return da - db
+            })
+        }
         resp.push(combinado)
     }
 }
