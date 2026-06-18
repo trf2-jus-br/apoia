@@ -82,8 +82,8 @@ export const FaseProcessual: FaseProcessualType = FaseProcessualArray.reduce((ac
 // Grupos de Síntese - agrupam tipos de síntese relacionados
 export interface GrupoDeSinteseType {
     slug: string
-    titulo: string
-    descricao: string
+    title: string
+    description: string
     icone?: string  // nome do ícone FontAwesome (ex: 'faGavel')
     cor?: string    // classe CSS de cor (ex: 'text-primary')
 }
@@ -91,8 +91,8 @@ export interface GrupoDeSinteseType {
 export const GrupoDeSinteseMap: Record<string, GrupoDeSinteseType> = {
     DECISAO_DE_VIABILIDADE: {
         slug: 'decisao-de-viabilidade',
-        titulo: 'Admissibilidade de Recursos',
-        descricao: 'Ferramentas para análise de viabilidade de recursos extraordinários e especiais',
+        title: 'Admissibilidade de Recursos',
+        description: 'Ferramentas para análise de viabilidade de recursos extraordinários e especiais',
         icone: 'faBalanceScale',
         cor: 'text-info'
     },
