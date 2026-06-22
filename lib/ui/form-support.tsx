@@ -259,6 +259,196 @@ function AsyncSelectComponent<T>({
     )
 }
 
+// Componente AsyncMultiSelect standalone para uso com hooks — armazena T[]
+interface AsyncMultiSelectComponentProps<T> {
+    label: string
+    name: string
+    searchFn: (query: string) => Promise<T[]>
+    formatOption: (item: T) => string
+    formatSelected?: (item: T) => string
+    minSearchLength?: number
+    width?: number | string
+    visible?: boolean
+    explanation?: string
+    keyFn?: (item: T) => string
+    getValue: () => T[]
+    setValue: (value: T[]) => void
+    colClass: (width?: string | number) => string
+    compact: boolean
+    formState: FormState
+}
+
+function AsyncMultiSelectComponent<T>({
+    label,
+    name,
+    searchFn,
+    formatOption,
+    formatSelected,
+    minSearchLength = 3,
+    width,
+    visible,
+    explanation,
+    keyFn,
+    getValue,
+    setValue,
+    colClass,
+    compact,
+    formState
+}: AsyncMultiSelectComponentProps<T>) {
+    const [searchQuery, setSearchQuery] = useState('')
+    const [options, setOptions] = useState<T[]>([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [showDropdown, setShowDropdown] = useState(false)
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    const selectedValues: T[] = getValue() || []
+    const displayFormatter = formatSelected || formatOption
+
+    const getItemKey = (item: T): string => {
+        if (keyFn) return keyFn(item)
+        if (item && typeof item === 'object' && 'id' in (item as object)) return String((item as any).id)
+        try {
+            return JSON.stringify(item)
+        } catch {
+            return String(Math.random())
+        }
+    }
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setShowDropdown(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleSearch = useCallback(async (query: string) => {
+        if (query.length < minSearchLength) {
+            setOptions([])
+            return
+        }
+
+        setIsLoading(true)
+        try {
+            const results = await searchFn(query)
+            setOptions(results)
+            setShowDropdown(true)
+        } catch (error) {
+            console.error('Erro na busca:', error)
+            setOptions([])
+        } finally {
+            setIsLoading(false)
+        }
+    }, [searchFn, minSearchLength])
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const query = e.target.value
+        setSearchQuery(query)
+
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current)
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            handleSearch(query)
+        }, 1000)
+    }
+
+    const handleSelect = (item: T) => {
+        const key = getItemKey(item)
+        const exists = selectedValues.some(v => getItemKey(v) === key)
+        if (exists) return
+
+        setValue([...selectedValues, item])
+        setSearchQuery('')
+        setOptions([])
+        setShowDropdown(false)
+    }
+
+    const handleRemove = (idx: number) => {
+        setValue(selectedValues.filter((_, i) => i !== idx))
+    }
+
+    const handleClearAll = () => {
+        setValue([])
+        setSearchQuery('')
+    }
+
+    return (
+        <Form.Group className={`${colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name} ref={containerRef}>
+            <Form.Label className={compact ? 'mb-0' : ''}>{label}</Form.Label>
+            {selectedValues.length > 0 && (
+                <div className="mb-2 d-flex flex-wrap gap-2 align-items-center">
+                    {selectedValues.map((item, idx) => (
+                        <span
+                            key={idx}
+                            className="badge bg-secondary d-inline-flex align-items-center"
+                            style={{ fontSize: '0.875rem', fontWeight: 'normal', padding: '0.4rem 0.6rem' }}
+                        >
+                            {displayFormatter(item)}
+                            <button
+                                type="button"
+                                className="btn-close btn-close-white ms-2"
+                                style={{ fontSize: '0.65rem' }}
+                                onClick={() => handleRemove(idx)}
+                                aria-label={`Remover ${displayFormatter(item)}`}
+                            />
+                        </span>
+                    ))}
+                    <Button variant="link" size="sm" onClick={handleClearAll} className="p-0 text-decoration-none">
+                        Limpar todos
+                    </Button>
+                </div>
+            )}
+            <div className="position-relative">
+                <div className="d-flex align-items-center">
+                    <Form.Control
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleInputChange}
+                        onFocus={() => options.length > 0 && setShowDropdown(true)}
+                        placeholder={`Digite ao menos ${minSearchLength} caracteres para buscar...`}
+                    />
+                    {isLoading && (
+                        <Spinner animation="border" size="sm" className="position-absolute" style={{ right: '10px' }} />
+                    )}
+                </div>
+                {showDropdown && options.length > 0 && (
+                    <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: '300px', overflowY: 'auto' }}>
+                        {options.map((item, index) => {
+                            const key = getItemKey(item)
+                            const isSelected = selectedValues.some(v => getItemKey(v) === key)
+                            return (
+                                <div
+                                    key={index}
+                                    className={`p-2 border-bottom ${isSelected ? 'text-muted' : ''}`}
+                                    style={{ cursor: isSelected ? 'default' : 'pointer' }}
+                                    onClick={() => !isSelected && handleSelect(item)}
+                                    onMouseEnter={(e) => !isSelected && (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                >
+                                    {formatOption(item)}
+                                    {isSelected && <small className="ms-2">(já selecionado)</small>}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+                {showDropdown && searchQuery.length >= minSearchLength && options.length === 0 && !isLoading && (
+                    <div className="position-absolute w-100 bg-white border rounded shadow-sm p-2 text-muted" style={{ zIndex: 1000 }}>
+                        Nenhum resultado encontrado
+                    </div>
+                )}
+            </div>
+            <FieldError formState={formState} name={name} />
+            {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
+        </Form.Group>
+    )
+}
+
 export class FormHelper {
     data: any;
     setData: (data: any) => void;
@@ -444,6 +634,30 @@ export class FormHelper {
             <AsyncSelectComponent<T>
                 {...props}
                 getValue={() => this.get(props.name)}
+                setValue={(value) => this.set(props.name, value)}
+                colClass={(width) => this.colClass(width)}
+                compact={this.compact}
+                formState={this.formState}
+            />
+        )
+    }
+
+    public AsyncMultiSelect = <T,>(props: {
+        label: string,
+        name: string,
+        searchFn: (query: string) => Promise<T[]>,
+        formatOption: (item: T) => string,
+        formatSelected?: (item: T) => string,
+        minSearchLength?: number,
+        width?: number | string,
+        visible?: boolean,
+        explanation?: string,
+        keyFn?: (item: T) => string
+    }) => {
+        return (
+            <AsyncMultiSelectComponent<T>
+                {...props}
+                getValue={() => this.get(props.name) || []}
                 setValue={(value) => this.set(props.name, value)}
                 colClass={(width) => this.colClass(width)}
                 compact={this.compact}

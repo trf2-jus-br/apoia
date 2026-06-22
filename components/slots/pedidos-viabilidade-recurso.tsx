@@ -59,8 +59,7 @@ interface SemanticSearchResponse {
     total: number
 }
 import { calcMd5 } from "@/lib/utils/hash"
-import devLog from "@/lib/utils/log"
-import { labelToName, maiusculasEMinusculas } from "@/lib/utils/utils"
+import { maiusculasEMinusculas } from "@/lib/utils/utils"
 import { useEffect, useState } from "react"
 import { Button, Spinner } from "react-bootstrap"
 
@@ -200,8 +199,8 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
         // Limpar campos de tema e motivo de inadmissão para pedidos que não requerem
         const pedidosLimpos = pedidos.map((pedido: any) => {
             let atualizado = false
-            if (!DISPOSITIVOS_COM_TEMA.includes(pedido.dispositivo) && pedido.tema) {
-                pedido.tema = null
+            if (!DISPOSITIVOS_COM_TEMA.includes(pedido.dispositivo) && Array.isArray(pedido.tema) && pedido.tema.length > 0) {
+                pedido.tema = []
                 atualizado = true
             }
             if (pedido.dispositivo !== 'INADIMITIR' && pedido.motivo) {
@@ -210,8 +209,8 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
             }
             const argumentos = pedido.argumentos.map((argumento: any) => {
                 let argAtualizado = false
-                if (!DISPOSITIVOS_COM_TEMA.includes(argumento.dispositivo) && argumento.tema) {
-                    argumento.tema = null
+                if (!DISPOSITIVOS_COM_TEMA.includes(argumento.dispositivo) && Array.isArray(argumento.tema) && argumento.tema.length > 0) {
+                    argumento.tema = []
                     argAtualizado = true
                 }
                 if (argumento.dispositivo !== 'INADIMITIR' && argumento.motivo) {
@@ -235,71 +234,6 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
         return atualizados
     }
 
-    // pedidos com tema.id mas sem tema.questao, obter o tema completo via busca semântica pela id
-    useEffect(() => {
-        console.log('Verificando pedidos para completar temas via busca semântica...')
-        const aPedidos = Frm.get('pedidos').pedidos
-        if (!aPedidos || aPedidos.length === 0) return
-
-        if (limparCamposDesnecessarios()) {
-            devLog('Campos desnecessários limpos. Pedidos atualizados:', Frm.get('pedidos').pedidos)
-            return
-        }
-
-        const buscarTemasCompletos = async () => {
-            const promessas: Promise<any>[] = []
-
-            aPedidos.forEach((pedido: any, indexPedido: number) => {
-                if (pedido.tema && typeof pedido.tema === 'string') {
-                    const idTema = pedido.tema
-                    const p = semanticSearchDeTemas(idTema)
-                        .then(temas => ({ tipo: 'pedido', indexPedido, temaCompleto: temas.find(t => t.id === idTema) }))
-                        .catch(error => { console.error('Erro ao buscar tema completo:', error); return null })
-                    promessas.push(p)
-                }
-
-                if (pedido.argumentos && Array.isArray(pedido.argumentos)) {
-                    pedido.argumentos.forEach((argumento: any, indexArgumento: number) => {
-                        if (argumento.tema && typeof argumento.tema === 'string') {
-                            const idTema = argumento.tema
-                            const p = semanticSearchDeTemas(idTema)
-                                .then(temas => ({ tipo: 'argumento', indexPedido, indexArgumento, temaCompleto: temas.find(t => t.id === idTema) }))
-                                .catch(error => { console.error('Erro ao buscar tema completo:', error); return null })
-                            promessas.push(p)
-                        }
-                    })
-                }
-            })
-
-            const resultados = await Promise.all(promessas)
-            const pedidosAtualizados = [...aPedidos]
-
-            resultados.forEach(resultado => {
-                if (resultado && resultado.temaCompleto) {
-                    if (resultado.tipo === 'pedido') {
-                        pedidosAtualizados[resultado.indexPedido].tema = resultado.temaCompleto
-                    } else if (resultado.tipo === 'argumento') {
-                        pedidosAtualizados[resultado.indexPedido].argumentos[resultado.indexArgumento].tema = resultado.temaCompleto
-                    }
-                }
-            })
-
-            console.log('Pedidos atualizados com temas completos:', pedidosAtualizados)
-
-            Frm.set('pedidos.pedidos', pedidosAtualizados)
-        }
-
-        buscarTemasCompletos()
-    }, [Frm, pedidos])
-
-    useEffect(() => {
-        console.log('Verificando pedidos para limpeza...')
-        if (limparCamposDesnecessarios()) {
-            devLog('Campos desnecessários limpos. Pedidos atualizados:', Frm.get('pedidos').pedidos)
-            return
-        }
-    }, [Frm.data])
-
     if (pedidosAnalisados) {
         if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
         const frmData = Frm.get('pedidos')
@@ -319,14 +253,14 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                             <li className={`mb-1 ${!pedido.dispositivo ? 'opacity-25' : ''}`} key={i}>
                                 <span>{pedido.texto}</span>
                                 <span> <b>{tiposDeDispositivo.find(o => o.id === pedido.dispositivo)?.name}</b></span>
-                                {pedido.tema && <strong> - {formatarTemaSelecionado(pedido.tema)}</strong>}
+                                {Array.isArray(pedido.tema) && pedido.tema.length > 0 && <strong> - {pedido.tema.map(formatarTemaSelecionado).join(', ')}</strong>}
                                 {pedido.motivo && <strong> - {pedido.motivo.map(m => motivoDaInadimissao.find(o => o.id === m)?.name).join(', ')}</strong>}
                                 <ul>
                                     {pedido.argumentos.map((argumento, j) =>
                                         <li key={j} className={`${!argumento.dispositivo ? 'opacity-25' : ''}`}>
                                             <span>{argumento.texto}</span>
                                             <span> <b>{tiposDeDispositivo.find(o => o.id === argumento.dispositivo)?.name}</b></span>
-                                            {argumento.tema && <strong> - {formatarTemaSelecionado(argumento.tema)}</strong>}
+                                            {Array.isArray(argumento.tema) && argumento.tema.length > 0 && <strong> - {argumento.tema.map(formatarTemaSelecionado).join(', ')}</strong>}
                                             {argumento.motivo && <strong> - {argumento.motivo.map(m => motivoDaInadimissao.find(o => o.id === m)?.name).join(', ')}</strong>}
                                         </li>
                                     )}
@@ -364,8 +298,8 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
             const pedido = pedidos[i]
             if (DISPOSITIVOS_COM_TEMA.includes(pedido.dispositivo)) {
                 enougth = true
-                if (!pedido.tema) {
-                    return 'Selecione um tema para todos os pedidos que requerem.'
+                if (!Array.isArray(pedido.tema) || pedido.tema.length === 0) {
+                    return 'Selecione ao menos um tema para todos os pedidos que requerem.'
                 }
             }
             if (pedido.dispositivo === 'INADIMITIR' && (!pedido.motivo || pedido.motivo.length === 0)) {
@@ -376,8 +310,8 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                 const argumento = pedido.argumentos[j]
                 if (DISPOSITIVOS_COM_TEMA.includes(argumento.dispositivo)) {
                     enougth = true
-                    if (!argumento.tema) {
-                        return 'Selecione um tema para todos os argumentos que requerem.'
+                    if (!Array.isArray(argumento.tema) || argumento.tema.length === 0) {
+                        return 'Selecione ao menos um tema para todos os argumentos que requerem.'
                     }
                 }
                 if (argumento.dispositivo === 'INADIMITIR' && (!argumento.motivo || argumento.motivo.length === 0)) {
@@ -428,7 +362,7 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                             {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
                             {Frm.get(`pedidos.pedidos[${i}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].motivo`} options={motivoDaInadimissao} width={'col-12'} displayCount={1} />}
                             {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].dispositivo`)) &&
-                                <Frm.AsyncSelect<SemanticSearchResultItem>
+                                <Frm.AsyncMultiSelect<SemanticSearchResultItem>
                                     label="Tema"
                                     name={`pedidos.pedidos[${i}].tema`}
                                     searchFn={semanticSearchDeTemas}
@@ -449,7 +383,7 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                                         {/* <Frm.TextArea label="Fundamentação (opcional)" name={`pedidos.pedidos[${i}].fundamentacao`} width={'col-12 col-sm-8'} /> */}
                                         {Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`) === 'INADIMITIR' && <Frm.MultiSelect label="Motivo" name={`pedidos.pedidos[${i}].argumentos[${j}].motivo`} options={motivoDaInadimissao} width={'col-12'} />}
                                         {DISPOSITIVOS_COM_TEMA.includes(Frm.get(`pedidos.pedidos[${i}].argumentos[${j}].dispositivo`)) &&
-                                            <Frm.AsyncSelect<SemanticSearchResultItem>
+                                            <Frm.AsyncMultiSelect<SemanticSearchResultItem>
                                                 label="Tema"
                                                 name={`pedidos.pedidos[${i}].argumentos[${j}].tema`}
                                                 searchFn={semanticSearchDeTemas}
