@@ -54,6 +54,7 @@ enum EnvPrivateEnum {
     JWT_SECRET,
     PWD_SECRET,
     PROPERTY_SECRET,
+    DATABASE_SECRET,
     DATALAKE_TOKEN,
     DATALAKE_CLIENT_ID,
     DATALAKE_CLIENT_SECRET,
@@ -133,6 +134,24 @@ export const envStringPrefixed = (key: string, seqTribunalPai: string): string =
     if (!s)
         s = envString(key)
     return s
+}
+
+// Cache por criptograma: evita re-derivar a chave (PBKDF2 100k iterações) a cada
+// getPrefs(). A chave do cache é o criptograma; após um upsert, o novo criptograma
+// é decriptado uma única vez e reaproveitado nas leituras seguintes.
+const dbSecretDecryptedCache: { [ciphertext: string]: string } = {}
+
+export const encryptWithDatabaseSecret = (text: string): string => {
+    const cryptr = new Cryptr(envString('DATABASE_SECRET') as string, { encoding: 'base64' })
+    return cryptr.encrypt(text)
+}
+
+export const decryptWithDatabaseSecret = (ciphertext: string): string => {
+    if (dbSecretDecryptedCache[ciphertext]) return dbSecretDecryptedCache[ciphertext]
+    const cryptr = new Cryptr(envString('DATABASE_SECRET') as string, { encoding: 'base64' })
+    const decrypted = cryptr.decrypt(ciphertext)
+    dbSecretDecryptedCache[ciphertext] = decrypted
+    return decrypted
 }
 
 export const getEnvStringPrefixedIfUserIsAllowed = (username: string, key: string, seqTribunalPai?: string): string => {

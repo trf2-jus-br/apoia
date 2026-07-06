@@ -5,7 +5,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { useRouter } from 'next/navigation';
 import { enumSorted, Model, ModelProvider, parseOpenRouterModels, parseOnPremisesModels } from '@/lib/ai/model-types';
 import { EMPTY_FORM_STATE, FormHelper } from '@/lib/ui/form-support';
-import { addGenericCookie, removeGenericCookie } from '../prompts/add-cookie';
+import { savePrefs, clearPrefs } from './actions';
 
 const Frm = new FormHelper()
 
@@ -27,19 +27,17 @@ export default function PrefsForm(params) {
     const singleTribunalSelectableModel = (params.configuredSelectableModels?.length || 0) === 1
     const tribunalOnlyMode = singleTribunalSelectableModel && !hasUserProvidedApiKey
 
-    const handleClick = (e) => {
-        setProcessing(true);
+    const handleClick = async (e) => {
         e.preventDefault();
-        const cookie = btoa(JSON.stringify(data))
-        addGenericCookie('prefs', cookie)
+        setProcessing(true);
+        await savePrefs(data)
         router.replace(`/`)
         router.refresh()
-        // setProcessing(false);
     }
 
     const handleClear = async (e) => {
         e.preventDefault();
-        await removeGenericCookie('prefs')
+        await clearPrefs()
         setData(JSON.parse(JSON.stringify(params.initialState)))
         setFormState(JSON.parse(JSON.stringify(EMPTY_FORM_STATE)))
         setRefreshCount(refreshCount + 1)
@@ -122,7 +120,7 @@ export default function PrefsForm(params) {
         if (!tribunalOnlyMode) return
         if (!data.model && !data.useModelInAllSituations) return
 
-        removeGenericCookie('prefs')
+        clearPrefs()
         setData({ ...data, model: '', useModelInAllSituations: false })
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tribunalOnlyMode, data.model, data.useModelInAllSituations])
@@ -221,7 +219,7 @@ export default function PrefsForm(params) {
                 </form >
                 <div className="row justify-content-center">
                     <div className="col col-12 col-md-8 col-xxl-6">
-                        <p>As chaves ficarão armazenadas no seu próprio navegador e só serão transferidas para a Apoia no momento do uso.</p>
+                        <p>As chaves serão armazenadas com segurança (criptografadas) na sua conta da Apoia.</p>
                     </div>
                 </div>
             </div >

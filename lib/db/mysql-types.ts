@@ -762,3 +762,11 @@ export type MyPromptStatsItem = {
     avgStars: number | null
     totalRatings: number
 }
+
+export interface IAUserPrefs {
+    user_id: number
+    model: string
+    use_model_in_all_situations: boolean
+    env_encrypted: string | null
+    updated_at: Date
+}
