@@ -73,11 +73,11 @@ export type ParsedModelConfigType = {
 }
 
 const ModelProviderArray = [
-    { id: 2, name: 'OpenAI', apiKey: 'OPENAI_API_KEY', apiKeyRegex: /^sk-proj-[a-zA-Z0-9_]{48,164}$/, status: StatusDeLancamento.PUBLICO },
+    { id: 2, name: 'OpenAI', apiKey: 'OPENAI_API_KEY', apiKeyRegex: /^sk-proj-[a-zA-Z0-9_-]{48,164}$/, status: StatusDeLancamento.PUBLICO },
     { id: 1, name: 'Anthropic', apiKey: 'ANTHROPIC_API_KEY', apiKeyRegex: /^sk-[a-zA-Z0-9_-]{100,110}$/, status: StatusDeLancamento.PUBLICO },
-    { id: 3, name: 'Google', apiKey: 'GOOGLE_API_KEY', apiKeyRegex: /^AI[a-zA-Z0-9]{37}$/, status: StatusDeLancamento.PUBLICO },
+    { id: 3, name: 'Google', apiKey: 'GOOGLE_API_KEY', apiKeyRegex: /^AI[a-zA-Z0-9_-]{37,40}$/, status: StatusDeLancamento.PUBLICO },
     { id: 4, name: 'Azure', apiKey: 'AZURE_API_KEY', resourceName: 'AZURE_RESOURCE_NAME', apiKeyRegex: /^[a-zA-Z0-9]{32,84}$/, status: StatusDeLancamento.PUBLICO },
-    { id: 7, name: 'AWS', apiKey: 'AWS_SECRET_ACCESS_KEY', accessKeyId: 'AWS_ACCESS_KEY_ID', region: 'AWS_REGION', apiKeyRegex: /^sk-[a-zA-Z0-9]{32}$/, status: StatusDeLancamento.PUBLICO },
+    { id: 7, name: 'AWS', apiKey: 'AWS_SECRET_ACCESS_KEY', accessKeyId: 'AWS_ACCESS_KEY_ID', region: 'AWS_REGION', apiKeyRegex: /^[a-zA-Z0-9]{40}$/, status: StatusDeLancamento.PUBLICO },
     { id: 5, name: 'Groq', apiKey: 'GROQ_API_KEY', apiKeyRegex: /^gsk_[a-zA-Z0-9]{52}$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
     { id: 6, name: 'DeepSeek', apiKey: 'DEEPSEEK_API_KEY', apiKeyRegex: /^sk-[a-zA-Z0-9]{32}$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
     { id: 9, name: 'OpenRouter', apiKey: 'OPENROUTER_API_KEY', models: 'OPENROUTER_MODELS', apiKeyRegex: /^sk-or-v1-[a-zA-Z0-9_-]+$/, status: StatusDeLancamento.EM_DESENVOLVIMENTO },
