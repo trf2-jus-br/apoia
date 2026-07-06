@@ -42,6 +42,7 @@ export function SidekickView({
         promptInitialized,
         faseAtual,
         suggestedPrompts,
+        isBetaTester,
     } = usePromptContext()
     const [urlNovaAba, setUrlNovaAba] = useState('')
 
@@ -134,6 +135,7 @@ export function SidekickView({
                                             apiKeyProvided={apiKeyProvided}
                                             model={model}
                                             sidekick={true}
+                                            isBetaTester={isBetaTester}
                                             promptButtons={
                                                 prompt?.slug === 'chat' && !!prompt?.origin ? (
                                                     <>

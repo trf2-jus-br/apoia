@@ -5,7 +5,7 @@ import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
 import { assertCurrentUser } from '@/lib/user'
-import { cookies } from 'next/headers'
+import { isBetaTester } from '@/lib/utils/prefs'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Suspense } from 'react'
 import { HomeGlobalStats } from '@/components/stats/home-global-stats'
@@ -14,8 +14,7 @@ export default async function HomePage() {
     const user = await assertCurrentUser()
 
     // Verifica se é beta tester
-    const cookieStore = await cookies()
-    const isBetaTester = cookieStore.get('beta-tester')?.value === '2'
+    const isBetaTesterUser = await isBetaTester()
 
     const features: { icon?: IconDefinition; logo?: string; title: string; subtitle?: string; description: string; href: string; color: string; betaOnly?: boolean }[] = [
         {
@@ -146,7 +145,7 @@ export default async function HomePage() {
                 </p>
                 <ApiKeyMissing />
 
-                {false && isBetaTester && (
+                {false && isBetaTesterUser && (
                     <Suspense fallback={null}>
                         <HomeGlobalStats />
                     </Suspense>
@@ -157,7 +156,7 @@ export default async function HomePage() {
                     <h2 className="text-center mb-4">Escolha uma das ferramentas abaixo para começar:</h2>
 
                     <Row className="g-4">
-                        {features.filter(f => !f.betaOnly || isBetaTester).map((feature, index) => (
+                        {features.filter(f => !f.betaOnly || isBetaTesterUser).map((feature, index) => (
                             <Col key={index} md={6} lg={3}>
                                 <Link href={feature.href} className="text-decoration-none text-dark">
                                     <Card className="h-100 text-center shadow-sm border rounded-4">

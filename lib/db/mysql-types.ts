@@ -768,5 +768,8 @@ export interface IAUserPrefs {
     model: string
     use_model_in_all_situations: boolean
     env_encrypted: string | null
+    anonymize: boolean
+    anonymize_until: Date | null
+    beta_tester: boolean
     updated_at: Date
 }

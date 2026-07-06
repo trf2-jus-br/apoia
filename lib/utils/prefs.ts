@@ -35,3 +35,20 @@ export async function getPrefs(): Promise<PrefsCookieType | undefined> {
     return undefined
 }
 
+// Helpers para anonymize e beta-tester. Prioridade banco > cookie (legado),
+// para que usuários ainda não migrados continuem funcionando até o PrefsMigrator rodar.
+
+export async function getAnonymize(): Promise<boolean> {
+    const fromDb = await PrefsDao.getAnonymize()
+    if (fromDb !== undefined) return fromDb
+    const cookiesList = await (cookies());
+    return cookiesList.get('anonymize')?.value !== 'false'
+}
+
+export async function isBetaTester(): Promise<boolean> {
+    const fromDb = await PrefsDao.getBetaTester()
+    if (fromDb !== undefined) return fromDb
+    const cookiesList = await (cookies());
+    return cookiesList.get('beta-tester')?.value === '2'
+}
+

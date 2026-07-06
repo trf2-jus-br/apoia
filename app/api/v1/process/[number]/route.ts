@@ -3,7 +3,7 @@ import { NextResponse, NextRequest } from "next/server"
 import { assertApiUser } from "@/lib/user"
 import { CargaDeConteudoEnum, obterDadosDoProcesso2 } from "@/lib/proc/process"
 import { withErrorHandler } from "@/lib/utils/api-error"
-import { cookies } from "next/headers"
+import { getAnonymize } from "@/lib/utils/prefs"
 import { anonymizeNames } from "@/lib/anonym/name-anonymizer"
 
 /**
@@ -50,8 +50,7 @@ async function GET_HANDLER(
     conteudoDasPecasSelecionadas: obterConteudo ? CargaDeConteudoEnum.SINCRONO : CargaDeConteudoEnum.NAO
   })
 
-  const cookiesList = await cookies()
-  const anonymize = cookiesList.get('anonymize')?.value !== 'false'
+  const anonymize = await getAnonymize()
   if (anonymize && dadosDoProcesso?.arrayDeDadosDoProcesso) {
     for (const d of dadosDoProcesso.arrayDeDadosDoProcesso) {
       if (d.poloAtivo) d.poloAtivo = anonymizeNames(d.poloAtivo).text

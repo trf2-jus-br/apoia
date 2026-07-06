@@ -1,9 +1,11 @@
 'use server'
 
-import { cookies } from 'next/headers'
+import { setBetaTester } from '@/app/(main)/prefs/actions'
 
+// Ativa o status de beta tester para o usuário corrente (persistido no banco em
+// ia_user_prefs). A rota /beta-tester continua funcionando; apenas a action
+// subjacente agora escreve no banco em vez de um cookie.
 export async function addBetaTesterCookie() {
-    const cookieStore = await cookies()
-    cookieStore.set('beta-tester', '2', { maxAge: 60 * 60 * 24 * 90 }) // 3 months in seconds
+    await setBetaTester(true)
     return null
 }

@@ -11,7 +11,7 @@ import { envString } from '../utils/env'
 import { anonymizeText } from '../anonym/anonym'
 import { getModel } from './model-server'
 import { FileTypeEnum, ModelUsageResult } from './model-types'
-import { cookies } from 'next/headers';
+import { getAnonymize } from '../utils/prefs';
 import { clipPieces } from './clip-pieces'
 import { pdfToText } from '../pdf/pdf'
 import { assertAnonimizacaoAutomatica } from '../proc/sigilo'
@@ -116,9 +116,8 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
     devLog('will build prompt', definition.kind)
     await waitForTexts(data)
 
-    // Anonymize text if the cookie is set
-    const cookiesList = await (cookies());
-    const anonymize = cookiesList.get('anonymize')?.value !== 'false'
+    // Anonymize text if the preference is set (banco > cookie legado)
+    const anonymize = await getAnonymize()
     data.textos = data.textos.map((texto: TextoType) => {
         if (texto.texto?.startsWith('data:') && texto.texto.includes(';base64,'))
             return texto

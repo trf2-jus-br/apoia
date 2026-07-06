@@ -48,4 +48,46 @@ export class PrefsDao {
         if (!user_id || !knex) return
         await knex('ia_user_prefs').where({ user_id }).delete()
     }
+
+    // ---- Anonymize ----
+
+    // Retorna o valor EFETIVO de anonymize, respeitando a expiração de 24h.
+    // undefined quando sem usuário/DB (caller faz fallback ao cookie legado).
+    static async getAnonymize(): Promise<boolean | undefined> {
+        const user_id = await UserDao.getCurrentUserId()
+        if (!user_id || !knex) return undefined
+        const row = await knex('ia_user_prefs').where({ user_id }).first()
+        if (!row) return true // default: anonimizar tudo
+        const expired = row.anonymize_until && new Date(row.anonymize_until) < new Date()
+        return expired ? true : !!row.anonymize
+    }
+
+    // Grava opt-out (false + until=agora+24h) ou volta ao default (true + until=null).
+    static async setAnonymize(value: boolean): Promise<void> {
+        const user_id = await UserDao.getCurrentUserId()
+        if (!user_id || !knex) return
+        const anonymize_until = value ? null : new Date(Date.now() + 24 * 60 * 60 * 1000)
+        await knex('ia_user_prefs')
+            .insert({ user_id, anonymize: value, anonymize_until })
+            .onConflict('user_id')
+            .merge(['anonymize', 'anonymize_until'])
+    }
+
+    // ---- Beta tester ----
+
+    static async getBetaTester(): Promise<boolean | undefined> {
+        const user_id = await UserDao.getCurrentUserId()
+        if (!user_id || !knex) return undefined
+        const row = await knex('ia_user_prefs').where({ user_id }).first()
+        return row ? !!row.beta_tester : false
+    }
+
+    static async setBetaTester(value: boolean): Promise<void> {
+        const user_id = await UserDao.getCurrentUserId()
+        if (!user_id || !knex) return
+        await knex('ia_user_prefs')
+            .insert({ user_id, beta_tester: value })
+            .onConflict('user_id')
+            .merge(['beta_tester'])
+    }
 }

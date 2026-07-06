@@ -23,6 +23,7 @@ export function PromptExecutionView({
         dadosDoProcesso,
         setPrompt,
         setNumber,
+        isBetaTester,
     } = usePromptContext()
     
     if (!prompt) return null
@@ -42,6 +43,7 @@ export function PromptExecutionView({
                                 <ProcessContents
                                     apiKeyProvided={apiKeyProvided}
                                     model={model}
+                                    isBetaTester={isBetaTester}
                                 >
                                     <PromptHeader prompt={prompt} onPromptChange={() => setPrompt(null)} />
                                 </ProcessContents>

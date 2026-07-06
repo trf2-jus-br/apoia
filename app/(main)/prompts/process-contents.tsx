@@ -28,12 +28,13 @@ const isNivelDeSigiloPermitidoClient = (maxConfidentialityLevel: number, nivel: 
     return n <= maxConfidentialityLevel
 }
 
-export default function ProcessContents({ apiKeyProvided, model, children, sidekick, promptButtons }: {
+export default function ProcessContents({ apiKeyProvided, model, children, sidekick, promptButtons, isBetaTester }: {
     apiKeyProvided: boolean,
     model?: string,
     children?: ReactNode,
     sidekick?: boolean
     promptButtons?: ReactNode
+    isBetaTester?: boolean
 }) {
     const {
         prompt,
@@ -58,7 +59,6 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const [choosingPieces, setChoosingPieces] = useState(!(sidekick && prompt?.slug === 'chat' && !!prompt?.origin))
     const [choosingLibrary, setChoosingLibrary] = useState(false)
     const searchParams = useSearchParams()
-    const isBetaTester = document.cookie.includes('beta-tester=2') || null
 
     const updateSelectedPieces = (pieces: PecaType[]) => {
         if (selectedPieces && pieces.length === selectedPieces.length && pieces.every(p => selectedPieces.some(sp => sp.id === p.id))) {

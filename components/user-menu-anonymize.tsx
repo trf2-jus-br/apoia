@@ -1,25 +1,17 @@
 'use client'
 
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { setAnonymize } from "@/app/(main)/prefs/actions"
 
-
-export default function UserMenuAnonymize() {
+export default function UserMenuAnonymize({ isAnonymized: initial }: { isAnonymized: boolean }) {
     const router = useRouter()
-    const [isAnonymized, setIsAnonymized] = useState(false)
+    const [isAnonymized, setIsAnonymized] = useState(initial)
 
-    useEffect(() => {
-        setIsAnonymized(!document.cookie.includes('anonymize=false'))
-    }, [])
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked
         setIsAnonymized(checked)
-        if (checked) {
-            document.cookie = "anonymize=true;path=/;max-age=86400"
-        } else {
-            document.cookie = "anonymize=false;path=/;max-age=86400"
-        }
+        await setAnonymize(checked)
         router.refresh()
     }
 

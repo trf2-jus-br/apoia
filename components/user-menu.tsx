@@ -12,6 +12,7 @@ import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
 import { getCurrentUser, isUserCorporativo } from '@/lib/user';
 import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-server';
+import { getAnonymize } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
 import Cryptr from 'cryptr';
 import UserMenuAnonymize from './user-menu-anonymize';
@@ -28,6 +29,7 @@ export default async function UserMenu({ }: {}) {
         const user = await getCurrentUser()
         const corporateUser = user && !!await isUserCorporativo(user)
         const apiKeyProvided = !!(await getSelectedModelParams()).apiKey
+        const isAnonymized = await getAnonymize()
 
         const nonCorporateUser = user && !(await isUserCorporativo(user))
 
@@ -68,7 +70,7 @@ export default async function UserMenu({ }: {}) {
                                 </a>}
                             <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
-                                <UserMenuAnonymize />
+                                <UserMenuAnonymize isAnonymized={isAnonymized} />
                                 {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
                                 {user && <li><UserMenuSignout /></li>}
                                 {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}

@@ -4,6 +4,9 @@ CREATE TABLE ia_user_prefs (
   model VARCHAR(128) NOT NULL DEFAULT '',
   use_model_in_all_situations BOOLEAN NOT NULL DEFAULT FALSE,
   env_encrypted TEXT NULL,
+  anonymize BOOLEAN NOT NULL DEFAULT TRUE,
+  anonymize_until TIMESTAMP NULL,
+  beta_tester BOOLEAN NOT NULL DEFAULT FALSE,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_user_prefs_user FOREIGN KEY (user_id) REFERENCES ia_user (id) ON DELETE CASCADE,
   PRIMARY KEY (user_id)

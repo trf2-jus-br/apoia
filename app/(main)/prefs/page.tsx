@@ -1,8 +1,7 @@
 import { Container } from 'react-bootstrap'
-import { getPrefs } from '@/lib/utils/prefs'
+import { getPrefs, isBetaTester } from '@/lib/utils/prefs'
 import { EMPTY_PREFS_COOKIE, PrefsCookieType } from '@/lib/utils/prefs-types'
 import PrefsForm from './prefs-form'
-import { cookies } from 'next/headers';
 import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { getSelectedModelParams } from '@/lib/ai/model-server'
 import devLog from '@/lib/utils/log';
@@ -27,8 +26,7 @@ export default async function Home() {
     openRouterModels,
     onPremisesModels,
     forceModelInAllSituations } = await getSelectedModelParams()
-  const statusCookie = (await cookies()).get('beta-tester')?.value
-  const statusDeLancamento = statusCookie ? JSON.parse(statusCookie) : StatusDeLancamento.PUBLICO
+  const statusDeLancamento = (await isBetaTester()) ? StatusDeLancamento.EM_DESENVOLVIMENTO : StatusDeLancamento.PUBLICO
 
   return (<>
     <Container fluid={false}>

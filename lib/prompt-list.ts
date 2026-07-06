@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+import { isBetaTester as isBetaTesterUser } from './utils/prefs'
 import { PromptDao } from './db/dao'
 import { IAPromptList } from './db/mysql-types'
 import { Instance, Matter, Scope, Share } from './proc/process-types'
@@ -72,11 +72,9 @@ async function buildVisiblePrompts(
  * Main function that orchestrates prompt list processing
  */
 export async function fixPromptList(basePrompts: IAPromptList[], showChatPadrao = false, isBetaTester?: boolean): Promise<IAPromptList[]> {
-    // Determine beta tester cookie (only if not provided as parameter)
+    // Determine beta tester status (only if not provided as parameter)
     if (isBetaTester === undefined) {
-        const cookieStore = await cookies()
-        const betaCookie = cookieStore.get('beta-tester')?.value
-        isBetaTester = betaCookie === '2'
+        isBetaTester = await isBetaTesterUser()
     }
 
     // Step 1: Sync internal prompts with database

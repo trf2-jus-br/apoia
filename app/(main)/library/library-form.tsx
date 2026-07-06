@@ -13,7 +13,7 @@ import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclus
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
 
-export default function LibraryForm({ record, promptDefinition }: { record: any, promptDefinition: any }) {
+export default function LibraryForm({ record, promptDefinition, isBetaTester }: { record: any, promptDefinition: any, isBetaTester?: boolean }) {
   const [data, setData] = useState<any>({ ...record })
   const [pending, setPending] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -29,7 +29,6 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
   const [editorKey, setEditorKey] = useState(0)
   const isGuideline = data.kind === IALibraryKind.GUIDELINE
   const isReadOnly = data.id && !data.is_mine
-  const isBetaTester = document.cookie.includes('beta-tester=2') || null
 
   const router = useRouter()
 

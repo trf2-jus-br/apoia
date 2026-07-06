@@ -12,7 +12,7 @@ import { getLibraryDocumentTool } from "./tools-library"
 import { getPangeaTool } from "./tools-pangea"
 import { getSemanticSearchTool } from "./tools-semantic-search"
 import { getLeadingCaseSearchTool } from "./tools-leading-case-search"
-import { cookies } from "next/headers"
+import { getAnonymize } from "../utils/prefs"
 import { anonymizeText } from "../anonym/anonym"
 import { envString, isAllowedUser } from "../utils/env"
 import { assertAnonimizacaoAutomatica } from "../proc/sigilo"
@@ -70,9 +70,8 @@ export const getProcessMetadataTool = (pUser: Promise<UserType>) => tool({
             const interop = await getInteropFromUser(await pUser)
             let metadata = await getProcessMetadata(processNumber, interop)
 
-            // Anonymize metadata if the cookie is set
-            const cookiesList = await (cookies());
-            const anonymize = cookiesList.get('anonymize')?.value !== 'false'
+            // Anonymize metadata if the preference is set (banco > cookie legado)
+            const anonymize = await getAnonymize()
             for (const processo of metadata) {
                 const sigilo = processo.informacoesGerais.nivelSigilo
                 if (anonymize || assertAnonimizacaoAutomatica(sigilo)) {
@@ -159,9 +158,8 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
                 const event = documentInfo?.movimento?.sequencia
                 const sigilo = documentInfo?.doc?.nivelSigilo
 
-                // Anonymize text if the cookie is set
-                const cookiesList = await (cookies());
-                const anonymize = cookiesList.get('anonymize')?.value !== 'false'
+                // Anonymize text if the preference is set (banco > cookie legado)
+                const anonymize = await getAnonymize()
 
                 if (anonymize || assertAnonimizacaoAutomatica(sigilo)) {
                     texto = anonymizeText(texto).text

@@ -54,6 +54,7 @@ interface PromptContextValue {
     setAction: (action: string | null) => void
     suggestedPrompts: IAPromptList[]
     execution_id: string
+    isBetaTester: boolean
 }
 
 const PromptContext = createContext<PromptContextValue | undefined>(undefined)
@@ -64,9 +65,10 @@ interface PromptProviderProps {
     toastMessage: (message: string, variant: string) => void
     maxConfidentialityLevel: number
     sidekick?: boolean
+    isBetaTester?: boolean
 }
 
-export function PromptProvider({ children, originalPrompts, toastMessage, maxConfidentialityLevel, sidekick }: PromptProviderProps) {
+export function PromptProvider({ children, originalPrompts, toastMessage, maxConfidentialityLevel, sidekick, isBetaTester = false }: PromptProviderProps) {
     const execution_id = useMemo(() => crypto.randomUUID(), [])
     const processData = useProcessData(toastMessage)
     const {
@@ -119,6 +121,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         ...promptState,
 
         execution_id,
+
+        isBetaTester,
     }), [
         numeroDoProcesso,
         setNumeroDoProcesso,
@@ -133,6 +137,7 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         fases,
         promptState,
         execution_id,
+        isBetaTester,
     ])
 
     return (

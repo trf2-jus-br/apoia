@@ -24,42 +24,78 @@ export async function clearPrefs(): Promise<void> {
     await removeGenericCookie('prefs')
 }
 
+// ---- Anonymize ----
+// Só banco. Sem usuário/DB → no-op (toggle funciona na sessão atual via state do React).
+export async function setAnonymize(value: boolean): Promise<void> {
+    await PrefsDao.setAnonymize(value)
+}
+
+// ---- Beta tester ----
+// Só banco.
+export async function setBetaTester(value: boolean): Promise<void> {
+    await PrefsDao.setBetaTester(value)
+}
+
 // Migração automática cookie -> banco. Disparada uma vez no mount do PrefsMigrator.
-// Só age quando há usuário autenticado com DB. Cenários:
-//  - Banco vazio + cookie presente: persiste o cookie no banco e remove o cookie.
-//  - Banco já preenchido + cookie presente (outro browser): apenas remove o cookie
-//    órfão (o banco é a fonte de verdade).
-//  - Sem usuário/DB: no-op (mantém o cookie como fallback de dev local).
-// Retorna true quando houve mudança (para o cliente poder router.refresh).
+// Migra independentemente os três cookies: prefs (model + env), anonymize e beta-tester.
+// Cada um só é migrado quando há usuário autenticado com DB; caso contrário segue como
+// fallback de dev local. Retorna true quando houve qualquer mudança (router.refresh).
 export async function migratePrefsFromCookie(): Promise<boolean> {
     const cookieStore = await cookies()
-    const cookieValue = cookieStore.get('prefs')?.value
-    if (!cookieValue) return false // nada a migrar
+    let changed = false
 
-    let prefsFromCookie: PrefsCookieType | undefined
-    try {
-        prefsFromCookie = JSON.parse(atob(cookieValue))
-    } catch {
-        // cookie inválido/corrompido: remove e encerra
-        await removeGenericCookie('prefs')
-        return true
+    // ---- prefs (model + env) ----
+    const prefsCookieValue = cookieStore.get('prefs')?.value
+    if (prefsCookieValue) {
+        let prefsFromCookie: PrefsCookieType | undefined
+        try {
+            prefsFromCookie = JSON.parse(atob(prefsCookieValue))
+        } catch {
+            // cookie inválido/corrompido: remove e segue
+            await removeGenericCookie('prefs')
+            changed = true
+            prefsFromCookie = undefined
+        }
+
+        if (prefsFromCookie) {
+            const fromDb = await PrefsDao.getPrefsForCurrentUser()
+            if (fromDb) {
+                // Banco já tem prefs (outro browser): cookie órfão -> descarta.
+                await removeGenericCookie('prefs')
+                changed = true
+            } else {
+                const savedToDb = await PrefsDao.upsertPrefsForCurrentUser(prefsFromCookie)
+                if (savedToDb) {
+                    await removeGenericCookie('prefs')
+                    changed = true
+                }
+            }
+        }
     }
 
-    const fromDb = await PrefsDao.getPrefsForCurrentUser()
-    if (fromDb) {
-        // Banco já tem prefs (usuário acessando de outro browser): o cookie é órfão.
-        // Despreza e apaga o cookie para convergir para a fonte de verdade única.
-        await removeGenericCookie('prefs')
-        return true
+    // ---- anonymize ----
+    // Cookie valores: 'true' | 'false'. Default (ausente) = anonimizar = true.
+    // Migra respeitando a semântica de 24h: se o cookie já expirou (não dá para saber
+    // via server action, pois o maxAge do client-cookie já o removeu do cookieStore),
+    // não haverá cookie aqui -> nada a migrar. Se há cookie 'false' (opt-out ativo),
+    // grava opt-out com until=agora+24h.
+    const anonymizeCookieValue = cookieStore.get('anonymize')?.value
+    if (anonymizeCookieValue !== undefined) {
+        const value = anonymizeCookieValue !== 'false' // true = anonimizar
+        // Só migra se houver usuário/DB (PrefsDao é no-op caso contrário).
+        await PrefsDao.setAnonymize(value)
+        // Remove o cookie: a fonte de verdade passa a ser o banco.
+        // (client-set, não httpOnly -> pode ser removido via cookies().delete())
+        try { cookieStore.delete('anonymize'); changed = true } catch { /* no-op */ }
     }
 
-    const savedToDb = await PrefsDao.upsertPrefsForCurrentUser(prefsFromCookie)
-    if (savedToDb) {
-        // Migrou com sucesso: remove o cookie (banco agora é a fonte de verdade).
-        await removeGenericCookie('prefs')
-        return true
+    // ---- beta-tester ----
+    // Cookie valor: '2' (legado, mágico). Migra para beta_tester=true.
+    const betaCookieValue = cookieStore.get('beta-tester')?.value
+    if (betaCookieValue === '2') {
+        await PrefsDao.setBetaTester(true)
+        try { cookieStore.delete('beta-tester'); changed = true } catch { /* no-op */ }
     }
 
-    // Sem usuário/DB: nada a fazer (cookie segue como fallback).
-    return false
+    return changed
 }
