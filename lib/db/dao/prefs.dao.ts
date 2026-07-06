@@ -43,10 +43,20 @@ export class PrefsDao {
         return user_id
     }
 
+    // Limpa apenas a seleção de modelo, a flag "usar em todas as situações" e os envs.
+    // Preserva anonymize/anonymize_until/beta_tester, que são controlados por outros
+    // pontos da UI e não devem ser afetados pelo botão "Limpar" do formulário de prefs.
     static async clearPrefsForCurrentUser(): Promise<void> {
         const user_id = await UserDao.getCurrentUserId()
         if (!user_id || !knex) return
-        await knex('ia_user_prefs').where({ user_id }).delete()
+        await knex('ia_user_prefs')
+            .where({ user_id })
+            .update({
+                model: '',
+                use_model_in_all_situations: false,
+                env_encrypted: null,
+                updated_at: knex.fn.now(),
+            })
     }
 
     // ---- Anonymize ----
