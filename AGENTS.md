@@ -85,12 +85,21 @@
 - Manter mensagens profissionais e diretas
 - Usar texto claro sem decorações desnecessárias
 
-### Testes
-- Testes do sync engine: `npx jest sync` (26 testes)
-- Testes de pattern matching: `npx jest tests/documentMatch` (54 testes)
-- Type check: `npx tsc --noEmit`
-- Check rápido: `npm run check`
-- Build completo: `npm run build`
+### Testes e Verificação
+Os comandos de verificação são definidos como scripts no `package.json` e **DEVEM ser usados sempre na forma canônica abaixo** (nunca variar com flags, `npx` direto, ou caminhos alternativos). Usar exatamente o comando listado garante que a camada de permissão reconheça o comando e evita confirmações desnecessárias.
+
+| Verificação | Comando canônico | Quando usar |
+|-------------|------------------|-------------|
+| Type check | `npm run typecheck` | Após qualquer edição de código (rápido) |
+| Lint + type check | `npm run check` | Check padrão antes de finalizar uma alteração |
+| Sync engine | `npm test -- sync` | Ao mexer em `lib/sync/` |
+| Pattern matching | `npm test -- tests/documentMatch` | Ao mexer em `lib/proc/pattern.ts` ou `combinacoes.ts` |
+| Todos os testes | `npm test` | Antes de commit / build |
+| Build completo | `npm run build` | Só ao concluir alteração significativa (demora) |
+
+- **Nunca** usar `npx tsc --noEmit`, `npx jest ...`, `tsc -p tsconfig.json`, etc. Sempre os scripts do `package.json` acima.
+- O `npm run check` roda `lint` + `typecheck` em sequência; se o `lint` falhar por problema de ambiente (ex.: Next 16 CLI), caia para `npm run typecheck` que é o crítico.
+- O Build demora. Prefira `npm run check`. Use o build completo só ao concluir uma alteração significativa.
 
 ## Pattern Matching de Peças e Eventos
 
