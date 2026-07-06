@@ -1,7 +1,12 @@
+import 'server-only'
+
 import { PrefsCookieType } from '@/lib/utils/prefs-types';
 import { headers, cookies } from 'next/headers';
 import { PrefsDao } from '@/lib/db/dao';
 
+// Somente leitura. A migração cookie->banco (e a remoção do cookie) é feita pela
+// server action migratePrefsFromCookie(), disparada no mount do PrefsMigrator:
+// cookies não podem ser mutados durante o render de um Server Component.
 export async function getPrefs(): Promise<PrefsCookieType | undefined> {
 
     // 1) Header "prefs" injetado pelo proxy de infra (prioridade máxima: permite
@@ -18,25 +23,10 @@ export async function getPrefs(): Promise<PrefsCookieType | undefined> {
 
     // 2) Banco: preferências do usuário autenticado (fonte de verdade principal).
     const fromDb = await PrefsDao.getPrefsForCurrentUser()
-    if (fromDb) {
-        // Cookie órfão: o usuário acessa de outro browser onde ainda existe o cookie
-        // antigo, mas já há registro no banco. O banco é a fonte de verdade, então
-        // desprezamos e apagamos o cookie para evitar divergência.
-        // Observação: cookies().delete() só pode ser chamado na fase de request; em
-        // Server Components isso é permitido, mas envolvemos em try/catch para não
-        // quebrar o render caso a mutação seja bloqueada (ex.: após streaming iniciar).
-        try {
-            const cookiesList = await (cookies());
-            if (cookiesList.get('prefs')?.value) {
-                cookiesList.delete('prefs')
-            }
-        } catch (e) {
-            // mutação indisponível neste contexto; segue com o valor do banco
-        }
-        return fromDb
-    }
+    if (fromDb) return fromDb
 
-    // 3) Cookie: fallback para sessões sem usuário ou sem DB (ex.: dev local).
+    // 3) Cookie: fallback para sessões sem usuário ou sem DB (ex.: dev local),
+    //    ou enquanto aguarda migração para o banco pelo PrefsMigrator.
     const cookiesList = await (cookies());
     const prefsCookie = cookiesList.get('prefs')?.value
     if (prefsCookie)
@@ -44,3 +34,4 @@ export async function getPrefs(): Promise<PrefsCookieType | undefined> {
 
     return undefined
 }
+

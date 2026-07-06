@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { envString } from "@/lib/utils/env"
 import NonCorporateUserWarning from "@/components/non-corporate-user-warning"
+import PrefsMigrator from "@/components/PrefsMigrator"
 import { Suspense } from "react"
 import { serviceMonitor } from "@/lib/interop/pdpjServiceMonitor"
 
@@ -42,6 +43,7 @@ export default async function RootLayoutWithTheme({
           </Container>
         </Navbar>}
         <Suspense fallback={null}><NonCorporateUserWarning /></Suspense>
+        <Suspense fallback={null}><PrefsMigrator /></Suspense>
         {serviceMonitor.isDown() && <div className="alert alert-warning mb-0"><div className="p-2 mb-0 container"><div className="row"><div className="col col-auto"><strong>Atenção:</strong> A Apoia está enfrentando dificuldades para acessar os serviços do Codex/DataLake. Por favor, tente novamente mais tarde.</div></div></div></div>}
         <GlobalProviders>
           <div>
