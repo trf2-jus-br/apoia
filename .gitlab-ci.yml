@@ -40,7 +40,9 @@ docker-build:
   before_script:
     - docker login -u "$NEXUS_USERNAME" -p "$NEXUS_PASSWORD" registry.cnj.jus.br
   script:
-    - docker build --pull -t "registry.cnj.jus.br/pdpj/apoia:$CI_COMMIT_REF_NAME" -f Dockerfile "$CI_PROJECT_DIR"
+    - export IMAGE_VERSION="${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}"
+    - echo "version:$IMAGE_VERSION"
+    - docker build --pull --build-arg IMAGE_VERSION="$IMAGE_VERSION" -t "registry.cnj.jus.br/pdpj/apoia:$CI_COMMIT_REF_NAME" -f Dockerfile "$CI_PROJECT_DIR"
     - docker push "registry.cnj.jus.br/pdpj/apoia:$CI_COMMIT_REF_NAME"
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
