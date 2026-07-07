@@ -14,46 +14,53 @@ export type UserType = {
     id?: number, name: string, email: string, preferredUsername?: string, iss?: string, encryptedPassword: string, system: string, accessToken?: string, corporativo?: any[], roles?: string[]
 }
 
+// Resolve um token PDPJ (JWT cru, sem o prefixo "Bearer PDPJ") em um UserType.
+// Extraído de getCurrentUser() para permitir reuso em outros contextos (ex.: rota MCP),
+// onde a autenticação não vem do header "Authorization: Bearer PDPJ" padrão.
+export const getUserFromPdpjToken = async (rawJwt: string): Promise<UserType | undefined> => {
+    try {
+        const claims: any = await verifyJwkSignedToken(rawJwt, envString('PDPJ_JWK'))
+
+        // Aggregate roles from realm_access and resource_access
+        const roleSet = new Set<string>()
+        if (claims?.realm_access?.roles) (claims.realm_access.roles as string[]).forEach(r => roleSet.add(r))
+        if (claims?.resource_access) {
+            Object.values(claims.resource_access as Record<string, any>).forEach((svc: any) => {
+                (svc?.roles as string[] | undefined)?.forEach(r => roleSet.add(r))
+            })
+        }
+        const roles = Array.from(roleSet)
+
+        // Determine the tribunal from claims
+        let seqTribunal: number | undefined = undefined
+        if (Array.isArray(claims['allowed-origins']) && claims['allowed-origins'].includes('https://eproc.jfrj.jus.br')) {
+            seqTribunal = 4
+        }
+
+        return {
+            name: claims.name,
+            email: claims.email,
+            preferredUsername: claims.preferred_username,
+            iss: claims.iss,
+            accessToken: rawJwt,
+            corporativo: seqTribunal ? [{ seq_tribunal_pai: seqTribunal }] : undefined,
+            roles,
+            encryptedPassword: undefined,
+            system: undefined,
+        }
+    } catch (error) {
+        console.error('Invalid pdpj-authorization token:', error)
+        return undefined
+    }
+}
+
 export const getCurrentUser = async (): Promise<UserType | undefined> => {
     const headersList = await headers()
 
     const authorization = headersList.get("authorization")
     if (authorization?.startsWith('Bearer PDPJ ')) {
         const pdpjAuthorization = authorization.replace('Bearer PDPJ ', '')
-        try {
-            const claims: any = await verifyJwkSignedToken(pdpjAuthorization, envString('PDPJ_JWK'))
-
-            // Aggregate roles from realm_access and resource_access
-            const roleSet = new Set<string>()
-            if (claims?.realm_access?.roles) (claims.realm_access.roles as string[]).forEach(r => roleSet.add(r))
-            if (claims?.resource_access) {
-                Object.values(claims.resource_access as Record<string, any>).forEach((svc: any) => {
-                    (svc?.roles as string[] | undefined)?.forEach(r => roleSet.add(r))
-                })
-            }
-            const roles = Array.from(roleSet)
-
-            // Determine the tribunal from claims
-            let seqTribunal: number | undefined = undefined
-            if (Array.isArray(claims['allowed-origins']) && claims['allowed-origins'].includes('https://eproc.jfrj.jus.br')) {
-                seqTribunal = 4
-            }
-
-            return {
-                name: claims.name,
-                email: claims.email,
-                preferredUsername: claims.preferred_username,
-                iss: claims.iss,
-                accessToken: pdpjAuthorization,
-                corporativo: seqTribunal ? [{ seq_tribunal_pai: seqTribunal }] : undefined,
-                roles,
-                encryptedPassword: undefined,
-                system: undefined,
-            }
-        } catch (error) {
-            console.error('Invalid pdpj-authorization token:', error)
-            return undefined
-        }
+        return getUserFromPdpjToken(pdpjAuthorization)
     }
 
     if (authorization) {

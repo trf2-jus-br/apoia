@@ -1,6 +1,6 @@
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret, faBoxArchive, faBookOpen, faPen, faPencil, faUsers, faBalanceScale, faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faList, faFileText, faDatabase, faAlignJustify, faComments, faDollar, faGavel, faUserSecret, faBoxArchive, faBookOpen, faPen, faPencil, faUsers, faBalanceScale, faSearch, faPlug } from '@fortawesome/free-solid-svg-icons'
 import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
@@ -134,6 +134,15 @@ export default async function HomePage() {
             description: "Informe-se sobre o uso da IA e custos associados",
             href: "/report/ai-usage",
             color: "text-success"
+        },
+        {
+            icon: faPlug,
+            title: "MCP",
+            subtitle: "Model Context Protocol",
+            description: "Integre as ferramentas do Apoia com clientes de IA como o Claude",
+            href: "/mcp",
+            color: "text-primary",
+            betaOnly: true
         },
     ]
 
