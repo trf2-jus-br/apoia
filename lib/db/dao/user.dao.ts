@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import knex from '../knex'
 import * as mysqlTypes from '../mysql-types'
 import { assertCurrentUser } from '../../user'
@@ -6,14 +7,24 @@ import { dailyLimits } from '../../utils/limits'
 import { OutOfQuotaError } from '@/lib/utils/api-error'
 
 export class UserDao {
-    static async getCurrentUserId() {
+    // cache() do React memoiza por requisição: varias chamadas no mesmo request = 1 lookup no banco.
+    // Seguro para dados de usuario porque e isolado por request (nao persiste entre usuarios).
+    static getCurrentUserId = cache(async (): Promise<number> => {
         const user = await assertCurrentUser()
         return await UserDao.assertIAUserId(user.preferredUsername || user.name)
-    }
+    })
+
+    // Lookup puro (somente leitura) memoizado por (username) dentro da mesma requisicao.
+    // Importante: NAO envolver assertIAUserId inteira em cache() porque ela tem efeitos
+    // colaterais (update de userFields) que precisam executar a cada chamada.
+    private static lookupIAUser = cache(async (username: string): Promise<any | null> => {
+        if (!knex) return null
+        return await knex('ia_user').select('*').where({ username }).first()
+    })
 
     static async assertIAUserId(username: string, userFields?: mysqlTypes.IAUserUpdateFields): Promise<number> {
         if (!knex) return 0
-        const user = await knex('ia_user').select('*').where({ username }).first()
+        const user = await UserDao.lookupIAUser(username)
         if (user) {
             // Update user fields if provided and different from existing values
             if (userFields) {

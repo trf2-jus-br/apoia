@@ -1,9 +1,20 @@
+import { cache } from 'react'
 import knex from '../knex'
 import { UserDao } from './user.dao'
 import { decryptWithDatabaseSecret, encryptWithDatabaseSecret } from '../../utils/env'
 import { PrefsCookieType } from '../../utils/prefs-types'
 
 export class PrefsDao {
+    // cache() do React memoiza o SELECT por (user_id) dentro da mesma requisicao.
+    // getPrefsForCurrentUser, getPrefsForUserId, getAnonymize e getBetaTester
+    // compartilham 1 SELECT por usuario por request (e 1 decrypt do env).
+    // NAO envolver as funcoes de escrita (upsert/clear/set*): elas gravam direto
+    // no banco e seus efeitos colaterais devem executar a cada chamada.
+    private static fetchPrefsRow = cache(async (user_id: number): Promise<any | undefined> => {
+        if (!knex || !user_id) return undefined
+        return await knex('ia_user_prefs').where({ user_id }).first()
+    })
+
     static async getPrefsForCurrentUser(): Promise<PrefsCookieType | undefined> {
         const user_id = await UserDao.getCurrentUserId()
         if (!user_id) return undefined // 0 quando sem DB ou sem usuário
@@ -11,8 +22,8 @@ export class PrefsDao {
     }
 
     static async getPrefsForUserId(user_id: number): Promise<PrefsCookieType | undefined> {
-        if (!knex || !user_id) return undefined
-        const row = await knex('ia_user_prefs').where({ user_id }).first()
+        if (!user_id) return undefined
+        const row = await PrefsDao.fetchPrefsRow(user_id)
         if (!row) return undefined
         const env = row.env_encrypted
             ? JSON.parse(decryptWithDatabaseSecret(row.env_encrypted))
@@ -66,7 +77,7 @@ export class PrefsDao {
     static async getAnonymize(): Promise<boolean | undefined> {
         const user_id = await UserDao.getCurrentUserId()
         if (!user_id || !knex) return undefined
-        const row = await knex('ia_user_prefs').where({ user_id }).first()
+        const row = await PrefsDao.fetchPrefsRow(user_id)
         if (!row) return true // default: anonimizar tudo
         const expired = row.anonymize_until && new Date(row.anonymize_until) < new Date()
         return expired ? true : !!row.anonymize
@@ -88,7 +99,7 @@ export class PrefsDao {
     static async getBetaTester(): Promise<boolean | undefined> {
         const user_id = await UserDao.getCurrentUserId()
         if (!user_id || !knex) return undefined
-        const row = await knex('ia_user_prefs').where({ user_id }).first()
+        const row = await PrefsDao.fetchPrefsRow(user_id)
         return row ? !!row.beta_tester : false
     }
 
