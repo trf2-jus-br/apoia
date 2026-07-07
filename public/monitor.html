@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apoia Health Monitor</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #273449;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --accent: #38bdf8;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  .toolbar h1 {
+    font-size: 15px;
+    margin: 0;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .toolbar h1 small { color: var(--muted); font-weight: 400; font-size: 11px; display:block; }
+
+  .badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .badge.ok     { background: rgba(16,185,129,.15); color: var(--ok);   border-color: var(--ok); }
+  .badge.idle   { background: rgba(148,163,184,.15); color: var(--muted); border-color: var(--border); }
+  .badge.alarm  {
+    background: var(--err); color: #fff; border-color: var(--err);
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{ box-shadow:0 0 0 0 rgba(239,68,68,.6);} 50%{ box-shadow:0 0 0 6px rgba(239,68,68,0);} }
+
+  .ctrl { display:flex; align-items:center; gap:6px; }
+  label.field { font-size: 11px; color: var(--muted); }
+  select, button {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #06283d; border-color: var(--accent); font-weight: 600; }
+  button.danger { background: var(--err); color:#fff; border-color: var(--err); }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+  .spacer { flex: 1; }
+  .meta { font-size: 11px; color: var(--muted); text-align: right; line-height: 1.4; }
+
+  /* ---------- Main ---------- */
+  main {
+    flex: 1;
+    min-height: 0;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chart-wrap {
+    flex: 1;
+    min-height: 280px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    position: relative;
+  }
+  #chart { width: 100% !important; height: 100% !important; }
+
+  /* ---------- Stats ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 8px;
+  }
+  @media (max-width: 1100px) { .stats { grid-template-columns: repeat(5, 1fr); } }
+  @media (max-width: 900px)  { .stats { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 520px)  { .stats { grid-template-columns: repeat(2, 1fr); } }
+  /* Em telas pequenas, o card de versão não força span 2 */
+  @media (max-width: 900px)  { .stat[style*="grid-column"] { grid-column: auto !important; } }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .stat .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .stat .v { font-size: 18px; font-weight: 600; margin-top: 2px; }
+  .stat .v.ok   { color: var(--ok); }
+  .stat .v.warn { color: var(--warn); }
+  .stat .v.err  { color: var(--err); }
+
+  .hint { font-size: 11px; color: var(--muted); padding: 0 4px 8px; }
+  code { background:#0b1220; padding:1px 5px; border-radius:4px; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <h1>Apoia Health Monitor
+    <small style="display: none"><code id="endpointLabel"></code></small>
+  </h1>
+
+  <span id="badge" class="badge idle">⏸ Parado</span>
+
+  <div class="ctrl">
+    <label class="field" for="interval">Intervalo</label>
+    <select id="interval">
+      <option value="100">100 ms</option>
+      <option value="500">500 ms</option>
+      <option value="1000" selected>1 s</option>
+      <option value="10000">10 s</option>
+      <option value="30000">30 s</option>
+      <option value="60000">1 min</option>
+    </select>
+  </div>
+
+  <button id="scaleBtn" title="Alternar escala do eixo Y">Escala: Linear</button>
+  <button id="muteBtn" aria-pressed="false" title="Ligar/desligar som de alarme">🔊 Som</button>
+
+  <div class="spacer"></div>
+
+  <button id="clearBtn">Limpar</button>
+  <button id="resetZoom">Reset zoom</button>
+  <button id="toggleBtn" class="primary">▶ Iniciar</button>
+
+  <div class="meta">
+    <div id="metaInterval">—</div>
+    <div id="metaUpdated">—</div>
+  </div>
+</header>
+
+<main>
+  <div class="chart-wrap"><canvas id="chart"></canvas></div>
+
+  <section class="stats">
+    <div class="stat"><div class="k">Último</div>     <div class="v" id="stat-last">—</div></div>
+    <div class="stat"><div class="k">Média</div>      <div class="v" id="stat-mean">—</div></div>
+    <div class="stat"><div class="k">p50</div>        <div class="v" id="stat-p50">—</div></div>
+    <div class="stat"><div class="k">p95</div>        <div class="v" id="stat-p95">—</div></div>
+    <div class="stat"><div class="k">p99</div>        <div class="v" id="stat-p99">—</div></div>
+    <div class="stat"><div class="k">HTTP</div>       <div class="v" id="stat-status">—</div></div>
+    <div class="stat"><div class="k">Falhas seguidas</div><div class="v" id="stat-failures">0</div></div>
+    <div class="stat"><div class="k">Amostras (5min)</div><div class="v" id="stat-samples">0</div></div>
+    <div class="stat" style="grid-column: span 2;"><div class="k">Versão atual</div><div class="v" id="stat-version">—</div></div>
+  </section>
+
+  <p class="hint">
+    Verde = OK (HTTP 200 e ≤ 1s) · Laranja = lento (&gt; 1s, dispara alarme) · Vermelho = erro (HTTP ≠ 200, timeout, falha de rede ou <strong>versão divergente</strong>).
+    Linha tracejada = limite de 1000 ms. Arraste para dar pan, role o mouse para zoom.
+  </p>
+</main>
+
+<!-- Chart.js + plugins via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Configuração
+   ============================================================ */
+const ENDPOINT          = "https://apoia.pdpj.jus.br/api/actuator/health";
+const WINDOW_MS         = 5 * 60 * 1000;   // janela do gráfico: últimos 5 min
+const ALARM_THRESHOLD   = 1000;            // ms — acima disso dispara alarme
+const REQUEST_TIMEOUT   = 15000;           // ms — aborta e considera "travado"
+const REBEEP_EVERY      = 5000;            // ms — re-toca o beep enquanto em alarme
+const CLEAR_AFTER_GOOD  = 3;               // amostras boas seguidas para sair do alarme
+const ORIGINAL_TITLE    = document.title;
+
+/* ============================================================
+   Estado
+   ============================================================ */
+const state = {
+  buffer: [],            // { t, ms, status, kind, version }  kind: 'ok' | 'slow' | 'error'
+  intervalMs: 1000,
+  timerId: null,
+  inFlight: false,
+  running: false,
+  alarm: false,              // alarme de lentidão/erros
+  versionAlarm: false,       // alarme de versões divergentes
+  consecutiveFailures: 0,
+  goodStreak: 0,
+  muted: false,
+  lastBeep: 0,
+  abortCtrl: null,
+};
+
+/* ============================================================
+   Áudio (Web Audio API) — beep de alarme
+   ============================================================ */
+let audioCtx = null;
+function ensureAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch (_) { /* sem áudio disponível */ }
+}
+function beep() {
+  if (state.muted || !audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(880, t0);
+  o.frequency.setValueAtTime(660, t0 + 0.12);
+  o.connect(g); g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
+  o.start(t0); o.stop(t0 + 0.27);
+}
+function maybeRebeep() {
+  const now = Date.now();
+  if (now - state.lastBeep >= REBEEP_EVERY) { beep(); state.lastBeep = now; }
+}
+
+/* ============================================================
+   Título da aba piscando (quando alarme + aba ociosa)
+   ============================================================ */
+let titleTimer = null;
+function startTitleFlash() {
+  if (titleTimer) return;
+  let on = false;
+  titleTimer = setInterval(() => {
+    document.title = on
+      ? "🔴 ALARME — Apoia sem responder!"
+      : ORIGINAL_TITLE;
+    on = !on;
+  }, 800);
+}
+function stopTitleFlash() {
+  if (titleTimer) { clearInterval(titleTimer); titleTimer = null; }
+  document.title = ORIGINAL_TITLE;
+}
+
+/* ============================================================
+   Badge da toolbar
+   ============================================================ */
+function setBadge() {
+  const el = document.getElementById("badge");
+  if (!state.running) {
+    el.className = "badge idle";
+    el.textContent = "⏸ Parado";
+  } else if (state.alarm || state.versionAlarm) {
+    el.className = "badge alarm";
+    const reasons = [];
+    if (state.alarm)        reasons.push(`${state.consecutiveFailures} ruins seguidas`);
+    if (state.versionAlarm) reasons.push(`versões divergentes`);
+    el.textContent = `🔴 ALARME · ${reasons.join(" · ")}`;
+  } else {
+    el.className = "badge ok";
+    el.textContent = "🟢 OK";
+  }
+}
+
+/* ============================================================
+   Máquina de estados do alarme
+   ============================================================ */
+function enterAlarm() {
+  state.alarm = true;
+  state.lastBeep = Date.now();
+  beep();
+  startTitleFlash();
+  setBadge();
+}
+function exitAlarm() {
+  state.alarm = false;
+  // Só para o beep/título se o alarme de versão também já tiver saído
+  exitAlarmIfAllClear();
+  setBadge();
+}
+function evaluateSample(s) {
+  const bad = s.kind !== "ok"; // 'slow' ou 'error'
+  if (bad) { state.consecutiveFailures++; state.goodStreak = 0; }
+  else     { state.consecutiveFailures = 0; state.goodStreak++; }
+
+  if (bad && !state.alarm)                       enterAlarm();
+  else if (state.alarm && state.goodStreak >= CLEAR_AFTER_GOOD) exitAlarm();
+  else if (state.alarm)                          { setBadge(); maybeRebeep(); }
+
+  // ---- Verificação de versões divergentes (independente do alarme de lentidão) ----
+  evaluateVersion();
+}
+
+/* Conta versões na janela visível. Se houver >1 versão, dispara versionAlarm
+   e marca as amostras minoritárias como erro para ficarem vermelhas no gráfico. */
+function evaluateVersion() {
+  const counts = new Map();        // versão -> nº de amostras
+  for (const s of state.buffer) {
+    if (s.version == null) continue;   // sem versão (undefined) não conta
+    counts.set(s.version, (counts.get(s.version) || 0) + 1);
+  }
+
+  if (counts.size < 2) {
+    // Tudo certo (0 ou 1 versão): remove o flag de erro de versão de todas as amostras
+    // e sai do alarme de versão se estiver ativo.
+    if (state.versionAlarm) {
+      state.versionAlarm = false;
+      // Limpa marcas prévias para não deixar resquício vermelho
+      for (const s of state.buffer) s.versionMismatch = false;
+      exitAlarmIfAllClear();
+      setBadge();
+    }
+    return;
+  }
+
+  // Determina a versão dominante (mais frequente) e marca as minoritárias como erro.
+  let dominant = null, dominantN = -1;
+  for (const [v, n] of counts) if (n > dominantN) { dominant = v; dominantN = n; }
+  for (const s of state.buffer) {
+    s.versionMismatch = (s.version != null && s.version !== dominant);
+  }
+
+  if (!state.versionAlarm) {
+    state.versionAlarm = true;
+    enterAlarmIfNotActive();   // dispara beep/título uma única vez
+    setBadge();
+  } else {
+    setBadge();
+    maybeRebeep();
+  }
+}
+
+function enterAlarmIfNotActive() {
+  // O beep/título-piscante são compartilhados; só inicia se nenhum alarme já estiver ativo
+  if (!state.alarm && !state.versionAlarm) return;
+  if (state.alarm || state.versionAlarm) {
+    state.lastBeep = Date.now();
+    beep();
+    startTitleFlash();
+  }
+}
+function exitAlarmIfAllClear() {
+  if (state.alarm || state.versionAlarm) return; // ainda há outro alarme ativo
+  stopTitleFlash();
+}
+
+/* ============================================================
+   Polling
+   ============================================================ */
+async function tick() {
+  if (!state.running || state.inFlight) return; // não empilha requisições
+  state.inFlight = true;
+
+  const ctrl = new AbortController();
+  state.abortCtrl = ctrl;
+  const timeoutId = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT);
+  const t0 = performance.now();
+
+  let ms, status, kind, version = undefined;
+  try {
+    // credentials:'omit' => navegador NÃO envia cookies => instância aleatória no LB
+    const res = await fetch(ENDPOINT, {
+      method: "GET",
+      credentials: "omit",
+      cache: "no-store",
+      signal: ctrl.signal,
+    });
+    ms = performance.now() - t0;
+    status = res.status;
+    // Tenta ler a versão do corpo (apenas em 200; erros normalmente não têm JSON útil)
+    if (status === 200) {
+      try {
+        const body = await res.json();
+        if (body && typeof body.version !== "undefined") version = String(body.version);
+      } catch (_) { /* corpo não-JSON — ignora a versão */ }
+    }
+    if (status !== 200)                   kind = "error";
+    else if (ms > ALARM_THRESHOLD)        kind = "slow";
+    else                                  kind = "ok";
+  } catch (e) {
+    ms = performance.now() - t0; // tempo real esperado até falhar/abortar
+    status = (e && e.name === "AbortError") ? "TIMEOUT" : "NETERR";
+    kind = "error";
+  } finally {
+    clearTimeout(timeoutId);
+    state.inFlight = false;
+    state.abortCtrl = null;
+  }
+
+  pushSample({ t: Date.now(), ms, status, kind, version });
+}
+
+function pushSample(s) {
+  state.buffer.push(s);
+  const cutoff = s.t - WINDOW_MS;
+  while (state.buffer.length && state.buffer[0].t < cutoff) state.buffer.shift();
+
+  evaluateSample(s);
+  scheduleRender();
+}
+
+/* ============================================================
+   Render (throttle por requestAnimationFrame)
+   ============================================================ */
+let renderQueued = false;
+function scheduleRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; drawChart(); drawStats(); });
+}
+
+/* ============================================================
+   Chart.js
+   ============================================================ */
+let chart;
+const thresholdPlugin = {
+  id: "thresholdLine",
+  afterDatasetsDraw(c) {
+    const y = c.scales.y;
+    if (!y) return;
+    const pos = y.getPixelForValue(ALARM_THRESHOLD);
+    const area = c.chartArea;
+    if (pos < area.top || pos > area.bottom) return;
+    const ctx = c.ctx;
+    ctx.save();
+    ctx.strokeStyle = "rgba(239,68,68,.55)";
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(area.left, pos);
+    ctx.lineTo(area.right, pos);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(239,68,68,.95)";
+    ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("1000 ms (alarme)", area.left + 6, pos - 4);
+    ctx.restore();
+  }
+};
+
+function initChart() {
+  if (window.ChartZoom) Chart.register(window.ChartZoom);
+
+  const ctx = document.getElementById("chart").getContext("2d");
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      datasets: [{
+        label: "Tempo de resposta",
+        data: [],
+        borderColor: "#10b981",
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        spanGaps: false,
+        // cor por segmento: vermelho p/ erro OU versão divergente, laranja p/ lento, verde p/ ok
+        segment: {
+          borderColor: (c) => {
+            const ka = c.p0.parsed._custom?.kind   ?? c.p0.raw?.kind;
+            const kb = c.p1.parsed._custom?.kind   ?? c.p1.raw?.kind;
+            const vma = c.p0.parsed._custom?.vm    ?? c.p0.raw?.vm;
+            const vmb = c.p1.parsed._custom?.vm    ?? c.p1.raw?.vm;
+            const errA = ka === "error" || vma === true;
+            const errB = kb === "error" || vmb === true;
+            if (errA || errB) return "#ef4444";
+            if (ka === "slow"  || kb === "slow")  return "#f59e0b";
+            return "#10b981";
+          }
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      normalized: true,
+      parsing: true,
+      interaction: { mode: "nearest", axis: "x", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => new Date(items[0].parsed.x).toLocaleTimeString("pt-BR"),
+            label: (item) => {
+              const raw = item.raw;
+              const ms = item.parsed.y;
+              const ver = raw?.version ? ` · v${raw.version}${raw.vm ? " ⚠ divergente" : ""}` : "";
+              return `${ms == null ? "—" : fmt(ms)} · HTTP ${raw?.status ?? "?"} · ${raw?.kind}${ver}`;
+            }
+          }
+        },
+        decimation: { enabled: true, algorithm: "min-max", threshold: 600, samples: 600 },
+        zoom: {
+          pan:  { enabled: true, mode: "x" },
+          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" }
+        }
+      },
+      scales: {
+        x: {
+          type: "time",
+          time: { unit: "minute", displayFormats: { minute: "HH:mm" } },
+          ticks: { color: "#94a3b8", maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+          grid:  { color: "rgba(148,163,184,.12)" }
+        },
+        y: {
+          type: "linear",
+          beginAtZero: true,
+          title: { display: true, text: "Tempo (ms)", color: "#94a3b8" },
+          ticks: { color: "#94a3b8", callback: (v) => fmt(v) },
+          grid:  { color: "rgba(148,163,184,.12)" }
+        }
+      }
+    },
+    plugins: [thresholdPlugin]
+  });
+}
+
+function drawChart() {
+  if (!chart) return;
+  // Mapeia mantendo kind/versionMismatch no raw para o segmento poder colorir
+  chart.data.datasets[0].data = state.buffer.map(s => ({
+    x: s.t, y: s.ms, kind: s.kind, status: s.status, vm: s.versionMismatch, version: s.version
+  }));
+  chart.update("none");
+}
+
+/* ============================================================
+   Estatísticas
+   ============================================================ */
+function fmt(ms) {
+  if (ms == null || Number.isNaN(ms)) return "—";
+  return ms < 1000 ? `${ms.toFixed(0)} ms` : `${(ms / 1000).toFixed(2)} s`;
+}
+function drawStats() {
+  const $ = (id) => document.getElementById(id);
+  const arr = state.buffer.map(s => s.ms).filter(v => typeof v === "number");
+  const n = arr.length;
+  $("stat-samples").textContent = n;
+  $("stat-failures").textContent = state.consecutiveFailures;
+
+  if (n === 0) {
+    ["stat-last","stat-mean","stat-p50","stat-p95","stat-p99"].forEach(id => $(id).textContent = "—");
+    $("stat-status").textContent = "—";
+    const v0 = $("stat-version"); v0.textContent = "—"; v0.className = "v";
+    return;
+  }
+  const sorted = [...arr].sort((a, b) => a - b);
+  const pct = (p) => sorted[Math.min(n - 1, Math.max(0, Math.floor((p / 100) * n)))];
+  const mean = arr.reduce((a, b) => a + b, 0) / n;
+  const last = arr[n - 1];
+  const lastStatus = state.buffer[n - 1].status;
+
+  const set = (id, v, cls) => { const e = $(id); e.textContent = fmt(v); e.className = "v " + (cls || ""); };
+
+  set("stat-last", last, last > ALARM_THRESHOLD ? "warn" : "ok");
+  set("stat-mean", mean, mean > ALARM_THRESHOLD ? "warn" : "");
+  set("stat-p50", pct(50));
+  set("stat-p95", pct(95), pct(95) > ALARM_THRESHOLD ? "warn" : "");
+  set("stat-p99", pct(99), pct(99) > ALARM_THRESHOLD ? "err" : "");
+
+  const stEl = $("stat-status");
+  stEl.textContent = lastStatus;
+  stEl.className = "v " + (lastStatus === 200 ? "ok" : "err");
+
+  // ---- Card de versão ----
+  // Conta versões na janela e mostra a dominante (+ contagem das divergentes, se houver)
+  const vEl = $("stat-version");
+  const vCounts = new Map();
+  for (const s of state.buffer) {
+    if (s.version == null) continue;
+    vCounts.set(s.version, (vCounts.get(s.version) || 0) + 1);
+  }
+  if (vCounts.size === 0) {
+    vEl.textContent = "— (sem versão)";
+    vEl.className = "v";
+  } else if (vCounts.size === 1) {
+    const [v, c] = [...vCounts][0];
+    vEl.textContent = `v${v} (${c})`;
+    vEl.className = "v ok";
+  } else {
+    // múltiplas versões: mostra a dominante e quantas amostras divergem
+    let dom = null, domN = -1, total = 0;
+    for (const [v, c] of vCounts) { if (c > domN) { dom = v; domN = c; } total += c; }
+    vEl.textContent = `v${dom} ⚠ ${total - domN}/${total} divergentes`;
+    vEl.className = "v err";
+  }
+
+  $("metaUpdated").textContent = "atualizado: " + new Date().toLocaleTimeString("pt-BR");
+}
+
+/* ============================================================
+   Controles
+   ============================================================ */
+function start() {
+  if (state.running) return;
+  ensureAudio();                  // gesto do usuário libera o áudio
+  state.running = true;
+  setBadge();
+  document.getElementById("toggleBtn").textContent = "⏸ Pausar";
+  document.getElementById("toggleBtn").classList.replace("primary", "danger");
+  state.timerId = setInterval(tick, state.intervalMs);
+  tick();                         // dispara imediatamente
+}
+function pause() {
+  state.running = false;
+  if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  if (state.abortCtrl) { try { state.abortCtrl.abort(); } catch (_) {} }
+  setBadge();
+  document.getElementById("toggleBtn").textContent = "▶ Iniciar";
+  document.getElementById("toggleBtn").classList.replace("danger", "primary");
+}
+function changeInterval(ms) {
+  state.intervalMs = ms;
+  document.getElementById("metaInterval").textContent = `intervalo: ${fmt(ms)} · janela: 5 min`;
+  if (state.running) {
+    clearInterval(state.timerId);
+    state.timerId = setInterval(tick, ms);
+  }
+}
+function clearData() {
+  state.buffer = [];
+  state.consecutiveFailures = 0;
+  state.goodStreak = 0;
+  state.versionAlarm = false;
+  exitAlarm();
+  exitAlarmIfAllClear();
+  setBadge();
+  scheduleRender();
+}
+
+/* ============================================================
+   Bindings
+   ============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("endpointLabel").textContent = ENDPOINT;
+  initChart();
+
+  const toggleBtn = document.getElementById("toggleBtn");
+  toggleBtn.addEventListener("click", () => { state.running ? pause() : start(); });
+
+  document.getElementById("interval").addEventListener("change", (e) => changeInterval(Number(e.target.value)));
+  changeInterval(1000);
+
+  document.getElementById("clearBtn").addEventListener("click", clearData);
+
+  document.getElementById("resetZoom").addEventListener("click", () => chart && chart.resetZoom());
+
+  const muteBtn = document.getElementById("muteBtn");
+  muteBtn.addEventListener("click", () => {
+    state.muted = !state.muted;
+    muteBtn.setAttribute("aria-pressed", String(state.muted));
+    muteBtn.textContent = state.muted ? "🔇 Som" : "🔊 Som";
+    if (!state.muted) ensureAudio();
+  });
+
+  const scaleBtn = document.getElementById("scaleBtn");
+  scaleBtn.addEventListener("click", () => {
+    const y = chart.options.scales.y;
+    const next = y.type === "linear" ? "logarithmic" : "linear";
+    y.type = next;
+    scaleBtn.textContent = `Escala: ${next === "linear" ? "Linear" : "Log"}`;
+    chart.update();
+  });
+
+  // Para o pisca-pisca do título quando a aba volta a ficar visível
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && !state.alarm) stopTitleFlash();
+  });
+
+  setBadge();
+});
+</script>
+</body>
+</html>
