@@ -1,6 +1,10 @@
 FROM node:20 AS base
 USER root
 
+ARG IMAGE_VERSION
+ENV IMAGE_VERSION=${IMAGE_VERSION}
+LABEL image.version="${IMAGE_VERSION}"
+
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
