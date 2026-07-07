@@ -16,6 +16,8 @@ export default async function HomePage() {
     // Verifica se é beta tester
     const isBetaTesterUser = await isBetaTester()
 
+    const version = process.env.IMAGE_VERSION || 'Desconhecida'
+
     const features: { icon?: IconDefinition; logo?: string; title: string; subtitle?: string; description: string; href: string; color: string; betaOnly?: boolean }[] = [
         {
             icon: faComments,
@@ -205,8 +207,11 @@ export default async function HomePage() {
                                 <li>• Centralização de custos e controle de limites de uso</li>
                                 <li>• Proteção de informações sigilosas por meio de APIs próprias</li>
                             </ul>
-                            <p className="mb-0">
+                            <p>
                                 Para saber mais e explorar todas as funcionalidades, consulte o <Link href="https://trf2.gitbook.io/apoia">Manual da Apoia</Link>.
+                            </p>
+                            <p className="mb-0">
+                                Versão: {version}
                             </p>
                         </Col>
                     </Row>
