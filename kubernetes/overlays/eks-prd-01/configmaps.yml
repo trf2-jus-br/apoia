@@ -33,6 +33,10 @@ data:
   ###DB_PASSWORD: ${DB_PASSWORD}
   DB_DATABASE: "pdpj_apoia"
 
+  # Limite do heap do V8 abaixo do limite do container (2Gi) para evitar OOM do V8.
+  # Mitigacao temporaria de leak; nao cura a causa raiz. Deixa ~500MB de margem.
+  NODE_OPTIONS: "--max-old-space-size=1536"
+
   ###KEYCLOAK_CREDENTIALS_SECRET: ${KEYCLOAK_CREDENTIALS_SECRET}
   KEYCLOAK_ISSUER: "https://sso.cloud.pje.jus.br/auth/realms/pje"
 
