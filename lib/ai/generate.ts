@@ -22,6 +22,7 @@ import * as Sentry from '@sentry/nextjs'
 import { getLibraryDocumentsForPrompt } from './library'
 import { calculateModelUsage, checkModelSupportsAudioVideo, checkModelSupportsPdf } from './model-metadata-server'
 import { slugify } from '../utils/utils'
+import { logPiecesEvent } from '../utils/telemetry'
 
 export async function retrieveFromCache(sha256: string, model: string, prompt: string, attempt: number | null): Promise<IAGenerated | undefined> {
     const cached = await GenerationDao.retrieveIAGeneration({ sha256, model, prompt, attempt })
@@ -131,12 +132,29 @@ export async function streamContent(definition: PromptDefinitionType, data: Prom
 
     // Get the model so that we can clip the pieces if necessary
     const { model: modelPreSelected } = await getModel({ structuredOutputs: false, profile: definition.metadata?.profile })
+    const totalAntesClip = data.textos.reduce((s, t) => s + (t.texto?.startsWith('data:') ? 0 : t.texto?.length || 0), 0)
     data.textos = await clipPieces(modelPreSelected, data.textos)
+    const totalAposClip = data.textos.reduce((s, t) => s + (t.texto?.startsWith('data:') ? 0 : t.texto?.length || 0), 0)
 
     const libraryPrompt = await getLibraryDocumentsForPrompt(slugify(definition.name), data.documentosDaBiblioteca)
     const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
     const messages = exec.message
     const structuredOutputs = exec.params?.structuredOutputs
+
+    // Telemetria: tamanho que efetivamente vai para o modelo (após clip + template + system).
+    const messagesChars = messages.reduce((s, m) => {
+        const c = (m as any).content
+        return s + (typeof c === 'string' ? c.length : Array.isArray(c) ? c.reduce((a: number, p: any) => a + (typeof p?.text === 'string' ? p.text.length : 0), 0) : 0)
+    }, 0)
+    logPiecesEvent('generate:prompt', {
+        kind: definition.kind,
+        model_pre_selected: modelPreSelected,
+        n_pecas: data.textos.length,
+        total_antes_clip_chars: totalAntesClip,
+        total_apos_clip_chars: totalAposClip,
+        messages_chars: messagesChars,
+        n_messages: messages.length,
+    })
 
     const { model, modelRef, apiKeyFromEnv } = await getModel({ structuredOutputs: !!structuredOutputs, profile: definition.metadata?.profile })
 

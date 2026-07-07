@@ -14,6 +14,7 @@ import { clipPieces } from './clip-pieces'
 import { buildRequests } from './build-requests'
 import devLog from '../utils/log'
 import { getTools } from './tools'
+import { logPiecesEvent } from '../utils/telemetry'
 
 export async function summarize(dossierNumber: string, pieceNumber: string): Promise<{ dossierData: any, generatedContent: GeneratedContent }> {
     const pUser = assertCurrentUser()
@@ -93,6 +94,35 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
 
         if (pecasComConteudo.length === 0) throw new Error(`${dossierNumber}: Nenhuma peça com conteúdo`)
 
+        // Telemetria: tamanho das peças carregadas (texto + binário) antes do clip.
+        {
+            let totalTextoChars = 0
+            let maiorPecaChars = 0
+            let totalBinarioBytes = 0
+            let maiorBinarioBytes = 0
+            for (const p of pecasComConteudo) {
+                const t = p.texto?.length || 0
+                // Conteúdo binário (PDF/imagem/áudio) vem como data URL base64 dentro de texto.
+                if (p.texto?.startsWith('data:')) {
+                    totalBinarioBytes += t
+                    if (t > maiorBinarioBytes) maiorBinarioBytes = t
+                } else {
+                    totalTextoChars += t
+                    if (t > maiorPecaChars) maiorPecaChars = t
+                }
+            }
+            logPiecesEvent('analyze:pre-clip', {
+                processo: dossierNumber,
+                batch: batchName || '',
+                complete: complete ? 1 : 0,
+                n_pecas: pecasComConteudo.length,
+                total_texto_chars: totalTextoChars,
+                maior_peca_chars: maiorPecaChars,
+                total_binario_bytes: totalBinarioBytes,
+                maior_binario_bytes: maiorBinarioBytes,
+            })
+        }
+
         if (!pecasComConteudo.find(p => !identificarSituacaoDaPeca(p.texto).problematica))
             throw new Error(`${dossierNumber}: Todas as peças estão com problemas (sigilosas, inacessíveis, vazias ou parciais)`)
 
@@ -145,6 +175,15 @@ export async function analyze(batchName: string | undefined, dossierNumber: stri
             const systemId = await SystemDao.assertSystemId(systemCode)
             const textosParaClipagem = JSON.parse(JSON.stringify(pecasComConteudo))
             const textosClipados = await clipPieces(model, textosParaClipagem)
+            // Telemetria: tamanho após clip (confirma se o clip atuou).
+            const totalPosClip = textosClipados.reduce((s, p) => s + (p.texto?.startsWith('data:') ? 0 : p.texto?.length || 0), 0)
+            logPiecesEvent('analyze:post-clip', {
+                processo: dossierNumber,
+                model: model || '',
+                n_pecas: textosClipados.length,
+                total_pos_clip_chars: totalPosClip,
+                n_requests: requests.length,
+            })
             const footer = buildFooter(model || '-', textosClipados)
             storeBatchItem(systemId, batchName, dossierNumber, requests, dadosDoProcesso, footer)
         }
