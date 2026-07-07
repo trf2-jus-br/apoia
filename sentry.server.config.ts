@@ -3,7 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
-if (process.env.NEXT_PUBLIC_SENTRY_DISABLED !== '1') {
+if (process.env.NEXT_PUBLIC_SENTRY_ENABLED === '1') {
   Sentry.init({
     dsn: "https://b266ea35a9ed6e281997bfca92d559af@o4510119948451840.ingest.us.sentry.io/4510119949697024",
 

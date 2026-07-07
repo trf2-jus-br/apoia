@@ -144,7 +144,7 @@ export function anonymizeText(
         currentText = currentText.replace(globalPattern, (full: string) => {
             const digits = full.replace(/\D/g, '');
             if (!isValidCPF(digits)) {
-                console.warn(`Invalid CPF detected: ${full}`);
+                // console.warn(`Invalid CPF detected: ${full}`);
                 // don't replace if checksum doesn't match
                 return full;
             }
