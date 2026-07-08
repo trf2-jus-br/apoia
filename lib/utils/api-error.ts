@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
+import { logHttpEvent } from './telemetry';
 
 /**
  * A standardized error response format for the API.
@@ -120,9 +121,20 @@ type TracedApiHandler = (req: NextRequest, props: any, trace: Trace) => Promise<
 export function withErrorHandler(handler: ApiHandler | TracedApiHandler): ApiHandler {
     return async (req: NextRequest, props: any) => {
         const trace = new Trace()
+        // Telemetria HTTP: loga start ao entrar e end ao concluir (inclusive em erro).
+        // A request que causar indisponibilidade terá start sem end antes do buraco.
+        const requestId = crypto.randomUUID().split('-')[0]
+        const path = req.nextUrl?.pathname || req.url
+        const method = req.method
+        const start = Date.now()
+        logHttpEvent('http:start', requestId, { method, path, has_body: !!req.body })
+        let status = 200
         try {
-            return await (handler as TracedApiHandler)(req, props, trace);
+            const res = await (handler as TracedApiHandler)(req, props, trace);
+            status = res.status
+            return res;
         } catch (error: any) {
+            status = error.status || 500
             // Capture without fixed route tag; request URL already present in scope
             Sentry.captureException(error);
 
@@ -131,6 +143,13 @@ export function withErrorHandler(handler: ApiHandler | TracedApiHandler): ApiHan
             // }
             // console.error('Unexpected API error:', error);
             // return apiErrorResponse('Internal server error', 500);
+        } finally {
+            logHttpEvent('http:end', requestId, {
+                method,
+                path,
+                status,
+                duration_ms: Date.now() - start,
+            })
         }
     };
 }

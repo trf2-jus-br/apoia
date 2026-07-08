@@ -54,7 +54,7 @@ export function startHeartbeat(): void {
 
     const intervalMs = process.env.TELEMETRY_INTERVAL_MS
         ? parseInt(process.env.TELEMETRY_INTERVAL_MS)
-        : 30000
+        : 10000
     if (!Number.isFinite(intervalMs) || intervalMs <= 0) return
 
     const pod = podName()
@@ -108,6 +108,33 @@ export function logPiecesEvent(context: string, fields: Record<string, number | 
             type: 'pieces',
             pod: podName(),
             context,
+            heap_used_mb: heapUsedMb(),
+            ...fields,
+            ts: new Date().toISOString(),
+        }
+        console.log(JSON.stringify(payload))
+    } catch {
+        // Telemetria nunca pode derrubar a aplicação.
+    }
+}
+
+/**
+ * Loga um evento HTTP (start/end) para cercar requisições que travam o pod.
+ * O request_id correlaciona start e end; a request que causou a indisponibilidade
+ * é aquela cujo "start" não tem "end" correspondente antes do buraco nos logs.
+ *
+ * @param event      'http:start' ou 'http:end'.
+ * @param requestId   identificador curto da request (gerado no middleware).
+ * @param fields      método, path, status, duration_ms, etc.
+ */
+export function logHttpEvent(event: 'http:start' | 'http:end', requestId: string, fields: Record<string, number | string | boolean | undefined>): void {
+    if (process.env.TELEMETRY_DISABLED === '1') return
+    if (process.env.NEXT_RUNTIME && process.env.NEXT_RUNTIME !== 'nodejs') return
+    try {
+        const payload = {
+            type: event,
+            pod: podName(),
+            request_id: requestId,
             heap_used_mb: heapUsedMb(),
             ...fields,
             ts: new Date().toISOString(),
