@@ -108,17 +108,17 @@ export default function McpPage({ toolsList }: { toolsList: ToolMeta[] }) {
 
                             {url && (
                                 <div className="position-relative">
-                                    <Button
-                                        variant={copySuccess ? 'success' : 'outline-secondary'}
-                                        size="sm"
-                                        className="position-absolute top-0 end-0 m-2 me-4"
-                                        onClick={handleCopy}
-                                    >
-                                        <FontAwesomeIcon icon={copySuccess ? faCheck : faCopy} className="me-1" />
-                                        {copySuccess ? 'Copiado' : 'Copiar'}
-                                    </Button>
-                                    <pre className="bg-light p-4 rounded" style={{ maxHeight: '200px', overflow: 'auto' }}>
+                                    <pre className="bg-light p-3 rounded" style={{ maxHeight: '200px', overflow: 'auto', textAlign: 'center' }}>
                                         <code className="text-break" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{url}</code>
+                                        <Button
+                                            variant={copySuccess ? 'success' : 'outline-secondary'}
+                                            size="sm"
+                                            className="mt-3"
+                                            onClick={handleCopy}
+                                        >
+                                            <FontAwesomeIcon icon={copySuccess ? faCheck : faCopy} className="me-1" />
+                                            {copySuccess ? 'Copiado' : 'Copiar'}
+                                        </Button>
                                     </pre>
                                 </div>
                             )}
