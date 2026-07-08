@@ -135,7 +135,7 @@ const pecasQueRepresentamContestacao = [
     T.DEFESA_PREVIA_DEFESA_PRELIMINAR_RESPOSTA_DO_REU,
 ]
 
-const pecasRelevantes1aInstancia = [
+export const pecasRelevantes1aInstancia = [
     T.PETICAO_INICIAL,
     T.PETICAO,
     T.EMENDA_DA_INICIAL,

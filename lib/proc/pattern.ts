@@ -75,7 +75,8 @@ export type MatchOperator =
   | { type: 'ANY'; options?: MatchOptions; phase?: string }
   | { type: 'SOME'; options?: MatchOptions; phase?: string }
   | { type: 'EVENT'; criteria: EventMatch; phase?: string }
-  | { type: 'ALT'; options: MatchOperator[][]; phase?: string };
+  | { type: 'ALT'; options: MatchOperator[][]; phase?: string }
+  | { type: 'SKIP'; options?: MatchOperator[][]; phase?: string };
 
 export const EXACT = (docType: T, captureAllInSameEvent?: boolean, phase?: string) => ({ type: 'EXACT' as const, docType, captureAllInSameEvent, phase })
 export const OR = (...docTypes: T[]) => ({ type: 'OR' as const, docTypes })
@@ -92,8 +93,7 @@ export const SOME_GREEDY = (options?: MatchOptions, phase?: string) => SOME({ ..
 // Helper sugar: ANY_EXCEPT(T.A, T.B) === ANY({ except: [T.A, T.B] })
 export const ANY_EXCEPT = (...docTypes: T[]) => ANY({ except: docTypes })
 export const ANY_EXCEPT_GREEDY = (...docTypes: T[]) => ANY({ except: docTypes, greedy: true })
-// PHASE marker operator (ANY vazio com phase) para marcar pontos sem capturar docs
-export const PHASE = (name: string) => ANY(undefined, name)
+export const PHASE = (name: string) => ({ type: 'SKIP' as const, phase: name })
 
 export type MatchResultItem = { operator: MatchOperator, captured: Documento[] }
 
@@ -322,6 +322,17 @@ function matchFromIndex(
         if (attempt) return attempt
       }
       return null
+    }
+    case 'SKIP': {
+      const newPhases = operator.phase ? addPhase(phases, operator, patternIdx, [...matched], items) : phases
+      return matchFromIndex(
+        items,
+        pattern,
+        patternIdx - 1,
+        itemIdx,
+        [...matched],
+        newPhases
+      );
     }
     default:
       return null;

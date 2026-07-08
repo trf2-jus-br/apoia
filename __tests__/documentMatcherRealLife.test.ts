@@ -1,5 +1,5 @@
-import { match, matchFull, ANY, SOME, EXACT, OR, ANY_GREEDY, SOME_GREEDY, MatchFullResult, matchSomePatterns } from '../lib/proc/pattern';
-import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T, padroesAgravo } from '../lib/proc/combinacoes';
+import { match, matchFull, ANY, SOME, EXACT, OR, ANY_GREEDY, SOME_GREEDY, MatchFullResult, matchSomePatterns, PHASE } from '../lib/proc/pattern';
+import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T, padroesAgravo, padraoConhecimentoForcado, padroesConhecimento, padraoConhecimentoAberta, pecasRelevantes1aInstancia, FaseProcessual, padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao } from '../lib/proc/combinacoes';
 
 type DocumentoType = {
   id: string | null
@@ -29,11 +29,11 @@ function captured(documentos: DocumentoType[], padraoApelacaoFechada: any) {
 }
 
 function capturedFromPatterns(documentos: DocumentoType[], padroes: any[]) {
-      const res: MatchFullResult | null = matchSomePatterns(documentos, padroes)
-      const captured = res?.items.flatMap(i => i.captured.map(d => parseInt(d.id)))
-      return captured
+  const res: MatchFullResult | null = matchSomePatterns(documentos, padroes)
+  const captured = res?.items.flatMap(i => i.captured.map(d => parseInt(d.id)))
+  return captured
 }
-  
+
 describe('real life scenarios', () => {
   test('find latest appeals documents', () => {
     expect(captured(docs(
@@ -87,7 +87,7 @@ describe('real life scenarios', () => {
 });
 
 describe('seleção automática do primeiro padrão que captura documentos', () => {
-    test('identificar apelação aberta', () => {
+  test('identificar apelação aberta', () => {
     expect(capturedFromPatterns(docs(
       T.PETICAO_INICIAL,
       T.SENTENCA,
@@ -113,13 +113,25 @@ describe('seleção automática do primeiro padrão que captura documentos', () 
     ), padroesApelacao)).toEqual([1, 2, 5, 6, 7, 8])
   });
 
-    test('identificar agravo aberto', () => {
+  test('identificar agravo aberto', () => {
     expect(capturedFromPatterns(docs(
       T.PETICAO_INICIAL,
       T.DESPACHO_DECISAO,
-      T.AGRAVO, 
+      T.AGRAVO,
       T.CONTRARRAZOES
     ), padroesAgravo)).toEqual([1, 2, 3, 4])
+  });
+
+  test('identificar padrôes de primeira instância', () => {
+    expect(capturedFromPatterns(docs(
+      T.PETICAO_INICIAL,
+      T.LAUDO,
+      T.DESPACHO_DECISAO,
+      T.LAUDO,
+      T.CONTESTACAO,
+      T.CONTESTACAO
+    ), [...padroesConhecimento]))
+      .toEqual([1, 2, 3, 4, 5, 6])
   });
 
 });
