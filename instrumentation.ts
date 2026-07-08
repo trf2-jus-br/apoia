@@ -17,8 +17,8 @@ export async function register() {
 
         // Heartbeat de telemetria para diagnostico de OOM/leak (memoria, handles, event loop).
         // Loga uma linha JSON a cada 30s por pod. Opt-out via TELEMETRY_DISABLED=1.
-        const { startHeartbeat } = await import('./lib/utils/telemetry')
-        startHeartbeat()
+        // const { startHeartbeat } = await import('./lib/utils/telemetry')
+        // startHeartbeat()
 
         const { migrateIfNeeded } = await import('./lib/migrate-on-start')
         await migrateIfNeeded()
