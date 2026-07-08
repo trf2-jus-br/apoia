@@ -7,7 +7,6 @@ import { assertApiUser } from '@/lib/user'
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, StreamTextResult, ToolSet, UIMessage } from 'ai'
 import { withErrorHandler } from '@/lib/utils/api-error'
 import { calcSha256 } from '@/lib/utils/hash'
-import { logPiecesEvent } from '@/lib/utils/telemetry'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60
@@ -64,25 +63,25 @@ async function POST_HANDLER(req: Request) {
     const modelMessages = await convertToModelMessages(messages)
 
     // Telemetria: tamanho das messages recebidas do cliente (histórico de chat).
-    {
-        let totalChars = 0
-        let maiorMsgChars = 0
-        for (const m of modelMessages) {
-            const c = (m as any).content
-            const len = typeof c === 'string'
-                ? c.length
-                : Array.isArray(c)
-                    ? c.reduce((a: number, p: any) => a + (typeof p?.text === 'string' ? p.text.length : 0), 0)
-                    : 0
-            totalChars += len
-            if (len > maiorMsgChars) maiorMsgChars = len
-        }
-        logPiecesEvent('chat:request', {
-            n_messages: modelMessages.length,
-            total_chars: totalChars,
-            maior_msg_chars: maiorMsgChars,
-        })
-    }
+    // {
+    //     let totalChars = 0
+    //     let maiorMsgChars = 0
+    //     for (const m of modelMessages) {
+    //         const c = (m as any).content
+    //         const len = typeof c === 'string'
+    //             ? c.length
+    //             : Array.isArray(c)
+    //                 ? c.reduce((a: number, p: any) => a + (typeof p?.text === 'string' ? p.text.length : 0), 0)
+    //                 : 0
+    //         totalChars += len
+    //         if (len > maiorMsgChars) maiorMsgChars = len
+    //     }
+    //     logPiecesEvent('chat:request', {
+    //         n_messages: modelMessages.length,
+    //         total_chars: totalChars,
+    //         maior_msg_chars: maiorMsgChars,
+    //     })
+    // }
 
     const sha256 = calcSha256(modelMessages)
 

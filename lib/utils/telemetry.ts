@@ -1,10 +1,12 @@
 // Telemetria de processo Node para diagnóstico de OOM/leak.
 //
-// Dois tipos de evento, ambos logados como uma linha JSON (para consulta
-// no Grafana/Loki filtrando por type):
+// Ponto único de instrumentação. Todos os eventos são logados como uma linha
+// JSON (consulte no Grafana/Loki filtrando por type). Convenção de tipos:
 //
-//   - heartbeat: estado do processo a cada 30s (memoria, handles, event loop).
-//   - pieces:    por chamada de analyze/geração, com tamanho das peças e heap.
+//   - heartbeat:  estado do processo a cada 10s (memoria, handles, event loop).
+//   - pieces:     por chamada de analyze/geração, com tamanho das peças e heap.
+//   - http:start / http:end: cerca requisições HTTP que travam o pod.
+//   - event:      evento ad-hoc (ex: chamadas a pdfToText) com context + fields.
 //
 // O campo "pod" usa os.hostname() para distinguir qual dos pods está doente
 // (process.env.HOSTNAME no Next standalone vem do Dockerfile como "0.0.0.0").
@@ -94,18 +96,19 @@ export function startHeartbeat(): void {
 }
 
 /**
- * Loga um evento de "pieces" (peças) por chamada de analyze/geração, para
- * correlacionar o tamanho dos inputs de IA com o uso de memória do processo.
+ * Loga um evento ad-hoc. Use para instrumentar pontos específicos (ex: pdfToText)
+ * sem criar uma função dedicada. O "context" identifica o ponto; "fields" leva
+ * métricas livres (duração, tamanho, status, etc.).
  *
- * @param context    identificador do caminho (ex: 'analyze', 'generate', 'chat', 'ai', 'batch').
- * @param fields     métricas livres (n_pecas, total_texto_chars, maior_peca_chars, etc.).
+ * @param context   identificador do ponto instrumentado (ex: 'pdfToText:start').
+ * @param fields    métricas livres.
  */
-export function logPiecesEvent(context: string, fields: Record<string, number | string | boolean | undefined>): void {
+export function logEvent(context: string, fields: Record<string, number | string | boolean | undefined>): void {
     if (process.env.TELEMETRY_DISABLED === '1') return
     if (process.env.NEXT_RUNTIME && process.env.NEXT_RUNTIME !== 'nodejs') return
     try {
         const payload = {
-            type: 'pieces',
+            type: 'event',
             pod: podName(),
             context,
             heap_used_mb: heapUsedMb(),
@@ -116,6 +119,17 @@ export function logPiecesEvent(context: string, fields: Record<string, number | 
     } catch {
         // Telemetria nunca pode derrubar a aplicação.
     }
+}
+
+/**
+ * Loga um evento de "pieces" (peças) por chamada de analyze/geração, para
+ * correlacionar o tamanho dos inputs de IA com o uso de memória do processo.
+ *
+ * @param context    identificador do caminho (ex: 'analyze', 'generate', 'chat', 'ai', 'batch').
+ * @param fields     métricas livres (n_pecas, total_texto_chars, maior_peca_chars, etc.).
+ */
+export function logPiecesEvent(context: string, fields: Record<string, number | string | boolean | undefined>): void {
+    logEvent(context, fields)
 }
 
 /**

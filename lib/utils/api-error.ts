@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
-import { logHttpEvent } from './telemetry';
 
 /**
  * A standardized error response format for the API.
@@ -127,7 +126,7 @@ export function withErrorHandler(handler: ApiHandler | TracedApiHandler): ApiHan
         const path = req.nextUrl?.pathname || req.url
         const method = req.method
         const start = Date.now()
-        logHttpEvent('http:start', requestId, { method, path, has_body: !!req.body })
+        // logHttpEvent('http:start', requestId, { method, path, has_body: !!req.body })
         let status = 200
         try {
             const res = await (handler as TracedApiHandler)(req, props, trace);
@@ -144,12 +143,12 @@ export function withErrorHandler(handler: ApiHandler | TracedApiHandler): ApiHan
             // console.error('Unexpected API error:', error);
             // return apiErrorResponse('Internal server error', 500);
         } finally {
-            logHttpEvent('http:end', requestId, {
-                method,
-                path,
-                status,
-                duration_ms: Date.now() - start,
-            })
+            // logHttpEvent('http:end', requestId, {
+            //     method,
+            //     path,
+            //     status,
+            //     duration_ms: Date.now() - start,
+            // })
         }
     };
 }

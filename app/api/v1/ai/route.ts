@@ -10,7 +10,6 @@ import { preprocessTemplate } from '@/lib/ai/template'
 import { createUIMessageStream, createUIMessageStreamResponse, StreamTextResult, ToolSet, UIMessage } from 'ai'
 import { ApiError, Trace, UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
 import { getTools } from '@/lib/ai/tools'
-import { logPiecesEvent } from '@/lib/utils/telemetry'
 
 export const maxDuration = 60
 
@@ -209,28 +208,28 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
     const definition = await resolveApiPrompt(kind, promptSlug, promptId)
     const data: any = body.data
     // Telemetria: tamanho do input recebido do cliente (textos + binários).
-    {
-        const textos = Array.isArray(data?.textos) ? data.textos : []
-        let totalTextoChars = 0
-        let totalBinarioBytes = 0
-        let maiorPecaChars = 0
-        for (const t of textos) {
-            const txt = typeof t?.texto === 'string' ? t.texto : ''
-            if (txt.startsWith('data:')) {
-                totalBinarioBytes += txt.length
-            } else {
-                totalTextoChars += txt.length
-                if (txt.length > maiorPecaChars) maiorPecaChars = txt.length
-            }
-        }
-        logPiecesEvent('ai:request', {
-            kind,
-            n_pecas: textos.length,
-            total_texto_chars: totalTextoChars,
-            maior_peca_chars: maiorPecaChars,
-            total_binario_bytes: totalBinarioBytes,
-        })
-    }
+    // {
+    //     const textos = Array.isArray(data?.textos) ? data.textos : []
+    //     let totalTextoChars = 0
+    //     let totalBinarioBytes = 0
+    //     let maiorPecaChars = 0
+    //     for (const t of textos) {
+    //         const txt = typeof t?.texto === 'string' ? t.texto : ''
+    //         if (txt.startsWith('data:')) {
+    //             totalBinarioBytes += txt.length
+    //         } else {
+    //             totalTextoChars += txt.length
+    //             if (txt.length > maiorPecaChars) maiorPecaChars = txt.length
+    //         }
+    //     }
+    //     logPiecesEvent('ai:request', {
+    //         kind,
+    //         n_pecas: textos.length,
+    //         total_texto_chars: totalTextoChars,
+    //         maior_peca_chars: maiorPecaChars,
+    //         total_binario_bytes: totalBinarioBytes,
+    //     })
+    // }
     const options: PromptOptionsType = {
         overrideSystemPrompt: body.overrideSystemPrompt,
         overridePrompt: body.overridePrompt,
@@ -278,14 +277,14 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
                 writer.write({ type: 'text-delta', delta: ret.cached, id: '1' });
                 writer.write({ type: 'text-end', id: '1' });
                 writer.write({ type: 'finish-step' });
-                    writer.write({
-                        type: 'finish',
-                        messageMetadata: {
-                            model: ret.model,
-                            usage: ret.usage,
-                            messages: executionResults.messages
-                        },
-                    });
+                writer.write({
+                    type: 'finish',
+                    messageMetadata: {
+                        model: ret.model,
+                        usage: ret.usage,
+                        messages: executionResults.messages
+                    },
+                });
             }
         })
         return createUIMessageStreamResponse({ stream });

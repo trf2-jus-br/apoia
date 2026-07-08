@@ -2,7 +2,6 @@ import { assertApiUser } from '@/lib/user'
 import { BatchDao } from '@/lib/db/dao'
 import { analyze } from '@/lib/ai/analysis'
 import { ForbiddenError, NotFoundError, withErrorHandler } from '@/lib/utils/api-error'
-import { logPiecesEvent } from '@/lib/utils/telemetry'
 
 export const maxDuration = 60
 
@@ -15,7 +14,7 @@ async function POST_HANDLER(req: Request, props: { params: Promise<{ id: string 
   const summary = await BatchDao.getBatchSummary(batch_id)
   if (!summary) throw new NotFoundError('Not found')
   // Telemetria: registra cada step de batch para correlacionar com heap no Grafana.
-  logPiecesEvent('batch:step', { batch_id, complete: summary.complete ? 1 : 0 })
+  // logPiecesEvent('batch:step', { batch_id, complete: summary.complete ? 1 : 0 })
   let dossier_code: string | undefined
   let job_id: number | undefined
   try {

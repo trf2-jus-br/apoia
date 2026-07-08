@@ -21,12 +21,18 @@ import { usePromptContext } from "./context/PromptContext";
 import Listen from "@/components/slots/listen";
 import devLog from "@/lib/utils/log";
 import { slugify } from "@/lib/utils/utils";
+import pLimit from "p-limit";
 
 // Helper function to check confidentiality level on client side
 const isNivelDeSigiloPermitidoClient = (maxConfidentialityLevel: number, nivel: string): boolean => {
     const n = parseInt(nivel)
     return n <= maxConfidentialityLevel
 }
+
+// Máximo de requisições /piece/.../content simultâneas ao servidor.
+// Limita o thundering herd: o servidor faz pdfToText (CPU-bound) por peça.
+const MAX_CONCURRENT_PIECE_FETCHES = 3
+const limit = pLimit(MAX_CONCURRENT_PIECE_FETCHES)
 
 export default function ProcessContents({ apiKeyProvided, model, children, sidekick, promptButtons, isBetaTester }: {
     apiKeyProvided: boolean,
@@ -103,29 +109,30 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const getSelectedPiecesContents = async () => {
         if (!selectedPieces || selectedPieces.length === 0) return
         const cache = pieceContent
-        const loading = {}
         const contents = {}
+        // Peças em cache são reaproveitadas; as demais são buscadas no servidor.
         for (const peca of selectedPieces) {
             if (cache[peca.id])
                 contents[peca.id] = cache[peca.id]
-            else
-                loading[peca.id] = fetch(`/api/v1/process/${peca.numeroDoProcesso || dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/content`)
         }
-        for (const id in loading) {
-            setLoadingPiecesProgress(Object.keys(contents).length)
-            const resp = await loading[id]
+        const toFetch = selectedPieces.filter(p => !cache[p.id])
+        // Janela deslizante via p-limit: no máx MAX_CONCURRENT_PIECE_FETCHES em voo.
+        // Evita o thundering herd no servidor (pdfToText é CPU-bound).
+        await Promise.all(toFetch.map(peca => limit(async () => {
+            const resp = await fetch(`/api/v1/process/${peca.numeroDoProcesso || dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/content`)
             if (!resp.ok) {
                 const data = await resp.json().catch(() => ({}))
                 if (data.errormsg)
-                    contents[id] = `${TEXTO_PECA_COM_ERRO}${data.errormsg ? ` ${data.errormsg}` : ''}`
-                continue
+                    contents[peca.id] = `${TEXTO_PECA_COM_ERRO}${data.errormsg ? ` ${data.errormsg}` : ''}`
+            } else {
+                const json = await resp.json()
+                if (json.errormsg)
+                    contents[peca.id] = json.errormsg
+                else
+                    contents[peca.id] = json.content
             }
-            const json = await resp.json()
-            if (json.errormsg)
-                contents[id] = json.errormsg
-            else
-                contents[id] = json.content
-        }
+            setLoadingPiecesProgress(Object.keys(contents).length)
+        })))
         setPieceContent(contents)
         setLoadingPiecesProgress(-1)
         devLog('Will build requests')
