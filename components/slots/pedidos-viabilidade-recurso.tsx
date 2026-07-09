@@ -3,7 +3,6 @@
 import AiContent from "@/components/ai-content"
 import { resolvePromptDefinition } from "@/lib/ai/prompt-actions"
 import { ContentType, GeneratedContent, PromptDefinitionType } from "@/lib/ai/prompt-types"
-import { PangeaResultadoItem, PangeaSearchRawResponse } from "@/lib/ai/tools-pangea"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { FormHelper } from "@/lib/ui/form-support"
 

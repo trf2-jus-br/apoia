@@ -1,6 +1,6 @@
 import { generateAndStreamContent } from '@/lib/ai/generate'
 import { getModel } from '@/lib/ai/model-server'
-import { getTools } from '@/lib/ai/tools'
+import { getTools } from '@/lib/ai-tools/tools'
 import { UserDao } from '@/lib/db/dao'
 import { getPromptDefinitionById } from '@/lib/ai/prompt-store'
 import { assertApiUser } from '@/lib/user'

@@ -2,13 +2,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js"
 import { z } from "zod"
 import { UserType } from "../user"
-import { getProcessMetadataTool, getPieceContentTool } from "../ai/tools"
-import { getPrecedentTool } from "../ai/tools-juris"
-import { getLibraryDocumentTool } from "../ai/tools-library"
-import { getPangeaTool } from "../ai/tools-pangea"
-import { getSemanticSearchTool } from "../ai/tools-semantic-search"
-import { getLeadingCaseSearchTool } from "../ai/tools-leading-case-search"
+import { getProcessMetadataTool, getPieceContentTool } from "../ai-tools/tools"
+import { getPrecedentTool } from "../ai-tools/tools-juris"
+import { getLibraryDocumentTool } from "../ai-tools/tools-library"
+import { getPangeaTool } from "../ai-tools/tools-pangea"
+import { getSemanticSearchTool } from "../ai-tools/tools-semantic-search"
+import { getLeadingCaseSearchTool } from "../ai-tools/tools-leading-case-search"
 import { getAddDateTool, getCurrentDateTool, getDateDiffTool } from "../ai-tools/tools-date"
+import { getCalculatorTool } from "../ai-tools/tools-calculator"
 
 // Tipo mínimo que extraímos de um tool do AI SDK v6 (description, inputSchema, execute).
 // Cada factory tem seu próprio tipo genérico Tool<INPUT, OUTPUT>, então usamos any aqui para
@@ -27,7 +28,8 @@ const TOOL_FACTORIES: Record<string, ApoiaToolFactory> = {
     precedent: getPrecedentTool,
     currentDate: getCurrentDateTool,
     dateDiff: getDateDiffTool,
-    addDate: getAddDateTool
+    addDate: getAddDateTool,
+    calculator: getCalculatorTool,
 }
 
 // Placeholder de user usado apenas para instanciar as factories uma vez em module scope e

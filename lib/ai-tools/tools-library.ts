@@ -3,7 +3,7 @@ import { UserType } from "../user"
 import { z } from "zod"
 import { LibraryDao } from "../db/dao"
 import { IALibrary } from "../db/mysql-types"
-import { formatLibraryDocument } from "./library"
+import { formatLibraryDocument } from "../ai/library"
 
 export const getLibraryDocumentTool = (pUser: Promise<UserType>) => tool({
     description: 'Obtém o conteúdo de um ou mais documentos da biblioteca do usuário a partir dos IDs dos documentos.',

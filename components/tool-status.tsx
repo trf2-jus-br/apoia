@@ -128,6 +128,68 @@ function toolMessage(part: UIMessagePart<any, any>): ReactElement {
                 case 'output-error':
                     return <div>Error: {part.errorText}</div>;
             }
+        case 'tool-currentDate':
+            switch (part.state) {
+                case 'input-streaming':
+                case 'input-available':
+                    return <span className="text-secondary">Obtendo a data atual...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Data atual: {part.output}.</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
+        case 'tool-dateDiff':
+            switch (part.state) {
+                case 'input-streaming':
+                case 'input-available':
+                    return <span className="text-secondary">Calculando diferença de datas...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Diferença entre {part.input?.startDate} e {part.input?.endDate}: {part.output}.</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
+        case 'tool-addDate': {
+            // Monta "5 anos 2 meses 10 dias" (omitiindo zeros) com sinal por componente.
+            const parts: string[] = []
+            const { anos, meses, dias } = part.input || {}
+            if (anos) parts.push(`${Math.abs(anos)} ano${Math.abs(anos) === 1 ? '' : 's'}`)
+            if (meses) parts.push(`${Math.abs(meses)} mês${Math.abs(meses) === 1 ? '' : 'es'}`)
+            if (dias) parts.push(`${Math.abs(dias)} dia${Math.abs(dias) === 1 ? '' : 's'}`)
+            // Junta com + / - quando há componentes de sinais mistos; senão usa o sinal global.
+            const signs = [anos, meses, dias].filter(v => v).map(v => v > 0 ? '+' : '-')
+            const allSameSign = signs.length > 0 && signs.every(s => s === signs[0])
+            const isNegative = allSameSign && signs[0] === '-'
+            const offset = parts.length === 0
+                ? 'sem alteração'
+                : allSameSign
+                    ? (isNegative ? '-' : '+') + ' ' + parts.join(', ')
+                    : parts.map((p, i) => `${signs[i]} ${p}`).join(' ')
+            switch (part.state) {
+                case 'input-streaming':
+                case 'input-available':
+                    return <span className="text-secondary">Calculando data...</span>
+                case 'output-available':
+                    return <span className="text-secondary">Data {part.input?.startDate} {offset}: {part.output}.</span>
+                case 'output-error':
+                    return <div>Error: {part.errorText}</div>;
+            }
+        }
+        case 'tool-calculator': {
+            const items: Array<{ expression: string }> = part?.input?.items || []
+            const results: Array<{ result?: any; error?: string }> = part?.output?.results || []
+            // Pares expression = result (ou = ? antes do output, ou = erro após o output)
+            const lines = items.map((item, i) => {
+                if (part.state === 'output-available' && i < results.length) {
+                    if (results[i].hasOwnProperty('result'))
+                        return `${item.expression} = ${results[i].result}`
+                    if (results[i].error)
+                        return `${item.expression} = erro: ${results[i].error}`
+                }
+                return `${item.expression} = ?`
+            })
+            const label = part.state === 'output-available' ? 'Cálculos' : 'Calculando'
+            return <span className="text-secondary">{label}: {lines.join(', ')}.</span>
+        }
         default:
             return <span className="text-secondary">Ferramenta desconhecida: {part.type}</span>
     }

@@ -1,4 +1,4 @@
-import { searchPangea, PANGEA_DEFAULT_ORGAOS, PANGEA_DEFAULT_TIPOS } from '@/lib/ai/tools-pangea'
+import { searchPangea, PANGEA_DEFAULT_ORGAOS, PANGEA_DEFAULT_TIPOS } from '@/lib/ai-tools/tools-pangea'
 import { withErrorHandler, BadRequestError } from '@/lib/utils/api-error'
 
 export const maxDuration = 30

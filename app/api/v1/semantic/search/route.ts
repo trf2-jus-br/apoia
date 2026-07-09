@@ -1,4 +1,4 @@
-import { searchSemantic } from '@/lib/ai/tools-semantic-search'
+import { searchSemantic } from '@/lib/ai-tools/tools-semantic-search'
 import { withErrorHandler, BadRequestError } from '@/lib/utils/api-error'
 
 export const maxDuration = 30

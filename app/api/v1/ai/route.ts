@@ -9,7 +9,7 @@ import { assertApiUser } from '@/lib/user'
 import { preprocessTemplate } from '@/lib/ai/template'
 import { createUIMessageStream, createUIMessageStreamResponse, StreamTextResult, ToolSet, UIMessage } from 'ai'
 import { ApiError, Trace, UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
-import { getTools } from '@/lib/ai/tools'
+import { getTools } from '@/lib/ai-tools/tools'
 
 export const maxDuration = 60
 

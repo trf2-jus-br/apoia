@@ -13,7 +13,7 @@ import { buildFooter } from '../utils/footer'
 import { clipPieces } from './clip-pieces'
 import { buildRequests } from './build-requests'
 import devLog from '../utils/log'
-import { getTools } from './tools'
+import { getTools } from '../ai-tools/tools'
 
 export async function summarize(dossierNumber: string, pieceNumber: string): Promise<{ dossierData: any, generatedContent: GeneratedContent }> {
     const pUser = assertCurrentUser()

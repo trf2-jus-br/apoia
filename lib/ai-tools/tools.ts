@@ -1,9 +1,9 @@
 import { tool } from "ai"
 import { assertCourtId, UserType } from "../user"
 import { getInteropFromUser } from "../proc/process"
-import { TextoType } from "./prompt-types"
+import { TextoType } from "../ai/prompt-types"
 import { slugify } from "../utils/utils"
-import { formatText } from "./prompt"
+import { formatText } from "../ai/prompt"
 import { z } from "zod"
 import { Interop, ObterPecaType } from "../interop/interop"
 import { InteropProcessoType } from "../interop/interop-types"
@@ -18,6 +18,7 @@ import { envString, isAllowedUser } from "../utils/env"
 import { assertAnonimizacaoAutomatica } from "../proc/sigilo"
 import devLog from "../utils/log"
 import { getAddDateTool, getCurrentDateTool, getDateDiffTool } from "./tools-date"
+import { getCalculatorTool } from "./tools-calculator"
 
 // write response to a file for debugging
 function devWriteJsonToFile(kind: string, text: string) {
@@ -198,6 +199,7 @@ export const getTools = async (pUser: Promise<UserType>) => {
         currentDate: getCurrentDateTool(pUser), 
         dateDiff: getDateDiffTool(pUser),
         addDate: getAddDateTool(pUser),
+        calculator: getCalculatorTool(pUser),
     }
     try {
         // Check if the user is allowed to access the precedent tool, must be TRF2 and have a specific CPF
