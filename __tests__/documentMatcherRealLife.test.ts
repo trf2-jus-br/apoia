@@ -1,5 +1,5 @@
 import { match, matchFull, ANY, SOME, EXACT, OR, ANY_GREEDY, SOME_GREEDY, MatchFullResult, matchSomePatterns, PHASE } from '../lib/proc/pattern';
-import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T, padroesAgravo, padraoConhecimentoForcado, padroesConhecimento, padraoConhecimentoAberta, pecasRelevantes1aInstancia, FaseProcessual, padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao } from '../lib/proc/combinacoes';
+import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T, padroesAgravo, padraoConhecimentoForcado, padroesConhecimento, padraoConhecimentoAberta, pecasRelevantes1aInstancia, FaseProcessual, padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao, padraoEmbargosDeDeclaracaoEmAcordao } from '../lib/proc/combinacoes';
 
 type DocumentoType = {
   id: string | null
@@ -132,6 +132,23 @@ describe('seleção automática do primeiro padrão que captura documentos', () 
       T.CONTESTACAO
     ), [...padroesConhecimento]))
       .toEqual([1, 2, 3, 4, 5, 6])
+  });
+
+  
+  test('identificar embargos de declaração em acórdão', () => {
+    expect(capturedFromPatterns(docs(
+      T.PETICAO_INICIAL,
+      T.SENTENCA,
+      T.APELACAO,
+      T.CONTRARRAZOES_AO_RECURSO_DE_APELACAO,
+      T.PARECER,
+      T.EMBARGOS_DE_DECLARACAO,
+      T.RELATORIO,
+      T.VOTO,
+      T.ACORDAO,
+      T.EMBARGOS_DE_DECLARACAO,
+      T.CONTRARRAZOES,
+    ), [padraoEmbargosDeDeclaracaoEmAcordao])).toEqual([7,8,9,10,11])
   });
 
 });

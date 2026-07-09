@@ -1,4 +1,4 @@
-import { getSemanticSearchTool } from '../lib/ai/tools-semantic-search'
+import { getSemanticSearchTool } from '../lib/ai-tools/tools-semantic-search'
 import { UserType } from '../lib/user'
 
 // Mock global fetch

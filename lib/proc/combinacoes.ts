@@ -185,7 +185,7 @@ const pecasQueFinalizamFaseDeRecursoDe2aInstancia = [
     T.ACORDAO,
 ]
 
-const pecasQueFinalizamFases = [
+export const pecasQueFinalizamFases = [
     ...pecasQueFinalizamFaseDeConhecimento,
     ...pecasQueFinalizamFaseDeTurmaRecursal,
     ...pecasQueFinalizamFaseDeRecursoDe2aInstancia
@@ -244,8 +244,9 @@ const subpadraoEmbargosDeDeclaracaoEmAcordao = [
     }),
 ]
 
-const padraoEmbargosDeDeclaracaoEmAcordao = [
-    subpadraoEmbargosDeDeclaracaoEmAcordao
+export const padraoEmbargosDeDeclaracaoEmAcordao = [
+    ANY(),
+    ...subpadraoEmbargosDeDeclaracaoEmAcordao
 ]
 
 const subpadraoViabilidadeDeRecursoExtraordinario = [
@@ -475,7 +476,7 @@ export const padroesConhecimento = [
 ]
 
 const padroesBasicosSegundaInstancia = [
-    ...padraoEmbargosDeDeclaracaoEmAcordao,
+    padraoEmbargosDeDeclaracaoEmAcordao,
     ...padroesApelacao,
     ...padroesAgravo,
 ]
@@ -493,7 +494,7 @@ const padroesMinimosSegundaInstancia = [
 //
 // Observação: `selecionarPecasPorPadraoComFase` retorna no PRIMEIRO match
 // (`break` no loop), então a posição no array = prioridade de detecção.
-const padroesPorPrioridade = [
+export const padroesPorPrioridade = [
     ...padroesViabilidadeDeRecursosExtraordinarioEEspecial,
     ...padroesBasicosSegundaInstancia,
     ...padroesTurmaRecursal,

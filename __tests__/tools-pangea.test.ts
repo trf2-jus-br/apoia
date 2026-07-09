@@ -1,4 +1,4 @@
-import { getPangeaTool } from '../lib/ai/tools-pangea'
+import { getPangeaTool } from '../lib/ai-tools/tools-pangea'
 import { UserType } from '../lib/user'
 
 // Mock global fetch

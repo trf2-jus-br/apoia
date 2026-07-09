@@ -109,7 +109,7 @@ export default function McpPage({ toolsList }: { toolsList: ToolMeta[] }) {
                             {url && (
                                 <div className="position-relative">
                                     <pre className="bg-light p-3 rounded" style={{ maxHeight: '200px', overflow: 'auto', textAlign: 'center' }}>
-                                        <code className="text-break" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{url}</code>
+                                        <div><code className="text-break" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{url}</code></div>
                                         <Button
                                             variant={copySuccess ? 'success' : 'outline-secondary'}
                                             size="sm"
