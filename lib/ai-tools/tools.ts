@@ -17,6 +17,7 @@ import { anonymizeText } from "../anonym/anonym"
 import { envString, isAllowedUser } from "../utils/env"
 import { assertAnonimizacaoAutomatica } from "../proc/sigilo"
 import devLog from "../utils/log"
+import { getAddDateTool, getCurrentDateTool, getDateDiffTool } from "./tools-date"
 
 // write response to a file for debugging
 function devWriteJsonToFile(kind: string, text: string) {
@@ -194,6 +195,9 @@ export const getTools = async (pUser: Promise<UserType>) => {
         getPangea: getPangeaTool(pUser), // sempre disponível (fase 1)
         getSemanticSearch: getSemanticSearchTool(pUser), // busca semântica de temas e recursos repetitivos
         getLeadingCaseSearch: getLeadingCaseSearchTool(pUser), // busca de temas pelo processo paradigma
+        currentDate: getCurrentDateTool(pUser), 
+        dateDiff: getDateDiffTool(pUser),
+        addDate: getAddDateTool(pUser),
     }
     try {
         // Check if the user is allowed to access the precedent tool, must be TRF2 and have a specific CPF

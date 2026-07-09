@@ -8,8 +8,8 @@ import { McpTokenDao } from "../db/dao/mcp-token.dao"
 import { MCP_TOKEN_QUERY_PARAM } from "./mcp-constants"
 
 // Endpoint streamable HTTP derivado pelo mcp-handler a partir do segmento [transport].
-// Com a rota em app/api/v1/mcp/[transport]/route.ts e basePath default, o endpoint HTTP é /mcp.
-const MCP_HTTP_PATH = "/api/v1/mcp/mcp"
+// Com a rota em app/api/mcp/[transport]/route.ts e basePath "/api/mcp", o endpoint HTTP é /api/mcp/mcp.
+const MCP_HTTP_PATH = "/api/mcp/mcp"
 
 export type McpConfigResult = {
     url: string

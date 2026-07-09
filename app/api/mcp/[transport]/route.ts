@@ -29,6 +29,24 @@ const buildAuthInfo = (tokenId: string, user: UserType): AuthInfo => ({
     extra: { user },
 })
 
+// Handler de preflight CORS. É separado do authedHandler de propósito: o preflight nunca
+// carrega credenciais, e withMcpAuth tem required: true, então passar OPTIONS por ele devolveria
+// 401 antes de qualquer coisa. Sem este export o Next.js responde 405 ao preflight, o que quebra
+// clientes MCP baseados em navegador (ex.: conector web do claude.ai), que precisam do preflight
+// bem-sucedido antes do POST porque enviam headers não-simples (Authorization custom scheme,
+// MCP-Session-Id, MCP-Protocol-Version, etc.). Os headers casam com o padrão de health/route.ts
+// e com o corsHeaders interno do mcp-handler.
+const handleOptions = () =>
+    new Response(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        },
+    })
+
 // Envolve o handler com autenticação. O token_id curto pode chegar de duas formas:
 //   1. Header "Authorization: Apoia-MCP <token_id>" (clientes com suporte a headers)
 //   2. Query param "?token=<token_id>" (mais universal, ex.: claude.ai web)
@@ -57,4 +75,4 @@ const authedHandler = withMcpAuth(
     { required: true }
 )
 
-export { authedHandler as GET, authedHandler as POST, authedHandler as DELETE }
+export { authedHandler as GET, authedHandler as POST, authedHandler as DELETE, handleOptions as OPTIONS }

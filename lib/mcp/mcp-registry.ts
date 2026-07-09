@@ -8,6 +8,7 @@ import { getLibraryDocumentTool } from "../ai/tools-library"
 import { getPangeaTool } from "../ai/tools-pangea"
 import { getSemanticSearchTool } from "../ai/tools-semantic-search"
 import { getLeadingCaseSearchTool } from "../ai/tools-leading-case-search"
+import { getAddDateTool, getCurrentDateTool, getDateDiffTool } from "../ai-tools/tools-date"
 
 // Tipo mínimo que extraímos de um tool do AI SDK v6 (description, inputSchema, execute).
 // Cada factory tem seu próprio tipo genérico Tool<INPUT, OUTPUT>, então usamos any aqui para
@@ -17,13 +18,16 @@ type ApoiaToolFactory = (pUser: Promise<UserType>) => any
 // Mapa nome -> factory de tool. As factories recebem Promise<UserType> e retornam um tool do AI SDK.
 // A instância do user só é usada dentro de execute(); description/inputSchema são estáticos.
 const TOOL_FACTORIES: Record<string, ApoiaToolFactory> = {
-    getProcessMetadata: getProcessMetadataTool,
-    getPiecesText: getPieceContentTool,
-    getLibraryDocument: getLibraryDocumentTool,
-    getPangea: getPangeaTool,
-    getSemanticSearch: getSemanticSearchTool,
-    getLeadingCaseSearch: getLeadingCaseSearchTool,
-    getPrecedent: getPrecedentTool,
+    processMetadata: getProcessMetadataTool,
+    piecesText: getPieceContentTool,
+    libraryDocument: getLibraryDocumentTool,
+    pangea: getPangeaTool,
+    semanticSearch: getSemanticSearchTool,
+    leadingCaseSearch: getLeadingCaseSearchTool,
+    precedent: getPrecedentTool,
+    currentDate: getCurrentDateTool,
+    dateDiff: getDateDiffTool,
+    addDate: getAddDateTool
 }
 
 // Placeholder de user usado apenas para instanciar as factories uma vez em module scope e
