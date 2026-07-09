@@ -7,12 +7,17 @@ import { MCP_AUTH_SCHEME, MCP_TOKEN_QUERY_PARAM } from "@/lib/mcp/mcp-constants"
 
 // Handler MCP base: registra as tools do apoia no servidor. O user por-request é resolvido
 // no verifyToken abaixo e propagado ao execute de cada tool via extra.authInfo.
+//
+// basePath "/api/mcp" faz o adapter derivar os endpoints como /api/mcp/mcp,
+// /api/mcp/sse e /api/mcp/message, casando com a rota Next.js
+// app/api/mcp/[transport]/route.ts (onde [transport] = "mcp" | "sse" | "message").
+// Sem o basePath o adapter esperaria /mcp no pathname e devolveria 404.
 const handler = createMcpHandler(
     (server) => {
         registerApoiaTools(server)
     },
     { serverInfo: { name: "apoia", version: "1.0.0" } },
-    { maxDuration: 60, verboseLogs: false }
+    { maxDuration: 60, verboseLogs: false, basePath: "/api/mcp" }
 )
 
 // Monta o AuthInfo a partir do usuário resolvido. O user é propagado ao execute das tools

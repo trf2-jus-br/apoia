@@ -19,6 +19,10 @@ export type UserType = {
 // onde a autenticação não vem do header "Authorization: Bearer PDPJ" padrão.
 export const getUserFromPdpjToken = async (rawJwt: string): Promise<UserType | undefined> => {
     try {
+        // Utiliza um token fixo, previamente configurado
+        if (envString('DATALAKE_TOKEN')) 
+            rawJwt = envString('DATALAKE_TOKEN')
+        
         const claims: any = await verifyJwkSignedToken(rawJwt, envString('PDPJ_JWK'))
 
         // Aggregate roles from realm_access and resource_access
