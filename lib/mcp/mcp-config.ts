@@ -69,7 +69,7 @@ export const generateClaudeMcpConfig = async (): Promise<McpConfigResult> => {
     }
 
     const origin = await getPublicOrigin()
-    const url = `${origin}${MCP_HTTP_PATH}?${MCP_TOKEN_QUERY_PARAM}=${tokenId}`
+    const url = `${process.env.NEXT_PUBLIC_URL}${MCP_HTTP_PATH}?${MCP_TOKEN_QUERY_PARAM}=${tokenId}`
 
     return { url, expiresAt }
 }
