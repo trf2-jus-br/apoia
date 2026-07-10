@@ -22,7 +22,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
     const user = await assertCurrentUser()
     if (!(await isUserCorporativo(user)))
         return <Container><div className="alert alert-danger mt-5">Usuário não é corporativo</div></Container>
-        
+
     await assertModel()
     const model = await getSelectedModelName()
 
@@ -39,7 +39,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
         }>
             <Container id="printDiv" className="mt-3" fluid={false}>
                 <Chat definition={definition} data={data} model={model} withTools={true}
-                    footer={<div key="footer" className="text-body-tertiary h-print">O Agente de IA busca informações e peças de qualquer processo. Para contextualizar, inclua o número do processo na sua primeira pergunta.</div>}
+                    footer={promptSlug !== 'chat-administrativo' && (
+                        <div key="footer" className="text-body-tertiary h-print">O Agente de IA busca informações e peças de qualquer processo. Para contextualizar, inclua o número do processo na sua primeira pergunta.</div>
+                    )}
                 />
                 <Print numeroDoProcesso={`chat-${slugify(formatYYYYMMDDHHMMSS(new Date()))}`} />
             </Container>

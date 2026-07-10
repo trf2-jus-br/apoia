@@ -19,6 +19,8 @@ import { assertAnonimizacaoAutomatica } from "../proc/sigilo"
 import devLog from "../utils/log"
 import { getAddDateTool, getCurrentDateTool, getDateDiffTool } from "./tools-date"
 import { getCalculatorTool } from "./tools-calculator"
+import { obterConteudoDaPeca } from "../proc/piece"
+import { PecaConteudoType } from "../proc/process-types"
 
 // write response to a file for debugging
 function devWriteJsonToFile(kind: string, text: string) {
@@ -121,8 +123,19 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
         try {
             const decoder = new TextDecoder('utf-8')
             const interop = await getInteropFromUser(await pUser)
+
             const pMetadata = getProcessMetadata(processNumber, interop)
-            const pPecas: Promise<ObterPecaType>[] = []
+            const metadata: InteropProcessoType[] = await pMetadata
+            const documentInfoMap: Record<string, { doc: any, movimento: any, processo: InteropProcessoType }> = {}
+            for (const processo of metadata) {
+                for (const movimento of processo.movimentosEDocumentos) {
+                    for (const doc of movimento.documentos) {
+                        documentInfoMap[doc.id] = { doc, movimento, processo }
+                    }
+                }
+            }
+
+            const pPecas: Promise<PecaConteudoType>[] = []
             for (const pieceId of pieceIdArray) {
                 if (!pieceId || !pieceId.trim()) {
                     return `Identificador de peça inválido: ${pieceId}`
@@ -130,31 +143,21 @@ export const getPieceContentTool = (pUser: Promise<UserType>) => tool({
                 if (!/^[a-zA-Z0-9-_]+$/.test(pieceId)) {
                     return `Identificador de peça inválido: ${pieceId}. Deve conter apenas letras, números, hífens ou underscore.`
                 }
-                pPecas.push(interop.obterPeca(processNumber, pieceId, false))
-            }
-            const pecas = await Promise.all(pPecas)
-            const metadata: InteropProcessoType[] = await pMetadata
-            const pecasComConteudo: TextoType[] = await Promise.all(pecas.map(async (p, index) => {
-                const pieceId = pieceIdArray[index]
 
                 // Find the document in metadata that matches this pieceId
-                let documentInfo = null
-                for (const processo of metadata) {
-                    for (const movimento of processo.movimentosEDocumentos) {
-                        const doc = movimento.documentos.find(d => d.id === pieceId)
-                        if (doc) {
-                            documentInfo = { doc, movimento, processo }
-                            break
-                        }
-                    }
-                    if (documentInfo) break
-                }
-
+                let documentInfo = documentInfoMap[pieceId]
                 if (!documentInfo)
                     throw new Error(`Não foi possível encontrar metadados para a peça ${pieceId} do processo ${processNumber}.`)
 
+                pPecas.push(obterConteudoDaPeca(undefined, processNumber, pieceId, documentInfo.doc?.tipoDocumento, documentInfo.doc?.nivelSigilo, interop))
+            }
+            const pecas = await Promise.all(pPecas)
+            const pecasComConteudo: TextoType[] = await Promise.all(pecas.map(async (p, index) => {
+                const pieceId = pieceIdArray[index]
+                const documentInfo = documentInfoMap[pieceId]
+
                 // Extract text from the buffer
-                let texto = decoder.decode(p.buffer)
+                let texto = p.conteudo || p.errorMsg || ''
                 const descr = documentInfo?.doc?.tipoDocumento
                 const label = documentInfo?.doc?.descricao
                 const event = documentInfo?.movimento?.sequencia
@@ -196,7 +199,7 @@ export const getTools = async (pUser: Promise<UserType>) => {
         getPangea: getPangeaTool(pUser), // sempre disponível (fase 1)
         getSemanticSearch: getSemanticSearchTool(pUser), // busca semântica de temas e recursos repetitivos
         getLeadingCaseSearch: getLeadingCaseSearchTool(pUser), // busca de temas pelo processo paradigma
-        currentDate: getCurrentDateTool(pUser), 
+        currentDate: getCurrentDateTool(pUser),
         dateDiff: getDateDiffTool(pUser),
         addDate: getAddDateTool(pUser),
         calculator: getCalculatorTool(pUser),

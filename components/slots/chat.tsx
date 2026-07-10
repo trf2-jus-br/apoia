@@ -344,7 +344,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const messagesContent = useMemo(() => (
         <>{messages.slice(initialMessages?.length || 0).map((m, idx) => (
             m.role === 'user' ?
-            <div className="row justify-content-end ms-5 g-2 chat-user-container" key={m.id}>
+                <div className="row justify-content-end ms-5 g-2 chat-user-container" key={m.id}>
                     <div className={`col col-auto mb-0 icon-container`}>
                         <FontAwesomeIcon onClick={() => handleEditMessage(idx + (initialMessages?.length || 0))} icon={faEdit} className="text-white align-bottom" />
                     </div>
@@ -471,17 +471,20 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                 </div>
             </div>
 
-            <div className="mt-1 text-center">
-                {getAllSuggestions()
-                    .filter(s => !instance || !s.instance || s.instance.includes(instance))
-                    .filter(s => params.sidekick ? s.sidekick !== false : true)
-                    .map(s => (
-                        <button className="btn btn-sm btn-outline-secondary mt-2 ms-1 me-1" onClick={() => runSuggestion(s.id)} key={s.id}>
-                            {s.icon && <FontAwesomeIcon icon={s.icon} className="me-1" />}
-                            {s.label}
-                        </button>
-                    ))}
-            </div></>
+            {params.definition.kind !== 'chat-administrativo' &&
+                <div className="mt-1 text-center">
+                    {getAllSuggestions()
+                        .filter(s => !instance || !s.instance || s.instance.includes(instance))
+                        .filter(s => params.sidekick ? s.sidekick !== false : true)
+                        .map(s => (
+                            <button className="btn btn-sm btn-outline-secondary mt-2 ms-1 me-1" onClick={() => runSuggestion(s.id)} key={s.id}>
+                                {s.icon && <FontAwesomeIcon icon={s.icon} className="me-1" />}
+                                {s.label}
+                            </button>
+                        ))}
+                </div>
+            }
+        </>
     ), [input, files, params.sidekick, handleSubmitAndSetFocus, fileInputRef, setInput, setFiles, btnClass, inputClass])
 
     const innerContent = useMemo(() => (

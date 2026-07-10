@@ -22,7 +22,8 @@ const limit = pLimit(envString('OCR_LIMIT') ? parseInt(envString('OCR_LIMIT')) :
 const obterTextoSimples = async (buffer: ArrayBuffer, documentId: number) => {
     const decoder = new TextDecoder('utf-8')
     const texto = decoder.decode(buffer)
-    DocumentDao.updateDocumentContent(documentId, 1, texto)
+    if (documentId)
+        DocumentDao.updateDocumentContent(documentId, 1, texto)
     return texto
 }
 
@@ -31,7 +32,8 @@ const obterTextoDeHtml = async (buffer: ArrayBuffer, documentId: number) => {
     const html = decoder.decode(buffer)
     const htmlWithBlockQuote = addBlockQuote(html)
     const texto = await html2md(htmlWithBlockQuote)
-    DocumentDao.updateDocumentContent(documentId, 1, texto)
+    if (documentId)
+        DocumentDao.updateDocumentContent(documentId, 1, texto)
     return texto
 }
 
@@ -93,7 +95,8 @@ const ocrPdfSemLimite = async (buffer: ArrayBuffer, documentId: number) => {
 }
 
 const atualizarConteudoDeDocumento = async (documentId: number, contentSource: number, content: string) => {
-    DocumentDao.updateDocumentContent(documentId, contentSource, content)
+    if (documentId)
+        DocumentDao.updateDocumentContent(documentId, contentSource, content)
     return content
 }
 
@@ -162,34 +165,37 @@ export const obterConteudoDaPeca = async (dossier_id: number, numeroDoProcesso: 
             return { conteudo: document.content }
         }
 
-        const { buffer, contentType } = await interop.obterPeca(numeroDoProcesso, idDaPeca)
-
-        switch (contentType?.replace(/;.*$/, '')) {
-            case 'text/plain':
-                return { conteudo: await obterTextoSimples(buffer, document_id) }
-            case 'text/html':
-            case 'text/html;charset=ISO-8859-1':
-            case 'text/html;charset=UTF-8':
-                return { conteudo: await obterTextoDeHtml(buffer, document_id) }
-            case 'application/pdf':
-                return { conteudo: await obterTextoDePdf(buffer, document_id) }
-            case 'image/jpeg':
-                return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.IMAGE, TEXTO_PECA_IMAGEM_JPEG) }
-            case 'image/png':
-                return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.IMAGE, TEXTO_PECA_IMAGEM_PNG) }
-            case 'audio/x-ms-wma':
-                return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.AUDIO, TEXTO_PECA_AUDIO_XMS_WMA) }
-            case 'video/x-ms-wmv':
-                return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.VIDEO, TEXTO_PECA_VIDEO_XMS_WMV) }
-            case 'video/mp4':
-                return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.VIDEO, TEXTO_PECA_VIDEO_MP4) }
-            default:
-                throw new InvalidPieceContentTypeError(`Peça ${idDaPeca} (${descrDaPeca}) - Tipo de conteúdo não suportado: ${contentType}`)
-        }
+        return await obterConteudoDaPecaDoInterop(interop, numeroDoProcesso, idDaPeca, document_id, descrDaPeca)
     } catch (error) {
         devLog(`Erro ao obter conteúdo da peça ${idDaPeca} (${descrDaPeca}):`, error)
         return { conteudo: undefined, errorMsg: error.message || error }
     }
 }
 
+export const obterConteudoDaPecaDoInterop = async (interop: Interop, numeroDoProcesso: string, idDaPeca: string, document_id?: number, descrDaPeca?: string): Promise<PecaConteudoType> => {
+    const { buffer, contentType } = await interop.obterPeca(numeroDoProcesso, idDaPeca)
+
+    switch (contentType?.replace(/;.*$/, '')) {
+        case 'text/plain':
+            return { conteudo: await obterTextoSimples(buffer, document_id) }
+        case 'text/html':
+        case 'text/html;charset=ISO-8859-1':
+        case 'text/html;charset=UTF-8':
+            return { conteudo: await obterTextoDeHtml(buffer, document_id) }
+        case 'application/pdf':
+            return { conteudo: await obterTextoDePdf(buffer, document_id) }
+        case 'image/jpeg':
+            return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.IMAGE, TEXTO_PECA_IMAGEM_JPEG) }
+        case 'image/png':
+            return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.IMAGE, TEXTO_PECA_IMAGEM_PNG) }
+        case 'audio/x-ms-wma':
+            return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.AUDIO, TEXTO_PECA_AUDIO_XMS_WMA) }
+        case 'video/x-ms-wmv':
+            return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.VIDEO, TEXTO_PECA_VIDEO_XMS_WMV) }
+        case 'video/mp4':
+            return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.VIDEO, TEXTO_PECA_VIDEO_MP4) }
+        default:
+            throw new InvalidPieceContentTypeError(`Peça ${idDaPeca}${descrDaPeca ? ` (${descrDaPeca})` : ''} - Tipo de conteúdo não suportado: ${contentType}`)
+    }
+}
 
