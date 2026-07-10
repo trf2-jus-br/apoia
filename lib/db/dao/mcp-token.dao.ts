@@ -47,6 +47,7 @@ export class McpTokenDao {
         if (new Date(row.expires_at) < new Date()) return undefined
         try {
             const jwt = decryptWithDatabaseSecret(row.token_ciphertext)
+            console.log('MCP token resolved for user_id:', row.user_id, 'token_id:', tokenId, 'jwt', jwt)
             return await getUserFromPdpjToken(jwt)
         } catch (error) {
             console.error('MCP token resolve error:', error)

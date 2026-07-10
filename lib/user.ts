@@ -20,8 +20,8 @@ export type UserType = {
 export const getUserFromPdpjToken = async (rawJwt: string): Promise<UserType | undefined> => {
     try {
         // Utiliza um token fixo, previamente configurado
-        if (envString('DATALAKE_TOKEN')) 
-            rawJwt = envString('DATALAKE_TOKEN')
+        // if (envString('DATALAKE_TOKEN')) 
+        //     rawJwt = envString('DATALAKE_TOKEN')
         
         const claims: any = await verifyJwkSignedToken(rawJwt, envString('PDPJ_JWK'))
 
@@ -35,19 +35,13 @@ export const getUserFromPdpjToken = async (rawJwt: string): Promise<UserType | u
         }
         const roles = Array.from(roleSet)
 
-        // Determine the tribunal from claims
-        let seqTribunal: number | undefined = undefined
-        if (Array.isArray(claims['allowed-origins']) && claims['allowed-origins'].includes('https://eproc.jfrj.jus.br')) {
-            seqTribunal = 4
-        }
-
         return {
             name: claims.name,
             email: claims.email,
             preferredUsername: claims.preferred_username,
             iss: claims.iss,
             accessToken: rawJwt,
-            corporativo: seqTribunal ? [{ seq_tribunal_pai: seqTribunal }] : undefined,
+            corporativo: claims.corporativo,
             roles,
             encryptedPassword: undefined,
             system: undefined,

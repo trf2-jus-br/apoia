@@ -104,7 +104,14 @@ export class InteropPDPJ implements Interop {
     private user: UserType
 
     async init() {
-        this.user = await getCurrentUser()
+        // Fluxo MCP: quando uma request MCP está em curso, o usuário já foi resolvido pelo
+        // verifyToken da rota (via McpTokenDao) e guardado no AsyncLocalStorage (mcpRequestContext).
+        // Usamos ele aqui em vez de getCurrentUser() porque, no endpoint MCP, não há header
+        // "Bearer PDPJ" nem sessão NextAuth disponíveis — getCurrentUser() retornaria undefined.
+        // Fora do fluxo MCP, getStore() retorna undefined e caímos no getCurrentUser() original.
+        const { mcpRequestContext } = await import('../mcp/mcp-request-context')
+        const mcpUser = mcpRequestContext.getStore()
+        this.user = mcpUser ?? await getCurrentUser()
         const seqTribunalPai = this.user ? '' + (assertCourtId(this.user)) : undefined
         this.datalakeApiUrl = envStringPrefixed('DATALAKE_API_URL', seqTribunalPai)
 
