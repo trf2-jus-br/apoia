@@ -3,6 +3,7 @@ import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js"
 import { UserType } from "@/lib/user"
 import { McpTokenDao } from "@/lib/db/dao/mcp-token.dao"
 import { registerApoiaTools } from "@/lib/mcp/mcp-registry"
+import { mcpRequestContext } from "@/lib/mcp/mcp-request-context"
 import { MCP_AUTH_SCHEME, MCP_TOKEN_QUERY_PARAM } from "@/lib/mcp/mcp-constants"
 
 // Handler MCP base: registra as tools do apoia no servidor. O user por-request é resolvido
@@ -20,14 +21,26 @@ const handler = createMcpHandler(
     { maxDuration: 60, verboseLogs: false, basePath: "/api/mcp" }
 )
 
-// Monta o AuthInfo a partir do usuário resolvido. O user é propagado ao execute das tools
-// via extra.authInfo.extra.user (ver lib/mcp/mcp-registry.ts).
+// Monta o AuthInfo a partir do usuário resolvido. O user vai em extra.user e é lido pelo
+// wrapper abaixo para popular o AsyncLocalStorage (mcpRequestContext), que o execute das
+// tools consome. Não dependemos da propagação extra.authInfo do SDK (instável entre versões).
 const buildAuthInfo = (tokenId: string, user: UserType): AuthInfo => ({
     token: tokenId,
     clientId: user.preferredUsername || user.name || "unknown",
     scopes: [],
     extra: { user },
 })
+
+// Wrapper que popula o AsyncLocalStorage com o user resolvido pelo verifyToken. O withMcpAuth
+// popula req.auth ANTES de chamar o handler, então este wrapper lê dali e executa o handler
+// original dentro de mcpRequestContext.run(user, ...). Como o mcp-handler é stateless
+// (cada POST processa auth -> registerTools -> execute numa única cadeia async), o execute
+// da tool lê o user via mcpRequestContext.getStore() dentro do mesmo contexto.
+const handlerWithContext = (req: any) => {
+    const user = (req.auth as AuthInfo | undefined)?.extra?.user as UserType | undefined
+    if (user) return mcpRequestContext.run(user, () => handler(req))
+    return handler(req)
+}
 
 // Handler de preflight CORS. É separado do authedHandler de propósito: o preflight nunca
 // carrega credenciais, e withMcpAuth tem required: true, então passar OPTIONS por ele devolveria
@@ -53,7 +66,7 @@ const handleOptions = () =>
 // O token_id é resolvido contra ia_mcp_token (ciphertext + expiração); o JWT PDPJ é
 // decifrado e validado server-side. Tokens inexistentes ou expirados são rejeitados (401).
 const authedHandler = withMcpAuth(
-    handler,
+    handlerWithContext,
     async (req): Promise<AuthInfo | undefined> => {
         // 1. Tenta pelo header Authorization
         const authHeader = req.headers.get("Authorization") || ""

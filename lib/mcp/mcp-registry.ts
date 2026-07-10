@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js"
 import { z } from "zod"
 import { UserType } from "../user"
+import { mcpRequestContext } from "./mcp-request-context"
 import { getProcessMetadataTool, getPieceContentTool } from "../ai-tools/tools"
 import { getPrecedentTool } from "../ai-tools/tools-juris"
 import { getLibraryDocumentTool } from "../ai-tools/tools-library"
@@ -59,14 +59,20 @@ const TOOL_META: { name: string, description: string, inputSchema: z.ZodObject<a
 export const registerApoiaTools = (server: McpServer) => {
     for (const meta of TOOL_META) {
         const factory = TOOL_FACTORIES[meta.name]
-        // paramsSchema aceita zod v3 object diretamente (AnySchema = z3.ZodTypeAny | z4.$ZodType).
-        // A instância de zod é única no projeto (verificado via npm ls zod), sem conflito.
+        // O 3º argumento de server.tool() é o "raw shape" (Record<string, ZodTypeAny>), NÃO o
+        // ZodObject inteiro. Passar o ZodObject fazia o SDK iterar as chaves do objeto (parse,
+        // _def, optional, ...) em vez dos campos (processNumber, ...), de modo que os argumentos
+        // chegavam vazios no execute -> "Cannot read properties of undefined (reading 'trim')".
+        // Passamos .shape para expor os campos reais.
         server.tool(
             meta.name,
             meta.description,
-            meta.inputSchema as unknown as Record<string, z.ZodTypeAny>,
-            async (args: any, extra: any) => {
-                const user = (extra?.authInfo as AuthInfo | undefined)?.extra?.user as UserType | undefined
+            meta.inputSchema.shape as Record<string, z.ZodTypeAny>,
+            async (args: any) => {
+                // O user é populado no AsyncLocalStorage pelo wrapper do handler no route.ts,
+                // a partir de req.auth (preenchido pelo withMcpAuth). Independente da propagação
+                // extra.authInfo do SDK, que se mostrou instável entre versões.
+                const user = mcpRequestContext.getStore()
                 if (!user) {
                     return {
                         content: [{ type: "text" as const, text: "Não autorizado: usuário não autenticado." }],
