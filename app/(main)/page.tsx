@@ -27,6 +27,13 @@ export default async function HomePage() {
             color: "text-primary"
         },
         {
+            icon: faComments,
+            title: "Chat Administrativo",
+            description: "Conversei com a IA sobre assuntos administrativos (RH, Contratos, etc.)",
+            href: "/chat?prompt=chat-administrativo",
+            color: "text-success"
+        },
+        {
             icon: faDatabase,
             title: "Prompts",
             description: "Banco de Prompts para Inteligência Artificial por categoria jurídica",

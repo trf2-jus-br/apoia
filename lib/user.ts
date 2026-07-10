@@ -9,6 +9,7 @@ import { envString } from './utils/env'
 import { UnauthorizedError } from './utils/api-error'
 import { slugify } from './utils/utils'
 import devLog from './utils/log'
+import { mcpRequestContext } from './mcp/mcp-request-context'
 
 export type UserType = {
     id?: number, name: string, email: string, preferredUsername?: string, iss?: string, encryptedPassword: string, system: string, accessToken?: string, corporativo?: any[], roles?: string[]
@@ -19,10 +20,6 @@ export type UserType = {
 // onde a autenticação não vem do header "Authorization: Bearer PDPJ" padrão.
 export const getUserFromPdpjToken = async (rawJwt: string): Promise<UserType | undefined> => {
     try {
-        // Utiliza um token fixo, previamente configurado
-        // if (envString('DATALAKE_TOKEN')) 
-        //     rawJwt = envString('DATALAKE_TOKEN')
-        
         const claims: any = await verifyJwkSignedToken(rawJwt, envString('PDPJ_JWK'))
 
         // Aggregate roles from realm_access and resource_access
@@ -53,6 +50,14 @@ export const getUserFromPdpjToken = async (rawJwt: string): Promise<UserType | u
 }
 
 export const getCurrentUser = async (): Promise<UserType | undefined> => {
+    // Fluxo MCP: quando uma request MCP está em curso, o usuário já foi resolvido pelo
+    // verifyToken da rota (via McpTokenDao) e guardado no AsyncLocalStorage (mcpRequestContext).
+    // Retornamos ele aqui para que códigos server-side genéricos (ex.: interop.init(), DAOs que
+    // usam assertCurrentUser) funcionem no contexto MCP sem alteração. Fora do fluxo MCP o ALS
+    // está vazio (getStore() retorna undefined) e o comportamento é o original.
+    const mcpUser = mcpRequestContext.getStore()
+    if (mcpUser) return mcpUser
+
     const headersList = await headers()
 
     const authorization = headersList.get("authorization")

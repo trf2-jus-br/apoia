@@ -14,10 +14,11 @@ import { formatDateTime, formatYYYYMMDDHHMMSS } from '@/lib/utils/date'
 import { slugify } from '@/lib/utils/utils'
 import { assertModel, getSelectedModelName } from '@/lib/ai/model-server'
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ prompt?: string }> }) {
     noStore()
     // const [processNumber, setProcessNumber] = useState<string | null>(null)
 
+    const { prompt: promptSlug } = await searchParams
     const user = await assertCurrentUser()
     if (!(await isUserCorporativo(user)))
         return <Container><div className="alert alert-danger mt-5">Usuário não é corporativo</div></Container>
@@ -25,7 +26,7 @@ export default async function Home() {
     await assertModel()
     const model = await getSelectedModelName()
 
-    const definition = await getPromptDefinition('chat-standalone')
+    const definition = await getPromptDefinition(promptSlug ?? 'chat-standalone')
     const data: PromptDataType = {
         textos: []
     }

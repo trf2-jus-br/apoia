@@ -2,7 +2,8 @@ import { ModelMessage } from "ai";
 import { IAGenerated } from "../db/mysql-types";
 import { Plugin, T } from "../proc/combinacoes";
 import { PecaConteudoType } from "../proc/process-types";
-import { ModelProfileKey } from "./model-types";
+import { EnumOfObjectsValueType, ModelProfileKey } from "./model-types";
+import { slugify } from "../utils/utils";
 
 // A ideia aqui é que existe uma definição de prompt (PromptDefinitionType) que pode vir do banco de dados ou 
 // de um arquivo markdown.
@@ -148,4 +149,19 @@ export type UsageType = {
     cachedInputTokens?: number | undefined;
     dollarValue?: number | undefined;
 }
+
+// Modo em que a Apoia opera: judicial ou administrativo.
+//
+const ModeArray = [
+    { id: 1, name: 'JUDICIAL', descr: 'Judicial', acronym: 'JUD' },
+    { id: 2, name: 'ADMINISTRATIVO', descr: 'Administrativo', acronym: 'ADM' },
+]
+export type ModeValueType = EnumOfObjectsValueType & { descr: string, acronym: string }
+export type ModeType = { [key: string]: ModeValueType }
+export const Mode: ModeType = ModeArray.reduce((acc, cur, idx) => {
+    acc[slugify(cur.name).replaceAll('-', '_').toUpperCase()] = { ...cur, sort: idx + 1 }
+    return acc
+}, {} as ModeType)
+export type ModeKey = keyof typeof Mode
+
 

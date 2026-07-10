@@ -16,6 +16,7 @@ import { getAnonymize } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
 import Cryptr from 'cryptr';
 import UserMenuAnonymize from './user-menu-anonymize';
+import UserMenuMode from './user-menu-mode';
 
 export default async function UserMenu({ }: {}) {
     noStore()
@@ -71,6 +72,7 @@ export default async function UserMenu({ }: {}) {
                             <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
+                                {/* <UserMenuMode mode={'JUDICIAL'} /> */}
                                 {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
                                 {user && <li><UserMenuSignout /></li>}
                                 {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}
