@@ -249,6 +249,25 @@ export const padraoEmbargosDeDeclaracaoEmAcordao = [
     ...subpadraoEmbargosDeDeclaracaoEmAcordao
 ]
 
+const subpadraoViabilidadeDeRecursoExtraordinarioComContrarrazoes = [
+    ANY({
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE(FaseProcessual.VIABILIDADE_RECURSO_EXTRAORDINARIO.name),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.RECURSO_EXTRAORDINARIO),
+    ANY({
+        except: pecasQueFinalizamFases
+    }),
+    EXACT(T.CONTRARRAZOES_AO_RECURSO_EXTRAORDINARIO),
+    ANY({
+        capture: [], greedy: true, except: pecasQueFinalizamFases
+    }),
+]
+
 const subpadraoViabilidadeDeRecursoExtraordinario = [
     ANY({
         capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
@@ -265,9 +284,20 @@ const subpadraoViabilidadeDeRecursoExtraordinario = [
 ]
 
 
+export const padraoViabilidadeDeRecursoExtraordinarioComContrarrazoes = [
+    ANY(),
+    ...subpadraoViabilidadeDeRecursoExtraordinarioComContrarrazoes
+]
+
 export const padraoViabilidadeDeRecursoExtraordinario = [
     ANY(),
     ...subpadraoViabilidadeDeRecursoExtraordinario
+]
+
+export const padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracaoComContrarrazoes = [
+    ANY(),
+    ...subpadraoEmbargosDeDeclaracaoEmAcordao,
+    ...subpadraoViabilidadeDeRecursoExtraordinarioComContrarrazoes
 ]
 
 export const padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao = [
@@ -341,13 +371,19 @@ export const padroesViabilidadeDeRecursoEspecial = [
 
 
 export const padroesViabilidadeDeRecursoExtraordinario = [
+    padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracaoComContrarrazoes,
+    padraoViabilidadeDeRecursoExtraordinarioComContrarrazoes,
     padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao,
     padraoViabilidadeDeRecursoExtraordinario,
 ]
 
 
 export const padroesViabilidadeDeRecursosExtraordinarioEEspecial = [
+    padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracaoComContrarrazoes,
+    padraoViabilidadeDeRecursoEspecialComContrarrazoes,
     padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao,
+    padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracaoComContrarrazoes,
+    padraoViabilidadeDeRecursoExtraordinarioComContrarrazoes,
     padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao,
     padraoViabilidadeDeRecursoEspecial,
     padraoViabilidadeDeRecursoExtraordinario,
