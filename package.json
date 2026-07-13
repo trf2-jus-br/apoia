@@ -58,6 +58,7 @@
     "diff-match-patch": "^1.0.5",
     "dompurify": "^3.3.0",
     "eureka-js-client": "^4.5.0",
+    "file-type": "^22.0.1",
     "glob": "^13.0.0",
     "http": "^0.0.1-security",
     "ia": "^0.0.1-beta",

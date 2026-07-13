@@ -15,6 +15,7 @@ import { PecaConteudoType } from './process-types'
 import { TEXTO_PECA_IMAGEM_JPEG, TEXTO_PECA_IMAGEM_PNG, TEXTO_PECA_PDF_OCR_ERRO, TEXTO_PECA_PDF_OCR_VAZIO, TEXTO_PECA_VIDEO_MP4, TEXTO_PECA_VIDEO_XMS_WMV, TEXTO_PECA_AUDIO_XMS_WMA } from './process-types'
 import devLog from '../utils/log'
 import { InvalidPieceContentTypeError } from '../utils/api-error'
+import { resolverContentType } from './content-type'
 import { assertCurrentUser } from '../user'
 
 const limit = pLimit(envString('OCR_LIMIT') ? parseInt(envString('OCR_LIMIT')) : 1)
@@ -172,15 +173,17 @@ export const obterConteudoDaPeca = async (dossier_id: number, numeroDoProcesso: 
     }
 }
 
+// Tipos de conteúdo reconhecidos pelo switch de dispatch (normalizados, sem charset).
+// A lógica de resolução (tipo reportado vs. detecção por bytes via file-type) fica em
+// ./content-type, que é testável isoladamente das dependências de I/O deste módulo.
 export const obterConteudoDaPecaDoInterop = async (interop: Interop, numeroDoProcesso: string, idDaPeca: string, document_id?: number, descrDaPeca?: string): Promise<PecaConteudoType> => {
     const { buffer, contentType } = await interop.obterPeca(numeroDoProcesso, idDaPeca)
+    const contentTypeResolvido = await resolverContentType(buffer, contentType)
 
-    switch (contentType?.replace(/;.*$/, '')) {
+    switch (contentTypeResolvido) {
         case 'text/plain':
             return { conteudo: await obterTextoSimples(buffer, document_id) }
         case 'text/html':
-        case 'text/html;charset=ISO-8859-1':
-        case 'text/html;charset=UTF-8':
             return { conteudo: await obterTextoDeHtml(buffer, document_id) }
         case 'application/pdf':
             return { conteudo: await obterTextoDePdf(buffer, document_id) }
@@ -195,7 +198,7 @@ export const obterConteudoDaPecaDoInterop = async (interop: Interop, numeroDoPro
         case 'video/mp4':
             return { conteudo: await atualizarConteudoDeDocumento(document_id, IADocumentContentSource.VIDEO, TEXTO_PECA_VIDEO_MP4) }
         default:
-            throw new InvalidPieceContentTypeError(`Peça ${idDaPeca}${descrDaPeca ? ` (${descrDaPeca})` : ''} - Tipo de conteúdo não suportado: ${contentType}`)
+            throw new InvalidPieceContentTypeError(`Peça ${idDaPeca}${descrDaPeca ? ` (${descrDaPeca})` : ''} - Tipo de conteúdo não suportado: ${contentTypeResolvido || contentType}`)
     }
 }
 
