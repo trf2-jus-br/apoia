@@ -276,6 +276,25 @@ export const padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao = [
     ...subpadraoViabilidadeDeRecursoExtraordinario
 ]
 
+const subpadraoViabilidadeDeRecursoEspecialComContrarrazoes = [
+    ANY({
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE(FaseProcessual.VIABILIDADE_RECURSO_ESPECIAL.name),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.RECURSO_ESPECIAL),
+    ANY({
+        except: pecasQueFinalizamFases
+    }),
+    EXACT(T.CONTRARRAZOES_AO_RECURSO_ESPECIAL),
+    ANY({
+        capture: [], greedy: true, except: pecasQueFinalizamFases
+    }),
+]
+
 const subpadraoViabilidadeDeRecursoEspecial = [
     ANY({
         capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
@@ -291,6 +310,11 @@ const subpadraoViabilidadeDeRecursoEspecial = [
     }),
 ]
 
+export const padraoViabilidadeDeRecursoEspecialComContrarrazoes = [
+    ANY(),
+    ...subpadraoViabilidadeDeRecursoEspecialComContrarrazoes
+]
+
 export const padraoViabilidadeDeRecursoEspecial = [
     ANY(),
     ...subpadraoViabilidadeDeRecursoEspecial
@@ -302,7 +326,15 @@ export const padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao = [
     ...subpadraoViabilidadeDeRecursoEspecial
 ]
 
+export const padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracaoComContrarrazoes = [
+    ANY(),
+    ...subpadraoEmbargosDeDeclaracaoEmAcordao,
+    ...subpadraoViabilidadeDeRecursoEspecialComContrarrazoes
+]
+
 export const padroesViabilidadeDeRecursoEspecial = [
+    padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracaoComContrarrazoes,
+    padraoViabilidadeDeRecursoEspecialComContrarrazoes,
     padraoViabilidadeDeRecursoEspecialComEmbargosDeDeclaracao,
     padraoViabilidadeDeRecursoEspecial,
 ]

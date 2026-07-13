@@ -29,7 +29,7 @@ export default async function HomePage() {
         {
             icon: faComments,
             title: "Chat Administrativo",
-            description: "Conversei com a IA sobre assuntos administrativos (RH, Contratos, etc.)",
+            description: "Converse com a IA sobre assuntos administrativos (RH, Contratos, etc.)",
             href: "/chat?prompt=chat-administrativo",
             color: "text-success"
         },

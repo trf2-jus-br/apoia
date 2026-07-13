@@ -193,7 +193,6 @@ export class InteropPDPJ implements Interop {
         if (!data || !data[0] || !data[0].tramitacoes || !data[0].tramitacoes.length) {
             throw new Error(`Não foi possível encontrar o processo ${numeroDoProcesso} no DataLake/Codex da PDPJ`)
         }
-
         const processos: InteropProcessoType[] = mapPdpjToSimplified(data[0])
         if (!processos || !processos.length) {
             throw new Error(`Não foi possível mapear o processo ${numeroDoProcesso} no DataLake/Codex da PDPJ`)
@@ -306,6 +305,14 @@ export class InteropPDPJ implements Interop {
                         let originarioSelecionado: DadosDoProcessoType
                         if (idClasseOriginario) {
                             originarioSelecionado = originario.find(p => p.codigoDaClasse === idClasseOriginario)
+                        }
+                        if (!originarioSelecionado && originario.length) {
+                            // Se o processo principal é de segundo grau, tenta selecionar um processo originário de primeiro grau
+                            if (instancia === 'SEGUNDO_GRAU') {
+                                originarioSelecionado = originario.find(p => p.instancia === 'PRIMEIRO_GRAU')
+                            } else if (instancia === 'TERCEIRO_GRAU') {
+                                originarioSelecionado = originario.find(p => p.instancia === 'SEGUNDO_GRAU')
+                            }
                         }
                         if (!originarioSelecionado && originario.length) originarioSelecionado = originario[0]
                         if (originarioSelecionado) {
