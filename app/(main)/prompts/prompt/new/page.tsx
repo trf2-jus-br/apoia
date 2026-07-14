@@ -6,7 +6,7 @@ import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { Instance, Matter, Scope } from '@/lib/proc/process-types'
 import { PublicError } from '@/lib/utils/public-error'
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
-import { getMode } from '@/lib/utils/prefs'
+import { getMode, isBetaTester } from '@/lib/utils/prefs'
 
 export default async function New(
     props: { params: Promise<{ kind: string }>, searchParams: Promise<{ copyFrom: string, template: string, import: string }> }
@@ -49,9 +49,10 @@ export default async function New(
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
     const isModerator = await isUserModerator(user)
     const allPrompts = await PromptDao.retrievePromptNamesAndUuids(user_id, isModerator)
+    const betaTester = await isBetaTester()
 
     return (<Container fluid={false}>
         <h1 className="mt-5 mb-3">Novo</h1>
-        <PromptForm record={record} allPrompts={allPrompts} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
+        <PromptForm record={record} allPrompts={allPrompts} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} isBetaTester={betaTester} />
     </Container>)
 }

@@ -28,6 +28,7 @@ const Frm = new FormHelper()
 export default function PromptForm(props) {
     const router = useRouter()
     const initialState = props.record || { content: {} }
+    const isBetaTester = props.isBetaTester || false
     // if (!initialState.model_id || (props.models && props.models[0] && !props.models.map(i => i.id).includes(initialState.model_id))) initialState.model_id = props.models && props.models[0] ? props.models[0].id : null
     // if (!initialState.testset_id || (props.testsets && props.testsets[0] && !props.testsets.map(i => i.id).includes(initialState.testset_id))) initialState.testset_id = props.testsets && props.testsets[0] ? props.testsets[0].id : null
     const [data, setData] = useState(cloneDeep(initialState))
@@ -173,7 +174,7 @@ export default function PromptForm(props) {
                     <Frm.Input label="Nome" name="name" width={6} explanation="Use maiúsculas e minúsculas." maxLength={64} />
                     <Frm.Input label="Autor" name="content.author" width={6} explanation="Use maiúsculas e minúsculas." maxLength={64} />
                     <Frm.Input label="Descrição (opcional)" name="content.description" explanation="Escreva uma explicação no imperativo, ex.: 'Gere um relatório do processo...' ou 'Analise as peças selecionadas...'." width={12} />
-                    <Frm.Select label="Modo" name="mode" options={modeOptions} width={3} />
+                    <Frm.Select label="Modo" name="mode" options={modeOptions} width={3} visible={isBetaTester} />
                     <Frm.MultiSelect label="Segmento" name="content.scope" options={scopeOptions} width={3} />
                     <Frm.MultiSelect label="Instância" name="content.instance" options={instanceOptions} width={3} />
                     <Frm.MultiSelect label="Natureza" name="content.matter" options={matterOptions} width={3} />

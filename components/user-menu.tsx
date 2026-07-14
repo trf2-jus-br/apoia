@@ -12,10 +12,11 @@ import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
 import { getCurrentUser, isUserCorporativo } from '@/lib/user';
 import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-server';
-import { getAnonymize, getMode } from '@/lib/utils/prefs';
+import { getAnonymize, getMode, isBetaTester } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
 import Cryptr from 'cryptr';
 import UserMenuAnonymize from './user-menu-anonymize';
+import UserMenuBetaTester from './user-menu-beta-tester';
 import UserMenuMode from './user-menu-mode';
 
 export default async function UserMenu({ }: {}) {
@@ -32,6 +33,7 @@ export default async function UserMenu({ }: {}) {
         const apiKeyProvided = !!(await getSelectedModelParams()).apiKey
         const isAnonymized = await getAnonymize()
         const mode = await getMode()
+        const betaTester = await isBetaTester()
         const isAdministrative = mode === 'ADMINISTRATIVO'
 
         const nonCorporateUser = user && !(await isUserCorporativo(user))
@@ -75,7 +77,8 @@ export default async function UserMenu({ }: {}) {
                             <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
-                                <UserMenuMode mode={mode} />
+                                {betaTester && <UserMenuMode mode={mode} />}
+                                {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
                                 {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
                                 {user && <li><UserMenuSignout /></li>}
                                 {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}

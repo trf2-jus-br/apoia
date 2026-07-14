@@ -4,6 +4,7 @@ import { PromptDao, UserDao } from '@/lib/db/dao'
 import { assertCurrentUserCorporativo, isUserModerator } from '@/lib/user';
 import { PublicError } from '@/lib/utils/public-error';
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
+import { isBetaTester } from '@/lib/utils/prefs';
 
 export default async function Edit(props: { params: Promise<{ id: number }> }) {
     try {
@@ -17,6 +18,7 @@ export default async function Edit(props: { params: Promise<{ id: number }> }) {
         let editingAsModerator = false
         const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
         const isModerator = await isUserModerator(user)
+        const betaTester = await isBetaTester()
         if (record.created_by !== user_id) {
             if (isModerator)
                 editingAsModerator = true
@@ -29,7 +31,7 @@ export default async function Edit(props: { params: Promise<{ id: number }> }) {
         return (<Container fluid={false}>
             <h1 className="mt-5 mb-3">Edição de Prompt</h1>
             {editingAsModerator && <div className="alert alert-warning">Você está editando este prompt como moderador. As alterações serão salvas mas o autor original será mantido.</div>}
-            <PromptForm record={record} allPrompts={allPrompts} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} />
+            <PromptForm record={record} allPrompts={allPrompts} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} isBetaTester={betaTester} />
         </Container>)
     } catch (e: any) {
         return (<Container fluid={false}>

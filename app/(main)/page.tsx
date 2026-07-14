@@ -163,7 +163,8 @@ export default async function HomePage() {
             description: "Integre as ferramentas do Apoia com clientes de IA como o Claude",
             href: "/mcp",
             color: "text-primary",
-            betaOnly: true
+            betaOnly: true,
+            mode: 'JUDICIAL'
         },
     ]
 
