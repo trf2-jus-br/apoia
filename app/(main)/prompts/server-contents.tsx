@@ -10,7 +10,7 @@ import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { IAPromptList } from '@/lib/db/mysql-types'
 import { fixPromptList } from '@/lib/prompt-list'
 import { nivelDeSigiloPermitido } from '@/lib/proc/sigilo'
-import { isBetaTester } from '@/lib/utils/prefs'
+import { isBetaTester, getMode } from '@/lib/utils/prefs'
 
 export default async function ServerContents( params: { sidekick?: boolean } ) {
     const MINIMUM_NUMBER_OF_VOTES_TO_TURN_UNLISTED = 5
@@ -25,7 +25,8 @@ export default async function ServerContents( params: { sidekick?: boolean } ) {
 
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
     // Ensure internal synthesis prompts are available in the bank (one-time upsert)
-    const basePrompts = await PromptDao.retrieveLatestPrompts(user_id, await isUserModerator(user))
+    const mode = await getMode()
+    const basePrompts = await PromptDao.retrieveLatestPrompts(user_id, await isUserModerator(user), mode)
 
     const prompts = await fixPromptList(basePrompts, params.sidekick ?? false )
 

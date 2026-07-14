@@ -12,7 +12,7 @@ import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
 import { getCurrentUser, isUserCorporativo } from '@/lib/user';
 import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-server';
-import { getAnonymize } from '@/lib/utils/prefs';
+import { getAnonymize, getMode } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
 import Cryptr from 'cryptr';
 import UserMenuAnonymize from './user-menu-anonymize';
@@ -31,6 +31,8 @@ export default async function UserMenu({ }: {}) {
         const corporateUser = user && !!await isUserCorporativo(user)
         const apiKeyProvided = !!(await getSelectedModelParams()).apiKey
         const isAnonymized = await getAnonymize()
+        const mode = await getMode()
+        const isAdministrative = mode === 'ADMINISTRATIVO'
 
         const nonCorporateUser = user && !(await isUserCorporativo(user))
 
@@ -39,7 +41,7 @@ export default async function UserMenu({ }: {}) {
         return (<>
             {user && corporateUser && <div className="collapse navbar-collapse" id="navbarSupportedContent">
                 <NavItem>
-                    <NavigationLink href="/chat" text="Chat" />
+                    <NavigationLink href={isAdministrative ? "/chat?prompt=chat-administrativo" : "/chat"} text="Chat" />
                 </NavItem>
                 <NavItem>
                     <NavigationLink href="/prompts/reset" text="Prompts" />
@@ -47,9 +49,10 @@ export default async function UserMenu({ }: {}) {
                 <NavItem>
                     <NavigationLink href="/revision" text="Revisão de Texto" />
                 </NavItem>
-                <NavItem>
-                    <NavigationLink href="/headnote" text="Ementa" />
-                </NavItem>
+                {!isAdministrative &&
+                    <NavItem>
+                        <NavigationLink href="/headnote" text="Ementa" />
+                    </NavItem>}
             </div>}
 
             <ul className="navbar-nav me-1 mb-2x mb-lg-0x">
@@ -72,7 +75,7 @@ export default async function UserMenu({ }: {}) {
                             <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
-                                {/* <UserMenuMode mode={'JUDICIAL'} /> */}
+                                <UserMenuMode mode={mode} />
                                 {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
                                 {user && <li><UserMenuSignout /></li>}
                                 {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}

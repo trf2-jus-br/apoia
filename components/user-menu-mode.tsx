@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { setAnonymize } from "@/app/(main)/prefs/actions"
+import { setMode } from "@/app/(main)/prefs/actions"
 import { ModeKey } from "@/lib/ai/prompt-types"
 
 export default function UserMenuMode({ mode: initial }: { mode: ModeKey }) {
@@ -12,7 +12,7 @@ export default function UserMenuMode({ mode: initial }: { mode: ModeKey }) {
     const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked
         setIsAdministrative(checked)
-        // await setAnonymize(checked)
+        await setMode(checked ? 'ADMINISTRATIVO' : 'JUDICIAL')
         router.refresh()
     }
 

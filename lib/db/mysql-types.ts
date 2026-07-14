@@ -117,6 +117,7 @@ export type IAPrompt = {
     base_id: number | null
     uuid: string
     category?: string | null
+    mode?: string | null
     created_by: number | null
     name: string
     slug: string
@@ -170,6 +171,7 @@ export type IAPrompt = {
 export type IAPromptToInsert = {
     base_id?: number
     category?: string | null
+    mode?: string | null
     name: string
     model_id: number
     testset_id: number | null
@@ -217,6 +219,7 @@ export type IAPromptList = {
     base_id: number | null
     uuid: string
     category?: string | null
+    mode?: string | null
     created_by: number | null
     name: string
     slug: string
@@ -771,5 +774,6 @@ export interface IAUserPrefs {
     anonymize: boolean
     anonymize_until: Date | null
     beta_tester: boolean
+    mode: string
     updated_at: Date
 }

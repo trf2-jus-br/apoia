@@ -18,6 +18,8 @@ const promptSchema = z.object({
     model_id: numericString(z.number()).nullable().optional(),
     testset_id: numericString(z.number()).nullable().optional(),
     share: z.string().nullable().optional(),
+    // mode: 'JUDICIAL' | 'ADMINISTRATIVO' | '' (vazio = ambos os modos, NULL no DB)
+    mode: z.string().nullable().optional(),
     created_by: numericString(z.number()).nullable().optional(),
     content: z.object({
         author: z.string().nullable().optional(),

@@ -52,3 +52,12 @@ export async function isBetaTester(): Promise<boolean> {
     return cookiesList.get('beta-tester')?.value === '2'
 }
 
+// Modo de operação (Judicial / Administrativo). Somente banco; default 'JUDICIAL'.
+// Retorna string (não ModeKey) porque ModeKey = keyof typeof Mode inclui number
+// (devido ao index signature de ModeType), o que não é útil para os callers.
+export async function getMode(): Promise<string> {
+    const fromDb = await PrefsDao.getMode()
+    if (fromDb) return fromDb
+    return 'JUDICIAL'
+}
+

@@ -5,7 +5,8 @@ import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
 import { assertCurrentUser } from '@/lib/user'
-import { isBetaTester } from '@/lib/utils/prefs'
+import { isBetaTester, getMode } from '@/lib/utils/prefs'
+import { ModeKey } from '@/lib/ai/prompt-types'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Suspense } from 'react'
 import { HomeGlobalStats } from '@/components/stats/home-global-stats'
@@ -16,22 +17,27 @@ export default async function HomePage() {
     // Verifica se é beta tester
     const isBetaTesterUser = await isBetaTester()
 
+    // Modo de operação: JUDICIAL (default) ou ADMINISTRATIVO
+    const mode = await getMode()
+
     const version = process.env.IMAGE_VERSION || 'Desconhecida'
 
-    const features: { icon?: IconDefinition; logo?: string; title: string; subtitle?: string; description: string; href: string; color: string; betaOnly?: boolean }[] = [
+    const features: { icon?: IconDefinition; logo?: string; title: string; subtitle?: string; description: string; href: string; color: string; betaOnly?: boolean; mode?: ModeKey }[] = [
         {
             icon: faComments,
             title: "Chat",
             description: "Converse com um Agente de IA sobre processos específicos",
             href: "/chat",
-            color: "text-primary"
+            color: "text-primary",
+            mode: 'JUDICIAL'
         },
         {
             icon: faComments,
             title: "Chat Administrativo",
             description: "Converse com a IA sobre assuntos administrativos (RH, Contratos, etc.)",
             href: "/chat?prompt=chat-administrativo",
-            color: "text-success"
+            color: "text-success",
+            mode: 'ADMINISTRATIVO'
         },
         {
             icon: faDatabase,
@@ -45,21 +51,24 @@ export default async function HomePage() {
             title: "Síntese",
             description: "Gere automaticamente resumos de peças processuais",
             href: "/prompts?prompt=resumo",
-            color: "text-success"
+            color: "text-success",
+            mode: 'JUDICIAL'
         },
         {
             icon: faGavel,
             title: "Sentença",
             description: "Minute sentenças informando fundamentação e dispositivo",
             href: "/prompts?prompt=sentenca",
-            color: "text-brown"
+            color: "text-brown",
+            mode: 'JUDICIAL'
         },
         {
             icon: faGavel,
             title: "Voto",
             description: "Minute votos informando fundamentação e dispositivo",
             href: "/prompts?prompt=voto",
-            color: "text-brown"
+            color: "text-brown",
+            mode: 'JUDICIAL'
         },
         {
             icon: faFileText,
@@ -80,14 +89,16 @@ export default async function HomePage() {
             title: "Ementa",
             description: "Crie ementas jurídicas com base em decisões",
             href: "/headnote",
-            color: "text-secondary"
+            color: "text-secondary",
+            mode: 'JUDICIAL'
         },
         {
             icon: faPencil,
             title: "Degravação",
             description: "Transcreva áudios de audiências e sessões com IA",
             href: "/transcription",
-            color: "text-info"
+            color: "text-info",
+            mode: 'JUDICIAL'
         },
         {
             logo: "logo-themantia.png",
@@ -95,7 +106,8 @@ export default async function HomePage() {
             title: "Busca de Temas",
             description: "Encontre temas dos Tribunais Superiores através de busca semântica",
             href: "/semantic-search",
-            color: "text-library"
+            color: "text-library",
+            mode: 'JUDICIAL'
         },
         {
             logo: "logo-admitia.png",
@@ -105,7 +117,8 @@ export default async function HomePage() {
             description: "Avaliação da admissibilidade de recursos (Vice-Presidência)",
             href: "/prompts?group=decisao-de-viabilidade",
             color: "text-library",
-            betaOnly: true
+            betaOnly: true,
+            mode: 'JUDICIAL'
         },
         {
             icon: faBookOpen,
@@ -119,7 +132,8 @@ export default async function HomePage() {
             title: "Relatório de Acervo",
             description: "Gere relatórios detalhados do acervo processual",
             href: "/batch",
-            color: "text-success"
+            color: "text-success",
+            mode: 'JUDICIAL'
         },
         {
             icon: faUsers,
@@ -174,7 +188,7 @@ export default async function HomePage() {
                     <h2 className="text-center mb-4">Escolha uma das ferramentas abaixo para começar:</h2>
 
                     <Row className="g-4">
-                        {features.filter(f => !f.betaOnly || isBetaTesterUser).map((feature, index) => (
+                        {features.filter(f => (!f.betaOnly || isBetaTesterUser) && (!f.mode || f.mode === mode)).map((feature, index) => (
                             <Col key={index} md={6} lg={3}>
                                 <Link href={feature.href} className="text-decoration-none text-dark">
                                     <Card className="h-100 text-center shadow-sm border rounded-4">

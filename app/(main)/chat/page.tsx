@@ -9,6 +9,7 @@ import { PromptDataType } from '@/lib/ai/prompt-types'
 import { faFileLines, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faSackDollar, faUsers, faGavel } from '@fortawesome/free-solid-svg-icons'
 import { assertCurrentUser, isUserCorporativo } from '@/lib/user'
+import { getMode } from '@/lib/utils/prefs'
 import Print from '@/components/slots/print'
 import { formatDateTime, formatYYYYMMDDHHMMSS } from '@/lib/utils/date'
 import { slugify } from '@/lib/utils/utils'
@@ -25,8 +26,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
     await assertModel()
     const model = await getSelectedModelName()
+    const mode = await getMode()
 
-    const definition = await getPromptDefinition(promptSlug ?? 'chat-standalone')
+    // Sem prompt na URL: default depende do modo (administrativo usa chat-administrativo).
+    const definition = await getPromptDefinition(promptSlug ?? (mode === 'ADMINISTRATIVO' ? 'chat-administrativo' : 'chat-standalone'))
     const data: PromptDataType = {
         textos: []
     }

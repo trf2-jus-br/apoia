@@ -54,6 +54,8 @@ export class PromptDao {
 
     static async insertIAPrompt(conn: any, data: mysqlTypes.IAPromptToInsert): Promise<mysqlTypes.IAPrompt | undefined> {
         const { base_id, category, name, model_id, testset_id, share, content, created_by } = data
+        // mode vazio ("Ambos") vira NULL no banco; valor específico é preservado.
+        const mode = data.mode || null
         const slug = slugify(name)
         const user = await assertCurrentUser()
         const isModerator = await isUserModerator(user)
@@ -72,7 +74,7 @@ export class PromptDao {
         this.dehydratatePromptContent(data.content)
         const [result] = await knex('ia_prompt').insert<mysqlTypes.IAPrompt>({
             base_id: base_id, uuid,
-            category, name, slug, model_id, testset_id, content: JSON.stringify(content), created_by: created_by_or_current_user, is_latest: 1, share
+            category, mode, name, slug, model_id, testset_id, content: JSON.stringify(content), created_by: created_by_or_current_user, is_latest: 1, share
         }).returning('id')
         const id = getId(result)
         if (!data.base_id) {
@@ -417,7 +419,7 @@ export class PromptDao {
         return result
     }
 
-    static async retrieveLatestPrompts(user_id: number, moderator?: boolean): Promise<mysqlTypes.IAPromptList[]> {
+    static async retrieveLatestPrompts(user_id: number, moderator?: boolean, mode?: string): Promise<mysqlTypes.IAPromptList[]> {
         if (!knex) return
         const result = await knex('ia_prompt')
             .leftJoin('ia_favorite as f', function () {
@@ -447,6 +449,12 @@ export class PromptDao {
                         this.where('ia_prompt.share', 'NAO_LISTADO')
                             .whereNotNull('f.prompt_id')
                     })
+            })
+            // Filtro por modo: NULL = visível em ambos; mode específico só no modo correspondente.
+            .andWhere(function () {
+                if (mode) {
+                    this.whereNull('ia_prompt.mode').orWhere('ia_prompt.mode', mode)
+                }
             })
             .groupBy('ia_prompt.id')
 
@@ -482,7 +490,7 @@ export class PromptDao {
         return records
     }
 
-    static async retrievePromptNamesAndUuids(user_id: number, moderator?: boolean): Promise<{ uuid: string; name: string }[]> {
+    static async retrievePromptNamesAndUuids(user_id: number, moderator?: boolean, mode?: string): Promise<{ uuid: string; name: string }[]> {
         if (!knex) return []
         const result = await knex('ia_prompt')
             .select('uuid', 'name')
@@ -499,6 +507,12 @@ export class PromptDao {
                             this.orWhere('ia_prompt.share', 'EM_ANALISE')
                         }
                     })
+            })
+            // Filtro por modo: NULL = visível em ambos; mode específico só no modo correspondente.
+            .andWhere(function () {
+                if (mode) {
+                    this.whereNull('ia_prompt.mode').orWhere('ia_prompt.mode', mode)
+                }
             })
             .orderBy('name')
         return result

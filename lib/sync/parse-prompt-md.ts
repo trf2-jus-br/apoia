@@ -10,6 +10,7 @@ import { slugify } from '../utils/utils'
 import { Share, Target, Scope, Instance, Matter } from '../proc/process-types'
 import { PieceStrategy, Plugin, T, FaseProcessual } from '../proc/combinacoes'
 import { normalizeModelProfile } from '../ai/model-types'
+import { Mode } from '../ai/prompt-types'
 
 /**
  * Build a lookup map that accepts both the canonical form (e.g. 'MAIS_RELEVANTES')
@@ -26,6 +27,7 @@ function buildEnumLookup(enumObj: Record<string, any>): Map<string, string> {
 }
 
 const shareLookup = buildEnumLookup(Share)
+const modeLookup = buildEnumLookup(Mode)
 const targetLookup = buildEnumLookup(Target)
 const scopeLookup = buildEnumLookup(Scope)
 const instanceLookup = buildEnumLookup(Instance)
@@ -151,6 +153,10 @@ export function parsePromptMarkdown(slug: string, md: string, relativePath: stri
     if (metadata.share != null) {
         const resolved = resolveEnum(metadata.share, shareLookup, 'share', relativePath)
         if (resolved) metadata.share = resolved
+    }
+    if (metadata.mode !== undefined && metadata.mode !== null) {
+        const resolved = resolveEnum(metadata.mode, modeLookup, 'mode', relativePath)
+        if (resolved) metadata.mode = resolved
     }
     if (metadata.target != null) {
         const resolved = resolveEnum(metadata.target, targetLookup, 'target', relativePath)

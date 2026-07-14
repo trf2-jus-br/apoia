@@ -284,12 +284,14 @@ async function syncSinglePrompt(
     }
     const slug = parsed.slug || slugify(parsed.name)
     const contentJson = JSON.stringify(newContent)
+    const parsedMetadataMode = parsed.metadata?.mode === null ? null : parsed.metadata?.mode || 'JUDICIAL'
 
     if (!existing) {
         // INSERT new prompt
         const [returned] = await knex!('ia_prompt').insert({
             uuid: parsed.uuid,
             category: null,
+            mode: parsedMetadataMode,
             name: parsed.name,
             slug,
             content: contentJson,
@@ -316,8 +318,9 @@ async function syncSinglePrompt(
         const shareChanged = existing.share !== newShare
         const nameChanged = existing.name !== parsed.name
         const slugChanged = existing.slug !== slug
+        const modeChanged = existing.mode !== parsedMetadataMode
 
-        if (changed || shareChanged || nameChanged || slugChanged) {
+        if (changed || shareChanged || nameChanged || slugChanged || modeChanged) {
             // Create new version: set old is_latest=0, insert new row with same base_id
             await knex!('ia_prompt').update({ is_latest: 0 }).where({ id: existing.id })
 
@@ -325,6 +328,7 @@ async function syncSinglePrompt(
                 uuid: parsed.uuid,
                 base_id: existing.base_id,
                 category: existing.category || null,
+                mode: parsedMetadataMode,
                 name: parsed.name,
                 slug,
                 content: contentJson,

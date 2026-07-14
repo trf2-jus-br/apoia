@@ -18,7 +18,7 @@ import { PieceDescr, PieceStrategy, Plugin, FaseProcessual } from '@/lib/proc/co
 import { findUnclosedMarking } from '@/lib/ai/template'
 import dynamic from 'next/dynamic'
 import AiContent from '@/components/ai-content'
-import { PromptConfigType, PromptDefinitionType } from '@/lib/ai/prompt-types'
+import { PromptConfigType, PromptDefinitionType, Mode } from '@/lib/ai/prompt-types'
 import { VisualizationEnum } from '@/lib/ui/preprocess'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
@@ -129,6 +129,8 @@ export default function PromptForm(props) {
         const modelOptions = [{ id: '', name: 'Padrão' }, ...enumSorted(ModelProfile).map(e => ({ id: e.key, name: e.value.name, disabled: e.key.startsWith('PREMIUM') }))]
         const summaryOptions = [{ id: 'NAO', name: 'Não' }, { id: 'SIM', name: 'Sim' }]
         const shareOptions = [{ id: 'PADRAO', name: 'Padrão', disabled: true }, { id: 'PUBLICO', name: 'Público', disabled: false }, { id: 'BETA_TESTE', name: 'Beta Teste', disabled: true }, { id: 'NAO_LISTADO', name: 'Não Listado' }, { id: 'PRIVADO', name: 'Privado' }, ...(data?.share === 'OCULTO' ? [{ id: 'OCULTO', name: 'Oculto', disabled: true }] : [])]
+        // Modo: NULL (ambos) é representado por string vazia na primeira opção.
+        const modeOptions = [...enumSorted(Mode).map(e => ({ id: e.value.name, name: e.value.descr })), { id: '', name: 'Ambos' }]
         const pluginOptions = Object.entries(Plugin).map(([key, value]) => ({ id: key, name: value }))
 
         if (data?.share === 'EM_ANALISE') {
@@ -169,22 +171,23 @@ export default function PromptForm(props) {
                     </Modal.Body>
                 </Modal>
                 <div className="row mb-5">
-                    <Frm.Input label="Nome" name="name" width={3} explanation="Use maiúsculas e minúsculas." maxLength={64} />
-                    <Frm.Input label="Autor" name="content.author" width={3} explanation="Use maiúsculas e minúsculas." maxLength={64} />
-                    <Frm.MultiSelect label="Segmento" name="content.scope" options={scopeOptions} width={2} />
-                    <Frm.MultiSelect label="Instância" name="content.instance" options={instanceOptions} width={2} />
-                    <Frm.MultiSelect label="Natureza" name="content.matter" options={matterOptions} width={2} />
+                    <Frm.Input label="Nome" name="name" width={6} explanation="Use maiúsculas e minúsculas." maxLength={64} />
+                    <Frm.Input label="Autor" name="content.author" width={6} explanation="Use maiúsculas e minúsculas." maxLength={64} />
                     <Frm.Input label="Descrição (opcional)" name="content.description" explanation="Escreva uma explicação no imperativo, ex.: 'Gere um relatório do processo...' ou 'Analise as peças selecionadas...'." width={12} />
+                    <Frm.Select label="Modo" name="mode" options={modeOptions} width={3} />
+                    <Frm.MultiSelect label="Segmento" name="content.scope" options={scopeOptions} width={3} />
+                    <Frm.MultiSelect label="Instância" name="content.instance" options={instanceOptions} width={3} />
+                    <Frm.MultiSelect label="Natureza" name="content.matter" options={matterOptions} width={3} />
                     <Frm.Select label="Fonte dos Dados" name="content.target" options={targetOptions} width={3} />
                     <Frm.Input label="Nome do Campo" name="content.editor_label" width={3} visible={[Target.TEXTO.name, Target.REFINAMENTO.name].includes(data.content.target)} />
                     <Frm.Select label="Seleção de Peças" name="content.piece_strategy" options={pieceStrategyOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
                     <Frm.MultiSelect label="Tipos de Peças" name="content.piece_descr" options={pieceDescrOptions} width={2} visible={Target.PROCESSO.name === data.content.target && PieceStrategy.TIPOS_ESPECIFICOS.name === data.content.piece_strategy} />
                     <Frm.MultiSelect label="Fases Processuais" name="content.phase" options={phaseOptions} width={3} visible={Target.PROCESSO.name === data.content.target} />
-                    <Frm.Select label="Resumir Selecionadas" name="content.summary" options={summaryOptions} width={2} visible={Target.PROCESSO.name === data.content.target && showAdvancedOptions} />
+                    <Frm.Select label="Compartilhamento" name="share" options={shareOptions} width={3} />
+                    <Frm.Select label="Resumir Selecionadas" name="content.summary" options={summaryOptions} width={3} visible={Target.PROCESSO.name === data.content.target && showAdvancedOptions} />
                     <Frm.Select label="Perfil" name="content.profile" options={modelOptions} width={3} visible={showAdvancedOptions} />
-                    <Frm.Select label="Compartilhamento" name="share" options={shareOptions} width={2} />
+                    <Frm.MultiSelect label="Plugins" name="content.plugins" options={pluginOptions} width={3} visible={showAdvancedOptions && data.content.batch_report} />
                     <Frm.Checkbox label="Lote" name="content.batch_report" width={2} visible={showAdvancedOptions} />
-                    <Frm.MultiSelect label="Plugins" name="content.plugins" options={pluginOptions} width={2} visible={showAdvancedOptions && data.content.batch_report} />
                     <Frm.Input label="Ordem" name="content.sort" width={3} visible={showAdvancedOptions && false} />
 
                     {/* Workflow: Predecessors and Successors */}

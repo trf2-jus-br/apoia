@@ -36,6 +36,12 @@ export async function setBetaTester(value: boolean): Promise<void> {
     await PrefsDao.setBetaTester(value)
 }
 
+// ---- Mode (Judicial / Administrativo) ----
+// Só banco.
+export async function setMode(mode: string): Promise<void> {
+    await PrefsDao.setMode(mode)
+}
+
 // Migração automática cookie -> banco. Disparada uma vez no mount do PrefsMigrator.
 // Migra independentemente os três cookies: prefs (model + env), anonymize e beta-tester.
 // Cada um só é migrado quando há usuário autenticado com DB; caso contrário segue como

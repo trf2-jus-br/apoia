@@ -6,6 +6,7 @@ import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { Instance, Matter, Scope } from '@/lib/proc/process-types'
 import { PublicError } from '@/lib/utils/public-error'
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
+import { getMode } from '@/lib/utils/prefs'
 
 export default async function New(
     props: { params: Promise<{ kind: string }>, searchParams: Promise<{ copyFrom: string, template: string, import: string }> }
@@ -15,8 +16,10 @@ export default async function New(
     const { kind } = params
     const user = await assertCurrentUser()
     const author = maiusculasEMinusculas(user.name)
+    const currentMode = await getMode()
     const emptyRecord = {
         share: "PRIVADO",
+        mode: currentMode,
         content: {
             scope: Object.keys(Scope),
             author,

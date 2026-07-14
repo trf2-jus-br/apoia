@@ -316,13 +316,14 @@ export class FormHelper {
     public Checkbox = ({ label, name, width, visible, explanation, topLabel = '&nbsp;' }: { label: string, name: string, width?: number | string, visible?: boolean, explanation?: string, topLabel?: string }) => {
         return (
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
-                {topLabel != '' && <Form.Label className={this.compact ? 'mb-0' : ''}>{topLabel}</Form.Label>}
+                {topLabel != '' && <Form.Label className={this.compact ? 'mb-0' : ''}><span dangerouslySetInnerHTML={{ __html: topLabel }} /></Form.Label>}
                 <Form.Check
                     type="checkbox"
                     id={name}
                     label={label}
                     checked={!!this.get(name)}
                     onChange={e => this.set(name, e.target.checked)}
+                    className='mt-2'
                 />
                 <FieldError formState={this.formState} name={name} />
                 {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
