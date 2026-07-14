@@ -7,7 +7,7 @@ import TextareaAutosize from 'react-textarea-autosize'
 import { removeOfficial, save, setOfficial } from './prompt-actions'
 import { EMPTY_FORM_STATE, FormHelper, FormError } from '@/lib/ui/form-support'
 import yamlps from 'js-yaml'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import cloneDeep from 'lodash/cloneDeep'
 import isEqual from 'lodash/isEqual'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -42,6 +42,12 @@ export default function PromptForm(props) {
     const [showAiContent, setShowAiContent] = useState(false)
 
 
+    useEffect(() => {
+        if (formState?.message === 'success') {
+            router.push('/prompts')
+        }
+    }, [formState, router])
+
     try {
         Frm.update(data, (d) => { setData(d); updateYaml(d) }, formState)
         const pristine = isEqual(data, { ...initialState })
@@ -56,15 +62,8 @@ export default function PromptForm(props) {
         }
 
 
-        if (formState?.message === 'success') {
-            handleBack()
-        }
-
         function handleBack() {
-            if (data.name && data.id)
-                router.push(`/prompts`)
-            else
-                router.push(`/prompts`)
+            router.push('/prompts')
         }
 
         const handleImportResult = (content) => {
