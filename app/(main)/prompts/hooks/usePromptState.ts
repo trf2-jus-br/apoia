@@ -66,6 +66,14 @@ export function usePromptState(
     const lastQueryRef = useRef<string>('')
     const [prompts, setPrompts] = useState<IAPromptList[]>(originalPrompts)
     const [prompt, setPrompt] = useState<IAPromptList | null>(null)
+
+    // Sincroniza o state quando arrive um novo conjunto de prompts do servidor
+    // (ex.: apos router.refresh() ao alternar o modo Judicial/Administrativo).
+    // useState so usa o valor inicial na primeira renderizacao, entao sem este
+    // efeito o Client Component manteria a lista antiga indefinidamente.
+    useEffect(() => {
+        setPrompts(originalPrompts)
+    }, [originalPrompts])
     const [scope, setScope] = useState<string | undefined>()
     const [instance, setInstance] = useState<InstanceKeyType | undefined>()
     const [matter, setMatter] = useState<string | undefined>()

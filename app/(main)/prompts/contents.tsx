@@ -48,6 +48,15 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
 
     const [promptsState, setPromptsState] = useState<IAPromptList[]>(prompts)
 
+    // Sincroniza a cópia local de prompts com o valor vindo do contexto, que por
+    // sua vez reflete a prop originalPrompts do Server Component. Sem isto, ao
+    // trocar o modo (Judicial/Administrativo) e router.refresh() trazer uma nova
+    // lista do servidor, promptsState permaneceria com o valor antigo (useState
+    // só usa o argumento na primeira renderização) e a UI não atualizaria.
+    useEffect(() => {
+        setPromptsState(prompts)
+    }, [prompts])
+
     useEffect(() => {
         const fetchCookie = async () => {
             const raw = await getCookieValue('termos-de-uso')
