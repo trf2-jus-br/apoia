@@ -5,6 +5,9 @@ import { InteropPDPJ } from "./pdpj"
 import { InteropProcessoType } from "./interop-types"
 import { systems } from '@/lib/utils/env'
 import { InteropBalcaojus } from "./balcaojus"
+import { InteropSEI } from "./sei"
+
+export { InteropSEI }
 
 export type ObterPecaType = { buffer: ArrayBuffer, contentType: string }
 

@@ -26,6 +26,7 @@ enum EnvPublicEnum {
 
     KEYCLOAK_ISSUER,
     DATALAKE_API_URL,
+    SEI_API_URL,
 
     APP_CODE,
     APP_PORT,

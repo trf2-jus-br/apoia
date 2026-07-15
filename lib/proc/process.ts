@@ -7,12 +7,15 @@ import { obterConteudoDaPeca, obterDocumentoGravado } from './piece'
 import { isNivelDeSigiloPermitido } from './sigilo'
 import { selecionarPecasPorPadraoComFase, T, PieceStrategy, SelecionarPecasResultado } from './combinacoes'
 import { getTiposDeSinteseValido } from './info-de-produto'
-import { getInterop, Interop } from '../interop/interop'
+import { getInterop, Interop, InteropSEI } from '../interop/interop'
 import { DadosDoProcessoType, PecaType, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
 import { UserType } from '../user'
 import devLog from '../utils/log'
 import * as Sentry from '@sentry/nextjs'
 import { getAggregatorByKind } from '../ai/prompt-store'
+import { getMode } from '../utils/prefs'
+import { envStringPrefixed } from '../utils/env'
+import { assertCourtId } from '../user'
 
 const selecionarPecas = (pecas: PecaType[], descricoes: string[]) => {
     const pecasRelevantes = pecas.filter(p => descricoes.includes(p.descr))
@@ -93,6 +96,15 @@ export const getInteropFromUser = async (user: UserType): Promise<Interop> => {
     const username = user?.email
     const password = user?.encryptedPassword ? decrypt(user?.encryptedPassword) : undefined
     const system = user?.system
+
+    // No modo administrativo, roteia para o interop do SEI quando configurado.
+    // SEI_API_URL pode ser prefixada por tribunal (TRIBUNAL_{seq}_SEI_API_URL).
+    const mode = await getMode()
+    if (mode === 'ADMINISTRATIVO' && envStringPrefixed('SEI_API_URL', user ? '' + assertCourtId(user) : undefined)) {
+        const interop = new InteropSEI()
+        await interop.init()
+        return interop
+    }
 
     const interop = getInterop(system, username, password)
     await interop.init()
@@ -252,12 +264,7 @@ export const obterDadosDoProcesso2 = async ({ numeroDoProcesso, pUser, pieces, c
     let errorMsg = undefined
     try {
         const user = await pUser
-        const username = user?.email
-        const password = user?.encryptedPassword ? decrypt(user?.encryptedPassword) : undefined
-        const system = user?.system
-
-        const interop = getInterop(system, username, password)
-        await interop.init()
+        const interop = await getInteropFromUser(user)
 
         const dadosDoProcesso = await interop.consultarProcesso(numeroDoProcesso)
         // pecas = [...dadosDoProcesso.pecas]

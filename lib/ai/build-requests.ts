@@ -6,6 +6,7 @@ import devLog from "../utils/log"
 import { normalizeModelProfile } from "./model-types"
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "./prompt-types"
 import { getPromptDefinition, getPromptDefinitionByUuid } from "./prompt-store"
+import { getMode } from "../utils/prefs"
 
 /**
  * Build requests from an aggregator's workflow successors (DB-driven).
@@ -112,7 +113,8 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
 
     // Basic chat as last item
     if (!prompt?.name?.toLowerCase().startsWith('chat ') && !requestArray.some(r => r.produto.startsWith('chat'))) {
-        const definition2 = await getPromptDefinition(`chat`)
+        const mode = await getMode()
+        const definition2 = await getPromptDefinition(mode === 'ADMINISTRATIVO' ? `chat-administrativo` : `chat`)
         const data: PromptDataType = { numeroDoProcesso, textos: pecasComConteudo, documentosDaBiblioteca }
         requestArray.push({ documentCode: null, documentDescr: null, data, title: 'Chat', produto: 'chat', promptSlug: definition2.kind, internalPrompt: definition2 })
     }

@@ -127,7 +127,7 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
             <AiTitle request={request} />
             <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />
         </article>
-        } else if (request.promptSlug === 'chat' || request?.title.toLowerCase().startsWith('chat ')) {
+        } else if (request.promptSlug === 'chat' || request.promptSlug.startsWith('chat-') || request?.title.toLowerCase().startsWith('chat ')) {
             if (previousArePending(Frm, requests, idx)) return null
             return <Chat definition={request.internalPrompt} data={requestComTextosAnteriores.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
         }
