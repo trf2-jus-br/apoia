@@ -659,7 +659,7 @@ export interface TipoDeSinteseValido {
 }
 
 const PieceStrategyArray = [
-    { id: 1, name: 'MAIS_RELEVANTES', descr: 'Peças mais relevantes', pattern: padroesPorPrioridade },
+    { id: 1, name: 'MAIS_RELEVANTES', descr: 'Peças mais relevantes', pattern: padroesPorPrioridadeComFallback },
     { id: 1, name: 'MAIS_RELEVANTES_PRIMEIRA_INSTANCIA', descr: 'Peças mais relevantes para 1ª Instância', pattern: [...padroesConhecimento, padraoConhecimentoForcado] },
     { id: 1, name: 'MAIS_RELEVANTES_SEGUNDA_INSTANCIA', descr: 'Peças mais relevantes para 2ª Instância', pattern: [...padroesBasicosSegundaInstancia, padraoApelacaoForcado] },
     { id: 1, name: 'APELACAO_E_TRIAGEM', descr: 'Triagem de Apelação ou Agravo', pattern: [...padroesBasicosSegundaInstancia, padraoAgravoForcado, padraoApelacaoForcado, padraoAgravoSemConhecimento, padraoAgravoForcadoSemConhecimento] },

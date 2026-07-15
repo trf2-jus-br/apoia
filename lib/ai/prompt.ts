@@ -6,11 +6,12 @@ import { formatDateDDMMYYYY } from "../utils/date"
 import devLog from "@/lib/utils/log"
 import { getPromptDefinition } from "./prompt-store"
 import { formatText } from "./prompt-client"
+import { getMode } from "@/lib/utils/prefs"
 
 // Re-export client-safe functions for backward compatibility
 export { formatText, waitForTexts, getPiecesWithContent, promptDefinitionFromDefinitionAndOptions, promptDefinitionFromMarkdown } from './prompt-client'
 
-export const applyTextsAndVariables = async (text: string, data: PromptDataType, jsonSchema?: string, template?: string, libraryPrompt?: string): Promise<string> => {
+export const applyTextsAndVariables = async (text: string, data: PromptDataType, jsonSchema?: string, template?: string, libraryPrompt?: string, mode?: string): Promise<string> => {
     if (!text) return ''
 
     const textos = data.textos.map(txt => ({ ...txt })) || []
@@ -50,7 +51,7 @@ export const applyTextsAndVariables = async (text: string, data: PromptDataType,
 
     text = text.replace('{{biblioteca}}', libraryPrompt)
 
-    text = text.replace('{{salvaguardas}}', salvaguardas)
+    text = text.replace('{{salvaguardas}}', mode === 'ADMINISTRATIVO' ? admSalvaguardas : salvaguardas)
 
     text = text.replace('{{numeroDoProcesso}}', data.numeroDoProcesso || 'Número do processo não definido')
 
@@ -75,10 +76,18 @@ export const applyTextsAndVariables = async (text: string, data: PromptDataType,
 
 export const promptExecuteBuilder = async (definition: PromptDefinitionType, data: PromptDataType, libraryPrompt?: string): Promise<PromptExecuteType> => {
     const message: ModelMessage[] = []
+    const mode = await getMode()
+    const isAdministrative = mode === 'ADMINISTRATIVO'
     if (definition?.kind !== 'chat' && definition?.kind !== 'chat_standalone' && !(definition?.systemPrompt?.includes('{{semPromptPadrao}}') || definition?.prompt?.includes('{{semPromptPadrao}}'))) {
-        const systemContent = definition.metadata?.target === 'PROCESSO' ? sistema : sistemaTextual
+        // Seleção do system prompt base: combina modo (judicial/administrativo) e target (processo/texto).
+        let systemContent: string
+        if (definition.metadata?.target === 'PROCESSO') {
+            systemContent = isAdministrative ? admSistema : sistema
+        } else {
+            systemContent = isAdministrative ? admSistemaTextual : sistemaTextual
+        }
         for (const part of systemContent.split(/^\s*---\s*$/gm)) {
-            const content = await applyTextsAndVariables(part, data, definition.jsonSchema, definition.template, libraryPrompt)
+            const content = await applyTextsAndVariables(part, data, definition.jsonSchema, definition.template, libraryPrompt, mode)
             devLog('System message content type:', typeof content, 'isArray:', Array.isArray(content))
             message.push({ role: 'system', content } as ModelMessage)
         }
@@ -86,7 +95,7 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
 
     if (definition.systemPrompt) {
         for (const part of definition.systemPrompt.split(/^\s*---\s*$/gm)) {
-            const content = await applyTextsAndVariables(part, data, definition.jsonSchema, definition.template, libraryPrompt)
+            const content = await applyTextsAndVariables(part, data, definition.jsonSchema, definition.template, libraryPrompt, mode)
             devLog('SystemPrompt content type:', typeof content, 'isArray:', Array.isArray(content))
             message.push({ role: 'system', content } as ModelMessage)
         }
@@ -111,7 +120,7 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
         definition.jsonSchema = promptJsonSchemaFromPromptMarkdown(prompt, true)
     }
 
-    const promptContent: string = await applyTextsAndVariables(prompt, data, definition.jsonSchema, definition.template)
+    const promptContent: string = await applyTextsAndVariables(prompt, data, definition.jsonSchema, definition.template, undefined, mode)
 
     if (prompt) {
         // Verificar se há arquivos (Data URLs) nos textos
@@ -161,3 +170,6 @@ export const promptExecuteBuilder = async (definition: PromptDefinitionType, dat
 import salvaguardas from '@/prompts/salvaguardas.md'
 import sistema from '@/prompts/sistema.md'
 import sistemaTextual from '@/prompts/sistema-textual.md'
+import admSalvaguardas from '@/prompts/adm-salvaguardas.md'
+import admSistema from '@/prompts/adm-sistema.md'
+import admSistemaTextual from '@/prompts/adm-sistema-textual.md'

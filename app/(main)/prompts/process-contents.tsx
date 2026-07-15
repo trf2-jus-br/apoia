@@ -1,6 +1,6 @@
 'use client'
 
-import { IALibrary, IALibraryInclusion, IAPrompt } from "@/lib/db/mysql-types";
+import { IALibrary, IALibraryInclusion } from "@/lib/db/mysql-types";
 import { PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
 import { ReactNode, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";

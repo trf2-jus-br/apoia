@@ -37,7 +37,7 @@ export default async function HomePage() {
             description: "Converse com a IA sobre assuntos administrativos (RH, Contratos, etc.)",
             href: "/chat?prompt=chat-administrativo",
             color: "text-success",
-            mode: 'ADMINISTRATIVO'
+            //mode: 'ADMINISTRATIVO'
         },
         {
             icon: faDatabase,
