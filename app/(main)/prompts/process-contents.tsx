@@ -51,7 +51,8 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         sinkFromURL,
         sinkButtonText,
         sourcePayload,
-        maxConfidentialityLevel
+        maxConfidentialityLevel,
+        mode
     } = usePromptContext()
 
     if (!prompt || !dadosDoProcesso) return null
@@ -82,6 +83,11 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     }
 
     const chooseSelectedPieces = (allPieces: PecaType[], pieceStrategy: string, pieceDescr: string[]) => {
+        // No modo administrativo não há pattern matching calibrado: pré-seleciona todas
+        // as peças acessíveis e deixa o usuário desmarcar as desnecessárias.
+        if (mode === 'ADMINISTRATIVO') {
+            return allPieces.filter(p => isNivelDeSigiloPermitidoClient(maxConfidentialityLevel, p.sigilo))
+        }
         // If it's an internal seeded prompt, prefer piece_strategy from DB content
         if (prompt.origin) {
             const dbPieceStrategy = prompt.content?.piece_strategy
@@ -253,7 +259,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
             />
         </>}
         {selectedPieces && <>
-            <ChoosePieces allPieces={dadosDoProcesso.pecas} selectedPieces={selectedPieces} onSave={(pieces) => { setRequests([]); changeSelectedPieces(pieces) }} onStartEditing={() => { setChoosingPieces(true) }} onEndEditing={() => setChoosingPieces(false)} editing={choosingPieces} dossierNumber={dadosDoProcesso.numeroDoProcesso} readyToStartAI={readyToStartAI} baselineDefaultIds={defaultPieceIds || []} />
+            <ChoosePieces allPieces={dadosDoProcesso.pecas} selectedPieces={selectedPieces} onSave={(pieces) => { setRequests([]); changeSelectedPieces(pieces) }} onStartEditing={() => { setChoosingPieces(true) }} onEndEditing={() => setChoosingPieces(false)} editing={choosingPieces} dossierNumber={dadosDoProcesso.numeroDoProcesso} readyToStartAI={readyToStartAI} baselineDefaultIds={defaultPieceIds || []} mode={mode} />
             <LoadingPieces />
             <ErrorMsg dadosDoProcesso={dadosDoProcesso} />
             {/* <div className="mb-4"></div> */}

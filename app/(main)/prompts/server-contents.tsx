@@ -54,5 +54,5 @@ export default async function ServerContents( params: { sidekick?: boolean } ) {
         }
     }
 
-    return <Contents prompts={promptsWithRatings} user={user} user_id={user_id} apiKeyProvided={!!apiKey} model={model} isModerator={isModerator} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={params.sidekick} isBetaTester={betaTester} />
+    return <Contents prompts={promptsWithRatings} user={user} user_id={user_id} apiKeyProvided={!!apiKey} model={model} isModerator={isModerator} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={params.sidekick} isBetaTester={betaTester} mode={mode} />
 }

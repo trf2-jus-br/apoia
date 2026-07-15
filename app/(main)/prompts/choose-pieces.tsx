@@ -17,12 +17,13 @@ interface ChoosePiecesFormProps {
     onSave: (pieces: string[]) => void,
     onClose: () => void,
     dossierNumber: string,
-    readyToStartAI: boolean
+    readyToStartAI: boolean,
+    mode: string
 }
 
 const canonicalPieces = (pieces: string[]) => [...pieces].sort((a, b) => a.localeCompare(b)).join(',')
 
-function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierNumber, readyToStartAI }: ChoosePiecesFormProps) {
+function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierNumber, readyToStartAI, mode }: ChoosePiecesFormProps) {
     const originalPieces: string[] = selectedPieces.map(p => p.id)
     const [selectedIds, setSelectedIds] = useState(originalPieces)
     const [canonicalOriginalPieces, setCanonicalOriginalPieces] = useState(canonicalPieces(originalPieces))
@@ -39,6 +40,11 @@ function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierN
             <div className="alert alert-warning pt-0">
                 <div className="row">
                     <div className="col-12">
+                        {mode === 'ADMINISTRATIVO' && (
+                            <div className="text-center p-0 mb-3 mt-3">
+                                <strong>Atenção</strong>, desmarque as peças desnecessárias. A IA funcionará melhor, de forma mais rápida e econômica se apenas as peças necessárias forem submetidas.
+                            </div>
+                        )}
                         <TableRecords records={[...allPieces].reverse()} spec="ChoosePieces" options={{ dossierNumber, apenasSelecionadas: true }} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged} modalActions={{ onClick: () => setShowTreeModal(true) }}>
                             <div className="col col-auto mt-3 mb-0">
                                 {alteredPieces
@@ -52,10 +58,10 @@ function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierN
                 </div>
             </div>
         </div>
-        <TreeModal 
-            show={showTreeModal} 
-            onClose={() => setShowTreeModal(false)} 
-            pieces={allPieces} 
+        <TreeModal
+            show={showTreeModal}
+            onClose={() => setShowTreeModal(false)}
+            pieces={allPieces}
             onSave={onSave}
             selectedIds={selectedIds}
             onSelectedIdsChanged={onSelectedIdsChanged}
@@ -73,8 +79,8 @@ export const ChoosePiecesLoading = () => {
 }
 
 
-export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStartEditing, onEndEditing, editing, dossierNumber, readyToStartAI, baselineDefaultIds}: {
-    allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onStartEditing: () => void, onEndEditing: () => void, editing: boolean, dossierNumber: string, readyToStartAI: boolean, baselineDefaultIds: string[]
+export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStartEditing, onEndEditing, editing, dossierNumber, readyToStartAI, baselineDefaultIds, mode }: {
+    allPieces: PecaType[], selectedPieces: PecaType[], onSave: (pieces: string[]) => void, onStartEditing: () => void, onEndEditing: () => void, editing: boolean, dossierNumber: string, readyToStartAI: boolean, baselineDefaultIds: string[], mode: string
 }) {
     const pathname = usePathname(); // let's get the pathname to make the component reusable - could be used anywhere in the project
     const router = useRouter();
@@ -159,5 +165,5 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
         }
         return <p className="text-body-tertiary text-center h-print">{s} - <span onClick={() => { onStartEditing() }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></p>
     }
-    return <ChoosePiecesForm onSave={onSaveLocal} onClose={onClose} allPieces={allPieces} selectedPieces={selectedPieces} dossierNumber={dossierNumber} readyToStartAI={readyToStartAI} />
+    return <ChoosePiecesForm onSave={onSaveLocal} onClose={onClose} allPieces={allPieces} selectedPieces={selectedPieces} dossierNumber={dossierNumber} readyToStartAI={readyToStartAI} mode={mode} />
 }

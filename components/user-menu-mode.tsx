@@ -28,7 +28,7 @@ export default function UserMenuMode({ mode: initial }: { mode: ModeKey }) {
                         checked={isAdministrative}
                     />
                     <label className="form-check-label" htmlFor="administrativeCheck">
-                        Modo SEI
+                        Modo SEI!
                     </label>
                 </div>
             </div>

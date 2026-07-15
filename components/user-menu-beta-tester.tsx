@@ -27,7 +27,7 @@ export default function UserMenuBetaTester({ isBetaTester: initial }: { isBetaTe
                         checked={isBetaTester}
                     />
                     <label className="form-check-label" htmlFor="betaTesterCheck">
-                        Beta tester
+                        Beta-Tester
                     </label>
                 </div>
             </div>
