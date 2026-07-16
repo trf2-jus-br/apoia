@@ -143,7 +143,7 @@ export function mapSeiToSimplified(processo: SeiInput): InteropProcessoType[] {
  *     Andamentos sem documentos são incluídos vazios (são movimentos puros).
  *  3. Documentos sem andamento casado geram um movimento sintético
  *     ("Inclusão de Documento") na dataHora do documento.
- *  4. Tudo é concatenado, ordenado por dataHora DECRESCENTE (mais recente =
+ *  4. Tudo é concatenado, ordenado por dataHora CRESCENTE (mais antigo =
  *     sequencia 1, posição 0 do array) e renumerado 1..N. A sequencia original
  *     do SEI é descartada.
  */
@@ -201,8 +201,8 @@ function buildMovimentosEDocumentos(processo: SeiInput): InteropMovimentoComDocu
         }
     }
 
-    // Numeracao por dataHora DECRESCENTE: mais recente = sequencia 1 (posição 0).
-    itens.sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
+    // Numeracao por dataHora CRESCENTE: mais antigo = sequencia 1 (posição 0).
+    itens.sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime())
     return itens.map((item, idx) => ({
         sequencia: idx + 1,
         dataHora: item.dataHora,

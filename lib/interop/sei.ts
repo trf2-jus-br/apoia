@@ -145,7 +145,7 @@ export class InteropSEI implements Interop {
                 rotulo: doc.nome,
                 dataHora: new Date(doc.dataHora),
             } as PecaType
-        }).sort((a, b) => (b.dataHora?.getTime() ?? 0) - (a.dataHora?.getTime() ?? 0)) // mais recente primeiro
+        }).sort((a, b) => (a.dataHora?.getTime() ?? 0) - (b.dataHora?.getTime() ?? 0)) // mais antigo primeiro
 
         const resp: DadosDoProcessoType[] = [{
             numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas,
