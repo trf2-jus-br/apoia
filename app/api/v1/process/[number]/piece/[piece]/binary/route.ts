@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server"
-import { getCurrentUser, assertApiUser, assertCourtId } from "@/lib/user"
+import { getCurrentUser, assertApiUser } from "@/lib/user"
 import { decrypt } from "@/lib/utils/crypt"
-import { getInterop, Interop, InteropSEI } from "@/lib/interop/interop"
+import { getInterop } from "@/lib/interop/interop"
 import { getMode } from "@/lib/utils/prefs"
-import { envStringPrefixed } from "@/lib/utils/env"
 import * as Sentry from '@sentry/nextjs'
 import { UnauthorizedError, withErrorHandler, ForbiddenError, NotFoundError } from '@/lib/utils/api-error'
 import { assertNivelDeSigilo } from "@/lib/proc/sigilo"
@@ -57,15 +56,11 @@ async function GET_HANDLER(
   const password = user?.encryptedPassword ? decrypt(user?.encryptedPassword) : undefined
   const system = user?.system
 
-  // No modo administrativo, roteia para o interop do SEI quando configurado.
-  // SEI_API_URL pode ser prefixada por tribunal (TRIBUNAL_{seq}_SEI_API_URL).
+  // A decisao entre SEI/PDPJ/MNI/Balcaojus fica centralizada em getInterop.
+  // A resolução de SEI_API_URL (prefixada por tribunal) acontece no init() do
+  // InteropSEI a partir de getCurrentUser(), como o InteropPDPJ já faz.
   const mode = await getMode()
-  let interop: Interop
-  if (mode === 'ADMINISTRATIVO' && envStringPrefixed('SEI_API_URL', user ? '' + assertCourtId(user) : undefined)) {
-    interop = new InteropSEI()
-  } else {
-    interop = getInterop(system, username, password)
-  }
+  const interop = getInterop(system, username, password, mode)
   await interop.init()
 
   // Obter metadados do processo para verificar sigilo da peça

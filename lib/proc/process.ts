@@ -7,15 +7,13 @@ import { obterConteudoDaPeca, obterDocumentoGravado } from './piece'
 import { isNivelDeSigiloPermitido } from './sigilo'
 import { selecionarPecasPorPadraoComFase, T, PieceStrategy, SelecionarPecasResultado } from './combinacoes'
 import { getTiposDeSinteseValido } from './info-de-produto'
-import { getInterop, Interop, InteropSEI } from '../interop/interop'
+import { getInterop, Interop } from '../interop/interop'
 import { DadosDoProcessoType, PecaType, TEXTO_PECA_COM_ERRO, TEXTO_PECA_SIGILOSA } from './process-types'
 import { UserType } from '../user'
 import devLog from '../utils/log'
 import * as Sentry from '@sentry/nextjs'
 import { getAggregatorByKind } from '../ai/prompt-store'
 import { getMode } from '../utils/prefs'
-import { envStringPrefixed } from '../utils/env'
-import { assertCourtId } from '../user'
 
 const selecionarPecas = (pecas: PecaType[], descricoes: string[]) => {
     const pecasRelevantes = pecas.filter(p => descricoes.includes(p.descr))
@@ -97,16 +95,11 @@ export const getInteropFromUser = async (user: UserType): Promise<Interop> => {
     const password = user?.encryptedPassword ? decrypt(user?.encryptedPassword) : undefined
     const system = user?.system
 
-    // No modo administrativo, roteia para o interop do SEI quando configurado.
-    // SEI_API_URL pode ser prefixada por tribunal (TRIBUNAL_{seq}_SEI_API_URL).
+    // A decisao entre SEI/PDPJ/MNI/Balcaojus fica centralizada em getInterop.
+    // A resolução de SEI_API_URL (prefixada por tribunal) acontece no init() do
+    // InteropSEI a partir de getCurrentUser(), como o InteropPDPJ já faz.
     const mode = await getMode()
-    if (mode === 'ADMINISTRATIVO' && envStringPrefixed('SEI_API_URL', user ? '' + assertCourtId(user) : undefined)) {
-        const interop = new InteropSEI()
-        await interop.init()
-        return interop
-    }
-
-    const interop = getInterop(system, username, password)
+    const interop = getInterop(system, username, password, mode)
     await interop.init()
     return interop
 }

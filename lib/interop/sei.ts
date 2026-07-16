@@ -22,6 +22,9 @@ export class InteropSEI implements Interop {
         // já vem com ?path=/apoia; as chamadas adicionam /processos/{num}...
         const seqTribunalPai = this.user ? '' + (assertCourtId(this.user)) : undefined
         this.seiApiUrl = envStringPrefixed('SEI_API_URL', seqTribunalPai)
+        if (!this.seiApiUrl) {
+            throw new Error('SEI_API_URL não configurada para o tribunal do usuário')
+        }
 
         // Utiliza o mesmo token do DataLake/PDPJ, enviado como Bearer para o SEI.
         if (envString('DATALAKE_TOKEN')) {

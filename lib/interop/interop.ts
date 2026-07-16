@@ -7,8 +7,6 @@ import { systems } from '@/lib/utils/env'
 import { InteropBalcaojus } from "./balcaojus"
 import { InteropSEI } from "./sei"
 
-export { InteropSEI }
-
 export type ObterPecaType = { buffer: ArrayBuffer, contentType: string }
 
 export interface Interop {
@@ -19,7 +17,14 @@ export interface Interop {
     obterPeca(numeroDoProcesso: string, idDaPeca: string, binary?: boolean): Promise<ObterPecaType>
 }
 
-export const getInterop = (system: string, username: string, password: string): Interop => {
+// Resolve qual interop instanciar. No modo administrativo, usa o SEI; a
+// resolução de SEI_API_URL (eventualmente prefixada por tribunal) e do token
+// acontece dentro de InteropSEI.init(), a partir de getCurrentUser(), como o
+// InteropPDPJ já faz. Caso contrário, cai no fluxo existente por system.kind.
+export const getInterop = (system: string, username: string, password: string, mode?: string): Interop => {
+    if (mode === 'ADMINISTRATIVO') {
+        return new InteropSEI()
+    }
     const currentSystem = systems.find(s => s.system === system)
     switch (currentSystem?.kind) {
         case 'MNI':
