@@ -153,8 +153,8 @@ export class InteropPDPJ implements Interop {
     }
 
     private limparEValidarNumeroProcesso(numero: string): string {
-        const n =  numero.replace(/\D/g, '')
-        if (n.length !== 20) 
+        const n = numero.replace(/\D/g, '')
+        if (n.length !== 20)
             throw new InvalidProcessNumberError(`Número do processo inválido: ${numero}`)
         return n
     }
@@ -395,15 +395,25 @@ export function aggregateProcessos(resp: DadosDoProcessoType[]) {
             const latestPecaDateB = b.pecas.length ? Math.max(...b.pecas.map(p => p.dataHora.getTime())) : 0
             return latestPecaDateB - latestPecaDateA
         })
+        // Distingue entre eventos quando houver mais de um processo no mesmo grau. Utiliza o (Originário)
+        const instanciaCounts = resp.reduce<Record<string, number>>((counts, p) => {
+            if (p.instancia) counts[p.instancia] = (counts[p.instancia] || 0) + 1
+            return counts
+        }, {})
+
         const combinado = resp.reduce((acc, p) => {
-            acc.pecas.push(...p.pecas.map(peca => ({ ...peca, numeroDoEvento: peca.numeroDoEvento + (Instance[p.instancia] ? `, ${Instance[p.instancia].acronym} Grau` : '') })))
             const instanciaLabel = Instance[p.instancia] ? `, ${Instance[p.instancia].acronym} Grau` : ''
+            const isOriginario = p.classe?.endsWith(' (Originário)')
+            const isInqueritoPolicial = p.classe === 'Inquérito Policial (Originário)'
+            const hasSameInstancia = p.instancia ? instanciaCounts[p.instancia] > 1 : false
+            const origLabel = isOriginario && hasSameInstancia ? (isInqueritoPolicial ? ' (Inqu.)' : ' (Orig.)') : ''
+            acc.pecas.push(...p.pecas.map(peca => ({ ...peca, numeroDoEvento: peca.numeroDoEvento + instanciaLabel + origLabel })))
             if (p.movimentosEDocumentos?.length) {
                 for (const mov of p.movimentosEDocumentos) {
                     acc.movimentosEDocumentos.push({
                         ...mov,
                         sequencia: Number(mov.sequencia) || 0,
-                        descricao: (mov.descricao || '') + instanciaLabel,
+                        descricao: (mov.descricao || '') + instanciaLabel + origLabel,
                         documentos: (mov.documentos || []).map(d => ({ ...d })),
                     })
                 }
