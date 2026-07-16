@@ -10,11 +10,6 @@ import { CannotAccessPieceTextError, CannotAccessProcessMetadataError, InvalidPr
 
 const REVALIDATE = undefined
 
-// Type para os campos utilizados no método consultarProcesso
-type SeiProcessoResponse = {
-    tramitacoes: SeiInput['tramitacoes']
-}[]
-
 export class InteropSEI implements Interop {
     private accessToken: string
     private seiApiUrl: string // já contém ?path=/apoia
@@ -79,12 +74,12 @@ export class InteropSEI implements Interop {
     }
 
     public consultarMetadadosDoProcesso = async (numeroDoProcesso: string): Promise<InteropProcessoType[]> => {
-        const data: SeiProcessoResponse = await this.consultarProcessoSei(numeroDoProcesso)
+        const data: SeiInput = await this.consultarProcessoSei(numeroDoProcesso)
 
-        if (!data || !data[0] || !data[0].tramitacoes || !data[0].tramitacoes.length) {
+        if (!data || (!data.andamentos && !data.documentos)) {
             throw new Error(`Não foi possível encontrar o processo ${numeroDoProcesso} no SEI`)
         }
-        const processos: InteropProcessoType[] = mapSeiToSimplified(data[0] as SeiInput)
+        const processos: InteropProcessoType[] = mapSeiToSimplified(data)
         if (!processos || !processos.length) {
             throw new Error(`Não foi possível mapear o processo ${numeroDoProcesso} no SEI`)
         }
@@ -94,67 +89,68 @@ export class InteropSEI implements Interop {
     public consultarProcesso = async (numProc: string, _recursivo?: boolean): Promise<DadosDoProcessoType[]> => {
         const numeroDoProcesso = this.limparEValidarNumeroProcesso(numProc)
 
-        const data: SeiProcessoResponse = await this.consultarProcessoSei(numeroDoProcesso)
+        const data: SeiInput = await this.consultarProcessoSei(numeroDoProcesso)
+
+        assertNivelDeSigilo(this.user, '' + data.nivelSigilo)
 
         // Aproveitar mapSeiToSimplified para obter movimentosEDocumentos já construídos.
-        let simplified: InteropProcessoType[] = []
+        let simplified: InteropProcessoType | undefined
         try {
-            simplified = mapSeiToSimplified(data[0] as SeiInput)
+            const arr = mapSeiToSimplified(data)
+            simplified = arr[0]
         } catch (e: any) {
             console.error(`Erro ao mapear movimentosEDocumentos para o processo ${numeroDoProcesso} no SEI: ${e.message}`)
         }
 
-        const resp: DadosDoProcessoType[] = []
-        for (let tramIdx = 0; tramIdx < data[0].tramitacoes.length; tramIdx++) {
-            const processo = data[0].tramitacoes[tramIdx]
-            assertNivelDeSigilo(this.user, '' + processo.nivelSigilo)
+        const ajuizamento = new Date(data.dataGeracao)
+        const nomeOrgaoJulgador = data.orgao?.nome
+        const codigoDaClasse = data.tipoProcedimento?.id || 0
+        const classe = data.tipoProcedimento?.nome
+        const segmento = ''
+        const instancia = ''
+        const materia = data.tipoProcedimento?.nome || ''
 
-            const ajuizamento = new Date(processo.dataHoraAjuizamento)
-            const nomeOrgaoJulgador = processo.tribunal?.nome
-            const codigoDaClasse = processo.classe?.[0]?.codigo || 0
-            const classe = processo.classe?.[0]?.nome
-            const segmento = processo.tribunal?.segmento
-            const instancia = processo.instancia || ''
-            const materia = processo.natureza
-            const partesPoloAtivo = (processo.partes || []).filter((p: any) => p.polo === 'ATIVO')
-            const partesPoloPassivo = (processo.partes || []).filter((p: any) => p.polo === 'PASSIVO')
-            const poloAtivo = `${partesPoloAtivo[0]?.nome}${partesPoloAtivo.length > 1 ? ` + ${partesPoloAtivo.length - 1}` : ''}` || ''
-            const poloPassivo = `${partesPoloPassivo[0]?.nome}${partesPoloPassivo.length > 1 ? ` + ${partesPoloPassivo.length - 1}` : ''}` || ''
+        // Interessados (SEI tipicamente envia vazio; mapeia o que existir).
+        const interessados = data.interessados || []
+        const partesPoloAtivo = interessados.filter((p: any) => p.polo === 'ATIVO')
+        const partesPoloPassivo = interessados.filter((p: any) => p.polo === 'PASSIVO')
+        const poloAtivo = partesPoloAtivo.length ? `${partesPoloAtivo[0]?.nome || ''}${partesPoloAtivo.length > 1 ? ` + ${partesPoloAtivo.length - 1}` : ''}` : ''
+        const poloPassivo = partesPoloPassivo.length ? `${partesPoloPassivo[0]?.nome || ''}${partesPoloPassivo.length > 1 ? ` + ${partesPoloPassivo.length - 1}` : ''}` : ''
 
-            // No SEI, cada documento gera seu próprio movimento sintético em
-            // mapSeiToSimplified. Aqui montamos as peças a partir dos documentos,
-            // e o númeroDoEvento/descricaoDoEvento vem do movimento sintético
-            // correspondente (vinculado 1:1).
-            const movimentosSinteticos = (simplified[tramIdx]?.movimentosEDocumentos || [])
-                .filter(m => m.descricao === 'Inclusão de Documento')
-
-            const pecas: PecaType[] = (processo.documentos || []).map((doc: any) => {
-                // Localiza o movimento sintético correspondente a este documento.
-                const mov = movimentosSinteticos.find(m => m.documentos.some(d => d.id === doc.id))
-                const docMov = mov?.documentos.find(d => d.id === doc.id)
-                return {
-                    id: doc.id,
-                    idOrigem: doc.idOrigem,
-                    numeroDoProcesso,
-                    numeroDoEvento: String(mov?.sequencia ?? ''),
-                    descricaoDoEvento: mov?.descricao ?? '',
-                    descr: (doc.tipo?.nome || doc.nome || '').toUpperCase(),
-                    tipoDoConteudo: doc.arquivo?.tipo,
-                    sigilo: nivelDeSigiloFromNivel(doc.nivelSigilo),
-                    pConteudo: undefined,
-                    conteudo: undefined,
-                    pDocumento: undefined,
-                    documento: undefined,
-                    categoria: undefined,
-                    rotulo: doc.nome || docMov?.nome,
-                    dataHora: new Date(doc.dataHoraJuntada),
-                } as PecaType
-            })
-
-            const movimentosEDocumentos = simplified[tramIdx]?.movimentosEDocumentos
-
-            resp.push({ numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas, movimentosEDocumentos, segmento, instancia, materia, poloAtivo, poloPassivo })
+        // Constroi índice numeroDoDocumento → movimento (sequencia/descricao) para
+        // preencher numeroDoEvento/descricaoDoEvento de cada peça.
+        const docParaMovimento = new Map<string, { sequencia: string, descricao: string }>()
+        for (const mov of simplified?.movimentosEDocumentos || []) {
+            for (const d of mov.documentos) {
+                docParaMovimento.set(d.id, { sequencia: String(mov.sequencia), descricao: mov.descricao })
+            }
         }
+
+        const pecas: PecaType[] = (data.documentos || []).map((doc) => {
+            const mov = docParaMovimento.get(doc.numero)
+            return {
+                id: doc.numero,
+                idOrigem: doc.idDocumento,
+                numeroDoProcesso,
+                numeroDoEvento: mov?.sequencia ?? '',
+                descricaoDoEvento: mov?.descricao ?? '',
+                descr: (doc.tipo || doc.nome || '').toUpperCase(),
+                tipoDoConteudo: doc.mimeType,
+                sigilo: nivelDeSigiloFromNivel(doc.nivelSigilo),
+                pConteudo: undefined,
+                conteudo: undefined,
+                pDocumento: undefined,
+                documento: undefined,
+                categoria: undefined,
+                rotulo: doc.nome,
+                dataHora: new Date(doc.dataHora),
+            } as PecaType
+        }).sort((a, b) => (b.dataHora?.getTime() ?? 0) - (a.dataHora?.getTime() ?? 0)) // mais recente primeiro
+
+        const resp: DadosDoProcessoType[] = [{
+            numeroDoProcesso, ajuizamento, codigoDaClasse, classe, nomeOrgaoJulgador, pecas,
+            movimentosEDocumentos: simplified?.movimentosEDocumentos, segmento, instancia, materia, poloAtivo, poloPassivo
+        }]
 
         aggregateProcessos(resp)
 

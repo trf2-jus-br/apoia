@@ -4,77 +4,65 @@
  * Converte o JSON retornado pela API REST do SEI (módulo trf2/sei-rest-api-module)
  * para a estrutura simplificada compartilhada com os demais interops.
  *
- * Diferença fundamental em relação ao PDPJ: o SEI não vincula documentos a
- * movimentos (movimentos[].idDocumento é sempre null). Por isso, para cada
- * documento é gerado um movimento sintético ("Inclusão de Documento") e todas
- * as sequências (reais + sintéticas) são renumeradas por dataHora crescente.
+ * O SEI não vincula documentos a andamentos via idDocumento nos andamentos,
+ * mas as descrições dos andamentos trazem o número do documento e a dataHora.
+ * A correlação documento→andamento é feita por:
+ *   1) dataHora do documento == dataHora do andamento, E
+ *   2) número do documento aparece na descrição do andamento.
+ * Quando nenhum andamento casa, é gerado um movimento sintético ("Inclusão de Documento").
+ * Todas as sequências (andamentos reais + sintéticos) são renumeradas por dataHora crescente.
  */
 
 import { InteropMovimentoComDocumentosType, InteropParteType, InteropProcessoType } from "./interop-types";
 import { nivelDeSigiloFromNivel } from "./pdpj";
 
-// Type definitions for the input SEI JSON structure.
-// O payload da API é um array de SeiInput; trabalhamos sempre com data[0].
+// Type definitions for the input SEI JSON structure (novo formato: objeto único).
 export interface SeiInput {
-    id: string;
-    tramitacoes: SeiTramitacao[];
-}
-
-export interface SeiTramitacao {
-    classe: SeiClasse[];
+    numero: string;
+    protocoloFormatado?: string;
     nivelSigilo: string;
-    dataHoraAjuizamento: string;
-    tribunal: {
+    nivelSigiloDescricao?: string;
+    tipoProcedimento: {
+        id: number;
+        nome: string;
+    };
+    dataGeracao: string;
+    orgao: {
         sigla: string;
         nome: string;
-        segmento: string;
     };
-    instancia: string | null;
-    natureza: string;
-    partes: SeiParte[];
-    movimentos: SeiMovimento[];
+    interessados?: SeiInteressado[];
+    andamentos: SeiAndamento[];
     documentos: SeiDocumento[];
     processosRelacionados?: SeiProcessoRelacionado[];
 }
 
-interface SeiClasse {
-    codigo: number;
-    nome: string;
+export interface SeiInteressado {
+    nome?: string;
+    // Campos opcionais para tolerância a variações entre órgãos.
+    polo?: 'ATIVO' | 'PASSIVO' | string;
+    tipo?: string;
+    tipoPessoa?: 'FISICA' | 'JURIDICA' | string;
 }
 
-interface SeiMovimento {
+export interface SeiAndamento {
     sequencia: number;
     dataHora: string;
     descricao: string;
-    idDocumento: string | null;
-    tipo: {
-        id: number | null;
-    } | null;
+    idTarefa?: number;
 }
 
-interface SeiDocumento {
+export interface SeiDocumento {
     sequencia: number;
-    id: string;
-    idOrigem?: string;
-    tipo: {
-        nome: string;
-    };
-    arquivo: {
-        tipo: string;
-        nome: string;
-    };
-    nivelSigilo: string;
+    numero: string;        // identificador usado nas descrições dos andamentos e na URL de obtenção do binário
+    protocoloFormatado?: string;
+    idDocumento?: string;  // id de origem (antigo idOrigem)
+    tipo: string;
     nome: string;
-    dataHoraJuntada: string;
-}
-
-// SEI pode enviar partes em formatos variados conforme o órgão; mapeamos o que
-// existir e deixamos vazio o resto. Campos opcionais para tolerância.
-interface SeiParte {
-    polo?: 'ATIVO' | 'PASSIVO' | string;
-    nome?: string;
-    tipo?: string;
-    tipoPessoa?: 'FISICA' | 'JURIDICA' | string;
+    nivelSigilo: string;
+    mimeType: string;
+    nomeArquivo: string;
+    dataHora: string;
 }
 
 interface SeiProcessoRelacionado {
@@ -85,121 +73,149 @@ interface SeiProcessoRelacionado {
 /**
  * Converte o JSON do SEI para a estrutura simplificada compartilhada.
  *
- * @param processo - data[0] do payload do SEI ({ id, tramitacoes })
- * @returns Uma lista de processos simplificados, um por tramitação.
+ * @param processo - objeto do payload do SEI
+ * @returns Uma lista com um processo simplificado (o SEI retorna um único processo).
  */
 export function mapSeiToSimplified(processo: SeiInput): InteropProcessoType[] {
     if (!processo) {
         throw new Error('Invalid SEI data provided');
     }
 
-    if (!processo?.tramitacoes?.length) {
-        throw new Error(`No tramitacao found for SEI process ${processo.id}`);
+    if (!processo.andamentos && !processo.documentos) {
+        throw new Error(`No andamentos/documentos found for SEI process ${processo.numero}`);
     }
 
-    const processosSimplificados = processo.tramitacoes.map(tramitacao => {
+    const processoSimplificado: InteropProcessoType = {
+        numeroProcesso: processo.numero,
+        tribunal: {
+            sigla: processo.orgao?.sigla || '',
+            nome: processo.orgao?.nome || '',
+            segmento: ''
+        },
+        instancia: '',
+        natureza: processo.tipoProcedimento?.nome || '',
+        competencia: '',
+        classe: {
+            codigo: processo.tipoProcedimento?.id || 0,
+            descricao: processo.tipoProcedimento?.nome || ''
+        },
+        assuntos: [],
+        partes: {
+            poloAtivo: [],
+            poloPassivo: []
+        },
+        informacoesGerais: {
+            dataAjuizamento: processo.dataGeracao,
+            nivelSigilo: nivelDeSigiloFromNivel(processo.nivelSigilo)
+        },
+        movimentosEDocumentos: []
+    };
 
-        const processoSimplificado: InteropProcessoType = {
-            numeroProcesso: processo.id,
-            tribunal: {
-                sigla: tramitacao.tribunal?.sigla || '',
-                nome: tramitacao.tribunal?.nome || '',
-                segmento: tramitacao.tribunal?.segmento || ''
-            },
-            instancia: tramitacao.instancia || '',
-            natureza: tramitacao.natureza || '',
-            competencia: '',
-            classe: {
-                codigo: tramitacao.classe?.[0]?.codigo || 0,
-                descricao: tramitacao.classe?.[0]?.nome || ''
-            },
-            assuntos: [],
-            partes: {
-                poloAtivo: [],
-                poloPassivo: []
-            },
-            informacoesGerais: {
-                dataAjuizamento: tramitacao.dataHoraAjuizamento,
-                nivelSigilo: nivelDeSigiloFromNivel(tramitacao.nivelSigilo)
-            },
-            movimentosEDocumentos: []
+    // Mapeia interessados (SEI tipicamente envia vazio; mapeia o que existir).
+    (processo.interessados || []).forEach(parte => {
+        const parteSimplificada: InteropParteType = {
+            nome: parte.nome || '',
+            tipo: parte.tipo || '',
+            tipoPessoa: (parte.tipoPessoa === 'JURIDICA' ? 'JURIDICA' : 'FISICA'),
+            documentos: [],
+            representantes: []
         };
+        if (parte.polo === 'PASSIVO') {
+            processoSimplificado.partes.poloPassivo.push(parteSimplificada);
+        } else {
+            processoSimplificado.partes.poloAtivo.push(parteSimplificada);
+        }
+    });
 
-        // Process parties (SEI tipicamente não envia; mapeia o que existir).
-        tramitacao.partes?.forEach(parte => {
-            const parteSimplificada: InteropParteType = {
-                nome: parte.nome || '',
-                tipo: parte.tipo || '',
-                tipoPessoa: (parte.tipoPessoa === 'JURIDICA' ? 'JURIDICA' : 'FISICA'),
-                documentos: [],
-                representantes: []
-            };
-            if (parte.polo === 'ATIVO') {
-                processoSimplificado.partes.poloAtivo.push(parteSimplificada);
-            } else {
-                processoSimplificado.partes.poloPassivo.push(parteSimplificada);
-            }
-        });
+    processoSimplificado.movimentosEDocumentos = buildMovimentosEDocumentos(processo);
 
-        processoSimplificado.movimentosEDocumentos = buildMovimentosEDocumentos(tramitacao);
-
-        return processoSimplificado;
-    })
-
-    return processosSimplificados;
+    return [processoSimplificado];
 }
 
 /**
- * Constrói a lista de movimentos (reais + sintéticos) com seus documentos,
- * ordenada por dataHora crescente e renumerada.
+ * Constrói a lista de movimentos com seus documentos.
  *
- * O SEI não vincula documentos a movimentos via idDocumento (sempre null).
- * Estratégia:
- *  1. Cria um item para cada movimento real, com documentos: [].
- *  2. Cria um movimento sintético ("Inclusão de Documento") para cada documento,
- *     já com o documento vinculado.
- *  3. Concatena, ordena por dataHora crescente e renumera sequencia de 1..N.
+ * Estratégia de correlação documento→andamento (por data/hora + número do doc):
+ *  1. Para cada documento, busca andamentos com a MESMA dataHora cuja descrição
+ *     cite o número do documento. Havendo múltiplos, prefere o de "Registro"/"Geração";
+ *     se ainda assim houver empate, fica com o primeiro.
+ *  2. Andamentos que receberam ao menos um documento são incluídos com esses docs.
+ *     Andamentos sem documentos são incluídos vazios (são movimentos puros).
+ *  3. Documentos sem andamento casado geram um movimento sintético
+ *     ("Inclusão de Documento") na dataHora do documento.
+ *  4. Tudo é concatenado, ordenado por dataHora DECRESCENTE (mais recente =
+ *     sequencia 1, posição 0 do array) e renumerado 1..N. A sequencia original
+ *     do SEI é descartada.
  */
-function buildMovimentosEDocumentos(tramitacao: SeiTramitacao): InteropMovimentoComDocumentosType[] {
-    const itens: InteropMovimentoComDocumentosType[] = [];
+function buildMovimentosEDocumentos(processo: SeiInput): InteropMovimentoComDocumentosType[] {
+    const documentos = processo.documentos || [];
+    const andamentos = processo.andamentos || [];
 
-    // 1) Movimentos reais (sem documentos, pois o SEI não faz a associação).
-    for (const movimento of tramitacao.movimentos || []) {
-        itens.push({
-            sequencia: 0, // renumerado abaixo
-            dataHora: movimento.dataHora,
-            descricao: movimento.descricao,
-            orgaoJulgador: '',
-            tipo: {
-                id: movimento.tipo?.id ?? null,
-                nome: '',
-                descricao: ''
-            },
-            documentos: []
-        });
+    // Indexa andamentos por dataHora (iso) para lookup rápido.
+    const andamentosPorDataHora = new Map<string, SeiAndamento[]>();
+    for (const a of andamentos) {
+        const key = normalizarDataHora(a.dataHora)
+        if (!andamentosPorDataHora.has(key)) andamentosPorDataHora.set(key, [])
+        andamentosPorDataHora.get(key)!.push(a)
     }
 
-    // 2) Movimento sintético por documento ("Inclusão de Documento").
-    for (const doc of tramitacao.documentos || []) {
-        itens.push({
-            sequencia: 0, // renumerado abaixo
-            dataHora: doc.dataHoraJuntada,
-            descricao: 'Inclusão de Documento',
-            orgaoJulgador: '',
-            tipo: {
-                id: null,
-                nome: '',
-                descricao: ''
-            },
-            documentos: [mapearDocumento(doc)]
-        });
+    // Rastreia quais andamentos foram consumidos (casaram com documento(s)).
+    const andamentosConsumidos = new Set<SeiAndamento>()
+    // Itens finais (movimentos): cada um com dataHora, descrição e documentos vinculados.
+    const itens: { dataHora: string, descricao: string, idTarefa: number | null, documentos: ReturnType<typeof mapearDocumento>[] }[] = []
+
+    for (const doc of documentos) {
+        const docDataHora = normalizarDataHora(doc.dataHora)
+        const candidatos = (andamentosPorDataHora.get(docDataHora) || [])
+            .filter(a => a.descricao?.includes(doc.numero))
+
+        let andamento: SeiAndamento | undefined
+        if (candidatos.length === 1) {
+            andamento = candidatos[0]
+        } else if (candidatos.length > 1) {
+            // Tiebreaker: prefere "Registro"/"Geração" de documento público.
+            andamento = candidatos.find(a => /registro de documento|gerado documento/i.test(a.descricao))
+                || candidatos[0]
+        }
+
+        const docMapeado = mapearDocumento(doc)
+        if (andamento) {
+            andamentosConsumidos.add(andamento)
+            // Anexa o documento a um item já criado para este andamento, ou cria um novo.
+            let item = itens.find(it => it.descricao === andamento!.descricao && normalizarDataHora(it.dataHora) === docDataHora)
+            if (!item) {
+                item = { dataHora: andamento.dataHora, descricao: andamento.descricao, idTarefa: andamento.idTarefa ?? null, documentos: [] }
+                itens.push(item)
+            }
+            item.documentos.push(docMapeado)
+        } else {
+            // Sem andamento casado: movimento sintético.
+            itens.push({ dataHora: doc.dataHora, descricao: 'Inclusão de Documento', idTarefa: null, documentos: [docMapeado] })
+        }
     }
 
-    // 3) Ordenar por dataHora crescente e renumerar.
-    itens.sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime());
-    itens.forEach((item, idx) => { item.sequencia = idx + 1 });
+    // Adiciona andamentos que não casaram com nenhum documento (movimentos puros).
+    for (const a of andamentos) {
+        if (!andamentosConsumidos.has(a)) {
+            itens.push({ dataHora: a.dataHora, descricao: a.descricao, idTarefa: a.idTarefa ?? null, documentos: [] })
+        }
+    }
 
-    return itens;
+    // Numeracao por dataHora DECRESCENTE: mais recente = sequencia 1 (posição 0).
+    itens.sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
+    return itens.map((item, idx) => ({
+        sequencia: idx + 1,
+        dataHora: item.dataHora,
+        descricao: item.descricao,
+        orgaoJulgador: '',
+        responsavel: '',
+        tipo: {
+            id: item.idTarefa ?? null,
+            nome: '',
+            descricao: ''
+        },
+        documentos: item.documentos
+    }))
 }
 
 /**
@@ -208,28 +224,33 @@ function buildMovimentosEDocumentos(tramitacao: SeiTramitacao): InteropMovimento
  */
 function mapearDocumento(doc: SeiDocumento) {
     return {
-        id: doc.id,
+        id: doc.numero,
         nome: doc.nome,
         nivelSigilo: nivelDeSigiloFromNivel(doc.nivelSigilo),
-        tipoDocumento: doc.tipo?.nome || '',
-        tipoArquivo: doc.arquivo?.tipo || '',
+        tipoDocumento: doc.tipo || '',
+        tipoArquivo: doc.mimeType || '',
         quantidadePaginas: 0,
         tamanho: 0,
         tamanhoTexto: formatFileSize(0),
         signatarios: [],
-        dataHoraJuntada: doc.dataHoraJuntada
-    };
+        dataHoraJuntada: doc.dataHora
+    }
+}
+
+/** Normaliza um ISO date-time para uma chave estável (segundos), ignorando ms. */
+function normalizarDataHora(iso: string): string {
+    return iso?.replace(/\.\d{3}Z$/, 'Z').replace(/\.\d{3}$/, '')
 }
 
 /**
  * Formats file size from bytes to human-readable format
  */
 function formatFileSize(bytes: number): string {
-    if (!bytes) return '0 B';
+    if (!bytes) return '0 B'
 
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
