@@ -1,10 +1,11 @@
 import { Container } from 'react-bootstrap'
 import PromptForm from '../../prompt-form'
 import { PromptDao, UserDao } from '@/lib/db/dao'
-import { assertCurrentUserCorporativo, isUserModerator } from '@/lib/user';
+import { assertCourtId, assertCurrentUserCorporativo, isUserModerator } from '@/lib/user';
 import { PublicError } from '@/lib/utils/public-error';
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { isBetaTester } from '@/lib/utils/prefs';
+import { envStringPrefixed } from '@/lib/utils/env';
 
 export default async function Edit(props: { params: Promise<{ id: number }> }) {
     try {
@@ -26,12 +27,16 @@ export default async function Edit(props: { params: Promise<{ id: number }> }) {
                 throw new PublicError('Você não tem permissão para editar este prompt.')
         }
 
+        const seqTribunalPai = user ? '' + (assertCourtId(user)) : undefined
+        const hasSeiApiUrl = !!envStringPrefixed('SEI_API_URL', seqTribunalPai)
+
+
         const allPrompts = await PromptDao.retrievePromptNamesAndUuids(user_id, isModerator)
 
         return (<Container fluid={false}>
             <h1 className="mt-5 mb-3">Edição de Prompt</h1>
             {editingAsModerator && <div className="alert alert-warning">Você está editando este prompt como moderador. As alterações serão salvas mas o autor original será mantido.</div>}
-            <PromptForm record={record} allPrompts={allPrompts} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} isBetaTester={betaTester} />
+            <PromptForm record={record} allPrompts={allPrompts} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} isBetaTester={betaTester} hasSeiApiUrl={hasSeiApiUrl} />
         </Container>)
     } catch (e: any) {
         return (<Container fluid={false}>

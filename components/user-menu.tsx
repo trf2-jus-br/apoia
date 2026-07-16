@@ -7,10 +7,10 @@ import Link from 'next/link'
 import UserMenuSignout from './user-menu-signout'
 import { unstable_noStore as noStore } from 'next/cache'
 import { NavigationLink } from './NavigationLink';
-import { envString } from '@/lib/utils/env';
+import { envString, envStringPrefixed } from '@/lib/utils/env';
 import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
-import { getCurrentUser, isUserCorporativo } from '@/lib/user';
+import { assertCourtId, getCurrentUser, isUserCorporativo } from '@/lib/user';
 import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-server';
 import { getAnonymize, getMode, isBetaTester } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
@@ -35,6 +35,9 @@ export default async function UserMenu({ }: {}) {
         const mode = await getMode()
         const betaTester = await isBetaTester()
         const isAdministrative = mode === 'ADMINISTRATIVO'
+
+        const seqTribunalPai = user ? '' + (assertCourtId(user)) : undefined
+        const hasSeiApiUrl = !!envStringPrefixed('SEI_API_URL', seqTribunalPai)
 
         const nonCorporateUser = user && !(await isUserCorporativo(user))
 
@@ -77,7 +80,7 @@ export default async function UserMenu({ }: {}) {
                             <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
-                                {betaTester && <UserMenuMode mode={mode} />}
+                                {betaTester && hasSeiApiUrl && <UserMenuMode mode={mode} />}
                                 {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
                                 {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
                                 {user && <li><UserMenuSignout /></li>}

@@ -1,12 +1,13 @@
 import { Container } from 'react-bootstrap'
 import PromptForm from '../prompt-form'
 import { PromptDao, UserDao } from '@/lib/db/dao'
-import { assertCurrentUser, isUserModerator } from '@/lib/user'
+import { assertCourtId, assertCurrentUser, isUserModerator } from '@/lib/user'
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { Instance, Matter, Scope } from '@/lib/proc/process-types'
 import { PublicError } from '@/lib/utils/public-error'
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { getMode, isBetaTester } from '@/lib/utils/prefs'
+import { envStringPrefixed } from '@/lib/utils/env'
 
 export default async function New(
     props: { params: Promise<{ kind: string }>, searchParams: Promise<{ copyFrom: string, template: string, import: string }> }
@@ -51,8 +52,11 @@ export default async function New(
     const allPrompts = await PromptDao.retrievePromptNamesAndUuids(user_id, isModerator)
     const betaTester = await isBetaTester()
 
+    const seqTribunalPai = user ? '' + (assertCourtId(user)) : undefined
+    const hasSeiApiUrl = !!envStringPrefixed('SEI_API_URL', seqTribunalPai)
+
     return (<Container fluid={false}>
         <h1 className="mt-5 mb-3">Novo</h1>
-        <PromptForm record={record} allPrompts={allPrompts} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} isBetaTester={betaTester} />
+        <PromptForm record={record} allPrompts={allPrompts} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} isBetaTester={betaTester} hasSeiApiUrl={hasSeiApiUrl} />
     </Container>)
 }
