@@ -1,5 +1,5 @@
-import { match, matchFull, ANY, SOME, EXACT, OR, ANY_GREEDY, SOME_GREEDY, MatchFullResult, matchSomePatterns, PHASE } from '../lib/proc/pattern';
-import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T, padroesAgravo, padraoConhecimentoForcado, padroesConhecimento, padraoConhecimentoAberta, pecasRelevantes1aInstancia, FaseProcessual, padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao, padraoEmbargosDeDeclaracaoEmAcordao } from '../lib/proc/combinacoes';
+import { match, matchFull, ANY, SOME, EXACT, OR, ANY_GREEDY, SOME_GREEDY, MatchFullResult, matchSomePatterns, PHASE, MatchOperator } from '../lib/proc/pattern';
+import { padroesApelacao, padraoApelacaoAberta, padraoApelacaoFechada, T, padroesAgravo, padraoConhecimentoForcado, padroesConhecimento, padraoConhecimentoAberta, pecasRelevantes1aInstancia, FaseProcessual, padraoViabilidadeDeRecursoExtraordinarioComEmbargosDeDeclaracao, padraoEmbargosDeDeclaracaoEmAcordao, padroesPorPrioridade, padroesPorPrioridadeComFallback, padraoDespachoInicial } from '../lib/proc/combinacoes';
 
 type DocumentoType = {
   id: string | null
@@ -28,7 +28,7 @@ function captured(documentos: DocumentoType[], padraoApelacaoFechada: any) {
   return captured
 }
 
-function capturedFromPatterns(documentos: DocumentoType[], padroes: any[]) {
+function capturedFromPatterns(documentos: DocumentoType[], padroes: MatchOperator[][]) {
   const res: MatchFullResult | null = matchSomePatterns(documentos, padroes)
   const captured = res?.items.flatMap(i => i.captured.map(d => parseInt(d.id)))
   return captured
@@ -149,6 +149,12 @@ describe('seleção automática do primeiro padrão que captura documentos', () 
       T.EMBARGOS_DE_DECLARACAO,
       T.CONTRARRAZOES,
     ), [padraoEmbargosDeDeclaracaoEmAcordao])).toEqual([7,8,9,10,11])
+  });
+
+  test('identificar apenas petição inicial', () => {
+    expect(capturedFromPatterns(docs(
+      T.PETICAO_INICIAL,
+    ), padroesPorPrioridadeComFallback)).toEqual([1])
   });
 
 });

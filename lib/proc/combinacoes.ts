@@ -514,11 +514,11 @@ export const padraoDespachoInicial = [
     ANY({ capture: [...pecasRelevantes1aInstancia] }),
     EXACT(T.PETICAO_INICIAL),
     PHASE(FaseProcessual.DESPACHO_INICIAL.name),
+    ANY({ capture: [...pecasRelevantes1aInstancia], except: pecasQueIniciamFases }),
 ]
 
 export const padraoConhecimentoAberta = [
     ...padraoDespachoInicial,
-    ANY({ capture: [...pecasRelevantes1aInstancia], except: pecasQueIniciamFases }),
     EXACT(T.DESPACHO_DECISAO),
     PHASE(FaseProcessual.CONHECIMENTO.name),
     ANY({ capture: [...pecasRelevantes1aInstancia], except: pecasQueIniciamFases }),
@@ -541,6 +541,7 @@ export const padraoConhecimentoForcado = [
 export const padroesConhecimento = [
     padraoConhecimentoFechada,
     padraoConhecimentoAberta,
+    padraoDespachoInicial,
 ]
 
 const padroesBasicosSegundaInstancia = [
@@ -571,7 +572,7 @@ export const padroesPorPrioridade = [
 
 // Mesma ordem de prioridade, mas inclui os padrões "forçados" como fallback
 // no final (só serão tentados se nenhum padrão natural casar).
-const padroesPorPrioridadeComFallback = [
+export const padroesPorPrioridadeComFallback = [
     ...padroesPorPrioridade,
     padraoAgravoForcado,
     padraoApelacaoForcado,
