@@ -10,6 +10,7 @@ import { UnauthorizedError } from './utils/api-error'
 import { slugify } from './utils/utils'
 import devLog from './utils/log'
 import { mcpRequestContext } from './mcp/mcp-request-context'
+import { modeUrl } from './utils/prefs'
 
 export type UserType = {
     id?: number, name: string, email: string, preferredUsername?: string, iss?: string, encryptedPassword: string, system: string, accessToken?: string, corporativo?: any[], roles?: string[]
@@ -81,7 +82,7 @@ export const getCurrentUser = async (): Promise<UserType | undefined> => {
 
 export const assertCurrentUser = async () => {
     const user = await getCurrentUser()
-    if (!user) redirect('/auth/signin')
+    if (!user) redirect(await modeUrl('/auth/signin'))
     return user
 }
 

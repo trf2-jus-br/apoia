@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faArrowLeft, faFileAlt } from "@fortawesome/free-solid-svg-icons"
 import { useRouter } from "next/navigation"
 import devLog from "@/lib/utils/log"
+import { useModeUrl } from "@/lib/utils/use-mode-url"
 
 interface GroupViewProps {
     groupSlug: string
@@ -16,6 +17,7 @@ interface GroupViewProps {
 
 export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps) {
     const router = useRouter()
+    const modeUrl = useModeUrl()
     
     // Encontra o grupo pelo slug
     const group = Object.values(GrupoDeSinteseMap).find(g => g.slug === groupSlug)
@@ -42,7 +44,7 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
     })
 
     const handleBack = () => {
-        router.push('/')
+        router.push(modeUrl('/'))
     }
 
     return (

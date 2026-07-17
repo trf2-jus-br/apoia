@@ -12,12 +12,13 @@ import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
 import { assertCourtId, getCurrentUser, isUserCorporativo } from '@/lib/user';
 import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-server';
-import { getAnonymize, getMode, isBetaTester } from '@/lib/utils/prefs';
+import { getAnonymize, getMode, getModeUrl, isBetaTester } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
 import Cryptr from 'cryptr';
 import UserMenuAnonymize from './user-menu-anonymize';
 import UserMenuBetaTester from './user-menu-beta-tester';
 import UserMenuMode from './user-menu-mode';
+import ModeLink from './mode-link';
 
 export default async function UserMenu({ }: {}) {
     noStore()
@@ -40,30 +41,31 @@ export default async function UserMenu({ }: {}) {
         const hasSeiApiUrl = !!envStringPrefixed('SEI_API_URL', seqTribunalPai)
 
         const nonCorporateUser = user && !(await isUserCorporativo(user))
+        const modeUrl = await getModeUrl()
 
 
 
         return (<>
             {user && corporateUser && <div className="collapse navbar-collapse" id="navbarSupportedContent">
                 <NavItem>
-                    <NavigationLink href={isAdministrative ? "/chat?prompt=chat-administrativo" : "/chat"} text="Chat" />
+                    <NavigationLink href={modeUrl("/chat")} text="Chat" />
                 </NavItem>
                 <NavItem>
-                    <NavigationLink href="/prompts/reset" text="Prompts" />
+                    <NavigationLink href={modeUrl(`/prompts/reset`)} text="Prompts" />
                 </NavItem>
                 <NavItem>
-                    <NavigationLink href="/revision" text="Revisão de Texto" />
+                    <NavigationLink href={modeUrl("/revision")} text="Revisão de Texto" />
                 </NavItem>
                 {!isAdministrative &&
                     <NavItem>
-                        <NavigationLink href="/headnote" text="Ementa" />
+                        <NavigationLink href={modeUrl("/headnote")} text="Ementa" />
                     </NavItem>}
             </div>}
 
             <ul className="navbar-nav me-1 mb-2x mb-lg-0x">
                 {((envString('ACCESS_ARENA') || '').split(';').includes(user?.name) || user?.roles?.includes('apoia-role-arena')) &&
                     (<NavItem>
-                        <NavigationLink href="/arena" text="Arena" />
+                        <NavigationLink href={modeUrl("/arena")} text="Arena" />
                     </NavItem>)}
                 <li className="nav-item dropdown">
                     {!user
@@ -78,11 +80,11 @@ export default async function UserMenu({ }: {}) {
                                     Configurações
                                 </a>}
                             <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><Link className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</Link></li>
+                                <li><ModeLink className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</ModeLink></li>
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
-                                {betaTester && hasSeiApiUrl && <UserMenuMode mode={mode} />}
+                                {betaTester && hasSeiApiUrl && <UserMenuMode />}
                                 {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
-                                {!user && <li><Link className="dropdown-item" href="/auth/signin">Login</Link></li>}
+                                {!user && <li><ModeLink className="dropdown-item" href="/auth/signin">Login</ModeLink></li>}
                                 {user && <li><UserMenuSignout /></li>}
                                 {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}
                             </ul></>
@@ -100,7 +102,7 @@ export default async function UserMenu({ }: {}) {
                         Configurações
                     </a>
                     <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li><Link className="dropdown-item" href="/prefs">Modelo de IA</Link></li>
+                        <li><ModeLink className="dropdown-item" href="/prefs">Modelo de IA</ModeLink></li>
                         <li className="dropdown-item"><ErrorSpan encrypted={encrypted} /></li>
                     </ul>
                 </li>

@@ -3,6 +3,7 @@ import 'server-only'
 import { PrefsCookieType } from '@/lib/utils/prefs-types';
 import { headers, cookies } from 'next/headers';
 import { PrefsDao } from '@/lib/db/dao';
+import { ADM_MODE_PREFIX, applyModeToUrl } from './mode-url';
 
 // Somente leitura. A migração cookie->banco (e a remoção do cookie) é feita pela
 // server action migratePrefsFromCookie(), disparada no mount do PrefsMigrator:
@@ -52,12 +53,26 @@ export async function isBetaTester(): Promise<boolean> {
     return cookiesList.get('beta-tester')?.value === '2'
 }
 
-// Modo de operação (Judicial / Administrativo). Somente banco; default 'JUDICIAL'.
+// Modo de operação (Judicial / Administrativo). A URL é a fonte da verdade:
+// o proxy.ts injeta o request header "x-apoia-mode" quando o path tem o
+// prefixo "/adm" (e o remove das demais URLs). O banco não guarda mais a
+// preferência de modo (coluna ia_user_prefs.mode removida na migration-029).
 // Retorna string (não ModeKey) porque ModeKey = keyof typeof Mode inclui number
 // (devido ao index signature de ModeType), o que não é útil para os callers.
 export async function getMode(): Promise<string> {
-    const fromDb = await PrefsDao.getMode()
-    if (fromDb) return fromDb
-    return 'JUDICIAL'
+    const headersList = await (headers());
+    return headersList.get('x-apoia-mode') === 'ADMINISTRATIVO' ? 'ADMINISTRATIVO' : 'JUDICIAL'
+}
+
+// Ajusta uma URL ao modo corrente (regras em applyModeToUrl, lib/utils/mode-url.ts).
+// Usar em redirects/hrefs de server components e actions sensíveis ao modo.
+export async function modeUrl(url: string): Promise<string> {
+    return applyModeToUrl(url, await getMode())
+}
+
+// Versão curried de modeUrl, para pontos que ajustam várias URLs de uma vez.
+export async function getModeUrl(): Promise<(url: string) => string> {
+    const modePrefix = (await getMode()) === 'ADMINISTRATIVO' ? ADM_MODE_PREFIX : ''
+    return (url: string) => applyModeToUrl(url, modePrefix)
 }
 

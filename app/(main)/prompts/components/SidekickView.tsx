@@ -11,6 +11,7 @@ import Chat from "@/components/slots/chat"
 import BreadCrumbs from "../breadcrumbs"
 import { useMemo, useState, useEffect } from "react"
 import { usePromptContext } from "../context/PromptContext"
+import { useModeUrl } from "@/lib/utils/use-mode-url"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faExternalLink } from "@fortawesome/free-solid-svg-icons"
 import { PromptButton } from "./PromptButton"
@@ -45,13 +46,14 @@ export function SidekickView({
         isBetaTester,
     } = usePromptContext()
     const [urlNovaAba, setUrlNovaAba] = useState('')
+    const modeUrl = useModeUrl()
 
     useEffect(() => {
         const url = numeroDoProcesso
-            ? `${window.location.origin}/prompts?process=${numeroDoProcesso}`
-            : `${window.location.origin}/`
+            ? modeUrl(`${window.location.origin}/prompts?process=${numeroDoProcesso}`)
+            : modeUrl(`${window.location.origin}/`)
         setUrlNovaAba(url)
-    }, [numeroDoProcesso])
+    }, [numeroDoProcesso, modeUrl])
 
     // Lista de prompts "demais" (favoritos) com os sugeridos já filtrados
     const demaisPrompts = useMemo(() => {

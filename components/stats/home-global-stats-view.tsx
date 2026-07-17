@@ -6,6 +6,7 @@ import { faClock, faRocket, faUsers, faBuilding, faTrophy, faInfoCircle } from '
 import Link from 'next/link'
 import { STATS_CONFIG } from '@/lib/utils/stats-config'
 import { MiniCourtChart } from './home-global-stats-chart'
+import ModeLink from '../mode-link'
 
 interface HomeGlobalStatsViewProps {
     stats: any
@@ -13,7 +14,7 @@ interface HomeGlobalStatsViewProps {
 
 export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
     let ranking = stats.courtRanking || []
-    
+
     // Mock data se houver menos de 5 tribunais
     // if (ranking.length < 5) {
     //     ranking = [
@@ -37,14 +38,14 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
     }))
 
     const othersSum = ranking.slice(5).reduce((sum: number, court: any) => sum + court.totalExecutions, 0)
-    const chartData = othersSum > 0 
+    const chartData = othersSum > 0
         ? [...top5, { name: 'Outros', executions: othersSum, fullName: 'Demais Tribunais' }]
         : top5
 
     return (
         <Row className="g-3 align-items-stretch">
             <Col md={2} className="text-center border-end">
-                <Link href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
+                <ModeLink prefetch={false} href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
                     <div className="flex-grow-1 d-flex flex-column justify-content-center">
                         <div className="text-primary mb-1">
                             <FontAwesomeIcon icon={faClock} size="lg" />
@@ -64,11 +65,11 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                             </OverlayTrigger>
                         </small>
                     </div>
-                </Link>
+                </ModeLink>
             </Col>
-            
+
             <Col md={2} className="text-center border-end">
-                <Link href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
+                <ModeLink prefetch={false} href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
                     <div className="flex-grow-1 d-flex flex-column justify-content-center">
                         <div className="text-info mb-1">
                             <FontAwesomeIcon icon={faRocket} size="lg" />
@@ -88,11 +89,11 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                             </OverlayTrigger>
                         </small>
                     </div>
-                </Link>
+                </ModeLink>
             </Col>
 
             <Col md={2} className="text-center border-end">
-                <Link href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
+                <ModeLink prefetch={false} href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
                     <div className="flex-grow-1 d-flex flex-column justify-content-center">
                         <div className="text-success mb-1">
                             <FontAwesomeIcon icon={faUsers} size="lg" />
@@ -112,11 +113,11 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                             </OverlayTrigger>
                         </small>
                     </div>
-                </Link>
+                </ModeLink>
             </Col>
 
             <Col md={2} className="text-center border-end">
-                <Link href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
+                <ModeLink prefetch={false} href="/stats/global" className="text-decoration-none text-dark d-flex flex-column h-100">
                     <div className="flex-grow-1 d-flex flex-column justify-content-center">
                         <div className="text-warning mb-1">
                             <FontAwesomeIcon icon={faBuilding} size="lg" />
@@ -136,11 +137,11 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                             </OverlayTrigger>
                         </small>
                     </div>
-                </Link>
+                </ModeLink>
             </Col>
 
             <Col md={4} className="text-center pe-4">
-                <Link href="/stats/global" className="text-decoration-none w-100 text-dark d-flex flex-column h-100">
+                <ModeLink prefetch={false} href="/stats/global" className="text-decoration-none w-100 text-dark d-flex flex-column h-100">
                     <div className="flex-grow-1 d-flex flex-column justify-content-center">
                         <MiniCourtChart data={chartData} />
                     </div>
@@ -155,7 +156,7 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                             </OverlayTrigger>
                         </small>
                     </div>
-                </Link>
+                </ModeLink>
             </Col>
         </Row>
     )

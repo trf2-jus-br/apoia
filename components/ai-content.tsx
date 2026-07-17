@@ -24,6 +24,7 @@ import { highlightCitationsLongestMatch } from '@/lib/n-grams'
 import { addLinkToPieces } from '@/lib/ui/link-to-piece'
 import { DadosDoProcessoType } from '@/lib/proc/process-types'
 import { playClickSound } from '@/lib/sound'
+import { useModeUrl } from '@/lib/utils/use-mode-url'
 
 export const getColor = (text, errormsg) => {
     let color = 'info'
@@ -86,6 +87,7 @@ const preprocessPromptMessages = (text: string, promptMessages): string => {
 
 
 export default function AiContent(params: { definition: PromptDefinitionType, data: PromptDataType, options?: PromptOptionsType, config?: PromptConfigType, visualization?: VisualizationEnum, dossierCode: string, diffSource?: string, onBusy?: () => void, onReady?: (content: ContentType) => void, dadosDoProcesso?: DadosDoProcessoType }) {
+    const modeUrl = useModeUrl()
     const [current, setCurrent] = useState('')
     const [complete, setComplete] = useState(false)
     const [errormsg, setErrormsg] = useState('')
@@ -225,7 +227,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
 
         let response: Response
         try {
-            response = await fetch('/api/v1/ai?uiMessageStream=true', {
+            response = await fetch(modeUrl('/api/v1/ai?uiMessageStream=true'), {
                 method: 'POST',
                 body: JSON.stringify(payload)
             })
@@ -372,7 +374,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     }, [current, errormsg]);
 
     const exibirPeca = (processNumber: string, idPiece: string) => {
-        const url = `/api/v1/process/${processNumber}/piece/${idPiece}/binary`;
+        const url = modeUrl(`/api/v1/process/${processNumber}/piece/${idPiece}/binary`);
         window.open(url, '_blank');
     };
 

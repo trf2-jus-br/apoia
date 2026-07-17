@@ -7,6 +7,7 @@ import { UserDao } from '@/lib/db/dao';
 import { CourtUsageData, UserUsageData, DailyUsageData } from '@/lib/db/mysql-types';
 import { dailyLimits } from '@/lib/utils/limits';
 import { displayUserName } from '@/lib/utils/utils';
+import ModeLink from '@/components/mode-link';
 
 export default async function DashboardPage(props) {
     const params = await props.params;
@@ -45,9 +46,9 @@ export default async function DashboardPage(props) {
         return (
             <Container className='mt-5'>
                 <div className="mb-3">
-                    <Link href={`/dashboard/${court_id}/${month}`} className="btn btn-outline-secondary btn-sm">
+                    <ModeLink prefetch={false} href={`/dashboard/${court_id}/${month}`} className="btn btn-outline-secondary btn-sm">
                         ← Voltar para Visão Geral
-                    </Link>
+                    </ModeLink>
                 </div>
 
                 <h1 className='mb-3 text-center'>Dados de Uso de {userName}</h1>
@@ -58,7 +59,7 @@ export default async function DashboardPage(props) {
                 {dailyUsageData.length > 0 ? (
                     <>
                         <CourtUsageChart data={dailyUsageData} />
-                        
+
                         <div className="row mt-4">
                             <div className="col-md-3">
                                 <h5>Consumo Total no Período</h5>
@@ -184,29 +185,29 @@ export default async function DashboardPage(props) {
                             {userUsageData.map((user) => (
                                 <tr key={user.id} style={{ cursor: 'pointer' }}>
                                     <td>
-                                        <Link href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
+                                        <ModeLink prefetch={false} href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
                                             {displayUserName(user.name, user.username)}
-                                        </Link>
+                                        </ModeLink>
                                     </td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <Link href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
+                                        <ModeLink prefetch={false} href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
                                             {user.usage_count}
-                                        </Link>
+                                        </ModeLink>
                                     </td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <Link href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
+                                        <ModeLink prefetch={false} href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
                                             {user.input_tokens_count.toLocaleString()}
-                                        </Link>
+                                        </ModeLink>
                                     </td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <Link href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
+                                        <ModeLink prefetch={false} href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
                                             {user.output_tokens_count.toLocaleString()}
-                                        </Link>
+                                        </ModeLink>
                                     </td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <Link href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
+                                        <ModeLink prefetch={false} href={`/dashboard/${court_id}/${month}?userId=${user.id}`} className="text-decoration-none text-dark">
                                             {user.approximate_cost.toFixed(2)}
-                                        </Link>
+                                        </ModeLink>
                                     </td>
                                 </tr>
                             ))}

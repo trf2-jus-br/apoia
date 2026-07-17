@@ -1,7 +1,11 @@
+'use client'
+
+import { useModeUrl } from '@/lib/utils/use-mode-url'
 import Link from 'next/link'
 // import { headers } from 'next/headers'
 
 export const NavigationLink = (params: { href: string, text: string, className?: string }) => {
+    const modeUrl = useModeUrl()
     // const headersList = headers()
     // const fullUrl = headersList.get('referer') || ""
     // const pathname = new URL(fullUrl).pathname
@@ -10,8 +14,10 @@ export const NavigationLink = (params: { href: string, text: string, className?:
         c += params.className
     // if (pathname == params.href)
     //     c += " link-active"
+
+    const prefixed = typeof params.href === 'string' ? modeUrl(params.href) : params.href
     return (
-        <Link href={params.href} className={c}>
+        <Link href={prefixed} className={c}>
             {params.text}
         </Link>
     )

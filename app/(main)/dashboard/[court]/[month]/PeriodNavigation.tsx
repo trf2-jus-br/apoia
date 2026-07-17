@@ -1,5 +1,6 @@
 'use client';
 
+import ModeLink from '@/components/mode-link';
 import Link from 'next/link';
 import React from 'react';
 
@@ -56,13 +57,13 @@ export default function PeriodNavigation({ court_id, currentPeriod, userId }: Pe
 
     return (
         <div className="d-flex justify-content-between align-items-center mb-4">
-            <Link href={previousUrl} className="btn btn-outline-primary">
+            <ModeLink prefetch={false} href={previousUrl} className="btn btn-outline-primary">
                 ← Período Anterior
-            </Link>
+            </ModeLink>
             <span className="fw-bold">{currentPeriod}</span>
-            <Link href={nextUrl} className="btn btn-outline-primary">
+            <ModeLink prefetch={false} href={nextUrl} className="btn btn-outline-primary">
                 Período Seguinte →
-            </Link>
+            </ModeLink>
         </div>
     );
 }

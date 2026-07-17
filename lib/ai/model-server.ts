@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { acceptSelectableModel, enumSortById, enumSorted, getSelectableModelsForApiKey, mergeSelectableModelLists, Model, ModelProfileKey, ModelProvider, ModelProviderType, ModelProviderValueType, parseModelConfig, parseOnPremisesModels, parseOpenRouterModels, resolveProfileModel } from "./model-types"
-import { getPrefs } from "../utils/prefs"
+import { getPrefs, modeUrl } from "../utils/prefs"
 import { envStringPrefixed, getEnvStringPrefixedIfUserIsAllowed } from "../utils/env"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createOpenAI } from "@ai-sdk/openai"
@@ -68,7 +68,7 @@ function getApiKeyByModel(model: string, prefs: PrefsCookieType, seqTribunalPai?
 
 export const assertModel = async () => {
     if (!(await getSelectedModelName())) {
-        redirect('/prefs')
+        redirect(await modeUrl('/prefs'))
     }
 }
 

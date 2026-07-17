@@ -11,6 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Link from 'next/link'
 import { STATS_CONFIG } from '@/lib/utils/stats-config'
+import ModeLink from '@/components/mode-link'
 
 interface UserStats {
     userId: number
@@ -142,9 +143,9 @@ export default function UserStatsPage({ params }: { params: Promise<{ userId: st
                     <FontAwesomeIcon icon={faTrophy} className="me-2 text-warning" />
                     Meu Impacto
                 </h1>
-                <Link href="/stats/global" className="btn btn-outline-primary">
+                <ModeLink prefetch={false} href="/stats/global" className="btn btn-outline-primary">
                     Ver Hub da Comunidade
-                </Link>
+                </ModeLink>
             </div>
 
             {/* Productivity Section */}
@@ -376,12 +377,12 @@ export default function UserStatsPage({ params }: { params: Promise<{ userId: st
                                 {stats.myPromptsStats.map((prompt) => (
                                     <tr key={prompt.promptBaseId}>
                                         <td>
-                                            <Link
+                                            <ModeLink prefetch={false}
                                                 href={`/prompts?prompt_id=${prompt.promptBaseId}`}
                                                 className="text-decoration-none"
                                             >
                                                 {prompt.promptName}
-                                            </Link>
+                                            </ModeLink>
                                         </td>
                                         <td className="text-center">
                                             <span className="badge bg-primary rounded-pill">

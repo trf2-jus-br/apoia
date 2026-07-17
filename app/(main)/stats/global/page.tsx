@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Container, Row, Col, Card, Spinner, Alert, OverlayTrigger, Tooltip as BsTooltip } from 'react-bootstrap'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faRocket, faClock, faUsers, faBuilding, faStar, faTrophy, faFire, faLightbulb, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import Link from 'next/link'
+import ModeLink from '@/components/mode-link'
 import { STATS_CONFIG } from '@/lib/utils/stats-config'
+import { faBuilding, faClock, faFire, faInfoCircle, faLightbulb, faRocket, faStar, faTrophy, faUsers } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { Alert, Tooltip as BsTooltip, Card, Col, Container, OverlayTrigger, Row, Spinner } from 'react-bootstrap'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface GlobalStats {
     totalExecutions: number
@@ -126,9 +127,9 @@ export default function GlobalStatsPage() {
                     <FontAwesomeIcon icon={faUsers} className="me-2 text-primary" />
                     Hub da Comunidade
                 </h1>
-                <Link href="/stats/user/me" className="btn btn-outline-primary">
+                <ModeLink prefetch={false} href="/stats/user/me" className="btn btn-outline-primary">
                     Ver Meu Impacto Pessoal
-                </Link>
+                </ModeLink>
             </div>
 
             {/* Hero - Impacto Total */}
@@ -308,12 +309,12 @@ export default function GlobalStatsPage() {
                                                 )}
                                             </div>
                                             <div className="flex-grow-1">
-                                                <Link
+                                                <ModeLink prefetch={false}
                                                     href={`/prompts?prompt_id=${prompt.promptBaseId}`}
                                                     className="text-decoration-none fw-semibold"
                                                 >
                                                     {prompt.promptName}
-                                                </Link>
+                                                </ModeLink>
                                                 <br />
                                                 <small className="text-muted">
                                                     {prompt.authorName || 'Desconhecido'}

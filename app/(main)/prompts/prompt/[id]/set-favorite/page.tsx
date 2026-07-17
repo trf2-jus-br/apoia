@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { UserDao, PromptDao } from '@/lib/db/dao'
 import { redirect } from 'next/navigation';
 import { assertCurrentUser } from '@/lib/user'
+import { modeUrl } from '@/lib/utils/prefs';
 
 export default async function Home(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -15,6 +16,6 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
     const idStr = params.id
     await PromptDao.setFavoriteByUuid(idStr, user_id)
 
-    redirect('/prompts')
+    redirect(await modeUrl(`/prompts`))
     return null
 }

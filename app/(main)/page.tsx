@@ -5,11 +5,12 @@ import { faFileLines } from '@fortawesome/free-regular-svg-icons'
 import Link from 'next/link'
 import ApiKeyMissing from '@/components/api-key-missing'
 import { assertCurrentUser } from '@/lib/user'
-import { isBetaTester, getMode } from '@/lib/utils/prefs'
+import { isBetaTester, getMode, modeUrl, getModeUrl } from '@/lib/utils/prefs'
 import { ModeKey } from '@/lib/ai/prompt-types'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Suspense } from 'react'
 import { HomeGlobalStats } from '@/components/stats/home-global-stats'
+import ModeLink from '@/components/mode-link'
 
 export default async function HomePage() {
     const user = await assertCurrentUser()
@@ -19,6 +20,7 @@ export default async function HomePage() {
 
     // Modo de operação: JUDICIAL (default) ou ADMINISTRATIVO
     const mode = await getMode()
+    const modeUrl = await getModeUrl()
 
     const version = process.env.IMAGE_VERSION || 'Desconhecida'
 
@@ -191,7 +193,7 @@ export default async function HomePage() {
                     <Row className="g-4">
                         {features.filter(f => (!f.betaOnly || isBetaTesterUser) && (!f.mode || f.mode === mode)).map((feature, index) => (
                             <Col key={index} md={6} lg={3}>
-                                <Link href={feature.href} className="text-decoration-none text-dark">
+                                <ModeLink href={modeUrl(feature.href)} className="text-decoration-none text-dark">
                                     <Card className="h-100 text-center shadow-sm border rounded-4">
                                         <CardBody className="d-flex flex-column">
                                             <div className="mb-3">
@@ -214,7 +216,7 @@ export default async function HomePage() {
                                             </CardText>
                                         </CardBody>
                                     </Card>
-                                </Link>
+                                </ModeLink>
                             </Col>
                         ))}
                     </Row>

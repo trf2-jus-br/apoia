@@ -4,6 +4,7 @@ import Table from '@/components/table-records'
 import Link from 'next/link'
 import { Toast, ToastContainer } from 'react-bootstrap'
 import { useState } from 'react'
+import ModeLink from '@/components/mode-link'
 
 export default function Contents({ items }: { items: any[] }) {
     const [showToast, setShowToast] = useState(false)
@@ -28,7 +29,7 @@ export default function Contents({ items }: { items: any[] }) {
                 onClick={handleOnClick}
             >
                 <div className="col col-auto mt-3 mb-0">
-                    <Link href="/library/new?kind=MARKDOWN" className="btn btn-primary">Criar Documento</Link>
+                    <ModeLink prefetch={false} href="/library/new?kind=MARKDOWN" className="btn btn-primary">Criar Documento</ModeLink>
                 </div>
             </Table>
 

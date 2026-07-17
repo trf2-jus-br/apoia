@@ -20,6 +20,7 @@ import dynamic from 'next/dynamic'
 import AiContent from '@/components/ai-content'
 import { PromptConfigType, PromptDefinitionType, Mode } from '@/lib/ai/prompt-types'
 import { VisualizationEnum } from '@/lib/ui/preprocess'
+import { useModeUrl } from '@/lib/utils/use-mode-url'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
@@ -27,6 +28,7 @@ const Frm = new FormHelper()
 
 export default function PromptForm(props) {
     const router = useRouter()
+    const modeUrl = useModeUrl()
     const initialState = props.record || { content: {} }
     const isBetaTester = props.isBetaTester || false
     const hasSeiApiUrl = props.hasSeiApiUrl || false
@@ -46,9 +48,9 @@ export default function PromptForm(props) {
 
     useEffect(() => {
         if (formState?.message === 'success') {
-            router.push('/prompts')
+            router.push(modeUrl('/prompts'))
         }
-    }, [formState, router])
+    }, [formState, router, modeUrl])
 
     try {
         Frm.update(data, (d) => { setData(d); updateYaml(d) }, formState)
@@ -65,7 +67,7 @@ export default function PromptForm(props) {
 
 
         function handleBack() {
-            router.push('/prompts')
+            router.push(modeUrl('/prompts'))
         }
 
         const handleImportResult = (content) => {

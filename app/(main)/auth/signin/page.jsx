@@ -8,11 +8,12 @@ import authOptions from '@/app/api/auth/[...nextauth]/options'
 import CredentialsForm from './credentials-form'
 import Provider from './provider'
 import { systems } from '@/lib/utils/env.ts'
+import { modeUrl } from "@/lib/utils/prefs"
 
 
 const Signin = async ({ searchParams }) => {
     const session = await getServerSession(authOptions);
-    if (session && session.user) redirect('/')
+    if (session && session.user) redirect(await modeUrl('/'))
     const providers = authOptions.providers
 
     // Query param handling: systems

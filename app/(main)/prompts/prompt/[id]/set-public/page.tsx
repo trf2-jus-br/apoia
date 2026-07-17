@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { PromptDao } from '@/lib/db/dao'
 import { redirect } from 'next/navigation'
 import { assertCurrentUser, isUserModerator } from '@/lib/user'
+import { modeUrl } from '@/lib/utils/prefs'
 
 export default async function Home(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -11,6 +12,6 @@ export default async function Home(props: { params: Promise<{ id: string }> }) {
     const user = await assertCurrentUser()
     if (await isUserModerator(user))
         await PromptDao.setPublic(parseInt(params.id))
-    redirect('/prompts')
+    redirect(await modeUrl(`/prompts`))
     return null
 }

@@ -11,6 +11,7 @@ import NonCorporateUserWarning from "@/components/non-corporate-user-warning"
 import PrefsMigrator from "@/components/PrefsMigrator"
 import { Suspense } from "react"
 import { serviceMonitor } from "@/lib/interop/pdpjServiceMonitor"
+import ModeLink from "./mode-link"
 
 export default async function RootLayoutWithTheme({
   children, theme, sidekick = false
@@ -32,9 +33,9 @@ export default async function RootLayoutWithTheme({
         >
           <Container fluid={false}>
             <div className="navbar-brand pt-0 pb-0" style={{ overflow: "hidden" }}>
-              <Link href="/" className="ms-0 me-0" style={{ verticalAlign: "middle" }}>
+              <ModeLink href="/" className="ms-0 me-0" style={{ verticalAlign: "middle" }}>
                 <Image src="/apoia-logo-vertical-transp.png" width={48 * 1102 / 478} height={48} alt="Apoia Logo" className="me-0" style={{}} />
-              </Link>
+              </ModeLink>
             </div>
             <button className="navbar-toggler d-print-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"></span>

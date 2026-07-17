@@ -1,18 +1,19 @@
 'use client'
 
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { setMode } from "@/app/(main)/prefs/actions"
-import { ModeKey } from "@/lib/ai/prompt-types"
+import { usePathname, useRouter } from "next/navigation"
 
-export default function UserMenuMode({ mode: initial }: { mode: ModeKey }) {
+// O modo é derivado da URL (prefixo "/adm" = ADMINISTRATIVO, ver proxy.ts), então
+// o toggle simplesmente navega para a mesma página com/sem o prefixo.
+export default function UserMenuMode() {
     const router = useRouter()
-    const [isAdministrative, setIsAdministrative] = useState(initial === 'ADMINISTRATIVO')
+    const pathname = usePathname()
+    const isAdministrative = pathname === '/adm' || pathname.startsWith('/adm/')
 
     const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const checked = e.target.checked
-        setIsAdministrative(checked)
-        await setMode(checked ? 'ADMINISTRATIVO' : 'JUDICIAL')
+        if (e.target.checked)
+            router.push(`/adm${pathname}`)
+        else
+            router.push(pathname.replace(/^\/adm/, '') || '/')
         router.refresh()
     }
 

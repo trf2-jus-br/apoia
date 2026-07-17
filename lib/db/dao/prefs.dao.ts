@@ -111,25 +111,4 @@ export class PrefsDao {
             .onConflict('user_id')
             .merge(['beta_tester'])
     }
-
-    // ---- Mode (Judicial / Administrativo) ----
-
-    // Retorna o modo de operação selecionado pelo usuário. Default 'JUDICIAL'
-    // quando não há linha no banco. undefined quando sem usuário/DB (caller
-    // faz fallback ao default).
-    static async getMode(): Promise<string | undefined> {
-        const user_id = await UserDao.getCurrentUserId()
-        if (!user_id || !knex) return undefined
-        const row = await PrefsDao.fetchPrefsRow(user_id)
-        return row?.mode || 'JUDICIAL'
-    }
-
-    static async setMode(mode: string): Promise<void> {
-        const user_id = await UserDao.getCurrentUserId()
-        if (!user_id || !knex) return
-        await knex('ia_user_prefs')
-            .insert({ user_id, mode })
-            .onConflict('user_id')
-            .merge(['mode'])
-    }
 }

@@ -5,6 +5,7 @@ import { assertCurrentUser, getCurrentUser } from "@/lib/user"
 import { faBook, faKey } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from "next/link"
+import ModeLink from "./mode-link"
 
 export default async function ApiKeyMissing({ }: {}) {
     const user = await getCurrentUser()
@@ -15,7 +16,7 @@ export default async function ApiKeyMissing({ }: {}) {
 
     return <div className="alert alert-info text-center mb-4" role="alert">
         Para usar as ferramentas de IA, você precisa de uma Chave de API.{' '}
-        <Link href="/prefs" className="alert-link">Cadastre a sua aqui</Link>.
+        <ModeLink href="/prefs" className="alert-link">Cadastre a sua aqui</ModeLink>.
         <FontAwesomeIcon icon={faKey} className="ms-2" />
         <br />
         Não sabe o que é? Consulte o{' '}

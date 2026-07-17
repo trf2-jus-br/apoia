@@ -42,6 +42,14 @@
 - `share` controla visibilidade: PADRAO, PUBLICO, BETA_TESTE, EM_ANALISE, NAO_LISTADO, PRIVADO, OCULTO
 - Prompts com nome começando com `^` são internos/sistema e devem ser ocultos nas listagens de usuário (filtro `name NOT LIKE '^%'`)
 - `category` (antigo `kind`) é nullable e atualmente setado como NULL
+- `mode` categoriza o prompt por modo de operação (JUDICIAL/ADMINISTRATIVO; NULL = ambos)
+
+### Modo de Operação via URL (`/adm`)
+- O modo (JUDICIAL/ADMINISTRATIVO) é derivado da **URL**, não de preferência persistida: prefixo `/adm` = ADMINISTRATIVO; URL sem prefixo = JUDICIAL, sempre. A coluna `ia_user_prefs.mode` foi removida (migration-029).
+- `proxy.ts` (raiz; Next 16 renomeou `middleware.ts` → `proxy.ts`) intercepta `/adm/:path*`, faz rewrite interno para o path sem prefixo e injeta o request header `x-apoia-mode`; em URLs sem prefixo o header é removido (anti-spoofing).
+- Server-side: `getMode()` e `getModePrefix()` em `lib/utils/prefs.ts` leem o header. Client-side: `useModePrefix()` (`lib/utils/use-mode-prefix.ts`) e `ModeLink` (`components/mode-link.tsx`).
+- Links, redirects e fetches **sensíveis ao modo** (home, menu, chat, fluxo de prompts/processos, `/api/v1/ai`, `/api/v1/build-requests`, binary de peça) devem preservar o prefixo usando esses helpers. URLs que já vêm de `usePathname()` preservam o prefixo automaticamente.
+- O toggle "Modo SEI!" (`components/user-menu-mode.tsx`) apenas navega para a mesma página com/sem o prefixo.
 
 ### Migrations
 - Migrations SQL ficam em `migrations/postgres/knex/` e `migrations/mysql/`

@@ -5,6 +5,8 @@ import Link from "next/link"
 import { ProcessFilters } from "./ProcessFilters"
 import { usePromptContext } from "../context/PromptContext"
 import { SuggestionCards } from "./SuggestionCards"
+import { useModeUrl } from "@/lib/utils/use-mode-url"
+import ModeLink from "@/components/mode-link"
 
 interface MainViewProps {
     promptsPrincipais: IAPromptList[]
@@ -33,7 +35,7 @@ export function MainView({
             {!apiKeyProvided && (
                 <Container className="mt-2 mb-3" fluid={false}>
                     <p className="text-center mt-3 mb-3">
-                        Execute os prompts diretamente na Apoia, cadastrando sua <Link href="/prefs">Chave de API</Link>.
+                        Execute os prompts diretamente na Apoia, cadastrando sua <ModeLink prefetch={false} href="/prefs">Chave de API</ModeLink>.
                     </p>
                 </Container>
             )}
@@ -92,14 +94,15 @@ export function MainView({
 }
 
 function CriarNovo() {
+    const modeUrl = useModeUrl()
     return (
         <div className="col col-auto mt-3">
             <DropdownButton id="criar-novo-dropdown" title="Criar Novo" variant="primary">
-                <Dropdown.Item href="/prompts/prompt/new">Prompt</Dropdown.Item>
-                <Dropdown.Item href="/prompts/prompt/new?template=true&import=true">
+                <Dropdown.Item href={modeUrl('/prompts/prompt/new')}>Prompt</Dropdown.Item>
+                <Dropdown.Item href={modeUrl('/prompts/prompt/new?template=true&import=true')}>
                     Prompt a partir de um modelo pré-existente
                 </Dropdown.Item>
-                <Dropdown.Item href="/prompts/prompt/new?template=true">
+                <Dropdown.Item href={modeUrl('/prompts/prompt/new?template=true')}>
                     Prompt a partir de um modelo no padrão da Apoia
                 </Dropdown.Item>
             </DropdownButton>

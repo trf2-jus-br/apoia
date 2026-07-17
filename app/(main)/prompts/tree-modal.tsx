@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Modal, Spinner } from "react-bootstrap";
 import { TreeView, type TreeNode } from "@/components/tree-view";
 import { PecaType } from "@/lib/proc/process-types";
+import { useModeUrl } from "@/lib/utils/use-mode-url";
 
 interface TreeModalProps {
     show: boolean;
@@ -22,6 +23,7 @@ export function TreeModal({ show, onClose, pieces, onSave, selectedIds, onSelect
     const [isResizing, setIsResizing] = useState<boolean>(false);
     const isResizingRef = useRef(false);
     const leftPaneRef = useRef<HTMLDivElement | null>(null);
+    const modeUrl = useModeUrl();
 
     // Agrupar peças por número do evento
     const groupedByEvent = pieces.reduce((acc, piece) => {
@@ -42,7 +44,7 @@ export function TreeModal({ show, onClose, pieces, onSave, selectedIds, onSelect
         children: piecesInEvent.map((piece) => ({
             id: piece.id,
             label: piece.descr,
-            url: `/api/v1/process/${piece.numeroDoProcesso}/piece/${piece.id}/binary`,
+            url: modeUrl(`/api/v1/process/${piece.numeroDoProcesso}/piece/${piece.id}/binary`),
             piece: piece
         }))
     }));

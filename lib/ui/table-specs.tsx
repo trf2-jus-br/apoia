@@ -9,10 +9,14 @@ import { formatDateTime, formatDuration } from "../utils/date"
 import { RatingCell } from "@/components/RatingCell"
 import devLog from "../utils/log"
 import { wrapTitle } from "@/app/(main)/prompts/components/PromptButton"
+import { useModeUrl } from "../utils/use-mode-url"
+import ModeLink from "@/components/mode-link"
 
 
 const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void, options?: any) => {
-
+    const modeUrl = useModeUrl()
+    // Prefixo de modo ("/adm") presente na URL corrente; links para APIs
+    // sensíveis ao modo (ex.: binary de peça) precisam mantê-lo.
     return {
         ChoosePieces: {
             columns: [
@@ -35,7 +39,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 },
                 { header: 'Evento', accessorKey: 'numeroDoEvento', enableSorting: true },
                 { header: 'Descrição', accessorKey: 'descricaoDoEvento', enableSorting: true, className: 'd-none d-lg-table-cell', style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <span title={data.row.original.descricaoDoEvento}>{data.row.original.descricaoDoEvento.toLowerCase()}</span> },
-                { header: 'Rótulo', accessorKey: 'rotulo', enableSorting: true, style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <a href={`/api/v1/process/${data.row.original.numeroDoProcesso || options?.dossierNumber}/piece/${data.row.original.id}/binary`} target="_blank" title={data.row.original.rotulo}>{data.row.original.rotulo.toLowerCase()}</a> },
+                { header: 'Rótulo', accessorKey: 'rotulo', enableSorting: true, style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <a href={modeUrl(`/api/v1/process/${data.row.original.numeroDoProcesso || options?.dossierNumber}/piece/${data.row.original.id}/binary`)} target="_blank" title={data.row.original.rotulo}>{data.row.original.rotulo.toLowerCase()}</a> },
                 { header: 'Tipo', accessorKey: 'descr', enableSorting: true, style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '10em' }, cell: data => <span title={data.row.original.descr}>{data.row.original.descr.toLowerCase()}</span> },
                 { header: 'Sigilo', accessorKey: 'sigilo', enableSorting: true, className: 'd-none d-lg-table-cell', cell: data => <span>{data.row.original.sigilo}</span> },
             ],
@@ -73,12 +77,12 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                                 <Dropdown.Item onClick={() => onClick('executar', data.row.original)}>Executar</Dropdown.Item>
                                 {!data.row.original.origin && <Dropdown.Item onClick={() => onClick('copiar', data.row.original)}>Copiar prompt</Dropdown.Item>}
                                 <Dropdown.Item onClick={() => onClick('copiar link para favoritar', data.row.original)}>Copiar link para adicionar aos favoritos</Dropdown.Item>
-                                {!data.row.original.origin && <Dropdown.Item href={`/prompts/prompt/${data.row.original.id}/edit`} disabled={!data.row.original.is_mine && !options?.isModerator}>Editar</Dropdown.Item>}
-                                {!data.row.original.origin && <Dropdown.Item href={`/prompts/prompt/new?copyFrom=${data.row.original.id}`}>Fazer uma cópia</Dropdown.Item>}
-                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.uuid}`}>Informações sobre o prompt</Dropdown.Item>
-                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.uuid}/set-favorite`}>Adicionar aos favoritos</Dropdown.Item>
-                                <Dropdown.Item href={`/prompts/prompt/${data.row.original.uuid}/reset-favorite`}>Remover dos favoritos</Dropdown.Item>
-                                {!data.row.original.origin && <Dropdown.Item href={`/prompts/prompt/${data.row.original.base_id}/remove`} disabled={!data.row.original.is_mine}>Remover</Dropdown.Item>}
+                                {!data.row.original.origin && <Dropdown.Item href={modeUrl(`/prompts/prompt/${data.row.original.id}/edit`)} disabled={!data.row.original.is_mine && !options?.isModerator}>Editar</Dropdown.Item>}
+                                {!data.row.original.origin && <Dropdown.Item href={modeUrl(`/prompts/prompt/new?copyFrom=${data.row.original.id}`)}>Fazer uma cópia</Dropdown.Item>}
+                                <Dropdown.Item href={modeUrl(`/prompts/prompt/${data.row.original.uuid}`)}>Informações sobre o prompt</Dropdown.Item>
+                                <Dropdown.Item href={modeUrl(`/prompts/prompt/${data.row.original.uuid}/set-favorite`)}>Adicionar aos favoritos</Dropdown.Item>
+                                <Dropdown.Item href={modeUrl(`/prompts/prompt/${data.row.original.uuid}/reset-favorite`)}>Remover dos favoritos</Dropdown.Item>
+                                {!data.row.original.origin && <Dropdown.Item href={modeUrl(`/prompts/prompt/${data.row.original.base_id}/remove`)} disabled={!data.row.original.is_mine}>Remover</Dropdown.Item>}
                             </Dropdown.Menu>
                         </Dropdown>
                     </>
@@ -195,7 +199,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 {
                     header: ' ', accessorKey: '', style: { textAlign: "center", width: "1%" }, enableSorting: false, cell: data => data.row.original.is_mine
                         ? <span className="text-secondary opacity-50"><FontAwesomeIcon icon={faUserSolid} /></span>
-                        : <a href={`/library/${data.row.original.id}/reset-favorite`} className="text-primary" title="Remover da biblioteca"><FontAwesomeIcon icon={faHeartSolid} /></a>
+                        : <ModeLink prefetch={false} href={`/library/${data.row.original.id}/reset-favorite`} className="text-primary" title="Remover da biblioteca"><FontAwesomeIcon icon={faHeartSolid} /></ModeLink>
                 },
                 {
                     header: 'Título',
@@ -214,7 +218,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                                         <Dropdown.Item href={`${pathname}/${data.row.original.id}/edit`}>{data.row.original.is_mine ? 'Editar' : 'Visualizar'}</Dropdown.Item>
                                         <Dropdown.Item onClick={() => onClick('copiar link para compartilhar', data.row.original)}>Copiar link para compartilhar</Dropdown.Item>
                                         {!data.row.original.is_mine && (
-                                            <Dropdown.Item href={`/library/${data.row.original.id}/reset-favorite`}>Remover da biblioteca</Dropdown.Item>
+                                            <Dropdown.Item href={modeUrl(`/library/${data.row.original.id}/reset-favorite`)}>Remover da biblioteca</Dropdown.Item>
                                         )}
                                     </Dropdown.Menu>
                                 </Dropdown>

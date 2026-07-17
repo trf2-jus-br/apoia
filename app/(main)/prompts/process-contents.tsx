@@ -21,6 +21,7 @@ import { usePromptContext } from "./context/PromptContext";
 import Listen from "@/components/slots/listen";
 import devLog from "@/lib/utils/log";
 import { slugify } from "@/lib/utils/utils";
+import { useModeUrl } from "@/lib/utils/use-mode-url";
 import pLimit from "p-limit";
 
 // Helper function to check confidentiality level on client side
@@ -66,6 +67,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     const [choosingPieces, setChoosingPieces] = useState(!(sidekick && prompt?.slug === 'chat' && !!prompt?.origin))
     const [choosingLibrary, setChoosingLibrary] = useState(false)
     const searchParams = useSearchParams()
+    const modeUrl = useModeUrl()
 
     const updateSelectedPieces = (pieces: PecaType[]) => {
         if (selectedPieces && pieces.length === selectedPieces.length && pieces.every(p => selectedPieces.some(sp => sp.id === p.id))) {
@@ -142,7 +144,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         setPieceContent(contents)
         setLoadingPiecesProgress(-1)
         devLog('Will build requests')
-        const buildResp = await fetch('/api/v1/build-requests', {
+        const buildResp = await fetch(modeUrl('/api/v1/build-requests'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

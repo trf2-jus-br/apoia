@@ -10,6 +10,8 @@ import CsvNumbersModal from '@/components/modals/CsvNumbersModal'
 import TableRecords from '@/components/table-records'
 import { useRouter } from 'next/navigation'
 import devLog from '@/lib/utils/log'
+import Link from 'next/link'
+import ModeLink from '@/components/mode-link'
 
 type Totals = { total: number, pending: number, running: number, ready: number, error: number }
 type Summary = { id: number, name: string, tipo_de_sintese: string, complete: boolean, paused: boolean, totals: Totals, spentCost?: number, estimatedTotalCost?: number }
@@ -300,12 +302,12 @@ export default function BatchPanelClient({ id, initialSummary, usdBrl, promptNam
           </Button>
         )}
         {summary?.name && ready > 0 && (
-          <a className="btn btn-outline-secondary ms-2" href={`/api/v1/batch/${id}/html`} target="_blank" rel="noopener noreferrer">
-              <FontAwesomeIcon icon={faEye} className="me-2" />Visualizar Relatório
-          </a>
+          <ModeLink className="btn btn-outline-secondary ms-2" href={`/api/v1/batch/${id}/html`} target="_blank" rel="noopener noreferrer" prefetch={false}>
+            <FontAwesomeIcon icon={faEye} className="me-2" />Visualizar Relatório
+          </ModeLink>
         )}
         {error > 0 && (
-          <a className="btn btn-outline-success ms-2" href={`/api/v1/batch/${id}/errors/csv`} target="_blank"><FontAwesomeIcon icon={faFileArrowDown} className="me-2" />Erros CSV</a>
+          <ModeLink prefetch={false} className="btn btn-outline-success ms-2" href={`/api/v1/batch/${id}/errors/csv`} target="_blank"><FontAwesomeIcon icon={faFileArrowDown} className="me-2" />Erros CSV</ModeLink>
         )}
       </div>
 

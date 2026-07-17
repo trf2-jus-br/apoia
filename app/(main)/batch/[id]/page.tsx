@@ -4,6 +4,7 @@ import { BatchDao, PromptDao } from '@/lib/db/dao'
 import { getSelectedModelParams } from '@/lib/ai/model-server'
 import { redirect } from 'next/navigation'
 import { getAggregatorNameMap } from '@/lib/ai/prompt-store'
+import { modeUrl } from '@/lib/utils/prefs'
 
 export const maxDuration = 60
 
@@ -29,7 +30,7 @@ export async function fetchDollar() {
 export default async function BatchPanel(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params
   const { apiKeyFromEnv } = await getSelectedModelParams()
-  if (apiKeyFromEnv) redirect('/batch')
+  if (apiKeyFromEnv) redirect(await modeUrl('/batch'))
   const summary = await getSummary(parseInt(id))
   const usdBrl = await fetchDollar()
   const promptName = summary?.prompt_base_id && (await PromptDao.retrieveLatestPromptByBaseId(summary.prompt_base_id))?.name

@@ -20,6 +20,7 @@ import MessageStatus from '../message-status';
 import MessageFooter from '../message-footer';
 import { useExecutionId, usePromptContext, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext';
 import { InstanceKeyType } from '@/lib/proc/process-types';
+import { useModeUrl } from '@/lib/utils/use-mode-url';
 
 const converter = new showdown.Converter({ tables: true })
 
@@ -66,6 +67,7 @@ function convertToUIMessages(modelMsgs: ModelMessage[], promptKind: string): UIM
 let loadingMessages = false
 
 export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, model: string, footer?: ReactElement, withTools?: boolean, setProcessNumber?: (number: string) => void, sidekick?: boolean, promptButtons?: ReactNode }) {
+    const modeUrl = useModeUrl()
     const [processNumber, setProcessNumber] = useState(params?.data?.numeroDoProcesso || '');
     const [input, setInput] = useState('')
     const [files, setFiles] = useState<FileList | undefined>(undefined)
@@ -119,7 +121,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     useEffect(() => {
         if (hasRun.current) return; hasRun.current = true;
         const load = async () => {
-            const res = await fetch('/api/v1/ai?messagesOnly=true', {
+            const res = await fetch(modeUrl('/api/v1/ai?messagesOnly=true'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -140,7 +142,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         }
         // Only load when definition.kind or data changes; setMessages is stable from hook
         load()
-    }, [params.definition.kind, dataKey])
+    }, [params.definition.kind, dataKey, modeUrl])
 
     // Adjust body padding based on controls height in sidekick mode
     useEffect(() => {

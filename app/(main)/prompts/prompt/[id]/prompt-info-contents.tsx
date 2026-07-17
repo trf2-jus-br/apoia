@@ -2,9 +2,11 @@
 
 import { Col, Container, Form, Row, Spinner } from 'react-bootstrap'
 import { IAPrompt } from '@/lib/db/mysql-types'
-import Link from 'next/link'
+import { getMode } from '@/lib/utils/prefs'
+import ModeLink from '@/components/mode-link'
 
 export default async function PromptInfoContents({ prompt, isModerator }: { prompt: IAPrompt, isModerator: boolean }) {
+    const mode = await getMode()
     return (
         <Container className="mt-3" fluid={false}>
             <Form>
@@ -136,11 +138,11 @@ export default async function PromptInfoContents({ prompt, isModerator }: { prom
             </Form>
             {isModerator && (
                 <div className="text-center mt-3">
-                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/edit`} className="btn btn-danger">Editar como Moderador</Link>
-                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-private`} className="btn btn-danger ms-2">Tornar Privado</Link>
-                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-unlisted`} className="btn btn-danger ms-2">Tornar Não Listado</Link>
-                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-public`} className="btn btn-danger ms-2">Tornar Público</Link>
-                    <Link prefetch={false} href={`/prompts/prompt/${prompt.id}/set-standard`} className="btn btn-danger ms-2">Tornar Padrão</Link>
+                    <ModeLink prefetch={false} href={`/prompts/prompt/${prompt.id}/edit`} className="btn btn-danger">Editar como Moderador</ModeLink>
+                    <ModeLink prefetch={false} href={`/prompts/prompt/${prompt.id}/set-private`} className="btn btn-danger ms-2">Tornar Privado</ModeLink>
+                    <ModeLink prefetch={false} href={`/prompts/prompt/${prompt.id}/set-unlisted`} className="btn btn-danger ms-2">Tornar Não Listado</ModeLink>
+                    <ModeLink prefetch={false} href={`/prompts/prompt/${prompt.id}/set-public`} className="btn btn-danger ms-2">Tornar Público</ModeLink>
+                    <ModeLink prefetch={false} href={`/prompts/prompt/${prompt.id}/set-standard`} className="btn btn-danger ms-2">Tornar Padrão</ModeLink>
                 </div>)
             }
         </Container>

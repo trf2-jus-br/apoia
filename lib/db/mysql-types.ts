@@ -774,6 +774,5 @@ export interface IAUserPrefs {
     anonymize: boolean
     anonymize_until: Date | null
     beta_tester: boolean
-    mode: string
     updated_at: Date
 }
