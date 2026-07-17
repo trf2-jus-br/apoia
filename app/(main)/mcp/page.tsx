@@ -7,7 +7,7 @@ export default async function McpInfoPage() {
     await assertCurrentUser()
     const toolsList = getApoiaToolsMetadata()
     return (
-        <Container fluid={false} className="mt-4">
+        <Container fluid={false} className="">
             <McpPage toolsList={toolsList} />
         </Container>
     )

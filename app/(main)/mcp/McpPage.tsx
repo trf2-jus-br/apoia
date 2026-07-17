@@ -41,18 +41,18 @@ export default function McpPage({ toolsList }: { toolsList: ToolMeta[] }) {
 
     return (
         <>
-            <h1 className="mb-4">
-                MCP - Model Context Protocol
-            </h1>
+            <h2 className="mt-3 mb-3">
+                MCP – Model Context Protocol
+            </h2>
             <p>O MCP é um padrão aberto que permite que
-                assistentes de IA - como o Claude ou o ChatGPT - acessem ferramentas externas de forma segura.
-                A Apoia expõe suas ferramentas de pesquisa processual, jurisprudência e biblioteca
-                através de um servidor MCP, para que você possa usá-las diretamente no seu cliente
+                assistentes de IA — como o Claude ou o ChatGPT — acessem ferramentas externas de forma segura.
+                A Apoia disponibiliza suas ferramentas de pesquisa processual, de jurisprudência e de biblioteca
+                por meio de um servidor MCP, para que você possa utilizá-las diretamente no seu cliente
                 de IA preferido.</p>
-            <p>Após configurar, as ferramentas do Apoia ficam disponíveis para o modelo, que pode
-                consultá-las automaticamente durante uma conversa. Para saber mais, consulte o Manual da Apoia.</p>
-            <p className="alert alert-danger"><strong>Importante</strong>: Utilizar o MCP em uma IA que aproveita os dados para treinamento é uma
-                violação direta da LGPD e da Resolução CNJ nº 615/2025. Somente use IAs com planos corporativos
+            <p>Após a configuração, as ferramentas da Apoia ficam disponíveis para o modelo, que pode
+                recorrer a elas automaticamente durante uma conversa. Para saber mais, consulte o Manual da Apoia.</p>
+            <p className="alert alert-danger"><strong>Importante</strong>: utilizar o MCP em uma IA que aproveita os dado enviados para treinamento constitui
+                violação direta da LGPD e da Resolução CNJ nº 615/2025. Utilize somente IAs com planos corporativos
                 ou pessoais que garantam uma política de zero retenção de dados.</p>
 
             <Row className="g-4">
@@ -62,8 +62,7 @@ export default function McpPage({ toolsList }: { toolsList: ToolMeta[] }) {
                         <CardBody>
                             <CardTitle as="h5">Configurar</CardTitle>
                             <CardText className="text-body-secondary">
-                                Gere a URL abaixo e informe-a no seu cliente MCP (ex.: no Claude Desktop,
-                                ao adicionar um servidor MCP remoto do tipo HTTP).
+                                Gere a URL abaixo e cadastre-a no seu cliente MCP como um servidor remoto (HTTP).
                             </CardText>
 
                             {!url && <div className="mb-3">
@@ -107,8 +106,8 @@ export default function McpPage({ toolsList }: { toolsList: ToolMeta[] }) {
                             {expiresAt && (
                                 <p className="mb-0"><strong>Atenção:</strong> o token de acesso embutido nesta URL
                                     expira em <strong>{expiresAt}</strong>. Após esse horário, faça logout e login na Apoia e gere uma nova
-                                    URL. <u>O token é pessoal e deve ser tratado
-                                        como uma senha - não o compartilhe</u>.
+                                    URL. <strong>O token é pessoal e deve ser tratado
+                                        como uma senha - não o compartilhe</strong>.
                                 </p>
                             )}
                         </CardBody>
