@@ -13,23 +13,31 @@ const KIND_LABELS: Record<TicketKind, string> = {
 
 // Captura a tela atual (DOM) como JPEG. Roda no cliente; a imagem só sai do
 // navegador se o usuário enviar o chamado com a opção de anexo marcada.
+// Modais e backdrops são excluídos da captura: como ela ocorre com a
+// TicketFormModal já aberta, a própria modal apareceria na imagem.
 const captureScreenshot = async (): Promise<Blob | null> => {
     try {
         const html2canvas = (await import('html2canvas')).default
         const width = Math.max(document.documentElement.scrollWidth, window.innerWidth)
         const scale = Math.min(1, 1600 / width)
-        const canvas = await html2canvas(document.body, { scale, logging: false, useCORS: true })
+        const canvas = await html2canvas(document.body, {
+            scale,
+            logging: false,
+            useCORS: true,
+            ignoreElements: el => el.classList?.contains('modal') || el.classList?.contains('modal-backdrop'),
+        })
         return await new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.7))
     } catch {
         return null
     }
 }
 
-export function TicketFormModal({ show, onHide, kind, errorContext, userName, userEmail }: {
+export function TicketFormModal({ show, onHide, kind, errorContext, encryptedErrorContext, userName, userEmail }: {
     show: boolean
     onHide: () => void
     kind?: TicketKind
     errorContext?: string
+    encryptedErrorContext?:string
     userName?: string
     userEmail?: string
 }) {
@@ -85,6 +93,7 @@ export function TicketFormModal({ show, onHide, kind, errorContext, userName, us
             form.append('kind', kind || selectedKind)
             form.append('message', message.trim())
             if (errorContext) form.append('error_context', errorContext)
+            if (encryptedErrorContext) form.append('encrypted_error_context', encryptedErrorContext)
             form.append('page_url', window.location.href)
             if (includeScreenshot && screenshot) {
                 form.append('screenshot', screenshot, 'screenshot.jpg')

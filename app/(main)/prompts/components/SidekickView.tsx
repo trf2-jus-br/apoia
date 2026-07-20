@@ -11,6 +11,7 @@ import Chat from "@/components/slots/chat"
 import BreadCrumbs from "../breadcrumbs"
 import { useMemo, useState, useEffect } from "react"
 import { usePromptContext } from "../context/PromptContext"
+import { useAppContext } from "@/app/context/appContext"
 import { useModeUrl } from "@/lib/utils/use-mode-url"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faExternalLink } from "@fortawesome/free-solid-svg-icons"
@@ -43,8 +44,8 @@ export function SidekickView({
         promptInitialized,
         faseAtual,
         suggestedPrompts,
-        isBetaTester,
     } = usePromptContext()
+    const { isBetaTester } = useAppContext()
     const [urlNovaAba, setUrlNovaAba] = useState('')
     const modeUrl = useModeUrl()
 
@@ -137,7 +138,6 @@ export function SidekickView({
                                             apiKeyProvided={apiKeyProvided}
                                             model={model}
                                             sidekick={true}
-                                            isBetaTester={isBetaTester}
                                             promptButtons={
                                                 prompt?.slug === 'chat' && !!prompt?.origin ? (
                                                     <>

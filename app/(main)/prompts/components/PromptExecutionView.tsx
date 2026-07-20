@@ -7,6 +7,7 @@ import TargetText from "../target-text"
 import { VisualizationEnum } from "@/lib/ui/preprocess"
 import { PromptHeader } from "./PromptHeader"
 import { usePromptContext } from "../context/PromptContext"
+import { useAppContext } from "@/app/context/appContext"
 
 interface PromptExecutionViewProps {
     apiKeyProvided: boolean
@@ -23,8 +24,8 @@ export function PromptExecutionView({
         dadosDoProcesso,
         setPrompt,
         setNumber,
-        isBetaTester,
     } = usePromptContext()
+    const { isBetaTester } = useAppContext()
     
     if (!prompt) return null
     return (
@@ -43,7 +44,6 @@ export function PromptExecutionView({
                                 <ProcessContents
                                     apiKeyProvided={apiKeyProvided}
                                     model={model}
-                                    isBetaTester={isBetaTester}
                                 >
                                     <PromptHeader prompt={prompt} onPromptChange={() => setPrompt(null)} />
                                 </ProcessContents>

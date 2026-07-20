@@ -6,7 +6,7 @@ import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { Instance, Matter, Scope } from '@/lib/proc/process-types'
 import { PublicError } from '@/lib/utils/public-error'
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
-import { getMode, isBetaTester } from '@/lib/utils/prefs'
+import { getMode } from '@/lib/utils/prefs'
 import { envStringPrefixed } from '@/lib/utils/env'
 
 export default async function New(
@@ -50,13 +50,13 @@ export default async function New(
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
     const isModerator = await isUserModerator(user)
     const allPrompts = await PromptDao.retrievePromptNamesAndUuids(user_id, isModerator)
-    const betaTester = await isBetaTester()
 
     const seqTribunalPai = user ? '' + (assertCourtId(user)) : undefined
     const hasSeiApiUrl = !!envStringPrefixed('SEI_API_URL', seqTribunalPai)
 
+    // isBetaTester é lido do AppContext no PromptForm (não é mais passado por prop)
     return (<Container fluid={false}>
         <h1 className="mt-5 mb-3">Novo</h1>
-        <PromptForm record={record} allPrompts={allPrompts} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} isBetaTester={betaTester} hasSeiApiUrl={hasSeiApiUrl} />
+        <PromptForm record={record} allPrompts={allPrompts} template={!!searchParams.template} importMode={searchParams.import === 'true'} templateDefinition={await getPromptDefinition('template-a-partir-de-modelo')} hasSeiApiUrl={hasSeiApiUrl} />
     </Container>)
 }

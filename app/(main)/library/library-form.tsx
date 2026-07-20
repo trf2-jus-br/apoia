@@ -13,7 +13,7 @@ import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclus
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
 
-export default function LibraryForm({ record, promptDefinition, isBetaTester }: { record: any, promptDefinition: any, isBetaTester?: boolean }) {
+export default function LibraryForm({ record, promptDefinition }: { record: any, promptDefinition: any }) {
   const [data, setData] = useState<any>({ ...record })
   const [pending, setPending] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -185,7 +185,7 @@ export default function LibraryForm({ record, promptDefinition, isBetaTester }: 
         </Form.Group>
       </div>
 
-      <div className={`col-2 ${isBetaTester ? '' : 'd-none'}`}>
+      <div className={`col-2`}>
         <Form.Group className="mb-3">
           <Form.Label>Tipo</Form.Label>
           <Form.Select value={data.kind} onChange={e => setData({ ...data, kind: e.target.value as IALibraryKind })} disabled={!!data.id}>

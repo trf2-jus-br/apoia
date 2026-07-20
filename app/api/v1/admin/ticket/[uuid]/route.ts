@@ -5,7 +5,7 @@ import Cryptr from 'cryptr'
 import { TicketDao } from '@/lib/db/dao'
 import { assertApiUser, isUserModerator } from '@/lib/user'
 import { ApiError, withErrorHandler } from '@/lib/utils/api-error'
-import { envString } from '@/lib/utils/env'
+import { decryptWithDatabaseSecret, envString } from '@/lib/utils/env'
 import { IATicketStatus } from '@/lib/db/mysql-types'
 
 const STATUSES: IATicketStatus[] = ['ABERTO', 'EM_ANALISE', 'RESOLVIDO']
@@ -23,13 +23,11 @@ async function GET_HANDLER(req: Request, { params }: { params: Promise<{ uuid: s
         throw new ApiError('Chamado não encontrado', 404)
     }
 
-    // error_context é gravado criptografado (Cryptr, mesmo padrão do ErrorSpan);
     // descriptografa server-side para exibição ao moderador
     let errorStack: string | null = null
     if (ticket.error_context) {
         try {
-            const cryptr = new Cryptr(envString('PROPERTY_SECRET') as string, {})
-            errorStack = cryptr.decrypt(ticket.error_context)
+            errorStack = decryptWithDatabaseSecret(ticket.error_context)
         } catch {
             errorStack = null
         }

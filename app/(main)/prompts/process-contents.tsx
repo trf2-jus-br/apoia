@@ -18,6 +18,7 @@ import { buildFooterFromPieces } from "@/lib/utils/footer";
 import { formatDateTime } from "@/lib/utils/date";
 
 import { usePromptContext } from "./context/PromptContext";
+import { useAppContext } from "@/app/context/appContext";
 import Listen from "@/components/slots/listen";
 import devLog from "@/lib/utils/log";
 import { slugify } from "@/lib/utils/utils";
@@ -35,13 +36,12 @@ const isNivelDeSigiloPermitidoClient = (maxConfidentialityLevel: number, nivel: 
 const MAX_CONCURRENT_PIECE_FETCHES = 3
 const limit = pLimit(MAX_CONCURRENT_PIECE_FETCHES)
 
-export default function ProcessContents({ apiKeyProvided, model, children, sidekick, promptButtons, isBetaTester }: {
+export default function ProcessContents({ apiKeyProvided, model, children, sidekick, promptButtons }: {
     apiKeyProvided: boolean,
     model?: string,
     children?: ReactNode,
     sidekick?: boolean
     promptButtons?: ReactNode
-    isBetaTester?: boolean
 }) {
     const {
         prompt,
@@ -53,8 +53,8 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         sinkButtonText,
         sourcePayload,
         maxConfidentialityLevel,
-        mode
     } = usePromptContext()
+    const { mode, isBetaTester } = useAppContext()
 
     if (!prompt || !dadosDoProcesso) return null
     const [selectedPieces, setSelectedPieces] = useState<PecaType[] | null>(null)

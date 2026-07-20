@@ -1,7 +1,10 @@
 "use client"
 
-function ErrorMsg(msg: string) {
+import { useState } from 'react';
+import { Modal, Button, Form } from 'react-bootstrap';
+import { TicketFormModal } from './ticket-form';
 
+function ErrorMsg(msg: string) {
     if (msg.match(/Não é possível armazenar um resultado de IA vazio/)) {
         return <>
             <p>Ocorreu um erro ao processar a solicitação de IA porque o resultado retornado pela API de IA está vazio.</p>
@@ -120,13 +123,23 @@ function ErrorMsg(msg: string) {
 }
 
 export default function ErrorMessage(params: { message: string }) {
+    const [showTicketForm, setShowTicketForm] = useState(false);
+
     const msg = params.message
     return (<>
         {ErrorMsg(msg)
             ? <>{ErrorMsg(msg)}
                 <p className="text-muted mb-0 mt-1" style={{ fontSize: '70%' }}>{msg}</p>
             </>
-            : msg}
-
+            : <>
+                <p className="mb-0">{msg}</p>
+            </>}
+        {/* <p className="text-muted mb-0 mt-1" style={{ fontSize: '70%', textAlign: 'right' }}>Se precisar de suporte, clique <a href="#" onClick={() => setShowTicketForm(true)}>aqui</a> para abrir um chamado.</p> */}
+        <TicketFormModal
+            show={showTicketForm}
+            onHide={() => setShowTicketForm(false)}
+            kind="ERRO"
+            errorContext={msg}
+        />
     </>)
 }

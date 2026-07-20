@@ -5,6 +5,7 @@ import { TicketDao, UserDao } from '@/lib/db/dao'
 import { assertApiUser } from '@/lib/user'
 import { withErrorHandler } from '@/lib/utils/api-error'
 import { IATicketKind } from '@/lib/db/mysql-types'
+import { encryptWithDatabaseSecret } from '@/lib/utils/env'
 
 const KINDS: IATicketKind[] = ['ERRO', 'DUVIDA', 'SUGESTAO']
 
@@ -24,7 +25,7 @@ async function POST_HANDLER(req: Request) {
     if (!message) {
         return NextResponse.json({ errormsg: 'A descrição do problema é obrigatória' }, { status: 400 })
     }
-    const errorContext = form.get('error_context') ? String(form.get('error_context')) : null
+    const errorContext: string = form.get('encrypted_error_context') ? String(form.get('encrypted_error_context')) : encryptWithDatabaseSecret(form.get('error_context') ? String(form.get('error_context')) : null)
     const pageUrl = form.get('page_url') ? String(form.get('page_url')).slice(0, 512) : null
     const userAgent = req.headers.get('user-agent')?.slice(0, 512) ?? null
 

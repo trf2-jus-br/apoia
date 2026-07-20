@@ -10,7 +10,7 @@ import { StatusDeLancamento } from '@/lib/proc/process-types'
 import { IAPromptList } from '@/lib/db/mysql-types'
 import { fixPromptList } from '@/lib/prompt-list'
 import { nivelDeSigiloPermitido } from '@/lib/proc/sigilo'
-import { isBetaTester, getMode } from '@/lib/utils/prefs'
+import { getMode } from '@/lib/utils/prefs'
 
 export default async function ServerContents( params: { sidekick?: boolean } ) {
     const MINIMUM_NUMBER_OF_VOTES_TO_TURN_UNLISTED = 5
@@ -41,9 +41,8 @@ export default async function ServerContents( params: { sidekick?: boolean } ) {
     }))
 
     const maxConfidentialityLevel = nivelDeSigiloPermitido(user)
-    const betaTester = await isBetaTester()
 
-    // Caso o prompt tenha share=PUBLICO e o rating tenha mais de 5 votos e a avg_laplace < 2, 
+    // Caso o prompt tenha share=PUBLICO e o rating tenha mais de 5 votos e a avg_laplace < 2,
     // troca o share para NAO_LISTADO para evitar exposição de prompts mal avaliados
     for (const prompt of promptsWithRatings) {
         if (prompt.share === 'PUBLICO' && prompt.rating) {
@@ -54,5 +53,7 @@ export default async function ServerContents( params: { sidekick?: boolean } ) {
         }
     }
 
-    return <Contents prompts={promptsWithRatings} user={user} user_id={user_id} apiKeyProvided={!!apiKey} model={model} isModerator={isModerator} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={params.sidekick} isBetaTester={betaTester} mode={mode} />
+    // isBetaTester e mode não são mais passados como props: vêm do AppContext
+    // (resolvido no RootLayoutWithTheme e exposto a todos os filhos do GlobalProviders).
+    return <Contents prompts={promptsWithRatings} user={user} user_id={user_id} apiKeyProvided={!!apiKey} model={model} isModerator={isModerator} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={params.sidekick} />
 }

@@ -10,7 +10,8 @@ import { ContentType, PromptConfigType, PromptDataType, PromptDefinitionType, Pr
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCopy, faThumbsDown } from '@fortawesome/free-regular-svg-icons'
 import { faRefresh, faCheck } from '@fortawesome/free-solid-svg-icons'
-import { useExecutionId, usePromptContext, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext'
+import { useExecutionId, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext'
+import { useAppContextSafe } from '@/app/context/appContext'
 import { Form } from 'react-bootstrap'
 import devLog from '@/lib/utils/log'
 import { readUIMessageStream, UIMessage } from 'ai'
@@ -104,7 +105,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const aggregatorPromptId = selectedPromptId !== null && params.definition.dbId !== selectedPromptId
         ? selectedPromptId
         : null
-    const { isBetaTester } = usePromptContext();
+    const isBetaTester = useAppContextSafe()?.isBetaTester ?? false
 
     const reportError = (err: any, payload: any) => {
         if (err && typeof err === 'object' && 'message' in err && (err as Error).message === 'NEXT_REDIRECT') throw err

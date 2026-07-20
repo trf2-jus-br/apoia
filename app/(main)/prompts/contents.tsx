@@ -216,7 +216,7 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
     )
 }
 
-export function Contents({ prompts, user, user_id, apiKeyProvided, model, isModerator, sidekick, maxConfidentialityLevel, isBetaTester, mode }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string, isModerator: boolean, maxConfidentialityLevel: number, sidekick?: boolean, isBetaTester?: boolean, mode?: string }) {
+export function Contents({ prompts, user, user_id, apiKeyProvided, model, isModerator, sidekick, maxConfidentialityLevel }: { prompts: IAPromptList[], user: UserType, user_id: number, apiKeyProvided: boolean, model?: string, isModerator: boolean, maxConfidentialityLevel: number, sidekick?: boolean }) {
     const [toast, setToast] = useState<string>()
     const [toastVariant, setToastVariant] = useState<string>()
 
@@ -226,7 +226,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model, isMode
     }
 
     return (
-        <PromptProvider originalPrompts={prompts} toastMessage={toastMessage} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={sidekick} isBetaTester={isBetaTester} mode={mode}>
+        <PromptProvider originalPrompts={prompts} toastMessage={toastMessage} maxConfidentialityLevel={maxConfidentialityLevel} sidekick={sidekick}>
             <ContentsInner
                 prompts={prompts}
                 user={user}

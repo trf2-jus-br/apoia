@@ -143,11 +143,13 @@ export const envStringPrefixed = (key: string, seqTribunalPai: string): string =
 const dbSecretDecryptedCache: { [ciphertext: string]: string } = {}
 
 export const encryptWithDatabaseSecret = (text: string): string => {
+    if (!text) return text
     const cryptr = new Cryptr(envString('DATABASE_SECRET') as string, { encoding: 'base64' })
     return cryptr.encrypt(text)
 }
 
 export const decryptWithDatabaseSecret = (ciphertext: string): string => {
+    if (!ciphertext) return ciphertext
     if (dbSecretDecryptedCache[ciphertext]) return dbSecretDecryptedCache[ciphertext]
     const cryptr = new Cryptr(envString('DATABASE_SECRET') as string, { encoding: 'base64' })
     const decrypted = cryptr.decrypt(ciphertext)

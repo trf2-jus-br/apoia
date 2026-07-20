@@ -12,6 +12,29 @@ import PrefsMigrator from "@/components/PrefsMigrator"
 import { Suspense } from "react"
 import { serviceMonitor } from "@/lib/interop/pdpjServiceMonitor"
 import ModeLink from "./mode-link"
+import { getCurrentUser, isUserCorporativo, isUserModerator } from "@/lib/user"
+import { getAnonymize, getMode, isBetaTester } from "@/lib/utils/prefs"
+import { AppContextValue } from "@/app/context/appContext"
+
+// Resolve server-side os dados de aplicação (flags de usuário + modo + preferências)
+// que não dependem de prompt e são expostos via AppContext a todos os filhos do
+// GlobalProviders. Páginas públicas/landing (sem usuário) recebem defaults.
+// As funções chamadas aqui são memoizadas por request (React cache() em
+// PrefsDao.fetchPrefsRow e UserDao.getCurrentUserId), então não adicionam
+// round-trips ao banco além dos que já ocorrem em UserMenu/páginas.
+async function resolveAppValue(): Promise<AppContextValue> {
+  const user = await getCurrentUser()
+  if (!user) {
+    return { isBetaTester: false, mode: 'JUDICIAL', isAnonymized: false, isModerator: false, isCorporativo: false }
+  }
+  return {
+    isBetaTester: await isBetaTester(),
+    mode: await getMode(),
+    isAnonymized: await getAnonymize(),
+    isModerator: await isUserModerator(user),
+    isCorporativo: await isUserCorporativo(user),
+  }
+}
 
 export default async function RootLayoutWithTheme({
   children, theme, sidekick = false
@@ -20,6 +43,7 @@ export default async function RootLayoutWithTheme({
   theme: 'light' | 'dark';
   sidekick?: boolean;
 }) {
+  const appValue = await resolveAppValue()
   return (
     <html lang="pt-BR" data-theme={theme}>
       <body suppressHydrationWarning={true} className={sidekick ? 'bg-chat' : theme === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'}>
@@ -46,7 +70,7 @@ export default async function RootLayoutWithTheme({
         <Suspense fallback={null}><NonCorporateUserWarning /></Suspense>
         <Suspense fallback={null}><PrefsMigrator /></Suspense>
         {serviceMonitor.isDown() && <div className="alert alert-warning mb-0"><div className="p-2 mb-0 container"><div className="row"><div className="col col-auto"><strong>Atenção:</strong> A Apoia está enfrentando dificuldades para acessar os serviços do Codex/DataLake. Por favor, tente novamente mais tarde.</div></div></div></div>}
-        <GlobalProviders>
+        <GlobalProviders appValue={appValue}>
           <div>
             {children}
           </div>

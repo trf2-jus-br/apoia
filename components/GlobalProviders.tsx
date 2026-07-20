@@ -1,13 +1,16 @@
 'use client'
 import NextAuthProvider from '@/app/context/nextAuthProvider'
+import { AppProvider, AppContextValue } from '@/app/context/appContext'
 import { ConfirmationProvider } from '@/components/confirm/ConfirmationProvider'
 
-export default function GlobalProviders({ children }: { children: React.ReactNode }) {
+export default function GlobalProviders({ children, appValue }: { children: React.ReactNode; appValue: AppContextValue }) {
   return (
     <NextAuthProvider>
-      <ConfirmationProvider>
-        {children}
-      </ConfirmationProvider>
+      <AppProvider value={appValue}>
+        <ConfirmationProvider>
+          {children}
+        </ConfirmationProvider>
+      </AppProvider>
     </NextAuthProvider>
   )
 }

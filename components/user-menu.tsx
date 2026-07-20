@@ -7,7 +7,7 @@ import Link from 'next/link'
 import UserMenuSignout from './user-menu-signout'
 import { unstable_noStore as noStore } from 'next/cache'
 import { NavigationLink } from './NavigationLink';
-import { envString, envStringPrefixed } from '@/lib/utils/env';
+import { encryptWithDatabaseSecret, envString, envStringPrefixed } from '@/lib/utils/env';
 import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
 import { assertCourtId, getCurrentUser, isUserCorporativo, isUserModerator } from '@/lib/user';
@@ -86,8 +86,8 @@ export default async function UserMenu({ }: {}) {
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
                                 {betaTester && hasSeiApiUrl && <UserMenuMode />}
                                 {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
-                                {user && <li><TicketFormButton label="Ajuda / Abrir chamado" className="dropdown-item" userName={user.name} userEmail={user.email} /></li>}
-                                {user && <li><ModeLink className="dropdown-item" href="/tickets">Meus chamados</ModeLink></li>}
+                                {/* {user && <li><TicketFormButton label="Ajuda / Abrir chamado" className="dropdown-item" userName={user.name} userEmail={user.email} /></li>} */}
+                                {/* {user && <li><ModeLink className="dropdown-item" href="/tickets">Meus chamados</ModeLink></li>} */}
                                 {moderator && <li><ModeLink className="dropdown-item" href="/admin/tickets">Chamados (moderação)</ModeLink></li>}
                                 {!user && <li><ModeLink className="dropdown-item" href="/auth/signin">Login</ModeLink></li>}
                                 {user && <li><UserMenuSignout /></li>}
@@ -98,8 +98,7 @@ export default async function UserMenu({ }: {}) {
             </ul>
         </>)
     } catch (error) {
-        const cryptr = new Cryptr(envString('PROPERTY_SECRET') as string, {})
-        const encrypted = cryptr.encrypt(error.stack as string)
+        const encrypted = encryptWithDatabaseSecret(error.stack as string)
         return (
             <ul className="navbar-nav me-1 mb-2x mb-lg-0x">
                 <li className="nav-item dropdown">

@@ -21,6 +21,7 @@ import AiContent from '@/components/ai-content'
 import { PromptConfigType, PromptDefinitionType, Mode } from '@/lib/ai/prompt-types'
 import { VisualizationEnum } from '@/lib/ui/preprocess'
 import { useModeUrl } from '@/lib/utils/use-mode-url'
+import { useAppContext } from '@/app/context/appContext'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 
@@ -30,7 +31,7 @@ export default function PromptForm(props) {
     const router = useRouter()
     const modeUrl = useModeUrl()
     const initialState = props.record || { content: {} }
-    const isBetaTester = props.isBetaTester || false
+    const { isBetaTester } = useAppContext()
     const hasSeiApiUrl = props.hasSeiApiUrl || false
     // if (!initialState.model_id || (props.models && props.models[0] && !props.models.map(i => i.id).includes(initialState.model_id))) initialState.model_id = props.models && props.models[0] ? props.models[0].id : null
     // if (!initialState.testset_id || (props.testsets && props.testsets[0] && !props.testsets.map(i => i.id).includes(initialState.testset_id))) initialState.testset_id = props.testsets && props.testsets[0] ? props.testsets[0].id : null
