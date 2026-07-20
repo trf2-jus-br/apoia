@@ -776,3 +776,37 @@ export interface IAUserPrefs {
     beta_tester: boolean
     updated_at: Date
 }
+
+// Ticket Types (Sistema de Chamados / Help Desk)
+export type IATicketKind = 'ERRO' | 'DUVIDA' | 'SUGESTAO'
+export type IATicketStatus = 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO'
+
+export type IATicket = {
+    id: string                       // UUID (protocolo do chamado)
+    user_id: number
+    username: string | null          // preferred_username (snapshot)
+    user_name: string | null         // snapshot
+    user_email: string | null        // snapshot
+    system: string | null            // PDPJ, etc. (snapshot)
+    court_id: number | null          // seq_tribunal_pai no momento da abertura
+    kind: IATicketKind
+    message: string
+    error_context: string | null     // stack criptografada (Cryptr) vinda do ErrorSpan
+    page_url: string | null
+    user_agent: string | null
+    screenshot?: Buffer | null       // não retornado nas listagens
+    screenshot_content_type: string | null
+    status: IATicketStatus
+    response: string | null          // resposta do moderador
+    responded_by: string | null      // preferred_username do moderador
+    responded_at: Date | null
+    created_at: Date
+    updated_at: Date | null
+}
+
+export type IATicketStats = {
+    byStatus: { status: IATicketStatus, count: number }[]
+    last7Days: number
+    avgResolutionHours: number | null
+    byCourt: { court_id: number | null, count: number }[]
+}

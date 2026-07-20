@@ -60,6 +60,7 @@
     "eureka-js-client": "^4.5.0",
     "file-type": "^22.0.1",
     "glob": "^13.0.0",
+    "html2canvas": "^1.4.1",
     "http": "^0.0.1-security",
     "ia": "^0.0.1-beta",
     "js-yaml": "^4.1.0",

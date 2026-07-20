@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
+import { TicketFormModal } from './ticket-form';
 
 export default function ErrorSpan({ encrypted }: { encrypted?: string }) {
     const [showModal, setShowModal] = useState(false);
+    const [showTicketForm, setShowTicketForm] = useState(false);
 
     if (!encrypted) return null;
 
@@ -34,7 +36,8 @@ export default function ErrorSpan({ encrypted }: { encrypted?: string }) {
                 </Modal.Header>
                 <Modal.Body>
                     <div style={{ marginBottom: 16 }}>
-                        Copie o texto abaixo e envie para o suporte.
+                        Abra um chamado para que o suporte receba os detalhes do erro automaticamente.
+                        Se preferir, copie o texto abaixo e envie para o suporte.
                     </div>
                     <Form.Control
                         as="textarea"
@@ -48,11 +51,21 @@ export default function ErrorSpan({ encrypted }: { encrypted?: string }) {
                     <Button variant="secondary" onClick={() => setShowModal(false)}>
                         Fechar
                     </Button>
-                    <Button variant="primary" onClick={copyErrorToClipboard}>
+                    <Button variant="outline-primary" onClick={copyErrorToClipboard}>
                         Copiar
+                    </Button>
+                    <Button variant="primary" onClick={() => { setShowModal(false); setShowTicketForm(true) }}>
+                        Abrir chamado
                     </Button>
                 </Modal.Footer>
             </Modal>
+
+            <TicketFormModal
+                show={showTicketForm}
+                onHide={() => setShowTicketForm(false)}
+                kind="ERRO"
+                errorContext={encrypted}
+            />
         </>
     );
 }

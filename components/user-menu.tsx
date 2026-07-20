@@ -10,10 +10,11 @@ import { NavigationLink } from './NavigationLink';
 import { envString, envStringPrefixed } from '@/lib/utils/env';
 import { maiusculasEMinusculas, primeiroEUltimoNome } from '@/lib/utils/utils';
 import WootricSurvey from './wootric-survey';
-import { assertCourtId, getCurrentUser, isUserCorporativo } from '@/lib/user';
+import { assertCourtId, getCurrentUser, isUserCorporativo, isUserModerator } from '@/lib/user';
 import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-server';
 import { getAnonymize, getMode, getModeUrl, isBetaTester } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
+import TicketFormButton from './ticket-form';
 import Cryptr from 'cryptr';
 import UserMenuAnonymize from './user-menu-anonymize';
 import UserMenuBetaTester from './user-menu-beta-tester';
@@ -41,6 +42,7 @@ export default async function UserMenu({ }: {}) {
         const hasSeiApiUrl = !!envStringPrefixed('SEI_API_URL', seqTribunalPai)
 
         const nonCorporateUser = user && !(await isUserCorporativo(user))
+        const moderator = user ? await isUserModerator(user) : false
         const modeUrl = await getModeUrl()
 
 
@@ -84,6 +86,9 @@ export default async function UserMenu({ }: {}) {
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
                                 {betaTester && hasSeiApiUrl && <UserMenuMode />}
                                 {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
+                                {user && <li><TicketFormButton label="Ajuda / Abrir chamado" className="dropdown-item" userName={user.name} userEmail={user.email} /></li>}
+                                {user && <li><ModeLink className="dropdown-item" href="/tickets">Meus chamados</ModeLink></li>}
+                                {moderator && <li><ModeLink className="dropdown-item" href="/admin/tickets">Chamados (moderação)</ModeLink></li>}
                                 {!user && <li><ModeLink className="dropdown-item" href="/auth/signin">Login</ModeLink></li>}
                                 {user && <li><UserMenuSignout /></li>}
                                 {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}

@@ -44,6 +44,15 @@
 - `category` (antigo `kind`) é nullable e atualmente setado como NULL
 - `mode` categoriza o prompt por modo de operação (JUDICIAL/ADMINISTRATIVO; NULL = ambos)
 
+### Tabela `ia_ticket` (Sistema de Chamados)
+- PK `id` é **UUID** gerada pela aplicação (`crypto.randomUUID()` em `TicketDao.createTicket`); funciona como protocolo do chamado
+- Snapshot dos dados do solicitante em colunas próprias (`username`, `user_name`, `user_email`, `system`, `court_id`); nomes de tribunal são resolvidos em tempo de exibição via `CourtDao.getCourtById` (cache local)
+- `kind`: ERRO | DUVIDA | SUGESTAO; `status`: ABERTO | EM_ANALISE | RESOLVIDO
+- `error_context` guarda a stack criptografada (Cryptr + `PROPERTY_SECRET`) vinda do `ErrorSpan`; descriptografada server-side na rota admin de detalhe
+- `screenshot` (BYTEA/LONGBLOB) só é lida por `TicketDao.getScreenshot` e servida em `/api/v1/ticket/[uuid]/screenshot` (dono ou moderador); listagens nunca retornam o blob
+- Entradas na UI: `TicketFormButton`/`TicketFormModal` (`components/ticket-form.tsx`, captura via `html2canvas` com consentimento), botão "Abrir chamado" no `ErrorSpan`, itens no `user-menu.tsx`
+- Páginas: `/tickets` (usuário acompanha seus chamados e respostas) e `/admin/tickets` (moderador: estatísticas, lista, detalhe, resposta) — guard `isUserModerator`
+
 ### Modo de Operação via URL (`/adm`)
 - O modo (JUDICIAL/ADMINISTRATIVO) é derivado da **URL**, não de preferência persistida: prefixo `/adm` = ADMINISTRATIVO; URL sem prefixo = JUDICIAL, sempre. A coluna `ia_user_prefs.mode` foi removida (migration-029).
 - `proxy.ts` (raiz; Next 16 renomeou `middleware.ts` → `proxy.ts`) intercepta `/adm/:path*`, faz rewrite interno para o path sem prefixo e injeta o request header `x-apoia-mode`; em URLs sem prefixo o header é removido (anti-spoofing).
