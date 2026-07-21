@@ -21,6 +21,7 @@ import MessageFooter from '../message-footer';
 import { useExecutionId, usePromptContext, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext';
 import { InstanceKeyType } from '@/lib/proc/process-types';
 import { useModeUrl } from '@/lib/utils/use-mode-url';
+import { playClickSound } from '@/lib/sound';
 
 const converter = new showdown.Converter({ tables: true })
 
@@ -101,9 +102,10 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     }
 
     const { messages, setMessages, sendMessage, error, clearError } =
-        useChat({
+        useChat({ 
             transport: new DefaultChatTransport({ api: `/api/v1/chat?withTools=${params.withTools ? 'true' : 'false'}${params.definition?.dbId ? `&promptId=${params.definition.dbId}` : ''}`, body: { execution_id: executionId, aggregator_prompt_id: aggregatorPromptId, dossierCode: processNumber || undefined } }),
             // messages: fetchedMessages,
+            onFinish: () => playClickSound()
         })
 
     // Hook de analytics encapsula instrumentação (depois de obter messages & error)

@@ -11,7 +11,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCopy, faThumbsDown } from '@fortawesome/free-regular-svg-icons'
 import { faRefresh, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { useExecutionId, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext'
-import { useAppContextSafe } from '@/app/context/appContext'
 import { Form } from 'react-bootstrap'
 import devLog from '@/lib/utils/log'
 import { readUIMessageStream, UIMessage } from 'ai'
@@ -105,7 +104,6 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const aggregatorPromptId = selectedPromptId !== null && params.definition.dbId !== selectedPromptId
         ? selectedPromptId
         : null
-    const isBetaTester = useAppContextSafe()?.isBetaTester ?? false
 
     const reportError = (err: any, payload: any) => {
         if (err && typeof err === 'object' && 'message' in err && (err as Error).message === 'NEXT_REDIRECT') throw err
@@ -296,7 +294,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
             } catch (error) {
                 console.error('Error fetching stream:', error);
             } finally {
-                if (isBetaTester) playClickSound()
+                playClickSound()
                 setComplete(true)
             }
         } else {
