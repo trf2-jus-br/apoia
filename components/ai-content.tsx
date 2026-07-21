@@ -147,7 +147,14 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     }
     const handleClose = async (evaluation_id: number, descr: string | null) => {
         setShow(false)
-        if (evaluation_id) setEvaluated(await evaluate(params.definition, params.data, evaluation_id, descr))
+        if (evaluation_id) {
+            try {
+                const generationId = (currentMessage?.metadata as any)?.generationId
+                setEvaluated(await evaluate(params.definition, params.data, evaluation_id, descr, generationId))
+            } catch (e) {
+                setErrormsg(`Não foi possível registrar a avaliação: ${(e as Error)?.message || e}`)
+            }
+        }
     }
     const handleShow = () => setShow(true)
 

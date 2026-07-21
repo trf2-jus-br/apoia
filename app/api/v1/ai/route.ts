@@ -282,7 +282,8 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
                     messageMetadata: {
                         model: ret.model,
                         usage: ret.usage,
-                        messages: executionResults.messages
+                        messages: executionResults.messages,
+                        generationId: executionResults.generationId,
                     },
                 });
             }
@@ -301,7 +302,7 @@ async function POST_HANDLER(request: Request, _props: any, trace: Trace) {
                 }
                 writer.write({
                     type: 'finish',
-                    messageMetadata: { model: ret.model, usage: ret.usage, messages: executionResults.messages },
+                    messageMetadata: { model: ret.model, usage: ret.usage, messages: executionResults.messages, generationId: executionResults.generationId },
                 });
             }
         })

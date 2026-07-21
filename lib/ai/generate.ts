@@ -346,25 +346,32 @@ async function processMessages(model: string, messages: ModelMessage[]): Promise
     return { processedMessagesModel, processedMessagesLog }
 }
 
-export async function evaluate(definition: PromptDefinitionType, data: PromptDataType, evaluation_id: number, evaluation_descr: string | null):
+export async function evaluate(definition: PromptDefinitionType, data: PromptDataType, evaluation_id: number, evaluation_descr: string | null, generationId?: number):
     Promise<boolean> {
     const user = await assertCurrentUser()
     const user_id = await UserDao.assertIAUserId(user.preferredUsername || user.name)
 
     if (!user_id) throw new Error('Usuário não autenticado')
 
-    const { model } = await getModel()
-    await waitForTexts(data)
-    const libraryPrompt = await getLibraryDocumentsForPrompt(slugify(definition.name), data.documentosDaBiblioteca)
-    const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
-    const messages = exec.message
-    const sha256 = calcSha256(messages)
+    let id = generationId
+    if (!id) {
+        // Fallback legado: reconstrói as messages para localizar a geração pelo sha256.
+        // Frágil: não reproduz anonimização/clip de peças/seleção de modelo por perfil
+        // aplicados em streamContent, então pode não encontrar o registro.
+        const { model } = await getModel()
+        await waitForTexts(data)
+        const libraryPrompt = await getLibraryDocumentsForPrompt(slugify(definition.name), data.documentosDaBiblioteca)
+        const exec = await promptExecuteBuilder(definition, data, libraryPrompt)
+        const messages = exec.message
+        const sha256 = calcSha256(messages)
 
-    // try to retrieve cached generations
-    const cached = await retrieveFromCache(sha256, model, definition.kind, null)
-    if (!cached) throw new Error('Generation not found')
+        // try to retrieve cached generations
+        const cached = await retrieveFromCache(sha256, model, definition.kind, null)
+        if (!cached) throw new Error('Generation not found')
+        id = cached.id
+    }
 
-    await GenerationDao.evaluateIAGeneration(user_id, cached.id, evaluation_id, evaluation_descr)
+    await GenerationDao.evaluateIAGeneration(user_id, id, evaluation_id, evaluation_descr)
 
     return true
 }
