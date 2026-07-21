@@ -59,6 +59,7 @@ interface SemanticSearchResponse {
     total: number
 }
 import { calcMd5 } from "@/lib/utils/hash"
+import devLog from "@/lib/utils/log"
 import { maiusculasEMinusculas } from "@/lib/utils/utils"
 import { useEffect, useState } from "react"
 import { Button, Spinner } from "react-bootstrap"
@@ -233,6 +234,75 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
 
         return atualizados
     }
+
+    // pedidos com tema.id mas sem tema.questao, obter o tema completo via busca semântica pela id
+    useEffect(() => {
+        devLog('Verificando pedidos para completar temas via busca semântica...')
+        const aPedidos = Frm.get('pedidos').pedidos
+        if (!aPedidos || aPedidos.length === 0) return
+
+        if (limparCamposDesnecessarios()) {
+            devLog('Campos desnecessários limpos. Pedidos atualizados:', Frm.get('pedidos').pedidos)
+            return
+        }
+
+        const buscarTemasCompletos = async () => {
+            const promessas: Promise<any>[] = []
+
+            aPedidos.forEach((pedido: any, indexPedido: number) => {
+                if (pedido.tema?.length > 0) {
+                    pedido.tema.forEach((tema: any, indexTema: number) => {
+                        if (typeof tema === 'string') {
+                            const p = semanticSearchDeTemas(tema)
+                                .then(temas => ({ tipo: 'pedido', indexPedido, indexTema, temaCompleto: temas.find(t => t.id === tema) }))
+                                .catch(error => { console.error('Erro ao buscar tema completo:', error); return null })
+                            promessas.push(p)
+                        }
+                    })
+                }
+
+                if (pedido.argumentos && Array.isArray(pedido.argumentos)) {
+                    pedido.argumentos.forEach((argumento: any, indexArgumento: number) => {
+                        if (argumento.tema?.length > 0) {
+                            argumento.tema.forEach((tema: any, indexTema: number) => {
+                                const p = semanticSearchDeTemas(tema)
+                                    .then(temas => ({ tipo: 'argumento', indexPedido, indexArgumento, indexTema, temaCompleto: temas.find(t => t.id === tema) }))
+                                    .catch(error => { console.error('Erro ao buscar tema completo:', error); return null })
+                                promessas.push(p)
+                            })
+                        }
+                    })
+                }
+            })
+
+            const resultados = await Promise.all(promessas)
+            const pedidosAtualizados = [...aPedidos]
+
+            resultados.forEach(resultado => {
+                if (resultado && resultado.temaCompleto) {
+                    if (resultado.tipo === 'pedido') {
+                        pedidosAtualizados[resultado.indexPedido].tema[resultado.indexTema] = resultado.temaCompleto
+                    } else if (resultado.tipo === 'argumento') {
+                        pedidosAtualizados[resultado.indexPedido].argumentos[resultado.indexArgumento].tema[resultado.indexTema] = resultado.temaCompleto
+                    }
+                }
+            })
+
+            console.log('Pedidos atualizados com temas completos:', pedidosAtualizados)
+
+            Frm.set('pedidos.pedidos', pedidosAtualizados)
+        }
+
+        buscarTemasCompletos()
+    }, [Frm, pedidos])
+
+    useEffect(() => {
+        console.log('Verificando pedidos para limpeza...')
+        if (limparCamposDesnecessarios()) {
+            devLog('Campos desnecessários limpos. Pedidos atualizados:', Frm.get('pedidos').pedidos)
+            return
+        }
+    }, [Frm.data])
 
     if (pedidosAnalisados) {
         if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary" /></div>

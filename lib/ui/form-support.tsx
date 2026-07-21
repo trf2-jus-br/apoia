@@ -11,6 +11,7 @@ import Editor from '../../components/EditorComponent';
 // Re-export server-compatible types and functions from form-state
 export { type FormState, EMPTY_FORM_STATE, getPathReference, fromErrorToFormState } from './form-state'
 import type { FormState } from './form-state'
+import devLog from '../utils/log';
 
 type FieldErrorProps = {
     formState: FormState
@@ -376,6 +377,8 @@ function AsyncMultiSelectComponent<T>({
         setValue([])
         setSearchQuery('')
     }
+
+    devLog('selected values', selectedValues)
 
     return (
         <Form.Group className={`${colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name} ref={containerRef}>
