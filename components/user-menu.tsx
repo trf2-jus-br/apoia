@@ -88,9 +88,16 @@ export default async function UserMenu({ }: {}) {
                                 {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
                                 {/* {user && <li><TicketFormButton label="Ajuda / Abrir chamado" className="dropdown-item" userName={user.name} userEmail={user.email} /></li>} */}
                                 {/* {user && <li><ModeLink className="dropdown-item" href="/tickets">Meus chamados</ModeLink></li>} */}
-                                {moderator && <li><ModeLink className="dropdown-item" href="/admin/tickets">Chamados (moderação)</ModeLink></li>}
                                 {!user && <li><ModeLink className="dropdown-item" href="/auth/signin">Login</ModeLink></li>}
                                 {user && <li><UserMenuSignout /></li>}
+                                {moderator && <>
+                                    <hr className="mt-2 mb-2"/>
+                                    <li><ModeLink className="dropdown-item" href="/admin/tickets">Chamados (moderação)</ModeLink></li>
+                                    <li><ModeLink className="dropdown-item" href="/admin/evaluations">Avaliações de IA</ModeLink></li>
+                                    <li><ModeLink className="dropdown-item" href="/admin/court">Tribunais</ModeLink></li>
+                                    <li><ModeLink className="dropdown-item" href="/admin/edit-prompt">Edição de Prompts</ModeLink></li>
+                                    <li><ModeLink className="dropdown-item" href="/admin/transfer-prompt">Transferência de Prompts</ModeLink></li>
+                                </>}
                                 {user && corporateUser && apiKeyProvided && envString('WOOTRIC_ACCOUNT_TOKEN') && <WootricSurvey user={user} token={envString('WOOTRIC_ACCOUNT_TOKEN')} />}
                             </ul></>
                     }

@@ -663,6 +663,72 @@ export type AIGenerationReportRow = {
     approximate_cost: number | null
 }
 
+// Tipos do painel estatístico de avaliações de IA (/admin/evaluations)
+export type EvaluationStatsParams = {
+    startDate?: string
+    endDate?: string
+    model?: string
+    prompt?: string
+}
+
+export type EvaluationSummary = {
+    totalGenerations: number
+    totalEvaluations: number
+    evaluationRate: number | null
+    topReason: string | null
+}
+
+export type EvaluationByReasonRow = {
+    evaluation_id: number
+    reason: string
+    evaluations: number
+}
+
+export type EvaluationByDayRow = {
+    day: string
+    generations: number
+    evaluations: number
+}
+
+export type EvaluationByModelRow = {
+    model: string
+    generations: number
+    evaluations: number
+    evaluationRate: number | null
+    topReason: string | null
+}
+
+export type EvaluationByPromptRow = {
+    prompt_id: number | null
+    prompt_name: string
+    generations: number
+    evaluations: number
+    evaluationRate: number | null
+}
+
+export type EvaluationListRow = {
+    id: number
+    created_at: Date
+    prompt_name: string
+    model: string
+    reason: string | null
+    evaluation_descr: string | null
+    evaluator_name: string | null
+    evaluator_username: string | null
+    dossier_code: string | null
+}
+
+export type EvaluationStatsResult = {
+    summary: EvaluationSummary
+    byReason: EvaluationByReasonRow[]
+    byDay: EvaluationByDayRow[]
+    byModel: EvaluationByModelRow[]
+    byPrompt: EvaluationByPromptRow[]
+    recent: EvaluationListRow[]
+    availableModels: string[]
+    availablePrompts: string[]
+}
+
 // Court Types (Cache de Tribunais)
 export type IACourt = {
     id: number                      // court_id (seq_orgao)

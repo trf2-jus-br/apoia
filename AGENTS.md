@@ -53,6 +53,12 @@
 - Entradas na UI: `TicketFormButton`/`TicketFormModal` (`components/ticket-form.tsx`, captura via `html2canvas` com consentimento), botão "Abrir chamado" no `ErrorSpan`, itens no `user-menu.tsx`
 - Páginas: `/tickets` (usuário acompanha seus chamados e respostas) e `/admin/tickets` (moderador: estatísticas, lista, detalhe, resposta) — guard `isUserModerator`
 
+### Painel de Avaliações de IA (`/admin/evaluations`)
+- Painel de estatísticas das avaliações negativas (thumbs-down) registradas em `ia_generation` (`evaluation_id`, `evaluation_descr`, `evaluation_user_id`); restrito a moderadores (guard `isUserModerator` na página e na rota)
+- Dados: `GenerationDao.retrieveEvaluationStats` (agregações por motivo, dia, modelo e prompt + últimas avaliações); prompts agrupados por nome (`COALESCE(p.name, g.prompt)`) pois um prompt tem várias versões
+- Rota: `GET /api/v1/admin/evaluation-stats` (params `startDate`, `endDate`, `model`, `prompt`); página `app/(main)/admin/evaluations/`; gráficos com recharts
+- `evaluate()` em `lib/ai/generate.ts` recebe o `generationId` via metadata do stream de `/api/v1/ai` (fallback legado reconstrói o sha256 das messages)
+
 ### Modo de Operação via URL (`/adm`)
 - O modo (JUDICIAL/ADMINISTRATIVO) é derivado da **URL**, não de preferência persistida: prefixo `/adm` = ADMINISTRATIVO; URL sem prefixo = JUDICIAL, sempre. A coluna `ia_user_prefs.mode` foi removida (migration-029).
 - `proxy.ts` (raiz; Next 16 renomeou `middleware.ts` → `proxy.ts`) intercepta `/adm/:path*`, faz rewrite interno para o path sem prefixo e injeta o request header `x-apoia-mode`; em URLs sem prefixo o header é removido (anti-spoofing).

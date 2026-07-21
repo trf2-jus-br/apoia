@@ -70,6 +70,185 @@ export class GenerationDao {
         return true
     }
 
+    // Estatísticas de avaliações negativas (thumbs-down) para o painel /admin/evaluations.
+    // Observação: uma geração avaliada sai do cache e pode ser regenerada, criando novas
+    // linhas; por isso as taxas são sobre linhas de ia_generation, não gerações distintas.
+    static async retrieveEvaluationStats(params: mysqlTypes.EvaluationStatsParams): Promise<mysqlTypes.EvaluationStatsResult> {
+        const empty: mysqlTypes.EvaluationStatsResult = {
+            summary: { totalGenerations: 0, totalEvaluations: 0, evaluationRate: null, topReason: null },
+            byReason: [], byDay: [], byModel: [], byPrompt: [], recent: [],
+            availableModels: [], availablePrompts: [],
+        }
+        if (!knex) return empty
+
+        const isPg = knex.client.config.client === 'pg'
+        const dayExpr = isPg ? 'g.created_at::date' : 'DATE(g.created_at)'
+
+        const applyFilters = (query: any) => {
+            // join com ia_prompt para permitir filtro por nome do prompt (agrupa versões)
+            query.leftJoin('ia_prompt as p', 'p.id', 'g.prompt_id')
+            if (params.startDate) query.andWhere('g.created_at', '>=', params.startDate + ' 00:00:00')
+            if (params.endDate) query.andWhere('g.created_at', '<=', params.endDate + ' 23:59:59')
+            if (params.model) query.andWhere('g.model', params.model)
+            if (params.prompt) query.andWhereRaw('COALESCE(p.name, g.prompt) = ?', [params.prompt])
+            return query
+        }
+
+        // Totais gerais (avaliações e gerações no período/filtro)
+        const totals: any = await applyFilters(knex('ia_generation as g'))
+            .select(
+                knex.raw('COUNT(*) as generations'),
+                knex.raw('COUNT(g.evaluation_id) as evaluations'),
+            )
+            .first()
+        const totalGenerations = Number(totals?.generations) || 0
+        const totalEvaluations = Number(totals?.evaluations) || 0
+
+        // Por motivo
+        const reasonRows: any[] = await applyFilters(knex('ia_generation as g'))
+            .leftJoin('ia_evaluation as e', 'e.id', 'g.evaluation_id')
+            .select('g.evaluation_id', 'e.descr as reason')
+            .count('* as evaluations')
+            .whereNotNull('g.evaluation_id')
+            .groupBy('g.evaluation_id', 'e.descr')
+            .orderBy('evaluations', 'desc')
+        const byReason: mysqlTypes.EvaluationByReasonRow[] = reasonRows.map(r => ({
+            evaluation_id: Number(r.evaluation_id),
+            reason: r.reason || `Motivo ${r.evaluation_id}`,
+            evaluations: Number(r.evaluations),
+        }))
+
+        // Por dia (gerações e avaliações)
+        const dayRows: any[] = await applyFilters(knex('ia_generation as g'))
+            .select(knex.raw(`${dayExpr} as day`))
+            .select(
+                knex.raw('COUNT(*) as generations'),
+                knex.raw('COUNT(g.evaluation_id) as evaluations'),
+            )
+            .groupByRaw(dayExpr)
+            .orderByRaw(`${dayExpr} asc`)
+        const byDay: mysqlTypes.EvaluationByDayRow[] = dayRows.map(r => ({
+            day: r.day instanceof Date ? r.day.toISOString().slice(0, 10) : String(r.day).slice(0, 10),
+            generations: Number(r.generations),
+            evaluations: Number(r.evaluations),
+        }))
+
+        // Por modelo
+        const modelRows: any[] = await applyFilters(knex('ia_generation as g'))
+            .select('g.model')
+            .select(
+                knex.raw('COUNT(*) as generations'),
+                knex.raw('COUNT(g.evaluation_id) as evaluations'),
+            )
+            .groupBy('g.model')
+            .orderBy('evaluations', 'desc')
+        // Motivo mais frequente por modelo
+        const modelReasonRows: any[] = await applyFilters(knex('ia_generation as g'))
+            .leftJoin('ia_evaluation as e', 'e.id', 'g.evaluation_id')
+            .select('g.model', 'e.descr as reason')
+            .count('* as evaluations')
+            .whereNotNull('g.evaluation_id')
+            .groupBy('g.model', 'e.descr')
+        const topReasonByModel = new Map<string, { reason: string, evaluations: number }>()
+        for (const r of modelReasonRows) {
+            const current = topReasonByModel.get(r.model)
+            if (!current || Number(r.evaluations) > current.evaluations)
+                topReasonByModel.set(r.model, { reason: r.reason || 'Outros', evaluations: Number(r.evaluations) })
+        }
+        const byModel: mysqlTypes.EvaluationByModelRow[] = modelRows.map(r => {
+            const generations = Number(r.generations)
+            const evaluations = Number(r.evaluations)
+            return {
+                model: r.model,
+                generations,
+                evaluations,
+                evaluationRate: generations > 0 ? evaluations / generations : null,
+                topReason: topReasonByModel.get(r.model)?.reason ?? null,
+            }
+        })
+
+        // Por prompt (agrupa versões pelo nome; fallback para a key gravada em g.prompt)
+        const promptRows: any[] = await applyFilters(knex('ia_generation as g'))
+            .select(knex.raw("COALESCE(p.name, g.prompt) as prompt_name"))
+            .select(
+                knex.raw('COUNT(*) as generations'),
+                knex.raw('COUNT(g.evaluation_id) as evaluations'),
+                knex.raw('MIN(g.prompt_id) as prompt_id'),
+            )
+            .groupByRaw('COALESCE(p.name, g.prompt)')
+            .orderBy('evaluations', 'desc')
+        const byPrompt: mysqlTypes.EvaluationByPromptRow[] = promptRows.map(r => {
+            const generations = Number(r.generations)
+            const evaluations = Number(r.evaluations)
+            return {
+                prompt_id: r.prompt_id != null ? Number(r.prompt_id) : null,
+                prompt_name: r.prompt_name,
+                generations,
+                evaluations,
+                evaluationRate: generations > 0 ? evaluations / generations : null,
+            }
+        })
+
+        // Últimas avaliações (detalhe)
+        const recentRows: any[] = await applyFilters(knex('ia_generation as g'))
+            .leftJoin('ia_evaluation as e', 'e.id', 'g.evaluation_id')
+            .leftJoin('ia_user as eu', 'eu.id', 'g.evaluation_user_id')
+            .leftJoin('ia_dossier as d', 'd.id', 'g.dossier_id')
+            .select(
+                'g.id',
+                'g.created_at',
+                knex.raw("COALESCE(p.name, g.prompt) as prompt_name"),
+                'g.model',
+                'e.descr as reason',
+                'g.evaluation_descr',
+                'eu.name as evaluator_name',
+                'eu.username as evaluator_username',
+                'd.code as dossier_code',
+            )
+            .whereNotNull('g.evaluation_id')
+            .orderBy('g.created_at', 'desc')
+            .limit(50)
+        const recent: mysqlTypes.EvaluationListRow[] = recentRows.map(r => ({
+            id: Number(r.id),
+            created_at: new Date(r.created_at),
+            prompt_name: r.prompt_name,
+            model: r.model,
+            reason: r.reason ?? null,
+            evaluation_descr: r.evaluation_descr ?? null,
+            evaluator_name: r.evaluator_name ?? null,
+            evaluator_username: r.evaluator_username ?? null,
+            dossier_code: r.dossier_code ?? null,
+        }))
+
+        // Opções dos filtros: modelos e prompts que já receberam avaliação (sem filtro de data)
+        const modelOptions: any[] = await knex('ia_generation as g')
+            .distinct('g.model')
+            .whereNotNull('g.evaluation_id')
+            .orderBy('g.model', 'asc')
+        const promptOptions: any[] = await knex('ia_generation as g')
+            .leftJoin('ia_prompt as p', 'p.id', 'g.prompt_id')
+            .select(knex.raw("COALESCE(p.name, g.prompt) as name"))
+            .whereNotNull('g.evaluation_id')
+            .groupByRaw('COALESCE(p.name, g.prompt)')
+            .orderBy('name', 'asc')
+
+        return {
+            summary: {
+                totalGenerations,
+                totalEvaluations,
+                evaluationRate: totalGenerations > 0 ? totalEvaluations / totalGenerations : null,
+                topReason: byReason[0]?.reason ?? null,
+            },
+            byReason,
+            byDay,
+            byModel,
+            byPrompt,
+            recent,
+            availableModels: modelOptions.map(r => r.model),
+            availablePrompts: promptOptions.map(r => r.name),
+        }
+    }
+
     static async retrieveAIGenerationsReport(params: { court_id?: number, startDate?: string, endDate?: string, limit?: number }): Promise<mysqlTypes.AIGenerationReportRow[]> {
         if (!knex) return []
         const { court_id, startDate, endDate, limit = 5000 } = params
