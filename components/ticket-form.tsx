@@ -1,5 +1,6 @@
 'use client'
 
+import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Form, Modal, Spinner } from 'react-bootstrap'
 
@@ -37,7 +38,7 @@ export function TicketFormModal({ show, onHide, kind, errorContext, encryptedErr
     onHide: () => void
     kind?: TicketKind
     errorContext?: string
-    encryptedErrorContext?:string
+    encryptedErrorContext?: string
     userName?: string
     userEmail?: string
 }) {
@@ -123,7 +124,7 @@ export function TicketFormModal({ show, onHide, kind, errorContext, encryptedErr
                     : <>
                         {(userName || userEmail) && (
                             <p className="text-muted small mb-3">
-                                Solicitante: {userName}{userEmail ? ` (${userEmail})` : ''}
+                                Solicitante: {maiusculasEMinusculas(userName)}{userEmail ? ` (${userEmail})` : ''}
                             </p>
                         )}
                         {error && <Alert variant="danger">{error}</Alert>}

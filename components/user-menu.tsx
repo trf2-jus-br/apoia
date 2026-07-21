@@ -86,12 +86,12 @@ export default async function UserMenu({ }: {}) {
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
                                 {betaTester && hasSeiApiUrl && <UserMenuMode />}
                                 {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
-                                {/* {user && <li><TicketFormButton label="Ajuda / Abrir chamado" className="dropdown-item" userName={user.name} userEmail={user.email} /></li>} */}
-                                {/* {user && <li><ModeLink className="dropdown-item" href="/tickets">Meus chamados</ModeLink></li>} */}
+                                {user && <li><TicketFormButton label="Ajuda / Abrir chamado" className="dropdown-item" userName={user.name} userEmail={user.email} /></li>}
+                                {user && <li><ModeLink className="dropdown-item" href="/tickets">Meus chamados</ModeLink></li>}
                                 {!user && <li><ModeLink className="dropdown-item" href="/auth/signin">Login</ModeLink></li>}
                                 {user && <li><UserMenuSignout /></li>}
                                 {moderator && <>
-                                    <hr className="mt-2 mb-2"/>
+                                    <hr className="mt-2 mb-2" />
                                     <li><ModeLink className="dropdown-item" href="/admin/tickets">Chamados (moderação)</ModeLink></li>
                                     <li><ModeLink className="dropdown-item" href="/admin/evaluations">Avaliações de IA</ModeLink></li>
                                     <li><ModeLink className="dropdown-item" href="/admin/court">Tribunais</ModeLink></li>
