@@ -79,6 +79,10 @@ function ContentsInner({ user, user_id, apiKeyProvided, model, isModerator, side
                 toastMessage('Prompt copiado para a área de transferência', 'success')
                 break
             case 'copiar link para favoritar':
+                if (row.share === 'PRIVADO') {
+                    toastMessage('Não é possível compartilhar link para prompt privado. Primeiro altere o compartilhamento para "Não Listado" ou superior.', 'warning')
+                    break
+                }
                 navigator.clipboard.writeText(`Clique no link abaixo para adicionar o prompt ${row.name} aos favoritos:\n\n${window.location.origin}/prompts/prompt/${row.uuid || row.base_id}/set-favorite`)
                 toastMessage('Link copiado para a área de transferência', 'success')
                 break
@@ -243,7 +247,7 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model, isMode
                         <strong className="me-auto">Atenção</strong>
                     </Toast.Header>
                     <Toast.Body className={toastVariant !== 'Light' && 'text-white'}>
-                        <ErrorMessage message={toast} />
+                        {toastVariant === 'danger' ? <ErrorMessage message={toast} /> : <p className="mb-0">{toast}</p>}
                     </Toast.Body>
                 </Toast>
             </ToastContainer>
