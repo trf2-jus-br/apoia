@@ -3,6 +3,7 @@ import { enumSorted } from "@/lib/ai/model-types"
 import { Instance, InstanceKeyType, Matter, Scope } from "@/lib/proc/process-types"
 import { usePromptContext } from "../context/PromptContext"
 import { FaseProcessual } from "@/lib/proc/combinacoes"
+import { IAPromptList } from "@/lib/db/mysql-types"
 
 const Fase = ({ fase }: { fase: string | undefined }) => {
     if (!fase) return null
@@ -11,7 +12,7 @@ const Fase = ({ fase }: { fase: string | undefined }) => {
     return <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>({faseDescricao?.toLocaleLowerCase()})</span>
 }
 
-export function ProcessFilters() {
+export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleExecutablePrompt?: IAPromptList | null, onExecute?: (row: IAPromptList) => void }) {
     const {
         number,
         setNumber,
@@ -88,8 +89,14 @@ export function ProcessFilters() {
                         <FormLabel className="mb-0"><u>F</u>iltro</FormLabel>
                         <Form.Control
                             type="text"
-                            value={filtro}
+                            value={filtro ?? ''}
                             onChange={(e) => setFiltro(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && singleExecutablePrompt && onExecute) {
+                                    e.preventDefault()
+                                    onExecute(singleExecutablePrompt)
+                                }
+                            }}
                             className={`${filtro ? ' bg-warning' : ''}`}
                             accessKey="f"
                             style={{ width: '6em' }}

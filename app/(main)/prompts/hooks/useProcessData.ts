@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { detectarFaseDoProcesso } from "@/lib/proc/combinacoes"
+import { playClickSound } from "@/lib/sound"
 
 export interface UseProcessDataResult {
     numeroDoProcesso: string | null
@@ -60,6 +61,7 @@ export function useProcessData(
             setIdxProcesso(idx)
             const dadosDoProc = data.arrayDeDadosDoProcesso[idx]
             setDadosDoProcesso(dadosDoProc)
+            playClickSound()
         }
     }
 

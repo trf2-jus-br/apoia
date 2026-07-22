@@ -14,6 +14,7 @@ import { SidekickView } from "./components/SidekickView"
 import { PromptExecutionView } from "./components/PromptExecutionView"
 import { GroupView } from "./components/GroupView"
 import axios from "axios"
+import { playErrorSound } from "@/lib/sound"
 
 export const copyPromptToClipboard = (prompt: IAPromptList) => {
     let s: string = prompt.content.system_prompt
@@ -227,6 +228,8 @@ export function Contents({ prompts, user, user_id, apiKeyProvided, model, isMode
     const toastMessage = (message: string, variant: string) => {
         setToast(message)
         setToastVariant(variant)
+        if (variant === 'danger')
+            playErrorSound()
     }
 
     return (

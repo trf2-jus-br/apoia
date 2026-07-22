@@ -50,13 +50,13 @@ export default async function UserMenu({ }: {}) {
         return (<>
             {user && corporateUser && <div className="collapse navbar-collapse" id="navbarSupportedContent">
                 <NavItem>
-                    <NavigationLink href={modeUrl("/chat")} text="Chat" />
+                    <NavigationLink href={modeUrl("/chat")} text="<u>C</u>hat" accessKey="c" />
                 </NavItem>
                 <NavItem>
-                    <NavigationLink href={modeUrl(`/prompts/reset`)} text="Prompts" />
+                    <NavigationLink href={modeUrl(`/prompts/reset`)} text="<u>P</u>rompts" accessKey="p" />
                 </NavItem>
                 <NavItem>
-                    <NavigationLink href={modeUrl("/revision")} text="Revisão de Texto" />
+                    <NavigationLink href={modeUrl("/revision")} text="Revisão de <u>T</u>exto" accessKey="t" />
                 </NavItem>
                 {!isAdministrative &&
                     <NavItem>

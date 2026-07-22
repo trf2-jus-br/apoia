@@ -48,10 +48,10 @@ function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierN
                         <TableRecords records={[...allPieces].reverse()} spec="ChoosePieces" options={{ dossierNumber, apenasSelecionadas: true }} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged} modalActions={{ onClick: () => setShowTreeModal(true) }}>
                             <div className="col col-auto mt-3 mb-0">
                                 {alteredPieces
-                                    ? <Button onClick={() => onSave(alteredPieces ? selectedIds : [])} variant="primary" disabled={selectedIds.length === 0}><FontAwesomeIcon icon={faRotateRight} className="me-2" />Salvar Alterações e Refazer</Button>
+                                    ? <Button onClick={() => onSave(alteredPieces ? selectedIds : [])} variant="primary" disabled={selectedIds.length === 0} accessKey="s"><FontAwesomeIcon icon={faRotateRight} className="me-2" /><u>S</u>alvar Alterações e Refazer</Button>
                                     : readyToStartAI
                                         ? <Button onClick={() => onClose()} variant="secondary"><FontAwesomeIcon icon={faClose} className="me-1" />Fechar</Button>
-                                        : <Button onClick={() => onClose()} variant="primary" disabled={selectedIds.length === 0}><FontAwesomeIcon icon={faPlay} className="me-1" />Prosseguir</Button>
+                                        : <Button onClick={() => onClose()} variant="primary" disabled={selectedIds.length === 0} accessKey="s"><FontAwesomeIcon icon={faPlay} className="me-1" />Pro<u>s</u>seguir</Button>
                                 }
                             </div></TableRecords>
                     </div>

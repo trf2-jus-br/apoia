@@ -75,3 +75,84 @@ export const playClickSound = (): void => {
     noise.start(now);
     noise.stop(now + 0.07);
 };
+
+// Helper para sons tonais (oscilador + envelope exponencial curto).
+// Diferente do click, que é ruído filtrado, estes sons são notas puras —
+// o contraste tímbrico é o que diferencia as situações para o usuário.
+type ToneOptions = {
+    frequency: number;
+    type?: OscillatorType;
+    startTime: number;
+    duration: number;
+    volume: number;
+};
+
+function playTone(ctx: AudioContext, opts: ToneOptions): void {
+    const { frequency, type = 'sine', startTime, duration, volume } = opts;
+
+    const osc = ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.value = frequency;
+
+    // Mesmo padrão de envelope do click: ataque quase instantâneo e
+    // decaimento exponencial (exponentialRamp não aceita 0).
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+}
+
+// Erro: "bonk" grave e descendente — duas notas triangle caindo.
+// Grave + descendente é universalmente associado a falha, sem ser estridente.
+export const playErrorSound = (): void => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    playTone(ctx, { frequency: 220, type: 'triangle', startTime: now, duration: 0.12, volume: 0.2 });
+    playTone(ctx, { frequency: 165, type: 'triangle', startTime: now + 0.11, duration: 0.18, volume: 0.2 });
+};
+
+// Término de tarefa: duas notas sine ascendentes (E5 -> A5), o "ding-ding"
+// clássico de conclusão com sucesso.
+export const playTaskEndSound = (): void => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    playTone(ctx, { frequency: 659, startTime: now, duration: 0.09, volume: 0.15 });
+    playTone(ctx, { frequency: 880, startTime: now + 0.09, duration: 0.14, volume: 0.15 });
+};
+
+// Início de tarefa: nota sine única e suave (A4), apenas sinaliza "começou".
+export const playTaskStartSound = (): void => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    playTone(ctx, { frequency: 440, startTime: ctx.currentTime, duration: 0.15, volume: 0.12 });
+};
+
+// Notificação/aviso: dois "blips" curtos e agudos (B5) — neutro, distinto
+// tanto do erro (grave/descendente) quanto do sucesso (ascendente).
+export const playNotifySound = (): void => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    playTone(ctx, { frequency: 987, startTime: now, duration: 0.06, volume: 0.12 });
+    playTone(ctx, { frequency: 987, startTime: now + 0.09, duration: 0.06, volume: 0.12 });
+};
+
+/**
+ * Alias de playClickSound com nome distinto: semântica "filtro convergiu num único prompt".
+ * A implementação resolvel para o mesmo som de click para evitar duplicar código de áudio.
+ */
+export const playConvergeSound = (): void => {
+    playClickSound();
+};

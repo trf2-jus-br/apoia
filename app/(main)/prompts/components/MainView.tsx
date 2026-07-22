@@ -7,6 +7,8 @@ import { usePromptContext } from "../context/PromptContext"
 import { SuggestionCards } from "./SuggestionCards"
 import { useModeUrl } from "@/lib/utils/use-mode-url"
 import ModeLink from "@/components/mode-link"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { playConvergeSound, playErrorSound } from "@/lib/sound"
 
 interface MainViewProps {
     promptsPrincipais: IAPromptList[]
@@ -25,13 +27,69 @@ export function MainView({
 }: MainViewProps) {
     const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual, suggestedPrompts } = usePromptContext()
 
+    // Contagem pós-filtro (texto) reportada por cada PromptsTable.
+    const [counts, setCounts] = useState<{ principal: number; comunidade: number }>({ principal: 0, comunidade: 0 })
+    const [singleRows, setSingleRows] = useState<{ principal: IAPromptList | null; comunidade: IAPromptList | null }>({ principal: null, comunidade: null })
+
+    // Factory estável: cada callback é memoizado com deps vazias, usando updates funcionais.
+    // Sem isso, cada render cria uma nova referência de função que dispara o effect na Table,
+    // provocando loop infinito (Maximum update depth exceeded).
+    const handleFiltered = useCallback((tab: 'principal' | 'comunidade') => (info: { count: number; rows: any[] }) => {
+        setCounts(prev => prev[tab] === info.count ? prev : { ...prev, [tab]: info.count })
+        setSingleRows(prev => {
+            const newSingle = info.count === 1 ? info.rows[0] as IAPromptList : null
+            return prev[tab]?.id === newSingle?.id ? prev : { ...prev, [tab]: newSingle }
+        })
+    }, [])
+
+    // Auto-troca: se a tab ativa ficar vazia e a outra tiver itens, troca automaticamente.
+    useEffect(() => {
+        if (activeTab === 'principal' && counts.principal === 0 && counts.comunidade > 0) {
+            setActiveTab('comunidade')
+        } else if (activeTab === 'comunidade' && counts.comunidade === 0 && counts.principal > 0) {
+            setActiveTab('principal')
+        }
+    }, [activeTab, counts, setActiveTab])
+
+    // Convergência: exatamente uma única tab com itens e essa tab com exatamente 1 item.
+    const principalVisible = counts.principal > 0
+    const comunidadeVisible = counts.comunidade > 0
+    const visibleTabs = [
+        ...(principalVisible ? [['principal', counts.principal, singleRows.principal] as const] : []),
+        ...(comunidadeVisible ? [['comunidade', counts.comunidade, singleRows.comunidade] as const] : []),
+    ]
+    const converged = visibleTabs.length === 1 && visibleTabs[0][1] === 1
+    const singleExecutablePrompt: IAPromptList | null = converged ? visibleTabs[0][2] : null
+
+    // Toca o som apenas na transição para o estado de convergência (não repete).
+    const prevConverged = useRef(false)
+    useEffect(() => {
+        if (converged && !prevConverged.current) {
+            playConvergeSound()
+        }
+        prevConverged.current = converged
+    }, [converged])
+
+    // Toca o som apenas na transição para o estado de convergência (não repete).
+    const zeroed = visibleTabs.length === 0
+    const prevZeroed = useRef(false)
+    useEffect(() => {
+        if (zeroed && !prevZeroed.current) {
+            playErrorSound()
+        }
+        prevZeroed.current = zeroed
+    }, [zeroed])
+
     const handleSuggestionClick = (prompt: IAPromptList) => {
         promptOnClick('executar', prompt)
     }
 
     return (
         <>
-            <ProcessFilters />
+            <ProcessFilters
+                singleExecutablePrompt={singleExecutablePrompt}
+                onExecute={(row) => promptOnClick('executar', row)}
+            />
             {!apiKeyProvided && (
                 <Container className="mt-2 mb-3" fluid={false}>
                     <p className="text-center mt-3 mb-3">
@@ -58,23 +116,25 @@ export function MainView({
                     onSelect={(k) => setActiveTab(k || 'principal')}
                     className="mt-3"
                 >
-                    <Tab eventKey="principal" title={<span><u>P</u>rincipais</span>} tabAttrs={{ accessKey: "p" }}>
+                    <Tab eventKey="principal" title={<span><u>P</u>rincipais</span>} tabAttrs={{ accessKey: "p", style: principalVisible ? undefined : { display: 'none' } }}>
                         <PromptsTable
                             prompts={promptsPrincipais}
                             onClick={promptOnClick}
                             onProcessNumberChange={setNumeroDoProcesso}
                             isModerator={isModerator}
+                            onFilteredChange={handleFiltered('principal')}
                         >
                             {CriarNovo()}
                         </PromptsTable>
                     </Tab>
 
-                    <Tab eventKey="comunidade" title={<span>Prompts Não <u>A</u>valiados</span>} tabAttrs={{ accessKey: "a" }}>
+                    <Tab eventKey="comunidade" title={<span>Prompts Não <u>A</u>valiados</span>} tabAttrs={{ accessKey: "a", style: comunidadeVisible ? undefined : { display: 'none' } }}>
                         <PromptsTable
                             prompts={promptsComunidade}
                             onClick={promptOnClick}
                             onProcessNumberChange={setNumeroDoProcesso}
                             isModerator={isModerator}
+                            onFilteredChange={handleFiltered('comunidade')}
                         >
                             {CriarNovo()}
                         </PromptsTable>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
     flexRender,
@@ -36,9 +36,9 @@ const customFilterFn = (row: any, columnId: string, filterValue: any, addMeta: (
 }
 
 
-export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, filter, setFilter, selectedIds, onSelectdIdsChanged, onClick, options, modalActions, children }: {
+export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, filter, setFilter, selectedIds, onSelectdIdsChanged, onClick, onFilteredChange, options, modalActions, children }: {
     records: any[], spec: string | any, linkToAdd?: string, linkToBack?: string, pageSize?: number, filter?: string | null, setFilter?: (s: string) => void,
-    selectedIds?: string[], onSelectdIdsChanged?: (ids: string[]) => void, onClick?: (kind: string, row: any) => void, options?: any, modalActions?: { onClick: () => void }, children?: any
+    selectedIds?: string[], onSelectdIdsChanged?: (ids: string[]) => void, onClick?: (kind: string, row: any) => void, onFilteredChange?: (info: { count: number, rows: any[] }) => void, options?: any, modalActions?: { onClick: () => void }, children?: any
 }) {
     const [currentPageSize, setCurrentPageSize] = useState(pageSize || 5)
     const [sorting, setSorting] = useState([])
@@ -91,6 +91,21 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
         }, 200)
         return () => clearTimeout(timer)
     }, [filter, apenasSelecionadas, table])
+
+    // Reporta ao chamador a contagem pós-filtro (texto globalFilter) e as linhas resultantes.
+    // Como o globalFilter só muda após o debounce acima, este callback dispara naturalmente
+    // 200ms após o usuário parar de digitar — não a cada keystroke.
+    // Dependemos apenas do count (primitivo estável): getFilteredRowModel().rows retorna uma
+    // nova referência de array a cada render, o que geraria loop infinito como dependência.
+    const filteredRowCount = table.getFilteredRowModel().rows.length
+    const lastReported = useRef(filteredRowCount)
+    useEffect(() => {
+        if (filteredRowCount !== lastReported.current) {
+            lastReported.current = filteredRowCount
+            const rows = table.getFilteredRowModel().rows.map(r => r.original)
+            onFilteredChange?.({ count: filteredRowCount, rows })
+        }
+    }, [filteredRowCount, onFilteredChange, table])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
