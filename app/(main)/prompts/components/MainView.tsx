@@ -25,7 +25,7 @@ export function MainView({
     isModerator,
     apiKeyProvided
 }: MainViewProps) {
-    const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual, suggestedPrompts } = usePromptContext()
+    const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual, suggestedPrompts, filtro } = usePromptContext()
 
     // Contagem pós-filtro (texto) reportada por cada PromptsTable.
     const [counts, setCounts] = useState<{ principal: number; comunidade: number }>({ principal: 0, comunidade: 0 })
@@ -71,7 +71,7 @@ export function MainView({
     }, [converged])
 
     // Toca o som apenas na transição para o estado de convergência (não repete).
-    const zeroed = visibleTabs.length === 0
+    const zeroed = visibleTabs.length === 0 && !!filtro
     const prevZeroed = useRef(false)
     useEffect(() => {
         if (zeroed && !prevZeroed.current) {
