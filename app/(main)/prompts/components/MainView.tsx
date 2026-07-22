@@ -28,7 +28,7 @@ export function MainView({
     const { activeTab, setActiveTab, setNumeroDoProcesso, faseAtual, suggestedPrompts, filtro } = usePromptContext()
 
     // Contagem pós-filtro (texto) reportada por cada PromptsTable.
-    const [counts, setCounts] = useState<{ principal: number; comunidade: number }>({ principal: 0, comunidade: 0 })
+    const [counts, setCounts] = useState<{ principal: number; comunidade: number }>({ principal: null, comunidade: null })
     const [singleRows, setSingleRows] = useState<{ principal: IAPromptList | null; comunidade: IAPromptList | null }>({ principal: null, comunidade: null })
 
     // Factory estável: cada callback é memoizado com deps vazias, usando updates funcionais.
@@ -52,8 +52,8 @@ export function MainView({
     }, [activeTab, counts, setActiveTab])
 
     // Convergência: exatamente uma única tab com itens e essa tab com exatamente 1 item.
-    const principalVisible = counts.principal > 0
-    const comunidadeVisible = counts.comunidade > 0
+    const principalVisible = counts.principal === null || counts.principal > 0
+    const comunidadeVisible = counts.comunidade === null || counts.comunidade > 0
     const visibleTabs = [
         ...(principalVisible ? [['principal', counts.principal, singleRows.principal] as const] : []),
         ...(comunidadeVisible ? [['comunidade', counts.comunidade, singleRows.comunidade] as const] : []),
