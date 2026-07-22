@@ -58,7 +58,7 @@ export function MainView({
                     onSelect={(k) => setActiveTab(k || 'principal')}
                     className="mt-3"
                 >
-                    <Tab eventKey="principal" title="Principais">
+                    <Tab eventKey="principal" title={<span><u>P</u>rincipais</span>} tabAttrs={{ accessKey: "p" }}>
                         <PromptsTable
                             prompts={promptsPrincipais}
                             onClick={promptOnClick}
@@ -69,7 +69,7 @@ export function MainView({
                         </PromptsTable>
                     </Tab>
 
-                    <Tab eventKey="comunidade" title="Prompts Não Avaliados">
+                    <Tab eventKey="comunidade" title={<span>Prompts Não <u>A</u>valiados</span>} tabAttrs={{ accessKey: "a" }}>
                         <PromptsTable
                             prompts={promptsComunidade}
                             onClick={promptOnClick}

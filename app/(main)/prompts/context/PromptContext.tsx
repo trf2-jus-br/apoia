@@ -15,6 +15,8 @@ interface PromptContextValue {
     dadosDoProcesso: DadosDoProcessoType | null
     idxProcesso: number
     setIdxProcesso: (idx: number) => void
+    filtro: string | null
+    setFiltro: (s: string | null) => void
     setDadosDoProcesso: (dados: DadosDoProcessoType | null) => void
     number: string
     setNumber: (number: string) => void
@@ -76,6 +78,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         dadosDoProcesso,
         idxProcesso,
         setIdxProcesso,
+        filtro,
+        setFiltro,
         setDadosDoProcesso,
         number,
         setNumber,
@@ -88,12 +92,14 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         originalPrompts,
         numeroDoProcesso,
         idxProcesso,
+        filtro,
         arrayDeDadosDoProcesso,
         setNumeroDoProcesso,
         setNumber,
         setDadosDoProcesso as any,
         setDadosDoProcesso,
         setIdxProcesso,
+        setFiltro,
         setTramFromUrl,
         maxConfidentialityLevel,
         sidekick,
@@ -109,6 +115,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         dadosDoProcesso,
         idxProcesso,
         setIdxProcesso,
+        filtro,
+        setFiltro,
         setDadosDoProcesso,
         number,
         setNumber,
@@ -126,6 +134,8 @@ export function PromptProvider({ children, originalPrompts, toastMessage, maxCon
         dadosDoProcesso,
         idxProcesso,
         setIdxProcesso,
+        filtro,
+        setFiltro,
         setDadosDoProcesso,
         number,
         setNumber,

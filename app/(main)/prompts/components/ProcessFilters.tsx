@@ -1,4 +1,4 @@
-import { Form, FormGroup, FormLabel, FormSelect, Row, Spinner, Container } from "react-bootstrap"
+import { Form, FormGroup, FormLabel, FormSelect, Row, Spinner, Container, FormText } from "react-bootstrap"
 import { enumSorted } from "@/lib/ai/model-types"
 import { Instance, InstanceKeyType, Matter, Scope } from "@/lib/proc/process-types"
 import { usePromptContext } from "../context/PromptContext"
@@ -20,6 +20,8 @@ export function ProcessFilters() {
         arrayDeDadosDoProcesso,
         idxProcesso,
         setIdxProcesso,
+        filtro,
+        setFiltro,
         setDadosDoProcesso,
         scope,
         setScope,
@@ -34,14 +36,15 @@ export function ProcessFilters() {
             <Container className="p-2 pb-3" fluid={false}>
                 <FormGroup as={Row} className="">
                     <div className="col col-auto">
-                        <FormLabel className="mb-0">Número do Processo</FormLabel>
-                        <Form.Control 
-                            name="numeroDoProcesso" 
-                            placeholder="(opcional)" 
-                            autoFocus={true} 
-                            className="form-control" 
-                            onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))} 
-                            value={number} 
+                        <FormLabel className="mb-0"><u>N</u>úmero do Processo</FormLabel>
+                        <Form.Control
+                            name="numeroDoProcesso"
+                            placeholder="(opcional)"
+                            autoFocus={true}
+                            className="form-control"
+                            onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))}
+                            value={number}
+                            accessKey="n"
                         />
                     </div>
                     {numeroDoProcesso && !dadosDoProcesso && (
@@ -56,15 +59,16 @@ export function ProcessFilters() {
                     )}
                     {numeroDoProcesso && arrayDeDadosDoProcesso && arrayDeDadosDoProcesso.length > 1 && (
                         <div className="col col-auto">
-                            <FormLabel className="mb-0">Tramitação <Fase fase={faseAtual} /></FormLabel>
-                            <FormSelect 
-                                value={idxProcesso} 
-                                onChange={(e) => { 
+                            <FormLabel className="mb-0"><u>T</u>ramitação <Fase fase={faseAtual} /></FormLabel>
+                            <FormSelect
+                                value={idxProcesso}
+                                onChange={(e) => {
                                     const idx = parseInt(e.target.value)
                                     setIdxProcesso(idx)
-                                    setDadosDoProcesso(arrayDeDadosDoProcesso[idx]) 
-                                }} 
+                                    setDadosDoProcesso(arrayDeDadosDoProcesso[idx])
+                                }}
                                 className="form-select"
+                                accessKey="t"
                             >
                                 {arrayDeDadosDoProcesso.map((d, idx) => (
                                     <option key={idx} value={idx}>{d.classe}</option>
@@ -81,11 +85,23 @@ export function ProcessFilters() {
                         </div>
                     )}
                     <div className="col col-auto ms-auto">
+                        <FormLabel className="mb-0"><u>F</u>iltro</FormLabel>
+                        <Form.Control
+                            type="text"
+                            value={filtro}
+                            onChange={(e) => setFiltro(e.target.value)}
+                            className={`${filtro ? ' bg-warning' : ''}`}
+                            accessKey="f"
+                            style={{ width: '6em' }}
+                        />
+                    </div>
+                    <div className="col col-auto">
                         <FormLabel className="mb-0">Segmento</FormLabel>
-                        <FormSelect 
-                            value={scope} 
-                            onChange={(e) => setScope(e.target.value)} 
-                            className={`form-select w-auto${scope ? ' bg-warning' : ''}`}
+                        <FormSelect
+                            value={scope}
+                            onChange={(e) => setScope(e.target.value)}
+                            className={`form-select ${scope ? ' bg-warning' : ''}`}
+                            style={{ width: '6em' }}
                         >
                             <option value="">Todos</option>
                             {enumSorted(Scope).map((s) => (
@@ -97,10 +113,11 @@ export function ProcessFilters() {
                     </div>
                     <div className="col col-auto">
                         <FormLabel className="mb-0">Instância</FormLabel>
-                        <FormSelect 
-                            value={instance} 
-                            onChange={(e) => setInstance(e.target.value as InstanceKeyType | undefined)} 
-                            className={`form-select w-auto${instance ? ' bg-warning' : ''}`}
+                        <FormSelect
+                            value={instance}
+                            onChange={(e) => setInstance(e.target.value as InstanceKeyType | undefined)}
+                            className={`form-select ${instance ? ' bg-warning' : ''}`}
+                            style={{ width: '6em' }}
                         >
                             <option value="">Todas</option>
                             {enumSorted(Instance).map((s) => (
@@ -112,10 +129,11 @@ export function ProcessFilters() {
                     </div>
                     <div className="col col-auto">
                         <FormLabel className="mb-0">Natureza</FormLabel>
-                        <FormSelect 
-                            value={matter} 
-                            onChange={(e) => setMatter(e.target.value)} 
-                            className={`form-select w-auto${matter ? ' bg-warning' : ''}`}
+                        <FormSelect
+                            value={matter}
+                            onChange={(e) => setMatter(e.target.value)}
+                            className={`form-select ${matter ? ' bg-warning' : ''}`}
+                            style={{ width: '6em' }}
                         >
                             <option value="">Todas</option>
                             {enumSorted(Matter).map((s) => (

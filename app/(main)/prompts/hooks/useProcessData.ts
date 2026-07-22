@@ -9,6 +9,8 @@ export interface UseProcessDataResult {
     dadosDoProcesso: DadosDoProcessoType | null
     idxProcesso: number
     setIdxProcesso: (idx: number) => void
+    filtro: string | null
+    setFiltro: (s : string | null) => void
     setDadosDoProcesso: (dados: DadosDoProcessoType | null) => void
     number: string
     setNumber: (number: string) => void
@@ -25,6 +27,7 @@ export function useProcessData(
     const [numeroDoProcesso, setNumeroDoProcesso] = useState<string | null>(null)
     const [arrayDeDadosDoProcesso, setArrayDeDadosDoProcesso] = useState<DadosDoProcessoType[] | null>(null)
     const [idxProcesso, setIdxProcesso] = useState(0)
+    const [filtro, setFiltro] = useState<string | null>(null)
     const [dadosDoProcesso, setDadosDoProcesso] = useState<DadosDoProcessoType | null>(null)
     const [number, setNumber] = useState<string>('')
     const [tramFromUrl, setTramFromUrl] = useState<number | null>(null)
@@ -102,6 +105,8 @@ export function useProcessData(
         dadosDoProcesso,
         idxProcesso,
         setIdxProcesso,
+        filtro,
+        setFiltro,
         setDadosDoProcesso,
         number,
         setNumber,

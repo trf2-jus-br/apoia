@@ -36,14 +36,13 @@ const customFilterFn = (row: any, columnId: string, filterValue: any, addMeta: (
 }
 
 
-export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, selectedIds, onSelectdIdsChanged, onClick, options, modalActions, children }: {
-    records: any[], spec: string | any, linkToAdd?: string, linkToBack?: string, pageSize?: number,
+export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, filter, setFilter, selectedIds, onSelectdIdsChanged, onClick, options, modalActions, children }: {
+    records: any[], spec: string | any, linkToAdd?: string, linkToBack?: string, pageSize?: number, filter?: string | null, setFilter?: (s: string) => void,
     selectedIds?: string[], onSelectdIdsChanged?: (ids: string[]) => void, onClick?: (kind: string, row: any) => void, options?: any, modalActions?: { onClick: () => void }, children?: any
 }) {
     const [currentPageSize, setCurrentPageSize] = useState(pageSize || 5)
     const [sorting, setSorting] = useState([])
     const [globalFilter, setGlobalFilter] = useState('')
-    const [filter, setFilter] = useState('')
     const pathname = usePathname()
     const { columns, thead, tr, tableClassName, theadClassName, pageSizes } = typeof (spec) === 'string' ? tableSpecs(pathname, onClick, options)[spec] : spec
     const [rowSelection, setRowSelection] = useState<RowSelectionState>(selectedIds ? selectedIds.reduce((acc, value) => ({ ...acc, [value]: true }), {}) : {})
@@ -84,8 +83,13 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
         }
     }, [rowSelection, onSelectdIdsChanged])
 
+    // Atualiza o globalFilter da tabela de forma debounced: o input continua respondendo
+    // instantaneamente, mas a recomputação das linhas filtradas só roda 200ms após parar de digitar
     useEffect(() => {
-        table.setGlobalFilter(`${filter}${apenasSelecionadas ? ' (selecionadas)' : ''}`)
+        const timer = setTimeout(() => {
+            table.setGlobalFilter(`${filter ?? ''}${apenasSelecionadas ? ' (selecionadas)' : ''}`)
+        }, 200)
+        return () => clearTimeout(timer)
     }, [filter, apenasSelecionadas, table])
 
     useEffect(() => {
@@ -150,7 +154,7 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                 {options?.apenasSelecionadas &&
                     <div className="col col-auto ms-auto mt-3 mb-0">
                         <div className="d-flex align-items-center gap-2 d-print-none">
-                            <Button onClick={modalActions.onClick} variant='outline-secondary'>Árvore</Button> 
+                            <Button onClick={modalActions.onClick} variant='outline-secondary'>Árvore</Button>
                             <div className="btn-group" role="group" aria-label="Filtro de seleção">
                                 <input
                                     type="radio"
@@ -181,19 +185,22 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                         </div>
                     </div>
                 }
-                <div className={`col col-auto mt-3 mb-0 ${options?.apenasSelecionadas ? '' : 'ms-auto'}`}>
-                    <input
-                        id="filter-input"
-                        list="filter-options"
-                        value={filter}
-                        onChange={e => { setFilter(String(e.target.value)) }}
-                        placeholder="Filtrar... (Alt+F)"
-                        className="form-control" style={{ width: '8em' }}
-                    />
-                    <datalist id="filter-options">
-                        <option value="selecionada" />
-                    </datalist>
-                </div>
+                {setFilter &&
+                    <div className={`col col-auto mt-3 mb-0 ${options?.apenasSelecionadas ? '' : 'ms-auto'}`}>
+                        <input
+                            id="filter-input"
+                            list="filter-options"
+                            value={filter}
+                            onChange={e => { setFilter(String(e.target.value)) }}
+                            placeholder="Filtrar... (Alt+F)"
+                            className="form-control" style={{ width: '8em' }}
+                        />
+                        <datalist id="filter-options">
+                            <option value="selecionada" />
+                        </datalist>
+                    </div>
+                }
+                <div className="col mt-3 mb-0 flex-grow-1 p-0" />
                 {(pageSizes && Array.isArray(pageSizes) && pageSizes.length > 0 && (table.getPageCount() > 1 || currentPageSize !== pageSizes?.[0])) && (
                     <div className="col col-auto mt-3 mb-0">
                         <Form.Select
