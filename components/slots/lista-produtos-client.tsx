@@ -21,6 +21,7 @@ import { SinkFromURLType, SourcePayloadType } from '@/lib/utils/messaging'
 import { sendApproveMessageToParent } from '@/lib/utils/messaging-helper'
 import { usePromptContext } from '@/app/(main)/prompts/context/PromptContext'
 import { PedidosViabilidadeRecursoEspecial, PedidosViabilidadeRecursoExtraordinario } from './pedidos-viabilidade-recurso'
+import { PedidosAgravoInternoEmViabilidadeRecursoEspecial, PedidosAgravoInternoEmViabilidadeRecursoExtraordinario } from './pedidos-agravo-interno-em-viabilidade'
 
 type PedidosComponentProps = {
     pedidos: { proximoPrompt: string; pedidos: any[] };
@@ -37,7 +38,14 @@ const PEDIDOS_COMPONENT_BY_SLUG: Record<string, React.ComponentType<PedidosCompo
     'pedidos-fundamentacoes-e-dispositivos': PedidosFundamentacoesEDispositivos,
     'juizo-viabilidade-recurso-especial': PedidosViabilidadeRecursoEspecial,
     'juizo-viabilidade-recurso-extraordinario': PedidosViabilidadeRecursoExtraordinario,
+    'juizo-agravo-interno-em-viabilidade-recurso-especial': PedidosAgravoInternoEmViabilidadeRecursoEspecial,
+    'juizo-agravo-interno-em-viabilidade-recurso-extraordinario': PedidosAgravoInternoEmViabilidadeRecursoExtraordinario,
 }
+
+// Slugs cujo slot consome dois requests (formulario + geracao seguinte): o JSON de
+// saida (`content.json`) popula `Frm.pedidos` e o indice seguinte e renderizado pelo
+// proprio componente, devendo ser pulado no loop principal.
+const PEDIDOS_SLOTS = Object.keys(PEDIDOS_COMPONENT_BY_SLUG)
 
 const Frm = new FormHelper(true)
 
@@ -51,7 +59,7 @@ const onReady = (Frm: FormHelper, requests: GeneratedContent[], idx: number, con
     Frm.set(`generated[${idx}]`, content)
 
     // Frm.set(`flow.ready[${idx}]`, content)
-    if ((['pedidos-fundamentacoes-e-dispositivos', 'juizo-viabilidade-recurso-especial', 'juizo-viabilidade-recurso-extraordinario'].includes(requests[idx].promptSlug)) && content.json) {
+    if ((PEDIDOS_SLOTS.includes(requests[idx].promptSlug)) && content.json) {
         Frm.set('pedidos', content.json)
     }
     if (content.json && isInformationExtractionPrompt(requests[idx].internalPrompt?.prompt)) {
@@ -161,7 +169,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
 
     const ctrls = []
     for (let idx = 0; idx < requests.length; idx++) {
-        if (idx > 0 && ['pedidos-fundamentacoes-e-dispositivos', 'juizo-viabilidade-recurso-especial', 'juizo-viabilidade-recurso-extraordinario'].includes(requests[idx - 1].promptSlug)) continue
+        if (idx > 0 && PEDIDOS_SLOTS.includes(requests[idx - 1].promptSlug)) continue
         if (previousArePending(Frm, requests, idx)) break
         const ctrl = requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model, sidekick, promptButtons, sinkFromURL, sinkButtonText, sourcePayload, dadosDoProcesso)
         if (ctrl === null) break

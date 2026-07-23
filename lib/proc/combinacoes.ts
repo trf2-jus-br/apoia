@@ -70,6 +70,8 @@ const FaseProcessualArray = [
     { id: 10, name: 'VIABILIDADE_RECURSO_ESPECIAL', descr: 'Viabilidade de Recurso Especial' },
     { id: 11, name: 'EMBARGOS_DE_DECLARACAO_EM_ACORDAO', descr: 'Embargos de Declaração em Acórdão' },
     { id: 12, name: 'AGRAVO_INTERNO', descr: 'Agravo Interno' },
+    { id: 13, name: 'AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_ESPECIAL', descr: 'Agravo Interno em Viabilidade de Recurso Especial' },
+    { id: 14, name: 'AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Agravo Interno em Viabilidade de Recurso Extraordinário' },
 ]
 
 export type FaseProcessualValueType = EnumOfObjectsValueType & { descr: string }
@@ -389,20 +391,145 @@ export const padroesViabilidadeDeRecursosExtraordinarioEEspecial = [
     padraoViabilidadeDeRecursoExtraordinario,
 ]
 
-export const padraoAgravoInterno = [
-    ANY(),
+// Padrões para Agravo Interno em decisão de viabilidade de recurso.
+// Sequência cronológica: Acórdão → Recurso (REsp/RE) → Decisão monocrática do VP
+// (negando seguimento) → Agravo Interno → Contrarrazões (ao agravo).
+// A decisão monocrática recorrida é casada via OR(DESPACHO/DECISÃO, SENTENÇA),
+// pois não há tipo dedicado no enum T.
+const subpadraoAgravoInternoEmViabilidadeRecursoEspecial = [
     ANY({
-        capture: [T.RELATORIO, T.VOTO], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
     }),
-    PHASE(FaseProcessual.AGRAVO_INTERNO.name),
+    PHASE(FaseProcessual.AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_ESPECIAL.name),
     EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.RECURSO_ESPECIAL),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
     ANY({
         greedy: false, except: pecasQueFinalizamFases
     }),
     EXACT(T.AGRAVO_INTERNO),
     ANY({
-        capture: [T.CONTRARRAZOES_AO_RECURSO_ESPECIAL], greedy: true, except: pecasQueFinalizamFases
+        capture: [T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
     }),
+]
+
+const subpadraoAgravoInternoEmViabilidadeRecursoEspecialComContrarrazoes = [
+    ANY({
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE(FaseProcessual.AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_ESPECIAL.name),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.RECURSO_ESPECIAL),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.AGRAVO_INTERNO),
+    ANY({
+        except: pecasQueFinalizamFases
+    }),
+    EXACT(T.CONTRARRAZOES),
+    ANY({
+        capture: [], greedy: true, except: pecasQueFinalizamFases
+    }),
+]
+
+const subpadraoAgravoInternoEmViabilidadeRecursoExtraordinario = [
+    ANY({
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE(FaseProcessual.AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_EXTRAORDINARIO.name),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.RECURSO_EXTRAORDINARIO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.AGRAVO_INTERNO),
+    ANY({
+        capture: [T.CONTRARRAZOES], greedy: true, except: pecasQueFinalizamFases
+    }),
+]
+
+const subpadraoAgravoInternoEmViabilidadeRecursoExtraordinarioComContrarrazoes = [
+    ANY({
+        capture: [T.RELATORIO, T.RELATORIO_E_VOTO, T.VOTO, T.ACORDAO], greedy: true, except: pecasQueFinalizamFases
+    }),
+    PHASE(FaseProcessual.AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_EXTRAORDINARIO.name),
+    EXACT(T.ACORDAO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.RECURSO_EXTRAORDINARIO),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    OR(T.DESPACHO_DECISAO, T.SENTENCA),
+    ANY({
+        greedy: false, except: pecasQueFinalizamFases
+    }),
+    EXACT(T.AGRAVO_INTERNO),
+    ANY({
+        except: pecasQueFinalizamFases
+    }),
+    EXACT(T.CONTRARRAZOES),
+    ANY({
+        capture: [], greedy: true, except: pecasQueFinalizamFases
+    }),
+]
+
+export const padraoAgravoInternoEmViabilidadeRecursoEspecial = [
+    ANY(),
+    ...subpadraoAgravoInternoEmViabilidadeRecursoEspecial
+]
+
+export const padraoAgravoInternoEmViabilidadeRecursoEspecialComContrarrazoes = [
+    ANY(),
+    ...subpadraoAgravoInternoEmViabilidadeRecursoEspecialComContrarrazoes
+]
+
+export const padraoAgravoInternoEmViabilidadeRecursoExtraordinario = [
+    ANY(),
+    ...subpadraoAgravoInternoEmViabilidadeRecursoExtraordinario
+]
+
+export const padraoAgravoInternoEmViabilidadeRecursoExtraordinarioComContrarrazoes = [
+    ANY(),
+    ...subpadraoAgravoInternoEmViabilidadeRecursoExtraordinarioComContrarrazoes
+]
+
+export const padroesAgravoInternoEmViabilidadeRecursoEspecial = [
+    padraoAgravoInternoEmViabilidadeRecursoEspecialComContrarrazoes,
+    padraoAgravoInternoEmViabilidadeRecursoEspecial,
+]
+
+export const padroesAgravoInternoEmViabilidadeRecursoExtraordinario = [
+    padraoAgravoInternoEmViabilidadeRecursoExtraordinarioComContrarrazoes,
+    padraoAgravoInternoEmViabilidadeRecursoExtraordinario,
+]
+
+// Ordem: Especial (com/sem contrarrazões) antes de Extraordinário, como na viabilidade.
+export const padroesAgravoInternoEmViabilidade = [
+    ...padroesAgravoInternoEmViabilidadeRecursoEspecial,
+    ...padroesAgravoInternoEmViabilidadeRecursoExtraordinario,
 ]
 
 export const padraoAgravoAberta = [
@@ -562,14 +689,16 @@ const padroesMinimosSegundaInstancia = [
 ]
 
 // Ordem de prioridade: padrões mais específicos/raros primeiro.
-// Viabilidade de Recursos Extraordinário/Especial tem prioridade máxima
-// (são os casos mais raros e específicos), seguida de Embargos de Declaração
-// em Acórdão, depois Apelação/Agravo, Turma Recursal, Conhecimento e, por
-// último, os padrões forçados (fallbacks).
+// Agravo Interno em Viabilidade tem a prioridade máxima (caso ainda mais raro e
+// específico que a viabilidade comum, pois inclui o agravo após a decisão
+// monocrática do VP), seguido de Viabilidade de Recursos Extraordinário/Especial,
+// Embargos de Declaração em Acórdão, Apelação/Agravo, Turma Recursal,
+// Conhecimento e, por último, os padrões forçados (fallbacks).
 //
 // Observação: `selecionarPecasPorPadraoComFase` retorna no PRIMEIRO match
 // (`break` no loop), então a posição no array = prioridade de detecção.
 export const padroesPorPrioridade = [
+    ...padroesAgravoInternoEmViabilidade,
     ...padroesViabilidadeDeRecursosExtraordinarioEEspecial,
     ...padroesBasicosSegundaInstancia,
     ...padroesTurmaRecursal,
@@ -673,6 +802,8 @@ const PieceStrategyArray = [
     { id: 1, name: 'CONHECIMENTO', descr: 'Fase de conhecimento', pattern: padroesConhecimento },
     { id: 1, name: 'VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Viabilidade de recurso extraordinário', pattern: padroesViabilidadeDeRecursoExtraordinario },
     { id: 1, name: 'VIABILIDADE_RECURSO_ESPECIAL', descr: 'Viabilidade de recurso especial', pattern: padroesViabilidadeDeRecursoEspecial },
+    { id: 1, name: 'AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_ESPECIAL', descr: 'Agravo interno em viabilidade de recurso especial', pattern: padroesAgravoInternoEmViabilidadeRecursoEspecial },
+    { id: 1, name: 'AGRAVO_INTERNO_EM_VIABILIDADE_RECURSO_EXTRAORDINARIO', descr: 'Agravo interno em viabilidade de recurso extraordinário', pattern: padroesAgravoInternoEmViabilidadeRecursoExtraordinario },
     { id: 2, name: 'PETICAO_INICIAL', descr: 'Petição inicial', pattern: [[ANY(), EXACT(T.PETICAO_INICIAL), ANY()]] },
     { id: 2, name: 'PETICAO_INICIAL_E_ANEXOS', descr: 'Petição inicial e anexos', pattern: [[ANY(), EXACT(T.PETICAO_INICIAL, true), ANY()]] },
     { id: 2, name: 'PPP', descr: 'Perfil Profissiográfico Previdenciário', pattern: [[ANY({ capture: [T.PERFIL_PROFISSIOGRAFICO_PREVIDENCIARIO], greedy: true })]] },

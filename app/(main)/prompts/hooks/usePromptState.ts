@@ -55,7 +55,7 @@ export function usePromptState(
     setArrayDeDadosDoProcesso: (array: any[] | null) => void,
     setDadosDoProcesso: (dados: any | null) => void,
     setIdxProcesso: (idx: number) => void,
-    setFiltro: (s : string | null) => void,
+    setFiltro: (s: string | null) => void,
     setTramFromUrl: (tram: number | null) => void,
     maxConfidentialityLevel: number,
     sidekick?: boolean,
@@ -261,22 +261,22 @@ export function usePromptState(
         setSuggestedPrompts(promptsSugeridos)
 
         // Não seleciona automaticamente se já há um prompt selecionado que não seja o padrão
-        if (prompt && prompt.slug && prompt.slug !== 'resumo') return
+        // if (prompt && prompt.slug && prompt.slug !== 'resumo') return
 
         // Busca o primeiro prompt que tenha a fase atual no campo phase
-        const promptParaFase = promptsSugeridos.length > 0 ? promptsSugeridos[0] : null
+        // const promptParaFase = promptsSugeridos.length > 0 ? promptsSugeridos[0] : null
 
-        if (prompt?.slug === 'resumo') {
-            if (promptParaFase) {
-                setPrompt(promptParaFase)
-            } else {
-                // Fallback: usa o prompt "resumo" se não encontrar nenhum para a fase
-                const promptResumo = prompts.find(p => p.slug === 'resumo')
-                if (promptResumo) {
-                    setPrompt(promptResumo)
-                }
-            }
-        }
+        // if (prompt?.slug === 'resumo') {
+        //     if (promptParaFase) {
+        //         setPrompt(promptParaFase)
+        //     } else {
+        //         // Fallback: usa o prompt "resumo" se não encontrar nenhum para a fase
+        //         const promptResumo = prompts.find(p => p.slug === 'resumo')
+        //         if (promptResumo) {
+        //             setPrompt(promptResumo)
+        //         }
+        //     }
+        // }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [faseAtual, dadosDoProcesso, promptInitialized, prompts])
 

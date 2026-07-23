@@ -34,8 +34,6 @@ export function GroupView({ groupSlug, prompts, onPromptClick }: GroupViewProps)
     const groupPrompts = prompts.filter(p => {
         if (!p.origin) return false
         const group = p.content?.group as any
-        if (group) 
-            devLog('Prompt', p.name, 'pertence ao grupo', group.slug)
         return group?.slug === groupSlug
     }).sort((a, b) => {
         const sortA = a.content?.sort ?? 0
