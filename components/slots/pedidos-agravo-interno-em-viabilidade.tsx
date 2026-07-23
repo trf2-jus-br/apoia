@@ -47,10 +47,10 @@ const motivoNaoConhecimento = [
 // Opcoes de decisao (dispositivo) por pedido/argumento
 const tiposDeDispositivo = [
     { id: '', name: '' },
-    { id: 'DESCONSIDERAR', name: 'Desconsiderar' },
     { id: 'NAO_CONHECIDO', name: 'Recurso não conhecido' },
     { id: 'PROVIDO', name: 'Recurso provido' },
     { id: 'DESPROVIDO', name: 'Recurso desprovido' },
+    { id: 'DESCONSIDERAR', name: 'Desconsiderar' },
 ]
 
 // Motivos por dispositivo. `requerTexto` abre um campo livre de fundamentos.
