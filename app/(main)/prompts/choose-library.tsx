@@ -135,7 +135,7 @@ export default function ChooseLibrary({ allDocuments, selectedDocuments, onSave,
         } else {
             s += l[0] + ' + ' + (l.length - 1)
         }
-        return <p className="text-body-tertiary text-center h-print mb-0">{s} - <span onClick={() => { setEditing(true); onStartEditing() }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></p>
+        return <p className="text-body-tertiary text-center h-print mb-0">{s} - <button type="button" className="btn btn-link p-0" onClick={() => { setEditing(true); onStartEditing() }} style={{marginTop: "-.35em"}}><span className="text-primary"><FontAwesomeIcon icon={faEdit} /> Alterar</span></button></p>
     }
     return <ChooseLibraryForm onSave={onSaveLocal} onClose={onClose} allDocuments={allDocuments} selectedDocuments={selectedDocuments} readyToStartAI={readyToStartAI} />
 }

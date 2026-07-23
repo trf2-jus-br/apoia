@@ -100,20 +100,20 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
             {/* <h2 className="mt-3">{prompt.content.editor_label}</h2> */}
             {/* <PromptConfig kind="ementa" setPromptConfig={setPromptConfig} /> */}
             {!source && <>
-                <div className="form-group"><label>{textoDescr}</label></div>
-                <div className="alert alert-secondary mb-1 p-0">
+                <div className="form-group"><span className="form-label">{textoDescr}</span></div>
+                <div className="alert alert-secondary mb-1 p-0" role="group" aria-label={textoDescr}>
                     <Suspense fallback={null}>
                         <EditorComp markdown={markdown} onChange={textChanged} showPdfUpload={true} />
                     </Suspense>
                 </div>
                 {hidden && <>
-                    <div className="text-body-tertiary">Cole o texto acima e clique em prosseguir.</div>
+                    <div className="text-body-tertiary" id="prosseguir-texto-help">Cole o texto acima e clique em prosseguir.</div>
                 </>}
             </>}
 
             {hidden && <>
                 {/* <Button disabled={!markdown || !orgaoJulgador} className="mt-3" onClick={() => setHidden(false)}>Gerar Ementa</Button> */}
-                <Button disabled={!markdown} className="mt-3" onClick={() => setHidden(false)}>Prosseguir</Button>
+                <Button disabled={!markdown} className="mt-3" onClick={() => setHidden(false)} accessKey="s" aria-describedby="prosseguir-texto-help">Pro<u>s</u>seguir</Button>
             </>}
             {!hidden && markdown && <div id="printDiv">
 
@@ -134,7 +134,7 @@ export default function TargetText({ visualization, apiKeyProvided }: { visualiz
                         {copiedPrompt && <>
                             <p className="alert alert-warning text-center mt-3">Prompt copiado para a area de transferencia, ja com o conteudo do texto informado acima!</p>
                             <h2>{prompt.name}</h2>
-                            <textarea name="prompt" className="form-control" rows={10} defaultValue={copiedPrompt} />
+                            <textarea name="prompt" className="form-control" rows={10} defaultValue={copiedPrompt} aria-label="Prompt copiado" />
                         </>}
                     </>
                 }

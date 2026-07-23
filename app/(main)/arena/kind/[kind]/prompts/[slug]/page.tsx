@@ -1,5 +1,3 @@
-'use server'
-
 import { Suspense } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { PromptDao } from '@/lib/db/dao'

@@ -13,9 +13,9 @@ export function PromptHeader({ prompt, onPromptChange, variant = 'title' }: Prom
         return (
             <div className="text-center">
                 <span className="h3">{prompt.name}</span> -{' '}
-                <span onClick={onPromptChange} className="text-primary" style={{ cursor: 'pointer' }}>
-                    <FontAwesomeIcon icon={faEdit} /> Alterar
-                </span>
+                <button type="button" className="btn btn-link p-0" onClick={onPromptChange} style={{ marginTop: "-.35em" }}>
+                    <span className="text-primary"><FontAwesomeIcon icon={faEdit} /> Alterar</span>
+                </button>
             </div>
         )
     }
@@ -23,9 +23,9 @@ export function PromptHeader({ prompt, onPromptChange, variant = 'title' }: Prom
     return (
         <div className="text-body-tertiary text-center h-print">
             Prompt: {prompt.name} -{' '}
-            <span onClick={onPromptChange} className="text-primary" style={{ cursor: 'pointer' }}>
-                <FontAwesomeIcon icon={faEdit} /> Alterar
-            </span>
+            <button type="button" className="btn btn-link p-0" style={{ marginTop: "-.35em" }} onClick={onPromptChange}>
+                <span className="text-primary"><FontAwesomeIcon icon={faEdit} /> Alterar</span>
+            </button>
         </div>
     )
 }

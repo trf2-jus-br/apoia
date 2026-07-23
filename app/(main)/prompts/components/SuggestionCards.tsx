@@ -22,9 +22,9 @@ export function SuggestionCards({ faseAtual, promptsSugeridos, onPromptClick }: 
             <Row className="row row-cols-1 row-cols-md-1 g-4">
                 {promptsSugeridos.map((prompt) => (
                     <Col key={prompt.id} md={4}>
-                        <Card
-                            className="h-100 shadow-sm border-primary btn btn-outline-primary"
-                            style={{ cursor: 'pointer' }}
+                        <button
+                            type="button"
+                            className="card h-100 shadow-sm border-primary btn btn-outline-primary text-start"
                             onClick={() => onPromptClick(prompt)}
                         >
                             <Card.Header className="bg-transparent border-0 pt-1 pb-0">
@@ -40,12 +40,7 @@ export function SuggestionCards({ faseAtual, promptsSugeridos, onPromptClick }: 
                                     </Card.Text>
                                 )}
                             </Card.Body>
-                            {/* <Card.Footer className="bg-transparent border-0 pt-0 pb-0">
-                                <Card.Text className="small text-muted mb-2">
-                                    {prompt.content?.author || 'Desconhecido'}
-                                </Card.Text>
-                            </Card.Footer> */}
-                        </Card>
+                        </button>
                     </Col>
                 ))}
             </Row>

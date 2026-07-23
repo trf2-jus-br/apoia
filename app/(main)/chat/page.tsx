@@ -1,5 +1,3 @@
-'use server'
-
 import { Suspense } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { Container, Spinner } from 'react-bootstrap'
@@ -14,6 +12,8 @@ import Print from '@/components/slots/print'
 import { formatDateTime, formatYYYYMMDDHHMMSS } from '@/lib/utils/date'
 import { slugify } from '@/lib/utils/utils'
 import { assertModel, getSelectedModelName } from '@/lib/ai/model-server'
+
+export const metadata = { title: 'Chat' }
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ prompt?: string }> }) {
     noStore()

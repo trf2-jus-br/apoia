@@ -344,7 +344,9 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                     <tbody>
                         {processos.map((processo, index) => (
                             <tr key={index}>
-                                <td className="text-end" title="Clique para tornar o principal" style={{ cursor: 'pointer' }} onClick={e => replaceMainProcess(processo.numeroDoProcesso)}>{index + 1}</td>
+                                <td className="text-end" title="Clique para tornar o principal">
+                                    <button type="button" className="btn btn-link p-0" onClick={e => replaceMainProcess(processo.numeroDoProcesso)}>{index + 1}</button>
+                                </td>
                                 <td>{NAVIGATE_TO_PROCESS_URL ? (<a href={NAVIGATE_TO_PROCESS_URL.replace('{numero}', processo.numeroDoProcesso)} style={{ color: 'rgb(33, 37, 41)', textDecoration: 'none' }} target="_blank" title="Clique para visualizar o processo">{processo.numeroDoProcesso}</a>) : processo.numeroDoProcesso}</td>
                                 {processo.errorMsg
                                     ? <td className="text-end text-danger" colSpan={principal.pecasSelecionadas.length + 2}>{processo.errorMsg &&
@@ -358,7 +360,7 @@ export default function AbusiveLitigationPage(params: { NAVIGATE_TO_PROCESS_URL?
                                         <td className="text-center">{processo.oabPoloAtivo}</td>
                                         {principal.pecasSelecionadas?.map((p, index) => {
                                             const s = similaridade[processo.numeroDoProcesso][index]
-                                            return <td title={s.closestDocument?.errorMsg} key={`${processo}-${p.rotulo}`} className={`text-end${s.closestDocument?.errorMsg ? ' text-danger' : ''}`}><span onClick={() => handleShowDiff(processo, index)}>{formatSimilarity(s.similarity)}</span></td>
+                                            return <td title={s.closestDocument?.errorMsg} key={`${processo}-${p.rotulo}`} className={`text-end${s.closestDocument?.errorMsg ? ' text-danger' : ''}`}><button type="button" className="btn btn-link p-0" onClick={() => handleShowDiff(processo, index)}>{formatSimilarity(s.similarity)}</button></td>
                                         })}
                                     </>}
                             </tr>

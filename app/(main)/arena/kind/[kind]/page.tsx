@@ -1,5 +1,3 @@
-'use server'
-
 import { Suspense } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { PromptDao, TestsetDao } from '@/lib/db/dao'
@@ -25,7 +23,7 @@ export default async function Home(props: { params: Promise<{ kind: string }> })
             <TableRecords records={prompts} spec="PromptsByKind" linkToAdd="prompts/new" pageSize={10} />
         </Suspense>
 
-        <h1 className="mb-0">Conjuntos de Testes</h1>
+        <h2 className="mb-0">Conjuntos de Testes</h2>
         <Suspense fallback={< TablePlaceholder />} >
             <TableRecords records={testsets} spec="TestsetsByKind" linkToAdd="testsets/new" pageSize={10} />
         </Suspense>

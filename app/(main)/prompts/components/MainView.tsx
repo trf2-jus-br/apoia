@@ -110,13 +110,14 @@ export function MainView({
                 </div>
             )}
 
+            <h1 className="visually-hidden">Prompts</h1>
             <Container className="mt-2 mb-3" fluid={false}>
                 <Tabs
                     activeKey={activeTab}
                     onSelect={(k) => setActiveTab(k || 'principal')}
                     className="mt-3"
                 >
-                    <Tab eventKey="principal" title={<span><u>P</u>rincipais</span>} tabAttrs={{ accessKey: "p", style: principalVisible ? undefined : { display: 'none' } }}>
+                    <Tab eventKey="principal" title={<span>Pr<u>i</u>ncipais</span>} tabAttrs={{ accessKey: "i", style: principalVisible ? undefined : { display: 'none' } }}>
                         <PromptsTable
                             prompts={promptsPrincipais}
                             onClick={promptOnClick}

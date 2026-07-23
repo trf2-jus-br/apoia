@@ -23,7 +23,7 @@ import { formatHtmlToEprocStandard } from '@/lib/utils/messaging-helper'
 import { highlightCitationsLongestMatch } from '@/lib/n-grams'
 import { addLinkToPieces } from '@/lib/ui/link-to-piece'
 import { DadosDoProcessoType } from '@/lib/proc/process-types'
-import { playClickSound } from '@/lib/sound'
+import { playTaskStartSound, playTaskEndSound, playErrorSound } from '@/lib/sound'
 import { useModeUrl } from '@/lib/utils/use-mode-url'
 
 export const getColor = (text, errormsg) => {
@@ -99,6 +99,9 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     const [copySuccess, setCopySuccess] = useState(false)
     const initialized = useRef(false)
     const contentRef = useRef<HTMLDivElement>(null);
+    // Espelja errormsg para leitura síncrona dentro de callbacks (ex.: finally do stream)
+    const errormsgRef = useRef('')
+    useEffect(() => { errormsgRef.current = errormsg }, [errormsg])
     const executionId = useExecutionId()
     const selectedPromptId = useSelectedPromptId()
     const aggregatorPromptId = selectedPromptId !== null && params.definition.dbId !== selectedPromptId
@@ -112,6 +115,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                 ? err
                 : (err && typeof err === 'object' && 'message' in err && (err as Error).message) || 'Erro desconhecido'
         setErrormsg(message);
+        playErrorSound();
         trackAIError({
             kind: payload.kind,
             model: payload.modelSlug,
@@ -294,8 +298,10 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
             } catch (error) {
                 console.error('Error fetching stream:', error);
             } finally {
-                playClickSound()
+                // Som de conclusão apenas em sucesso; reportError já toca playErrorSound() em falha.
+                // Lemos o estado de erro via ref para decidir após setComplete.
                 setComplete(true)
+                if (!errormsgRef.current) playTaskEndSound()
             }
         } else {
             const reader = response.body?.getReader()
@@ -308,6 +314,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                         setComplete(true)
                         const text = Buffer.concat(chunks).toString("utf-8")
                         reportReady(text, payload)
+                        playTaskEndSound()
                         break
                     }
                     chunks.push(value)
@@ -328,6 +335,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         setErrormsg('')
         setComplete(false)
         setEvaluated(false)
+        playTaskStartSound()
         try {
             fetchStream()
         } catch (e) {
@@ -387,20 +395,24 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
     return <>
         <MessageStatus message={currentMessage} />
         {current || errormsg
-            ? <div className="mb-3" >
-                <div className={`alert alert-${color} ai-content mb-0`}>
-                    {color === 'warning' && <h1 className="mt-0">Rascunho</h1>}
+            ? <div className="mb-3" aria-live="polite" aria-busy={!complete}>
+                <span className="visually-hidden">
+                    {errormsg ? `Erro: ${errormsg}` : (complete ? 'Conteúdo gerado' : 'Gerando conteúdo, aguarde...')}
+                </span>
+                <div className={`alert alert-${color} ai-content mb-0`} role={errormsg ? 'alert' : undefined}>
+                    {color === 'warning' && <h2 className="mt-0">Rascunho</h2>}
                     {(complete || errormsg) && (
                         <>
                             <button
                                 className={`btn btn-sm btn-transparent float-end d-print-none }`}
                                 onClick={() => { handleCopy() }}
+                                aria-label={copySuccess ? 'Copiado' : 'Copiar conteúdo'}
                             >
                                 <FontAwesomeIcon icon={copySuccess ? faCheck : faCopy} />
                             </button>
                             {evaluated
-                                ? <button className="btn btn-sm btn-transparent float-end d-print-none" onClick={() => { setCurrent(''); run() }}><FontAwesomeIcon icon={faRefresh} /></button>
-                                : <button className="btn btn-sm btn-transparent float-end d-print-none" onClick={() => { handleShow() }}><FontAwesomeIcon icon={faThumbsDown} /></button>}
+                                ? <button className="btn btn-sm btn-transparent float-end d-print-none" aria-label="Gerar novamente" onClick={() => { setCurrent(''); run() }}><FontAwesomeIcon icon={faRefresh} /></button>
+                                : <button className="btn btn-sm btn-transparent float-end d-print-none" aria-label="Avaliar resposta negativamente" onClick={() => { handleShow() }}><FontAwesomeIcon icon={faThumbsDown} /></button>}
                         </>
                     )}
                     {errormsg

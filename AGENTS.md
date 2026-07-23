@@ -103,6 +103,41 @@
 - Usar Bootstrap alerts para feedback visual claro
 - Validar estados e dar feedback apropriado
 
+### Acessibilidade
+
+O projeto segue uma iniciativa de acessibilidade baseada em `accessKey` + letra sublinhada, feedback sonoro e ARIA. Os padrões abaixo são aditivos (sem mudar layout/comportamento) e devem ser aplicados em novos componentes.
+
+#### accessKey + `<u>`
+- Padrão: atributo `accessKey="letra"` no elemento focável + letra sublinhada no texto visível com `<u>L</u>`. A letra sublinhada deve corresponder à tecla do accessKey.
+- Em JSX de botões/tabs, `<u>` é elemento literal: `<span>Pr<u>i</u>ncipais</span>` com `tabAttrs={{ accessKey: "i" }}`.
+- Em links da navbar (`NavigationLink`), `<u>` é string HTML passada em `text` (renderizada via `dangerouslySetInnerHTML`): `text="E<u>m</u>enta" accessKey="m"`.
+- **Mapa de teclas (respeitar — evitar conflitos na mesma página):**
+  - Navbar (todas as páginas): `c`=Chat, `p`=Prompts, `t`=Revisão de Texto, `m`=Ementa.
+  - `/prompts`: tab Principais=`i`, tab Não Avaliados=`a`, Tramitação=`r`, Número=`n`, Filtro=`f`, Prosseguir (choose-pieces)=`s`.
+  - Por contexto: Chat Enviar=`e`, Anexar=`x`; print PDF=`d`; listen Ouvir=`u`; pedidos Gerar=`g`; Prosseguir (process-number-form/target-text)=`s` (não co-renderizam com choose-pieces).
+- **Botões desabilitados**: sempre explicar o motivo. Usar `aria-describedby` apontando para um `<span id="...-help">` (visível ou `visually-hidden`) com a instrução, ou `title` quando não houver texto de instrução.
+
+#### Sons (`lib/sound.ts`)
+Funções disponíveis e quando usar:
+- `playTaskStartSound()` — início de uma tarefa de IA (ex.: `AiContent.run()`).
+- `playTaskEndSound()` — conclusão com sucesso (ex.: fim do stream sem erro).
+- `playErrorSound()` — erro/falha (ex.: `reportError`, erros do chat, toast danger, filtro sem resultados).
+- `playClickSound()` — feedback leve (ex.: processo carregado, mensagem do chat finalizada).
+- `playConvergeSound()` — convergência de filtro para prompt único.
+- `playNotifySound()` — notificação pontual.
+O `AudioContext` é singleton (com resume em suspensão). Para ler o estado de erro de forma síncrona dentro de callbacks (ex.: `finally` do stream), use um ref espelhado do estado (ver `errormsgRef` em `ai-content.tsx`).
+
+#### Padrões ARIA
+- **Texto só para leitores de tela**: `<span className="visually-hidden">...</span>`. Para placeholders decorativos (`placeholder-glow`), manter `aria-hidden="true"` no container e adicionar um sr-only "Carregando...".
+- **Live regions**: `role="status"` / `aria-live="polite"` para progresso e estados de carregamento; `role="log" aria-live="polite"` para históricos (ex.: mensagens de chat); `role="alert"` para erros e avisos. Atenção: o `Alert` do react-bootstrap renderiza `role="alert"` por padrão — sobrescrever com `role="status"` em confirmações de sucesso (polite).
+- **Botões clicáveis**: sempre `<button>` em vez de `<span>`/`<div>` com `onClick` (mesmo mantendo a aparência via classes Bootstrap como `btn btn-link p-0`). Para dropzones/áreas clicáveis, usar `role="button" tabIndex={0}` + `onKeyDown` (Enter/Espaço).
+- **Labels de formulário**: associar label↔controle via `htmlFor`+`id`, `controlId` no `Form.Group` (react-bootstrap gera ambos), ou `aria-label` quando não houver label visível.
+- **Botões só-ícone**: sempre `aria-label` descritivo (ou `<span className="visually-hidden">` com o texto).
+- **Tabelas**: `<th scope="col">` nos cabeçalhos e `<caption className="visually-hidden">` para dar contexto.
+- **Gráficos**: wrapper com `role="img"` + `aria-label` resumindo o conteúdo.
+- **Estados visuais-only** (ex.: `opacity-25` para itens "desconsiderados"): adicionar sr-only com o significado (ex.: `(desconsiderado)`).
+- **Informações só em `title`/cor** (ex.: custo/tokens no rodapé de mensagem): replicar em `aria-label`.
+
 ### Estilo de Código
 - **Não usar emoticons** no código, logs ou interface
 - Manter mensagens profissionais e diretas

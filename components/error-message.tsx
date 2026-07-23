@@ -134,7 +134,7 @@ export default function ErrorMessage(params: { message: string }) {
             : <>
                 <p className="mb-0">{msg}</p>
             </>}
-        <p className="text-muted mb-0 mt-1" style={{ fontSize: '70%', textAlign: 'right' }}>Se precisar de suporte, clique <a href="#" onClick={() => setShowTicketForm(true)}>aqui</a> para abrir um chamado.</p>
+        <p className="text-muted mb-0 mt-1" style={{ fontSize: '70%', textAlign: 'right' }}>Se precisar de suporte, clique <button type="button" className="btn btn-link p-0" style={{ fontSize: 'inherit', verticalAlign: 'baseline' }} onClick={() => setShowTicketForm(true)}>aqui</button> para abrir um chamado.</p>
         <TicketFormModal
             show={showTicketForm}
             onHide={() => setShowTicketForm(false)}

@@ -60,7 +60,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
     ]
 
     if (pedidosAnalisados) {
-        if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
+        if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary"><span className="visually-hidden">Carregando...</span></Spinner></div>
         const aPedidos = [...Frm.get('pedidos').pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         const data = { ...request.data }
         data.textos = [...request.data.textos, { numeroDoProcesso: data?.numeroDoProcesso || '', slug: 'pedidos', descr: 'Pedidos', texto: JSON.stringify(aPedidos), sigilo: '0' }]
@@ -74,6 +74,7 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
                     <ol>
                         {aPedidos.map((pedido, i) =>
                             <li className={`mb-1 ${!pedido.dispositivo ? 'opacity-25' : ''}`} key={i}>
+                                {!pedido.dispositivo && <span className="visually-hidden">(desconsiderado)</span>}
                                 <span>{pedido.liminar === 'SIM' ? <span><b><u>Liminar</u></b> - </span> : ''}</span>
                                 <span>{tiposDePedido.find(o => o.id === pedido.tipoDePedido)?.name} - </span>
                                 {pedido.verba !== 'NENHUMA' && <>
@@ -135,8 +136,9 @@ export const PedidosFundamentacoesEDispositivos = ({ pedidos, request, nextReque
         {Frm.get('pedidos')?.pedidos.length > 0 &&
             <div className="row h-print mb-3">
                 <div className="col">
-                    <Button className="float-end" variant="primary" onClick={() => Frm.set('pedidosAnalisados', true)} disabled={Frm.get('pedidos')?.pedidos?.some(p => !p.dispositivo)}>
-                        Gerar {nextRequest.title}
+                    <span id="gerar-pedidos-help" className="visually-hidden">Selecione um comando (dispositivo) para todos os pedidos antes de gerar.</span>
+                    <Button className="float-end" variant="primary" onClick={() => Frm.set('pedidosAnalisados', true)} disabled={Frm.get('pedidos')?.pedidos?.some(p => !p.dispositivo)} accessKey="g" aria-describedby="gerar-pedidos-help">
+                        <u>G</u>erar {nextRequest.title}
                     </Button>
                 </div>
             </div>

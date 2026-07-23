@@ -117,7 +117,7 @@ export function TicketFormModal({ show, onHide, kind, errorContext, encryptedErr
             </Modal.Header>
             <Modal.Body>
                 {createdUuid
-                    ? <Alert variant="success" className="mb-0">
+                    ? <Alert variant="success" className="mb-0" role="status">
                         Chamado aberto com sucesso. Anote o protocolo: <strong>{createdUuid.substring(0, 8)}</strong>.
                         Você pode acompanhar o status em "Meus chamados" no menu do usuário.
                     </Alert>
@@ -129,7 +129,7 @@ export function TicketFormModal({ show, onHide, kind, errorContext, encryptedErr
                         )}
                         {error && <Alert variant="danger">{error}</Alert>}
                         {!kind && (
-                            <Form.Group className="mb-3">
+                            <Form.Group className="mb-3" controlId="ticket-kind">
                                 <Form.Label>Tipo</Form.Label>
                                 <Form.Select value={selectedKind} onChange={e => setSelectedKind(e.target.value as TicketKind)}>
                                     {Object.entries(KIND_LABELS).map(([value, label]) =>
@@ -137,7 +137,7 @@ export function TicketFormModal({ show, onHide, kind, errorContext, encryptedErr
                                 </Form.Select>
                             </Form.Group>
                         )}
-                        <Form.Group className="mb-3">
+                        <Form.Group className="mb-3" controlId="ticket-message">
                             <Form.Label>Descreva o problema</Form.Label>
                             <Form.Control
                                 as="textarea"
@@ -194,9 +194,9 @@ export default function TicketFormButton({ label, className, kind, errorContext,
     const [show, setShow] = useState(false)
     return (
         <>
-            <a href="#" className={className} onClick={e => { e.preventDefault(); setShow(true) }}>
+            <button type="button" className={className} onClick={e => { e.preventDefault(); setShow(true) }}>
                 {label}
-            </a>
+            </button>
             <TicketFormModal
                 show={show}
                 onHide={() => setShow(false)}

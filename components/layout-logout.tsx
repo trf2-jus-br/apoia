@@ -7,5 +7,5 @@ export default function LayoutLogout() {
         signOut()
     }
 
-    return (<span className="alert-link" style={{ textDecoration: 'underline' }} onClick={() => logout()}>faça o login utilizando CPF e senha</span>)
+    return (<button type="button" className="btn btn-link alert-link p-0" style={{ textDecoration: 'underline' }} onClick={() => logout()}>faça o login utilizando CPF e senha</button>)
 }

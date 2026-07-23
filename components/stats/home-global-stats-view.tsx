@@ -61,7 +61,7 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                                 placement="top"
                                 overlay={<BsTooltip>Calculado considerando que cada utilização da IA economiza {STATS_CONFIG.TEMPO_MEDIO_ECONOMIA_POR_EXECUCAO_MINUTOS} minutos ao usuário (tempo médio estimado)</BsTooltip>}
                             >
-                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} tabIndex={0} aria-label="Calculado considerando que cada utilização da IA economiza 5 minutos ao usuário (tempo médio estimado)" />
                             </OverlayTrigger>
                         </small>
                     </div>
@@ -85,7 +85,7 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                                 placement="top"
                                 overlay={<BsTooltip>Total de execuções de prompts desde o início da plataforma</BsTooltip>}
                             >
-                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} tabIndex={0} aria-label="Total de execuções de prompts desde o início da plataforma" />
                             </OverlayTrigger>
                         </small>
                     </div>
@@ -109,7 +109,7 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                                 placement="top"
                                 overlay={<BsTooltip>Usuários que executaram pelo menos um prompt nos últimos 30 dias</BsTooltip>}
                             >
-                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} tabIndex={0} aria-label="Usuários que executaram pelo menos um prompt nos últimos 30 dias" />
                             </OverlayTrigger>
                         </small>
                     </div>
@@ -133,7 +133,7 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                                 placement="top"
                                 overlay={<BsTooltip>Número de tribunais distintos com usuários cadastrados</BsTooltip>}
                             >
-                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} tabIndex={0} aria-label="Número de tribunais distintos com usuários cadastrados" />
                             </OverlayTrigger>
                         </small>
                     </div>
@@ -152,7 +152,7 @@ export function HomeGlobalStatsView({ stats }: HomeGlobalStatsViewProps) {
                                 placement="top"
                                 overlay={<BsTooltip>Total histórico de execuções de prompts por tribunal</BsTooltip>}
                             >
-                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} />
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-secondary" style={{ cursor: 'help', fontSize: '0.75rem' }} tabIndex={0} aria-label="Total histórico de execuções de prompts por tribunal" />
                             </OverlayTrigger>
                         </small>
                     </div>

@@ -36,24 +36,29 @@ export const RatingStatsDisplay: React.FC<RatingStatsDisplayProps> = ({
 
     const content = !hasEnoughVotes ? (
         // Menos de MIN_VOTES_TO_SHOW_RATING votos: mostra apenas a estrela em cinza claro
-        <span
+        <button
+            type="button"
+            className="btn btn-link p-0"
             onClick={onClick}
-            style={{ cursor: onClick ? 'pointer' : 'default', alignItems: 'center' }}
+            style={{ alignItems: 'center' }}
+            aria-label="Avaliar prompt"
         >
             <FontAwesomeIcon icon={faStar} style={{ color: '#e0e0e0' }} />
-        </span>
+        </button>
     ) : (
         // MIN_VOTES_TO_SHOW_RATING ou mais votos: mostra o número em azul e sublinhado
-        <span
+        <button
+            type="button"
+            className="btn btn-link p-0"
             onClick={onClick}
             style={{
-                cursor: onClick ? 'pointer' : 'default',
                 color: '#0d6efd',
                 textDecoration: 'underline'
             }}
+            aria-label={`Avaliar prompt. Média ${formatNumber(avgLaplace)} de 5 estrelas`}
         >
             {formatNumber(avgLaplace)}
-        </span>
+        </button>
     )
 
     return (

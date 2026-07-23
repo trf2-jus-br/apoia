@@ -145,20 +145,23 @@ export const StarsWidget: React.FC<StarsWidgetProps> = ({
                         const isFilled = displayRating ? n <= displayRating : false
 
                         return (
-                            <FontAwesomeIcon
+                            <button
+                                type="button"
                                 key={n}
-                                icon={isFilled ? faStarSolid : faStar}
-                                className="prompt-star"
+                                className="btn btn-link p-0 prompt-star"
+                                aria-label={`${n} estrela${n > 1 ? 's' : ''}`}
                                 onClick={(e: React.MouseEvent) => handleSelect(n, e)}
                                 onMouseEnter={() => setHoverRating(n)}
+                                disabled={loading}
                                 style={{
                                     cursor: loading ? 'wait' : 'pointer',
                                     color: isFilled ? '#ffc107' : '#cfcfcf',
                                     transition: 'transform .12s ease, color .12s ease',
                                     fontSize: '1.1em'
                                 }}
-                                title={`${n} estrela${n > 1 ? 's' : ''}`}
-                            />
+                            >
+                                <FontAwesomeIcon icon={isFilled ? faStarSolid : faStar} />
+                            </button>
                         )
                     })}
                 </span>

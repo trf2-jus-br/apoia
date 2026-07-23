@@ -145,7 +145,7 @@ export default function PrefsForm(params) {
         <>
             <div className="row justify-content-center">
                 <div className="col col-12 col-md-8 col-xxl-6">
-                    <h4 className="text-center mt-3 mb-2">Modelo de Inteligência Artificial</h4>
+                    <h1 className="h4 text-center mt-3 mb-2">Modelo de Inteligência Artificial</h1>
                     <p className="text-center">Antes de usar a Apoia é necessário fornecer uma chave de API e selecionar o modelo de IA desejado no formulário abaixo. Leia atentamente a <a href="https://github.com/trf2-jus-br/apoia/wiki/Modelos-de-IA-e-Chaves-de-APIs">documentação</a>, principalmente no que se refere aos limites de uso e a LGPD.</p>
                 </div>
             </div>
@@ -206,8 +206,9 @@ export default function PrefsForm(params) {
                                         <button onClick={handleClear} className="btn btn-warning" style={{ width: '10em' }}>Limpar</button>
                                     </div>
                                     <div className="col">
-                                        <button onClick={handleClick} disabled={processing || (!data.model && !tribunalOnlyMode)} className="btn btn-primary float-end" style={{ width: '10em' }}>{processing
-                                            ? (<span className="spinner-border text-white opacity-50" style={{ width: '1em', height: '1em' }} role="status"><span className="visually-hidden">Loading...</span></span>)
+                                        <span id="salvar-prefs-help" className="visually-hidden">Selecione um modelo de IA antes de salvar.</span>
+                                        <button onClick={handleClick} disabled={processing || (!data.model && !tribunalOnlyMode)} className="btn btn-primary float-end" style={{ width: '10em' }} aria-describedby="salvar-prefs-help">{processing
+                                            ? (<span className="spinner-border text-white opacity-50" style={{ width: '1em', height: '1em' }} role="status"><span className="visually-hidden">Carregando...</span></span>)
                                             : 'Salvar'}</button>
 
                                     </div>

@@ -1,10 +1,10 @@
-'use server'
-
 import { Suspense } from 'react'
 import { unstable_noStore as noStore } from 'next/cache'
 import { Container, Spinner } from 'react-bootstrap'
 import ServerContents from './server-contents'
 import { assertModel } from '@/lib/ai/model-server'
+
+export const metadata = { title: 'Prompts' }
 
 export default async function Home() {
     noStore()

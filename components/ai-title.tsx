@@ -9,7 +9,6 @@ export default function AiTitle({ request }: { request: GeneratedContent }) {
             {request.documentLocation
                 ? <><span> (e. </span>
                     <a href={request.documentLink ? modeUrl(request.documentLink) : undefined} target='_blank' className="h-print">{request.documentLocation}</a>
-                    <span className="d-none">{request.documentLocation}</span>
                     <span>)</span>
                 </>
                 : ''

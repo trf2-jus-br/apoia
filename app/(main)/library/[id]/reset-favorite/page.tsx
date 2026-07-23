@@ -1,5 +1,3 @@
-'use server'
-
 import { unstable_noStore as noStore } from 'next/cache'
 import { UserDao, LibraryDao } from '@/lib/db/dao'
 import { redirect } from 'next/navigation';

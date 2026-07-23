@@ -53,7 +53,7 @@ export default function Listen(params) {
     return (
         <div className="h-print" style={{ height: '1em' }}>
             <div className="float-end">
-                <Button variant="primary" type="button" onClick={handleClick}>Ouvir</Button>
+                <Button variant="primary" type="button" onClick={handleClick} accessKey="u"><u>O</u>uvir</Button>
             </div>
         </div>
     )

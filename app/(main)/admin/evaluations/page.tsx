@@ -1,5 +1,3 @@
-'use server'
-
 import { assertCurrentUser, isUserModerator } from '@/lib/user'
 import { redirect } from 'next/navigation'
 import EvaluationsAdminClient from './evaluations-admin-client'

@@ -25,21 +25,22 @@ export default function ProcessNumberForm({ id, onChange }: { id: string, onChan
     return (
         <>
             <div className="row justify-content-center">
-                {/* <h1 className="text-center">Selecione o Processo</h1> */}
+                <h1 className="visually-hidden">Selecione o Processo</h1>
                 <div className="col col-12 col-md-6 mt-4">
                     <div className="mx-auto pt-4 pb-4 mb-5 alert-secondary alert">
                         <form>
                             <div className="form-group">
-                                <label>Número do Processo</label>
+                                <label htmlFor="numeroDoProcesso">Número do Processo</label>
                                 <input type="text" id="numeroDoProcesso" name="numeroDoProcesso" placeholder="" autoFocus={true} className="form-control" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumber(e.target.value.replace(/\D/g, ""))} value={number} />
                             </div>
                             <div className="d-flex justify-content-end mt-4">
-                                <Button onClick={handleClick} disabled={processing || number.length != 20} className="btn btn-primary" style={{ width: '10em' }}>
+                                <span id="prosseguir-help" className="visually-hidden">Digite os 20 dígitos do número do processo para prosseguir.</span>
+                                <Button onClick={handleClick} disabled={processing || number.length != 20} className="btn btn-primary" style={{ width: '10em' }} accessKey="s" aria-describedby="prosseguir-help">
                                     {processing ? (
                                         <span className="spinner-border text-white opacity-50" style={{ width: '1em', height: '1em' }} role="status">
-                                            <span className="visually-hidden">Loading...</span>
+                                            <span className="visually-hidden">Carregando...</span>
                                         </span>
-                                    ) : 'Prosseguir'}
+                                    ) : <span>Pro<u>s</u>seguir</span>}
                                 </Button>
                             </div>
                         </form >

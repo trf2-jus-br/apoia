@@ -22,13 +22,13 @@ export default function ErrorSpan({ encrypted }: { encrypted?: string }) {
 
     return (
         <>
-            <span
-                className="text-danger"
-                style={{ cursor: 'pointer' }}
+            <button
+                type="button"
+                className="btn btn-link text-danger p-0"
                 onClick={() => setShowModal(true)}
             >
                 Ocorreu um erro, clique aqui para ver detalhes
-            </span>
+            </button>
 
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
                 <Modal.Header closeButton>
@@ -44,6 +44,7 @@ export default function ErrorSpan({ encrypted }: { encrypted?: string }) {
                         value={encrypted}
                         readOnly
                         rows={4}
+                        aria-label="Detalhes técnicos do erro"
                         style={{ fontFamily: 'monospace', marginBottom: 16 }}
                     />
                 </Modal.Body>

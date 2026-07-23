@@ -72,11 +72,11 @@ export default function DraftSentenceModal(props: ModalProps<{ processNumber?: s
         <Modal.Title>Minutar</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form.Group className={`mb-3 ${context.processNumber ? 'd-none' : ''}`}>
+        <Form.Group className={`mb-3 ${context.processNumber ? 'd-none' : ''}`} controlId="minutar-process-number">
           <Form.Label>Número do processo</Form.Label>
           <Form.Control ref={inputRef} name="numeroDoProcesso" value={processNumber} onChange={(e) => setProcessNumber(e.target.value)} onKeyDown={handleKeyDown} />
         </Form.Group>
-        <Form.Group className="mb-3">
+        <Form.Group className="mb-3" controlId="minutar-decision">
           <Form.Label>Decisão</Form.Label>
           <Form.Select ref={selectRef} value={decision} onChange={(e) => setDecision(e.target.value as any)} onKeyDown={handleKeyDown}>
             <option value="">[Selecione]</option>
@@ -84,14 +84,14 @@ export default function DraftSentenceModal(props: ModalProps<{ processNumber?: s
             <option value="improcedente">Improcedente</option>
           </Form.Select>
         </Form.Group>
-        <Form.Group>
+        <Form.Group controlId="minutar-fundamentacao">
           <Form.Label>Fundamentação</Form.Label>
           <Form.Control as="textarea" rows={6} value={fundamentacao} onChange={(e) => setFundamentacao(e.target.value)} onKeyDown={handleKeyDown} />
         </Form.Group>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-        <Button variant="primary" disabled={!canSubmit} onClick={() => onSubmit({ processNumber, decision, fundamentacao })}>Gerar</Button>
+        <Button variant="primary" disabled={!canSubmit} onClick={() => onSubmit({ processNumber, decision, fundamentacao })} title={!canSubmit ? 'Informe o número do processo e a decisão' : undefined}>Gerar</Button>
       </Modal.Footer>
     </Modal>
   )

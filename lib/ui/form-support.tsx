@@ -25,7 +25,7 @@ type FormErrorProps = {
 const FieldError = ({ formState, name }: FieldErrorProps) => {
     if (!formState.fieldErrors || !formState.fieldErrors[name]) return ''
     return (
-        <span className="text-danger">
+        <span className="text-danger" id={`${name}-erro`} role="alert">
             {formState.fieldErrors[name]?.[0]}
         </span>
     )
@@ -34,8 +34,8 @@ const FieldError = ({ formState, name }: FieldErrorProps) => {
 const FormError = ({ formState }: FormErrorProps) => {
     if (formState.status !== "ERROR") return ''
     return (
-        <span className="text-danger align-middle">
-            <strong>Erro! </strong>{formState?.message} <span style={{ display: 'none' }}>{JSON.stringify(formState)}</span>
+        <span className="text-danger align-middle" role="alert">
+            <strong>Erro! </strong>{formState?.message} <span style={{ display: 'none' }} aria-hidden="true">{JSON.stringify(formState)}</span>
         </span>
     )
 }
@@ -144,8 +144,10 @@ function AsyncSelectComponent<T>({
     const [options, setOptions] = useState<T[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [showDropdown, setShowDropdown] = useState(false)
+    const [activeIndex, setActiveIndex] = useState(-1)
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const listboxId = `${name}-lista`
 
     const selectedValue = getValue()
 
@@ -196,6 +198,24 @@ function AsyncSelectComponent<T>({
         setSearchQuery('')
         setOptions([])
         setShowDropdown(false)
+        setActiveIndex(-1)
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!showDropdown || options.length === 0) return
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setActiveIndex(prev => (prev + 1) % options.length)
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            setActiveIndex(prev => (prev <= 0 ? options.length - 1 : prev - 1))
+        } else if (e.key === 'Enter' && activeIndex >= 0) {
+            e.preventDefault()
+            handleSelect(options[activeIndex])
+        } else if (e.key === 'Escape') {
+            setShowDropdown(false)
+            setActiveIndex(-1)
+        }
     }
 
     const handleClear = () => {
@@ -225,22 +245,30 @@ function AsyncSelectComponent<T>({
                             value={searchQuery}
                             onChange={handleInputChange}
                             onFocus={() => options.length > 0 && setShowDropdown(true)}
+                            onKeyDown={handleKeyDown}
                             placeholder={`Digite ao menos ${minSearchLength} caracteres para buscar...`}
+                            role="combobox"
+                            aria-expanded={showDropdown}
+                            aria-controls={listboxId}
+                            aria-activedescendant={activeIndex >= 0 ? `${listboxId}-opt-${activeIndex}` : undefined}
                         />
                         {isLoading && (
                             <Spinner animation="border" size="sm" className="position-absolute" style={{ right: '10px' }} />
                         )}
                     </div>
                     {showDropdown && options.length > 0 && (
-                        <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: '300px', overflowY: 'auto' }}>
+                        <div id={listboxId} role="listbox" className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: '300px', overflowY: 'auto' }}>
                             {options.map((item, index) => (
                                 <div
                                     key={index}
-                                    className="p-2 border-bottom"
+                                    id={`${listboxId}-opt-${index}`}
+                                    role="option"
+                                    aria-selected={index === activeIndex}
+                                    className={`p-2 border-bottom ${index === activeIndex ? 'bg-light' : ''}`}
                                     style={{ cursor: 'pointer' }}
                                     onClick={() => handleSelect(item)}
-                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                    onMouseEnter={() => setActiveIndex(index)}
+                                    onMouseLeave={() => setActiveIndex(-1)}
                                 >
                                     {formatOption(item)}
                                 </div>
@@ -300,8 +328,10 @@ function AsyncMultiSelectComponent<T>({
     const [options, setOptions] = useState<T[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [showDropdown, setShowDropdown] = useState(false)
+    const [activeIndex, setActiveIndex] = useState(-1)
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const listboxId = `${name}-lista`
 
     const selectedValues: T[] = getValue() || []
     const displayFormatter = formatSelected || formatOption
@@ -367,6 +397,24 @@ function AsyncMultiSelectComponent<T>({
         setSearchQuery('')
         setOptions([])
         setShowDropdown(false)
+        setActiveIndex(-1)
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!showDropdown || options.length === 0) return
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setActiveIndex(prev => (prev + 1) % options.length)
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            setActiveIndex(prev => (prev <= 0 ? options.length - 1 : prev - 1))
+        } else if (e.key === 'Enter' && activeIndex >= 0) {
+            e.preventDefault()
+            handleSelect(options[activeIndex])
+        } else if (e.key === 'Escape') {
+            setShowDropdown(false)
+            setActiveIndex(-1)
+        }
     }
 
     const handleRemove = (idx: number) => {
@@ -413,25 +461,33 @@ function AsyncMultiSelectComponent<T>({
                         value={searchQuery}
                         onChange={handleInputChange}
                         onFocus={() => options.length > 0 && setShowDropdown(true)}
+                        onKeyDown={handleKeyDown}
                         placeholder={`Digite ao menos ${minSearchLength} caracteres para buscar...`}
+                        role="combobox"
+                        aria-expanded={showDropdown}
+                        aria-controls={listboxId}
+                        aria-activedescendant={activeIndex >= 0 ? `${listboxId}-opt-${activeIndex}` : undefined}
                     />
                     {isLoading && (
                         <Spinner animation="border" size="sm" className="position-absolute" style={{ right: '10px' }} />
                     )}
                 </div>
                 {showDropdown && options.length > 0 && (
-                    <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: '300px', overflowY: 'auto' }}>
+                    <div id={listboxId} role="listbox" className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: '300px', overflowY: 'auto' }}>
                         {options.map((item, index) => {
                             const key = getItemKey(item)
                             const isSelected = selectedValues.some(v => getItemKey(v) === key)
                             return (
                                 <div
                                     key={index}
-                                    className={`p-2 border-bottom ${isSelected ? 'text-muted' : ''}`}
+                                    id={`${listboxId}-opt-${index}`}
+                                    role="option"
+                                    aria-selected={isSelected || index === activeIndex}
+                                    className={`p-2 border-bottom ${isSelected ? 'text-muted' : ''} ${index === activeIndex ? 'bg-light' : ''}`}
                                     style={{ cursor: isSelected ? 'default' : 'pointer' }}
                                     onClick={() => !isSelected && handleSelect(item)}
-                                    onMouseEnter={(e) => !isSelected && (e.currentTarget.style.backgroundColor = '#f8f9fa')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                    onMouseEnter={() => !isSelected && setActiveIndex(index)}
+                                    onMouseLeave={() => setActiveIndex(-1)}
                                 >
                                     {formatOption(item)}
                                     {isSelected && <small className="ms-2">(já selecionado)</small>}
@@ -499,7 +555,10 @@ export class FormHelper {
                     onChange={e => { this.set(name, e.target.value); validator && validator(e.target.value, name) }}
                     placeholder=""
                     maxLength={maxLength}
-                    key={name} />
+                    key={name}
+                    isInvalid={!!this.formState.fieldErrors?.[name]}
+                    aria-describedby={this.formState.fieldErrors?.[name] ? `${name}-erro` : undefined}
+                />
                 <FieldError formState={this.formState} name={name} />
                 {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
             </Form.Group>
@@ -517,6 +576,8 @@ export class FormHelper {
                     checked={!!this.get(name)}
                     onChange={e => this.set(name, e.target.checked)}
                     className='mt-2'
+                    isInvalid={!!this.formState.fieldErrors?.[name]}
+                    aria-describedby={this.formState.fieldErrors?.[name] ? `${name}-erro` : undefined}
                 />
                 <FieldError formState={this.formState} name={name} />
                 {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
@@ -528,7 +589,10 @@ export class FormHelper {
         return (
             <Form.Group className={this.colClass(width)} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
-                <ReactTextareaAutosize className="form-control" name={name} value={this.get(name)} onChange={e => this.set(name, e.target.value)} placeholder="" key={name} />
+                <ReactTextareaAutosize className="form-control" name={name} id={name} value={this.get(name)} onChange={e => this.set(name, e.target.value)} placeholder="" key={name}
+                    aria-invalid={!!this.formState.fieldErrors?.[name]}
+                    aria-describedby={this.formState.fieldErrors?.[name] ? `${name}-erro` : undefined}
+                />
                 <FieldError formState={this.formState} name={name} />
                 {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
             </Form.Group>
@@ -541,7 +605,9 @@ export class FormHelper {
         return (
             <Form.Group className={this.colClass(width)} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
-                <Editor markdown={this.get(name) || ''} onChange={e => this.set(name, e)} key={name} />
+                <div role="group" aria-label={label}>
+                    <Editor markdown={this.get(name) || ''} onChange={e => this.set(name, e)} key={name} />
+                </div>
                 <FieldError formState={this.formState} name={name} />
                 {explanation && <Form.Text className="text-body-tertiary ms-1">{explanation}</Form.Text>}
             </Form.Group>
@@ -552,7 +618,10 @@ export class FormHelper {
         return (
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
-                <Form.Select name={name} value={this.get(name) || ''} onChange={e => this.set(name, e.target.value)}>
+                <Form.Select name={name} value={this.get(name) || ''} onChange={e => this.set(name, e.target.value)}
+                    isInvalid={!!this.formState.fieldErrors?.[name]}
+                    aria-describedby={this.formState.fieldErrors?.[name] ? `${name}-erro` : undefined}
+                >
                     {options.map(c => (<option value={c.id} key={c.id} disabled={c.disabled === true} hidden={c.hidden === true}>{c.name}</option>))}
                 </Form.Select>
                 <FieldError formState={this.formState} name={name} />
@@ -596,7 +665,7 @@ export class FormHelper {
             <Form.Group className={`${this.colClass(width)} ${visible === false ? 'd-none' : ''}`} controlId={name}>
                 <Form.Label className={this.compact ? 'mb-0' : ''}>{label}</Form.Label>
                 <Dropdown>
-                    <Dropdown.Toggle as='span' variant="light" id="dropdown-basic" className='form-control'>
+                    <Dropdown.Toggle variant="light" id={name} className='form-control text-start'>
                         {getDisplayText()}
                     </Dropdown.Toggle>
 
@@ -606,7 +675,7 @@ export class FormHelper {
                                 className="custom-checkbox ml-3"
                                 key={option.id}
                                 type="checkbox"
-                                id={`option_${option.id}`}
+                                id={`option_${name}_${option.id}`}
                                 label={option.name}
                                 checked=
                                 {(this.get(name) || []).includes(option.id)}
@@ -671,14 +740,14 @@ export class FormHelper {
 
     public CheckBoxes = ({ label, labelsAndNames, onClick, width }: { label: string, labelsAndNames: { label: string, name: string }[], onClick?: (label: string, name: string, checked: boolean) => void, width?: number | string }) => {
         return this.setData ? (
-            <div className={this.colClass(width)}>
-                <Form.Label>{label}</Form.Label>
+            <fieldset className={this.colClass(width)}>
+                <legend className="form-label" style={{ fontSize: 'inherit' }}>{label}</legend>
                 {labelsAndNames.filter(c => c != null).map((c, idx) => {
                     return (
                         <Form.Check key={c.name} type="checkbox" label={c.label} checked={this.get(c.name)} onChange={e => { this.set(c.name, e.target.checked); if (onClick) onClick(c.label, c.name, e.target.checked) }} />
                     )
                 })}
-            </div>
+            </fieldset>
         ) : (
             <div className={this.colClass(width)}>
                 <Form.Label>{label}</Form.Label>
@@ -687,7 +756,7 @@ export class FormHelper {
                         {labelsAndNames.filter(c => c != null).map((c, idx) => {
                             return (
                                 <tr key={c.name}>
-                                    <td>{c.label}</td>
+                                    <th scope="row">{c.label}</th>
                                     <td><strong>{this.get(c.name) ? 'Sim' : 'Não'}</strong></td>
                                 </tr>
                             )

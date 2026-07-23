@@ -15,20 +15,20 @@ export const Subtitulo = ({ dadosDoProcesso }: { dadosDoProcesso: DadosDoProcess
 
     return (<>
         {nomeDaClasse
-            ? <div className="text-center" aria-hidden="true">{nomeDaClasse}</div>
+            ? <div className="text-center">{nomeDaClasse}</div>
             : ''}
         {poloAtivo && poloPassivo
-            ? <div className="text-center" aria-hidden="true">{`${maiusculasEMinusculasOuSigla(poloAtivo)}  x  ${maiusculasEMinusculasOuSigla(poloPassivo)}`}</div>
+            ? <div className="text-center">{`${maiusculasEMinusculasOuSigla(poloAtivo)}  x  ${maiusculasEMinusculasOuSigla(poloPassivo)}`}</div>
             : ''}
         {ajuizamento
-            ? <div className="text-center" aria-hidden="true">{`Ajuizado em ${formatBrazilianDate(ajuizamento)}`}</div>
+            ? <div className="text-center">{`Ajuizado em ${formatBrazilianDate(ajuizamento)}`}</div>
             : ''}
     </>
     )
 }
 
 export const SubtituloLoading = () => {
-    return <div className="placeholder-glow">
+    return <div className="placeholder-glow" aria-hidden="true">
         <div className="row justify-content-center">
             <div className="col-4"><div className="placeholder w-100"></div></div>
         </div>

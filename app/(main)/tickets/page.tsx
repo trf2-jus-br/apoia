@@ -1,8 +1,8 @@
-'use server'
-
 import { assertCurrentUser } from '@/lib/user'
 import { TicketDao, UserDao } from '@/lib/db/dao'
 import TicketsClient from './tickets-client'
+
+export const metadata = { title: 'Meus Chamados' }
 
 export default async function TicketsPage() {
     const user = await assertCurrentUser()

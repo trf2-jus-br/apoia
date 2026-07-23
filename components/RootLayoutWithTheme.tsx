@@ -47,8 +47,9 @@ export default async function RootLayoutWithTheme({
   return (
     <html lang="pt-BR" data-theme={theme}>
       <body suppressHydrationWarning={true} className={sidekick ? 'bg-chat' : theme === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'}>
+        <a href="#conteudo-principal" className="visually-hidden-focusable">Pular para o conteúdo principal</a>
         <ImportBsJS />
-        {!sidekick && <Navbar
+        {!sidekick && <header><Navbar
           bg={theme}
           variant={theme === 'dark' ? 'dark' : 'light'}
           data-bs-theme={theme}
@@ -58,22 +59,22 @@ export default async function RootLayoutWithTheme({
           <Container fluid={false}>
             <div className="navbar-brand pt-0 pb-0" style={{ overflow: "hidden" }}>
               <ModeLink href="/" className="ms-0 me-0" style={{ verticalAlign: "middle" }}>
-                <Image src="/apoia-logo-vertical-transp.png" width={48 * 1102 / 478} height={48} alt="Apoia Logo" className="me-0" style={{}} />
+                <Image src="/apoia-logo-vertical-transp.png" width={48 * 1102 / 478} height={48} alt="Apoia — página inicial" className="me-0" style={{}} />
               </ModeLink>
             </div>
-            <button className="navbar-toggler d-print-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <button className="navbar-toggler d-print-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Alternar navegação">
               <span className="navbar-toggler-icon"></span>
             </button>
             <Suspense fallback={null}><UserMenu /></Suspense>
           </Container>
-        </Navbar>}
+        </Navbar></header>}
         <Suspense fallback={null}><NonCorporateUserWarning /></Suspense>
         <Suspense fallback={null}><PrefsMigrator /></Suspense>
-        {serviceMonitor.isDown() && <div className="alert alert-warning mb-0"><div className="p-2 mb-0 container"><div className="row"><div className="col col-auto"><strong>Atenção:</strong> A Apoia está enfrentando dificuldades para acessar os serviços do Codex/DataLake. Por favor, tente novamente mais tarde.</div></div></div></div>}
+        {serviceMonitor.isDown() && <div className="alert alert-warning mb-0" role="alert"><div className="p-2 mb-0 container"><div className="row"><div className="col col-auto"><strong>Atenção:</strong> A Apoia está enfrentando dificuldades para acessar os serviços do Codex/DataLake. Por favor, tente novamente mais tarde.</div></div></div></div>}
         <GlobalProviders appValue={appValue}>
-          <div>
+          <main id="conteudo-principal">
             {children}
-          </div>
+          </main>
         </GlobalProviders>
         {envString('GOOGLE_ANALYTICS_ID') && <GoogleAnalytics gaId={envString('GOOGLE_ANALYTICS_ID')} />}
       </body>

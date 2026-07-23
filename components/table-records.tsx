@@ -121,11 +121,12 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
     return (
         <div>
             <table className={tableClassName || 'table table-sm table-striped'}>
+                <caption className="visually-hidden">Registros</caption>
                 <thead className={theadClassName || ''}>
                     {thead ? thead() : table.getHeaderGroups().map(headerGroup => (
                         <tr key={headerGroup.id}>
                             {headerGroup.headers.map(header => (
-                                <th key={header.id} className={(header.column.columnDef as any)?.className} style={(header.column.columnDef as any)?.style}>
+                                <th key={header.id} scope="col" className={(header.column.columnDef as any)?.className} style={(header.column.columnDef as any)?.style}>
                                     {header.isPlaceholder
                                         ? null
                                         : flexRender(
@@ -163,7 +164,7 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                 }
                 {linkToAdd &&
                     <div className="col col-auto ms-auto mt-3 mb-0">
-                        <Link href={`${pathname}/${linkToAdd}`} className="btn btn-light bt float-end d-print-none"><FontAwesomeIcon icon={faAdd} /></Link>
+                        <Link href={`${pathname}/${linkToAdd}`} className="btn btn-light bt float-end d-print-none" aria-label="Adicionar novo registro"><FontAwesomeIcon icon={faAdd} /></Link>
                     </div>
                 }
                 {options?.apenasSelecionadas &&
@@ -208,6 +209,7 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                             value={filter}
                             onChange={e => { setFilter(String(e.target.value)) }}
                             placeholder="Filtrar... (Alt+F)"
+                            aria-label="Filtrar registros"
                             className="form-control" style={{ width: '8em' }}
                         />
                         <datalist id="filter-options">
@@ -221,6 +223,7 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
                         <Form.Select
                             value={currentPageSize}
                             onChange={e => setCurrentPageSize(Number(e.target.value))}
+                            aria-label="Itens por página"
                             className="d-print-none"
                         >
                             {pageSizes.map(size => (

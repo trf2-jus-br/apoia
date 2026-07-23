@@ -41,7 +41,7 @@ export default function AskProcessNumberModal(props: ModalProps<{ processNumber?
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form.Group>
+        <Form.Group controlId="ask-process-number">
           <Form.Label>Por favor, informe o número do processo:</Form.Label>
           <Form.Control
             ref={inputRef}
@@ -55,10 +55,11 @@ export default function AskProcessNumberModal(props: ModalProps<{ processNumber?
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-        <Button 
-          variant="primary" 
-          onClick={() => onSubmit({ processNumber })} 
+        <Button
+          variant="primary"
+          onClick={() => onSubmit({ processNumber })}
           disabled={!context.hasAttachedFiles && !processNumber?.trim()}
+          title={!context.hasAttachedFiles && !processNumber?.trim() ? 'Informe o número do processo (ou anexe arquivos)' : undefined}
         >
           Confirmar
         </Button>

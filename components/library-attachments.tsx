@@ -216,7 +216,7 @@ export default function LibraryAttachments({ libraryId }: { libraryId: number })
     <div className="library-attachments">
       <h5 className="mb-3">Anexos</h5>
 
-      <ToastContainer position="bottom-end" className="p-3" style={{ position: 'fixed', zIndex: 9999 }}>
+      <ToastContainer position="bottom-end" className="p-3" style={{ position: 'fixed', zIndex: 9999 }} role="status" aria-live="polite">
         {toasts.map(toast => (
           <Toast
             key={toast.id}
@@ -240,6 +240,15 @@ export default function LibraryAttachments({ libraryId }: { libraryId: number })
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        role="button"
+        tabIndex={0}
+        aria-label="Enviar PDFs: arraste arquivos ou pressione Enter para selecionar"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            if (!uploading) document.getElementById('attachment-file-input')?.click()
+          }
+        }}
         style={{
           border: '3px dashed #777',
           cursor: uploading ? 'wait' : 'pointer',
@@ -289,12 +298,13 @@ export default function LibraryAttachments({ libraryId }: { libraryId: number })
       ) : (
         <div className="table-responsive">
           <table className="table table-hover">
+            <caption className="visually-hidden">Anexos</caption>
             <thead>
               <tr>
-                <th style={{ width: '40%' }}>Nome do Arquivo</th>
-                <th style={{ width: '15%' }} className="text-end">Tamanho</th>
-                <th style={{ width: '15%' }} className="text-end">Palavras</th>
-                <th style={{ width: '15%' }} className="text-center">Ações</th>
+                <th scope="col" style={{ width: '40%' }}>Nome do Arquivo</th>
+                <th scope="col" style={{ width: '15%' }} className="text-end">Tamanho</th>
+                <th scope="col" style={{ width: '15%' }} className="text-end">Palavras</th>
+                <th scope="col" style={{ width: '15%' }} className="text-center">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -302,13 +312,13 @@ export default function LibraryAttachments({ libraryId }: { libraryId: number })
                 <tr key={att.id}>
                   <td>
                     <FontAwesomeIcon icon={faFilePdf} className="me-2 text-danger" />
-                    <span
-                      className="text-primary"
-                      style={{ cursor: 'pointer' }}
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 text-primary"
                       onClick={() => handleDownload(att.id, att.filename)}
                     >
                       {att.filename}
-                    </span>
+                    </button>
                   </td>
                   <td className="text-end">{formatFileSize(att.file_size)}</td>
                   <td className="text-end">{formatNumber(att.word_count)}</td>
@@ -319,6 +329,7 @@ export default function LibraryAttachments({ libraryId }: { libraryId: number })
                       className="me-2"
                       onClick={() => handleDownload(att.id, att.filename)}
                       title="Baixar"
+                      aria-label={`Baixar ${att.filename}`}
                     >
                       <FontAwesomeIcon icon={faDownload} />
                     </Button>
@@ -327,6 +338,7 @@ export default function LibraryAttachments({ libraryId }: { libraryId: number })
                       size="sm"
                       onClick={() => handleDelete(att.id, att.filename)}
                       title="Excluir"
+                      aria-label={`Excluir ${att.filename}`}
                     >
                       <FontAwesomeIcon icon={faTrash} />
                     </Button>

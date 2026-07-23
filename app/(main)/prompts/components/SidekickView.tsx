@@ -118,7 +118,7 @@ export function SidekickView({
 
     return (
         <Container className="mt-0 mb-3" fluid={true}>
-            <div className="float-end"><a href={urlNovaAba} target="_blank" rel="noopener noreferrer" title="Abrir em nova aba"><FontAwesomeIcon icon={faExternalLink} /></a></div>
+            <div className="float-end"><a href={urlNovaAba} target="_blank" rel="noopener noreferrer" title="Abrir em nova aba" aria-label="Abrir em nova aba"><FontAwesomeIcon icon={faExternalLink} /></a></div>
             <BreadCrumbs
                 resetToHome={resetToHome}
                 resetProcess={resetProcess}

@@ -24,6 +24,7 @@ export async function generateMetadata(
     parent: ResolvingMetadata
 ): Promise<Metadata> {
     const metadata: Metadata = {
+        title: { default: 'Apoia', template: '%s | Apoia' },
         openGraph: {
             title: 'Apoia',
             description: 'Apoia',

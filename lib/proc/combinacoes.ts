@@ -510,6 +510,12 @@ export const padroesTurmaRecursal = [
     padraoTurmaRecursalAberta,
 ]
 
+export const padraoCalculoDePrescricao = [
+    ANY({ capture: [...pecasRelevantes1aInstancia] }),
+    EXACT(T.PETICAO_INICIAL),
+    ANY({ capture: [T.DESPACHO_DECISAO, T.CERTIDAO, T.SENTENCA, T.ACORDAO] }),
+]
+
 export const padraoDespachoInicial = [
     ANY({ capture: [...pecasRelevantes1aInstancia] }),
     EXACT(T.PETICAO_INICIAL),

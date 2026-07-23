@@ -7,7 +7,7 @@ export default function ProcessTitle(params: { id: string | number, onRemove?: (
     const onRemove = params?.onRemove
 
     return (
-        <div className="text-center" aria-hidden="true">
+        <div className="text-center">
             <span className="h1">
                 Processo {process.env.NAVIGATE_TO_PROCESS_URL ? (<a href={process.env.NAVIGATE_TO_PROCESS_URL.replace('{numero}', id)} style={{ color: 'rgb(33, 37, 41)', textDecoration: 'none' }}>{id}</a>) : id}
             </span>

@@ -56,21 +56,21 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
         Prompts: {
             columns: [
                 {
-                    header: ' ', accessorKey: '', style: { textAlign: "center", width: "1%" }, enableSorting: false, cell: data => {
+                    id: 'acoes', header: <span className="visually-hidden">Ações</span>, accessorKey: '', style: { textAlign: "center", width: "1%" }, enableSorting: false, cell: data => {
                         const isFavorite = data.row.original.is_favorite;
 
                         return isFavorite
-                            ? <span role="button" className="text-primary" onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, uuid: data.row.original.uuid, action: 'reset' })}>
+                            ? <button type="button" className="btn btn-link p-0 text-primary" aria-label={data.row.original.is_mine ? "Remover dos meus prompts" : "Remover dos favoritos"} onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, uuid: data.row.original.uuid, action: 'reset' })}>
                                 <FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUserSolid : faHeartSolid} />
-                            </span>
-                            : <span role="button" className="text-secondary opacity-50" onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, uuid: data.row.original.uuid, action: 'set' })}>
+                            </button>
+                            : <button type="button" className="btn btn-link p-0 text-secondary opacity-50" aria-label={data.row.original.is_mine ? "Adicionar aos meus prompts" : "Adicionar aos favoritos"} onClick={() => onClick('favoritar', { base_id: data.row.original.base_id, uuid: data.row.original.uuid, action: 'set' })}>
                                 <FontAwesomeIcon className="me-1" icon={data.row.original.is_mine ? faUser : faHeart} />
-                            </span>
+                            </button>
                     }
                 },
                 {
                     header: 'Prompt', accessorKey: 'name', enableSorting: true, cell: data => <>
-                        <span className="text-primary" style={{ cursor: 'pointer' }} onClick={() => onClick('executar', data.row.original)} title={wrapTitle(data.row.original?.content?.description)}><u>{data.row.original.name}</u></span>
+                        <button type="button" className="btn btn-link p-0 text-primary" onClick={() => onClick('executar', data.row.original)} title={wrapTitle(data.row.original?.content?.description)}><u>{data.row.original.name}</u></button>
                         <Dropdown style={{ display: 'inline', cursor: 'pointer' }}>
                             <Dropdown.Toggle as="a" className="m-1" id={data.row.original.name} />
                             <Dropdown.Menu>
@@ -96,7 +96,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
 
                 // Interactive rating: mostra número ou estrela, clique abre widget de avaliação
                 {
-                    header: <span title="Avaliação"><FontAwesomeIcon icon={faStar} /></span>,
+                    id: 'rating', header: <span title="Avaliação"><FontAwesomeIcon icon={faStar} aria-hidden="true" /><span className="visually-hidden">Avaliação</span></span>,
                     accessorKey: 'rating.avg_laplace',
                     enableSorting: true,
                     style: { textAlign: "center" },
@@ -111,7 +111,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                     )
                 },
 
-                { header: <span title="Favoritos"><FontAwesomeIcon icon={faHeart} /></span>, accessorKey: 'favorite_count', enableSorting: true, style: { textAlign: "center" } },
+                { id: 'favoritos', header: <span title="Favoritos"><FontAwesomeIcon icon={faHeart} aria-hidden="true" /><span className="visually-hidden">Favoritos</span></span>, accessorKey: 'favorite_count', enableSorting: true, style: { textAlign: "center" } },
             ],
             tableClassName: 'table table-striped table-border-sides mb-0'
         },
@@ -256,9 +256,9 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 { header: 'Erro', accessorKey: 'error_msg', enableSorting: true, style: { textAlign: "left", maxWidth: "24em" } },
                 {
                     header: 'Ação', accessorKey: 'none', enableSorting: true, style: { textAlign: "right" }, cell: data => (<>
-                        {data.row.original.status === 'PENDING' && <span className="text-primary" onClick={() => onClick('play', data.row.original)}><FontAwesomeIcon icon={faPlay} className="me-2" /></span>}
-                        {(data.row.original.status === 'READY' || data.row.original.status === 'ERROR') && <span className="text-primary" onClick={() => onClick('retry', data.row.original)}><FontAwesomeIcon icon={faRotateRight} className="me-2" /></span>}
-                        {data.row.original.status === 'RUNNING' && <span className="text-primary" onClick={() => onClick('stop', data.row.original)}><FontAwesomeIcon icon={faStop} className="me-2" /></span>}
+                        {data.row.original.status === 'PENDING' && <button type="button" className="btn btn-link p-0 text-primary" aria-label="Executar" onClick={() => onClick('play', data.row.original)}><FontAwesomeIcon icon={faPlay} className="me-2" /></button>}
+                        {(data.row.original.status === 'READY' || data.row.original.status === 'ERROR') && <button type="button" className="btn btn-link p-0 text-primary" aria-label="Tentar novamente" onClick={() => onClick('retry', data.row.original)}><FontAwesomeIcon icon={faRotateRight} className="me-2" /></button>}
+                        {data.row.original.status === 'RUNNING' && <button type="button" className="btn btn-link p-0 text-primary" aria-label="Parar" onClick={() => onClick('stop', data.row.original)}><FontAwesomeIcon icon={faStop} className="me-2" /></button>}
                     </>)
                 }
             ],

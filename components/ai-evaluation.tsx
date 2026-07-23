@@ -15,7 +15,7 @@ export default function AiEvaluation(params) {
 
     const handleSave = () => { params.onClose(evaluationId, descr); setEvaluationId(''); setDescr('') }
     const handleClose = () => { params.onClose(); setEvaluationId(''); setDescr('') }
-    const handleSubmit = (event) => { }
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); if (evaluationId) handleSave() }
 
     return (
         <Modal show={params.show} onHide={handleClose}>
@@ -29,14 +29,14 @@ export default function AiEvaluation(params) {
                         {Evaluation.map(e => (
                             <option key={e.id} value={e.id}>{e.descr}</option>))}
                     </Form.Select>
-                    <Form.Control placeholder='Detalhamento (Opcional)' className='mt-2 w-100' type='input' value={descr} onChange={e => setDescr(e.target.value)}></Form.Control>
+                    <Form.Control placeholder='Detalhamento (Opcional)' aria-label="Detalhamento (opcional)" className='mt-2 w-100' type='input' value={descr} onChange={e => setDescr(e.target.value)}></Form.Control>
                 </form>
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={handleClose}>
                     Fechar
                 </Button>
-                <Button variant="primary" onClick={handleSave} disabled={processing || !evaluationId}>
+                <Button variant="primary" onClick={handleSave} disabled={processing || !evaluationId} title={(!evaluationId && !processing) ? 'Selecione um motivo principal' : undefined}>
                     Salvar
                 </Button>
             </Modal.Footer>

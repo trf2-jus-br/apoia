@@ -10,8 +10,10 @@ interface ChartProps {
 }
 
 export function MiniCourtChart({ data }: ChartProps) {
+    const total = data.reduce((acc, d) => acc + (d.executions || 0), 0)
+    const ariaLabel = `Gráfico de ranking de tribunais por volume de processos. Total: ${total.toLocaleString('pt-BR')}.`
     return (
-        <div style={{ height: '80px', width: '100%' }}>
+        <div style={{ height: '80px', width: '100%' }} role="img" aria-label={ariaLabel}>
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
                     <XAxis 

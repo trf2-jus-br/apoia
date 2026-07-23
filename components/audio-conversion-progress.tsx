@@ -73,7 +73,7 @@ export default function AudioConversionProgress({
                     <strong>Convertendo para MP3 otimizado (16kHz, mono, 64kbps)</strong>
                 </div>
                 <div className="mb-2">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
+                    <div className="d-flex justify-content-between align-items-center mb-1" role="status" aria-live="polite">
                         <small className="text-muted">{getStageLabel()}</small>
                         <small className="text-muted">{Math.round(progress.progress)}%</small>
                     </div>
@@ -113,9 +113,9 @@ export default function AudioConversionProgress({
                         </div>
                     </Col>
                     <Col xs="auto" className="ms-auto h-print">
-                        <span className="link-primary" onClick={handleDownload} style={{ cursor: 'pointer' }}>
+                        <button type="button" className="btn btn-link p-0 link-primary" onClick={handleDownload} aria-label="Baixar MP3">
                             <FontAwesomeIcon icon={faDownload} />
-                        </span>
+                        </button>
                     </Col>
                 </Row>
             )}

@@ -305,7 +305,7 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
     }, [Frm.data])
 
     if (pedidosAnalisados) {
-        if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary" /></div>
+        if (!resolvedDef) return <div className="text-center my-3"><Spinner variant="secondary"><span className="visually-hidden">Carregando...</span></Spinner></div>
         const frmData = Frm.get('pedidos')
         const aPedidos = [...frmData.pedidos].filter(p => p.dispositivo && p.dispositivo !== 'DESCONSIDERAR')
         const data = { ...request.data }
@@ -321,6 +321,7 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                     ) : <ol>
                         {aPedidos.map((pedido, i) =>
                             <li className={`mb-1 ${!pedido.dispositivo ? 'opacity-25' : ''}`} key={i}>
+                                {!pedido.dispositivo && <span className="visually-hidden">(desconsiderado)</span>}
                                 <span>{pedido.texto}</span>
                                 <span> <b>{tiposDeDispositivo.find(o => o.id === pedido.dispositivo)?.name}</b></span>
                                 {Array.isArray(pedido.tema) && pedido.tema.length > 0 && <strong> - {pedido.tema.map(formatarTemaSelecionado).join(', ')}</strong>}
@@ -328,6 +329,7 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                                 <ul>
                                     {pedido.argumentos.map((argumento, j) =>
                                         <li key={j} className={`${!argumento.dispositivo ? 'opacity-25' : ''}`}>
+                                            {!argumento.dispositivo && <span className="visually-hidden">(desconsiderado)</span>}
                                             <span>{argumento.texto}</span>
                                             <span> <b>{tiposDeDispositivo.find(o => o.id === argumento.dispositivo)?.name}</b></span>
                                             {Array.isArray(argumento.tema) && argumento.tema.length > 0 && <strong> - {argumento.tema.map(formatarTemaSelecionado).join(', ')}</strong>}
@@ -475,7 +477,7 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                 </div>
             </div>
         </div>
-        <span className="text-muted text-small">{disabledReason}</span>
+        <span id="gerar-decisao-help" className="text-muted text-small">{disabledReason}</span>
         {Frm.get('pedidos')?.pedidos.length > 0 &&
             <div className="row h-print mb-3 mt-3">
                 <div className="col">
@@ -484,8 +486,10 @@ const PedidosViabilidadeRecurso = ({ pedidos, request, nextRequest, Frm, dossier
                         variant="primary"
                         onClick={() => Frm.set('pedidosAnalisados', true)}
                         disabled={!!disabledReason}
+                        accessKey="g"
+                        aria-describedby="gerar-decisao-help"
                     >
-                        Gerar Decisão
+                        <u>G</u>erar Decisão
                     </Button>
                 </div>
             </div>

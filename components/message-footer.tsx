@@ -71,5 +71,5 @@ export default function MessageFooter({ message }: { message: UIMessage }) {
     const tokenPart = parts.length ? `Tokens: ${parts.join(' | ')}` : 'Tokens: —'
     const modelPart = modelUsed ? `\nModelo: ${modelUsed}` : ''
     const footerHint = `${tokenPart}\nCusto em Dólares: ${dollarValue?.toFixed(5)} | Cotação do Dólar: ${dollarRate == null ? '—' : dollarRate?.toFixed(2)}${modelPart}`
-    return <p className="mt-0 mb-0 h-print" style={{ fontSize: '0.8rem', opacity: 0.3 }} title={footerHint}>{dollarRate == null ? `$${dollarValue?.toFixed(2)}` : `R$${(dollarValue * dollarRate)?.toFixed(2)?.replace('.', ',')}`}</p>
+    return <p className="mt-0 mb-0 h-print" style={{ fontSize: '0.8rem', opacity: 0.3 }} title={footerHint} aria-label={footerHint}>{dollarRate == null ? `$${dollarValue?.toFixed(2)}` : `R$${(dollarValue * dollarRate)?.toFixed(2)?.replace('.', ',')}`}</p>
 }

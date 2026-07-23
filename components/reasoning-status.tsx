@@ -13,8 +13,8 @@ export default function Reasoning({ currentReasoning, showReasoning, setShowReas
                         <span dangerouslySetInnerHTML={{ __html: currentReasoning.title }} />
                         {currentReasoning?.content
                             ? showReasoning
-                                ? <FontAwesomeIcon icon={faChevronUp} className="ms-1" style={{ cursor: 'pointer' }} onClick={() => setShowReasoning(!showReasoning)} />
-                                : <FontAwesomeIcon icon={faChevronDown} className="ms-1" style={{ cursor: 'pointer' }} onClick={() => setShowReasoning(!showReasoning)} />
+                                ? <button type="button" className="btn btn-link p-0 text-secondary ms-1" aria-expanded={showReasoning} aria-label="Ocultar raciocínio" onClick={() => setShowReasoning(!showReasoning)} style={{marginTop: "-.35em"}}><FontAwesomeIcon icon={faChevronUp} /></button>
+                                : <button type="button" className="btn btn-link p-0 text-secondary ms-1" aria-expanded={showReasoning} aria-label="Mostrar raciocínio" onClick={() => setShowReasoning(!showReasoning)} style={{marginTop: "-.35em"}}><FontAwesomeIcon icon={faChevronDown} /></button>
                             : null
                         }
                         {showReasoning && <div className="mt-2" dangerouslySetInnerHTML={{ __html: currentReasoning.content }} />}

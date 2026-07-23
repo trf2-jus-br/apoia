@@ -273,7 +273,7 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, onChange, readOnly, show
             <button
                 onClick={onClick}
                 title="Copiar com highlights"
-                aria-label="Copiar para Wordcom highlights"
+                aria-label="Copiar para Word com highlights"
                 style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -345,6 +345,7 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, onChange, readOnly, show
                     accept="application/pdf"
                     onChange={handleFileSelect}
                     style={{ display: 'none' }}
+                    aria-label="Selecionar arquivo PDF"
                 />
             )}
             <MDXEditor
@@ -383,14 +384,15 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, onChange, readOnly, show
                     }),
                 ]}
             />
-            {showPdfUpload && isProcessingPdf && (
-                <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 1000 }}>
-                    <div className="d-flex align-items-center bg-white border rounded px-3 py-2 shadow-sm">
-                        <Spinner animation="border" size="sm" className="me-2" />
-                        <small>Processando PDF...</small>
-                    </div>
-                </div>
-            )}
+    {showPdfUpload && isProcessingPdf && (
+        <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 1000 }} role="status" aria-live="polite">
+            <div className="d-flex align-items-center bg-white border rounded px-3 py-2 shadow-sm">
+                <Spinner animation="border" size="sm" className="me-2" aria-hidden="true" />
+                <small aria-hidden="true">Processando PDF...</small>
+                <span className="visually-hidden">Processando PDF, aguarde...</span>
+            </div>
+        </div>
+    )}
             {showPdfUpload && (
                 <ToastContainer className="p-3" position="top-end" style={{ zIndex: 1050 }}>
                     <Toast

@@ -47,11 +47,12 @@ function ChoosePiecesForm({ allPieces, selectedPieces, onSave, onClose, dossierN
                         )}
                         <TableRecords records={[...allPieces].reverse()} spec="ChoosePieces" options={{ dossierNumber, apenasSelecionadas: true }} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged} modalActions={{ onClick: () => setShowTreeModal(true) }}>
                             <div className="col col-auto mt-3 mb-0">
+                                <span id="escolher-pecas-help" className="visually-hidden">Selecione ao menos uma peça para prosseguir.</span>
                                 {alteredPieces
-                                    ? <Button onClick={() => onSave(alteredPieces ? selectedIds : [])} variant="primary" disabled={selectedIds.length === 0} accessKey="s"><FontAwesomeIcon icon={faRotateRight} className="me-2" /><u>S</u>alvar Alterações e Refazer</Button>
+                                    ? <Button onClick={() => onSave(alteredPieces ? selectedIds : [])} variant="primary" disabled={selectedIds.length === 0} accessKey="s" aria-describedby="escolher-pecas-help"><FontAwesomeIcon icon={faRotateRight} className="me-2" /><u>S</u>alvar Alterações e Refazer</Button>
                                     : readyToStartAI
                                         ? <Button onClick={() => onClose()} variant="secondary"><FontAwesomeIcon icon={faClose} className="me-1" />Fechar</Button>
-                                        : <Button onClick={() => onClose()} variant="primary" disabled={selectedIds.length === 0} accessKey="s"><FontAwesomeIcon icon={faPlay} className="me-1" />Pro<u>s</u>seguir</Button>
+                                        : <Button onClick={() => onClose()} variant="primary" disabled={selectedIds.length === 0} accessKey="s" aria-describedby="escolher-pecas-help"><FontAwesomeIcon icon={faPlay} className="me-1" />Pro<u>s</u>seguir</Button>
                                 }
                             </div></TableRecords>
                     </div>
@@ -163,7 +164,7 @@ export default function ChoosePieces({ allPieces, selectedPieces, onSave, onStar
         } else {
             s += l[0] + ' + ' + (l.length - 1)
         }
-        return <p className="text-body-tertiary text-center h-print">{s} - <span onClick={() => { onStartEditing() }} className="text-primary" style={{ cursor: 'pointer' }}><FontAwesomeIcon icon={faEdit} /> Alterar</span></p>
+        return <p className="text-body-tertiary text-center h-print">{s} - <button type="button" className="btn btn-link p-0" onClick={() => { onStartEditing() }} style={{marginTop: "-.35em"}}><span className="text-primary"><FontAwesomeIcon icon={faEdit} /> Alterar</span></button></p>
     }
     return <ChoosePiecesForm onSave={onSaveLocal} onClose={onClose} allPieces={allPieces} selectedPieces={selectedPieces} dossierNumber={dossierNumber} readyToStartAI={readyToStartAI} mode={mode} />
 }

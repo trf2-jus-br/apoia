@@ -21,7 +21,7 @@ import MessageFooter from '../message-footer';
 import { useExecutionId, usePromptContext, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext';
 import { InstanceKeyType } from '@/lib/proc/process-types';
 import { useModeUrl } from '@/lib/utils/use-mode-url';
-import { playClickSound } from '@/lib/sound';
+import { playErrorSound, playTaskEndSound, playTaskStartSound } from '@/lib/sound';
 
 const converter = new showdown.Converter({ tables: true })
 
@@ -33,7 +33,7 @@ function preprocessar(mensagem: UIMessage, role: string) {
         return acc
     }, '')
     if (!texto) return ''
-    return converter.makeHtml(`<span class="d-none"><b>${role === 'user' ? 'Usuário' : 'Assistente'}</b>: </span>${texto}`)
+    return converter.makeHtml(`<span class="visually-hidden"><b>${role === 'user' ? 'Usuário' : 'Assistente'}</b>: </span>${texto}`)
 }
 
 function hasText(mensagem: UIMessage) {
@@ -102,10 +102,10 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     }
 
     const { messages, setMessages, sendMessage, error, clearError } =
-        useChat({ 
+        useChat({
             transport: new DefaultChatTransport({ api: `/api/v1/chat?withTools=${params.withTools ? 'true' : 'false'}${params.definition?.dbId ? `&promptId=${params.definition.dbId}` : ''}`, body: { execution_id: executionId, aggregator_prompt_id: aggregatorPromptId, dossierCode: processNumber || undefined } }),
             // messages: fetchedMessages,
-            onFinish: () => playClickSound()
+            onFinish: () => playTaskEndSound()
         })
 
     // Hook de analytics encapsula instrumentação (depois de obter messages & error)
@@ -116,6 +116,10 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         messages,
         error,
     })
+
+    // Feedback sonoro de erro: toca sempre que surge um erro (servidor) ou aviso (cliente).
+    useEffect(() => { if (error) playErrorSound() }, [error])
+    useEffect(() => { if (clientError) playErrorSound() }, [clientError])
 
     // Memoized dataKey to avoid deep comparison issues in useEffect
     const dataKey = useMemo(() => JSON.stringify(params.data ?? {}), [params.data])
@@ -139,6 +143,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
             if (uiMsgs.length && uiMsgs[uiMsgs.length - 1].role === 'user') {
                 sendMessage()
+                playTaskStartSound()
             }
 
         }
@@ -241,6 +246,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
             if (clientError) return
             const msg = createUserMessage(input, fileParts)
             sendMessage(msg)
+            playTaskStartSound()
         })
         setInput('')
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -306,6 +312,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
             if (clientError) return
             const msg = createUserMessage(text, fileParts, { suggestion: true })
             sendMessage(msg)
+            playTaskStartSound()
             // Clear files after sending
             setFiles(undefined)
             if (fileInputRef.current) fileInputRef.current.value = ''
@@ -350,7 +357,9 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
             m.role === 'user' ?
                 <div className="row justify-content-end ms-5 g-2 chat-user-container" key={m.id}>
                     <div className={`col col-auto mb-0 icon-container`}>
-                        <FontAwesomeIcon onClick={() => handleEditMessage(idx + (initialMessages?.length || 0))} icon={faEdit} className="text-white align-bottom" />
+                        <button type="button" className="btn btn-sm btn-link p-0" aria-label="Editar mensagem" onClick={() => handleEditMessage(idx + (initialMessages?.length || 0))}>
+                            <FontAwesomeIcon icon={faEdit} className="text-white align-bottom" />
+                        </button>
                     </div>
                     <div className={`col col-auto mb-0`}>
                         <div className={`text-wrap mb-2 rounded chat-content chat-user${params.sidekick ? '-sidekick' : ''}`} dangerouslySetInnerHTML={{ __html: preprocessar(m, m.role) }} />
@@ -382,16 +391,16 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
             {error && <div className="row justify-content-start">
                 <div className={`col col-auto mb-0`}>
-                    <div className={true ? 'alert alert-danger' : `text-wrap mb-3 rounded text-danger`}>
-                        <button type="button" className="btn-close float-end" data-bs-dismiss="alert" aria-label="Close" onClick={(e) => { e.preventDefault(); clearError() }}></button>
+                    <div className={true ? 'alert alert-danger' : `text-wrap mb-3 rounded text-danger`} role="alert">
+                        <button type="button" className="btn-close float-end" data-bs-dismiss="alert" aria-label="Fechar" onClick={(e) => { e.preventDefault(); clearError() }}></button>
                         <b>Erro:</b> <ErrorMessage message={error.message} />
                     </div>
                 </div>
             </div>}
             {clientError && <div className="row justify-content-start">
                 <div className="col col-auto mb-0">
-                    <div className='alert alert-warning'>
-                        <button type="button" className="btn-close float-end" aria-label="Close" onClick={(e) => { e.preventDefault(); setClientError(null) }}></button>
+                    <div className='alert alert-warning' role="alert">
+                        <button type="button" className="btn-close float-end" aria-label="Fechar" onClick={(e) => { e.preventDefault(); setClientError(null) }}></button>
                         <b>Aviso:</b> <ErrorMessage message={clientError} />
                     </div>
                 </div>
@@ -406,9 +415,10 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                 <div className="xcol xcol-12">
                     <form onSubmit={handleSubmitAndSetFocus} className="mt-auto">
                         <div className="input-group">
-                            <button className={`btn ${btnClass}`} type="button" onClick={() => fileInputRef.current?.click()} title="Anexar PDFs">
+                            <button className={`btn ${btnClass}`} type="button" onClick={() => fileInputRef.current?.click()} title="Anexar PDFs" aria-label="Anexar PDFs" accessKey="x">
                                 <FontAwesomeIcon icon={faPaperclip} />
                             </button>
+                            <label htmlFor="chat-input" className="visually-hidden">Mensagem para a IA</label>
                             <TextareaAutosize
                                 id="chat-input"
                                 style={{ borderColor: params.sidekick ? 'var(--bs-btn-hover-border-color)' : 'var(--bs-light)' }}
@@ -430,7 +440,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                                 }}
                                 autoFocus
                             />
-                            <button className={`btn ${btnClass}`} type="submit">Enviar</button>
+                            <button className={`btn ${btnClass}`} type="submit" accessKey="e"><u>E</u>nviar</button>
                         </div>
                         <input
                             type="file"
@@ -438,6 +448,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                             multiple
                             ref={fileInputRef}
                             style={{ display: 'none' }}
+                            aria-label="Selecionar arquivos PDF"
                             onChange={(e) => {
                                 if (e.target.files) {
                                     // Acumular arquivos existentes com os novos
@@ -466,6 +477,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                                 className="badge bg-secondary text-white border-0 me-1 mb-1"
                                 style={{ cursor: 'pointer' }}
                                 title="Remover anexos"
+                                aria-label="Remover anexos"
                                 onClick={() => { setFiles(undefined); if (fileInputRef.current) fileInputRef.current.value = '' }}
                             >
                                 <FontAwesomeIcon icon={faTrash} />
@@ -510,8 +522,9 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                 </div>
             </>
             :
-            <><h2>Chat</h2>
-                <div className={`alert alert-dark bg-dark text-white p-2 pt-3 pb-3 chat-box ${params.footer ? 'mb-1' : 'mb-3'}`}>
+            <>
+                <h1>Chat</h1>
+                <div className={`alert alert-dark bg-dark text-white p-2 pt-3 pb-3 chat-box ${params.footer ? 'mb-1' : 'mb-3'}`} role="log" aria-live="polite">
                     <div className='container'>
                         {messagesContent}
                         {controlsContent}

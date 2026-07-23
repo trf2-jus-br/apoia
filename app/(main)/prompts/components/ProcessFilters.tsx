@@ -37,8 +37,9 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
             <Container className="p-2 pb-3" fluid={false}>
                 <FormGroup as={Row} className="">
                     <div className="col col-auto">
-                        <FormLabel className="mb-0"><u>N</u>úmero do Processo</FormLabel>
+                        <FormLabel className="mb-0" htmlFor="numeroDoProcesso"><u>N</u>úmero do Processo</FormLabel>
                         <Form.Control
+                            id="numeroDoProcesso"
                             name="numeroDoProcesso"
                             placeholder="(opcional)"
                             autoFocus={true}
@@ -53,15 +54,16 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
                             <FormLabel className="mb-0">&nbsp;</FormLabel>
                             <span className="form-control text-white" style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
                                 <Spinner size="sm" animation="border" role="status">
-                                    <span className="visually-hidden">Loading...</span>
+                                    <span className="visually-hidden">Carregando...</span>
                                 </Spinner>
                             </span>
                         </div>
                     )}
                     {numeroDoProcesso && arrayDeDadosDoProcesso && arrayDeDadosDoProcesso.length > 1 && (
                         <div className="col col-auto">
-                            <FormLabel className="mb-0"><u>T</u>ramitação <Fase fase={faseAtual} /></FormLabel>
+                            <FormLabel className="mb-0" htmlFor="tramitacao">T<u>r</u>amitação <Fase fase={faseAtual} /></FormLabel>
                             <FormSelect
+                                id="tramitacao"
                                 value={idxProcesso}
                                 onChange={(e) => {
                                     const idx = parseInt(e.target.value)
@@ -69,7 +71,7 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
                                     setDadosDoProcesso(arrayDeDadosDoProcesso[idx])
                                 }}
                                 className="form-select"
-                                accessKey="t"
+                                accessKey="r"
                             >
                                 {arrayDeDadosDoProcesso.map((d, idx) => (
                                     <option key={idx} value={idx}>{d.classe}</option>
@@ -86,8 +88,9 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
                         </div>
                     )}
                     <div className="col col-auto ms-auto">
-                        <FormLabel className="mb-0"><u>F</u>iltro</FormLabel>
+                        <FormLabel className="mb-0" htmlFor="filtro"><u>F</u>iltro</FormLabel>
                         <Form.Control
+                            id="filtro"
                             type="text"
                             value={filtro ?? ''}
                             onChange={(e) => setFiltro(e.target.value)}
@@ -103,8 +106,9 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
                         />
                     </div>
                     <div className="col col-auto">
-                        <FormLabel className="mb-0">Segmento</FormLabel>
+                        <FormLabel className="mb-0" htmlFor="segmento">Segmento</FormLabel>
                         <FormSelect
+                            id="segmento"
                             value={scope}
                             onChange={(e) => setScope(e.target.value)}
                             className={`form-select ${scope ? ' bg-warning' : ''}`}
@@ -119,8 +123,9 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
                         </FormSelect>
                     </div>
                     <div className="col col-auto">
-                        <FormLabel className="mb-0">Instância</FormLabel>
+                        <FormLabel className="mb-0" htmlFor="instancia">Instância</FormLabel>
                         <FormSelect
+                            id="instancia"
                             value={instance}
                             onChange={(e) => setInstance(e.target.value as InstanceKeyType | undefined)}
                             className={`form-select ${instance ? ' bg-warning' : ''}`}
@@ -135,8 +140,9 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
                         </FormSelect>
                     </div>
                     <div className="col col-auto">
-                        <FormLabel className="mb-0">Natureza</FormLabel>
+                        <FormLabel className="mb-0" htmlFor="natureza">Natureza</FormLabel>
                         <FormSelect
+                            id="natureza"
                             value={matter}
                             onChange={(e) => setMatter(e.target.value)}
                             className={`form-select ${matter ? ' bg-warning' : ''}`}

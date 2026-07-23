@@ -3,6 +3,8 @@ import HeadNotePage from './HeadNotePage'
 import { assertModel } from '@/lib/ai/model-server'
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
 
+export const metadata = { title: 'Ementa' }
+
 export default async function Revison() {
     await assertModel()
     const definition = await getPromptDefinition('ementa')

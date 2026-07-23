@@ -89,7 +89,7 @@ export default function PromptConfig({ kind, setPromptConfig }: { kind: string, 
         if (current.extra)
             a.push(`Personalização do Prompt: ${current.extra}`)
         const s = a.join(', ') || 'Prompt'
-        return <p className="text-body-tertiary">{s} - <FontAwesomeIcon onClick={() => { setEditing(true) }} icon={faEdit} /></p>
+        return <p className="text-body-tertiary">{s} - <button type="button" className="btn btn-link p-0" aria-label="Editar configuração do prompt" onClick={() => { setEditing(true) }}><FontAwesomeIcon icon={faEdit} /></button></p>
     }
     return <PromptConfigForm kind={kind} config={current} onSave={onSave} />
 }

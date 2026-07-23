@@ -120,6 +120,8 @@ const TreeNodeComponent: React.FC<TreeNodeComponentProps> = ({ node, level, onNo
             <button
               className="btn btn-sm p-0"
               onClick={handleToggle}
+              aria-label={isExpanded ? 'Recolher' : 'Expandir'}
+              aria-expanded={isExpanded}
               style={{
                 width: '24px',
                 height: '24px',
@@ -140,6 +142,7 @@ const TreeNodeComponent: React.FC<TreeNodeComponentProps> = ({ node, level, onNo
               type="checkbox"
               checked={allChildrenChecked}
               onChange={handleCheckboxClick}
+              aria-label={node.label}
               style={{
                 width: '12px',
                 height: '12px',
@@ -154,6 +157,7 @@ const TreeNodeComponent: React.FC<TreeNodeComponentProps> = ({ node, level, onNo
             type="checkbox"
             checked={isChecked}
             onChange={handleCheckboxClick}
+            aria-label={node.label}
             style={{
               width: '12px',
               height: '12px',
@@ -198,9 +202,6 @@ export const TreeView: React.FC<TreeViewProps> = ({
 }) => {
   const sortedData = useMemo(() => sortTreeByLabel(data || []), [data]);
 
-  console.log('Rendering TreeView with data:', data);
-
-  
   if (!sortedData || sortedData.length === 0) {
     return (
       <div className={`tree-view ${className}`}>

@@ -1,5 +1,3 @@
-'use server'
-
 import { unstable_noStore as noStore } from 'next/cache'
 import { Container } from 'react-bootstrap'
 import { getPromptDefinition } from '@/lib/ai/prompt-store'

@@ -64,7 +64,7 @@ export const playClickSound = (): void => {
     // exponentialRamp não aceita 0, por isso partimos de 0.0001.
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.3, now + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.7, now + 0.002);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
 
     noise.connect(highpass);
@@ -122,12 +122,13 @@ export const playErrorSound = (): void => {
 // Término de tarefa: duas notas sine ascendentes (E5 -> A5), o "ding-ding"
 // clássico de conclusão com sucesso.
 export const playTaskEndSound = (): void => {
-    const ctx = getAudioContext();
-    if (!ctx) return;
+    playClickSound()
+    // const ctx = getAudioContext();
+    // if (!ctx) return;
 
-    const now = ctx.currentTime;
-    playTone(ctx, { frequency: 659, startTime: now, duration: 0.09, volume: 0.15 });
-    playTone(ctx, { frequency: 880, startTime: now + 0.09, duration: 0.14, volume: 0.15 });
+    // const now = ctx.currentTime;
+    // playTone(ctx, { frequency: 659, startTime: now, duration: 0.09, volume: 0.15 });
+    // playTone(ctx, { frequency: 880, startTime: now + 0.09, duration: 0.14, volume: 0.15 });
 };
 
 // Início de tarefa: nota sine única e suave (A4), apenas sinaliza "começou".
@@ -135,7 +136,7 @@ export const playTaskStartSound = (): void => {
     const ctx = getAudioContext();
     if (!ctx) return;
 
-    playTone(ctx, { frequency: 440, startTime: ctx.currentTime, duration: 0.15, volume: 0.12 });
+    playTone(ctx, { frequency: 440, startTime: ctx.currentTime, duration: 0.05, volume: 0.12 });
 };
 
 // Notificação/aviso: dois "blips" curtos e agudos (B5) — neutro, distinto

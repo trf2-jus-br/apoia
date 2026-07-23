@@ -17,13 +17,13 @@ export default async function ApiKeyMissing({ }: {}) {
     return <div className="alert alert-info text-center mb-4" role="alert">
         Para usar as ferramentas de IA, você precisa de uma Chave de API.{' '}
         <ModeLink href="/prefs" className="alert-link">Cadastre a sua aqui</ModeLink>.
-        <FontAwesomeIcon icon={faKey} className="ms-2" />
+        <FontAwesomeIcon icon={faKey} className="ms-2" aria-hidden="true" />
         <br />
         Não sabe o que é? Consulte o{' '}
         <Link
             href="https://trf2.gitbook.io/apoia/chave-de-api-e-modelo-de-ia"
             className="alert-link"
         >Manual da Apoia</Link>.
-        <FontAwesomeIcon icon={faBook} className="ms-2" />
+        <FontAwesomeIcon icon={faBook} className="ms-2" aria-hidden="true" />
     </div>
 }

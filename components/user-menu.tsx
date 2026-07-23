@@ -60,7 +60,7 @@ export default async function UserMenu({ }: {}) {
                 </NavItem>
                 {!isAdministrative &&
                     <NavItem>
-                        <NavigationLink href={modeUrl("/headnote")} text="Ementa" />
+                        <NavigationLink href={modeUrl("/headnote")} text="E<u>m</u>enta" accessKey="m" />
                     </NavItem>}
             </div>}
 
