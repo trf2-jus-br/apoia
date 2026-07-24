@@ -93,6 +93,10 @@ function dataComTextosAnteriores(Frm: FormHelper, requests: GeneratedContent[], 
 function previousArePending(Frm: FormHelper, requests: GeneratedContent[], idx: number): boolean {
     for (let i = 0; i < idx; i++) {
         const content = Frm.get(`generated[${i}]`)
+        const optional = requests[i].optional === true
+        const optionalActive = Frm.get(`_optional_${i}`) === true
+        if (optional && !optionalActive)
+            continue
         if (!content?.raw) {
             // devLog('previousArePending', idx, requests[idx].title, i)
             return true
@@ -131,10 +135,10 @@ function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number,
                 </article>
             }
         } else if (isInformationExtractionPrompt(request.internalPrompt?.prompt) && information_extraction && !sidekick) {
-        return <article key={idx}>
-            <AiTitle request={request} />
-            <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />
-        </article>
+            return <article key={idx}>
+                <AiTitle request={request} />
+                <InformationExtractionForm promptMarkdown={request.internalPrompt.prompt} promptFormat={request.internalPrompt.format} Frm={Frm} variableName={informationExtractionVariableName} />
+            </article>
         } else if (request.promptSlug === 'chat' || request.promptSlug.startsWith('chat-') || request?.title.toLowerCase().startsWith('chat ')) {
             if (previousArePending(Frm, requests, idx)) return null
             return <Chat definition={request.internalPrompt} data={requestComTextosAnteriores.data} model={(request.internalPrompt as any)?.model || 'unknown'} key={dataHash} sidekick={sidekick} promptButtons={promptButtons} />
@@ -167,9 +171,59 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
 
     Frm.update(data, setData, EMPTY_FORM_STATE)
 
+    // Renderiza os requests em ordem. Ao iniciar uma faixa contígua de prompts
+    // opcionais, faz um lookahead: exibe PRIMEIRO todos os botões dos opcionais
+    // inativos (em ordem de índice) e SÓ DEPOIS os slots dos opcionais ativos.
+    // Assim, com três opcionais onde só o do meio está ativo, a ordem visual fica
+    // btn1, btn3 e slot2. Slots ativos continuam respeitando previousArePending:
+    // um slot em processamento impede a execução dos demais slots posteriores, mas
+    // os botões dos inativos permanecem visíveis.
     const ctrls = []
     for (let idx = 0; idx < requests.length; idx++) {
         if (idx > 0 && PEDIDOS_SLOTS.includes(requests[idx - 1].promptSlug)) continue
+
+        const request = requests[idx]
+
+        if (request.optional) {
+            console.log('opcional: ', JSON.stringify(request))
+            // Determina o fim da faixa contígua de opcionais a partir de idx.
+            let end = idx
+            while (end + 1 < requests.length && requests[end + 1].optional) end++
+
+            // (1) Botões dos opcionais inativos da faixa, em ordem de índice. Agrupados
+            // num container alinhado pela direita, criado somente quando há ao menos
+            // um botão a exibir.
+            const optionalButtons: ReactNode[] = []
+            for (let i = idx; i <= end; i++) {
+                if (Frm.get(`_optional_${i}`) !== true) {
+                    optionalButtons.push(
+                        <button key={`optional-${i}`} className="btn btn-secondary text-end" onClick={() => Frm.set(`_optional_${i}`, true)}>
+                            {requests[i].title}
+                        </button>
+                    )
+                }
+            }
+            if (optionalButtons.length > 0) {
+                ctrls.push(<div key={`optional-group-${idx}`} className="text-end">{optionalButtons}</div>)
+            }
+
+            // (2) Slots dos opcionais ativos da faixa, em ordem de índice, com gate
+            // de pendência. Um slot pendente interrompe o processamento dos slots
+            // ativos restantes (seus botões, se inativos, já foram exibidos acima).
+            for (let i = idx; i <= end; i++) {
+                if (Frm.get(`_optional_${i}`) === true) {
+                    if (previousArePending(Frm, requests, i)) break
+                    const ctrl = requestSlot(Frm, requests, i, dadosDoProcesso.numeroDoProcesso, model, sidekick, promptButtons, sinkFromURL, sinkButtonText, sourcePayload, dadosDoProcesso)
+                    if (ctrl === null) break
+                    ctrls.push(ctrl)
+                }
+            }
+
+            idx = end
+            continue
+        }
+
+        // Prompt comum: gate de pendência e requestSlot normais.
         if (previousArePending(Frm, requests, idx)) break
         const ctrl = requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model, sidekick, promptButtons, sinkFromURL, sinkButtonText, sourcePayload, dadosDoProcesso)
         if (ctrl === null) break

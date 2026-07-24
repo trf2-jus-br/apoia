@@ -132,6 +132,8 @@ export type GeneratedContent = {
     result?: Promise<IAGenerated | undefined>,
     generated?: string,
     peca?: T,
+    optional?: boolean,
+    condition?: string,
 }
 
 export type PromptAdditionalInformationType = {

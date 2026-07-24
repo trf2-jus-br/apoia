@@ -39,6 +39,8 @@ async function buildRequestsFromWorkflow(
             produto: def.kind,
             promptSlug: def.kind,
             internalPrompt: def,
+            optional: step.optional,
+            condition: step.condition,
         })
     }
 
