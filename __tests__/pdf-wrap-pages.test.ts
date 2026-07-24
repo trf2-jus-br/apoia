@@ -74,6 +74,25 @@ describe('wrapPages', () => {
         )
     })
 
+    it('colapsa runs de LF imediatamente após CRLF (mistura \\n\\r\\n e \\r\\n\\r\\n)', () => {
+        // Cobre a interação entre normalização CRLF e colapso de LF: nenhum \n extra.
+        const raw = 'A\n\r\nB\r\n\r\nC'
+        const out = wrapPages(raw)
+        expect(out).toBe('<page number="1">\nA\nB\nC\n</page>')
+    })
+
+    it('lida com CR isolado no meio de runs de LF (\\r\\n\\n -> um \\n)', () => {
+        const raw = 'X\r\n\nY'
+        const out = wrapPages(raw)
+        expect(out).toBe('<page number="1">\nX\nY\n</page>')
+    })
+
+    it('não colapsa form-feed com LF: \\\\n\\\\f\\\\n vira quebra de página, não LF', () => {
+        const raw = 'P1\n\f\nP2'
+        const out = wrapPages(raw)
+        expect(out).toBe('<page number="1">\nP1\n</page>\n<page number="2">\nP2\n</page>')
+    })
+
     it('compatível com obterPaginasECaracteres: split em </page> reconstrói as páginas', () => {
         // Espelha a lógica de lib/proc/piece.ts:obterPaginasECaracteres
         const raw = 'Alpha\fBeta\fGama\f'
