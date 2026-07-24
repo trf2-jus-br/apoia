@@ -33,6 +33,12 @@
 - `migrations/mysql/` — Migrations MySQL (manter em sincronia com as de PostgreSQL)
 - `prompts/` — Arquivos .md dos prompts locais
 
+### Extração de PDF
+- A extração de texto de PDFs é feita pelo binário nativo **Poppler (`pdftotext`)**, invocado via `child_process.spawn` em `lib/pdf/pdf.ts` (`pdfToText`). Roda num **subprocesso fora do event loop** do Node (antes usava `pdf-parse`/PDF.js in-process, que bloqueava o servidor).
+- Requer `pdftotext` no PATH. **Produção (Docker)**: `poppler-utils` instalado via `apt-get` no estágio `runner` do `Dockerfile`. **Dev Windows**: instalar via `scoop install poppler` ou `choco install poppler` e garantir `pdftotext` no PATH.
+- A saída envolve cada página em marcadores `<page number="N">...</page>` (convertidos do form-feed `\f` do pdftotext por `wrapPages`). **Não remover/renumerar** — esses marcadores são consumidos pelo sistema de citações n-grams (tooltip "Pág: N" em `lib/n-grams/`), por `obterPaginasECaracteres` em `lib/proc/piece.ts` (decide o threshold de OCR) e por `components/EditorComponent.tsx`.
+- Concorrência de subprocessos limitada por `p-limit` (env `PDF_PARSE_LIMIT`, default 1); cap de 10MB (`MAX_PDF_BYTES`); timeout via env `PDFTOTEXT_TIMEOUT_MS` (default 120s).
+
 ### Tabela `ia_prompt`
 - Coluna `content` (JSONB) armazena a definição completa do prompt
 - `content.workflow` contém predecessores/sucessores: `{ predecessors?: [{uuid, name?, optional?, condition?}], successors?: [...] }`

@@ -49,6 +49,13 @@ FROM base AS runner
 USER root
 WORKDIR /app
 
+# Poppler (pdftotext): extração de texto de PDFs via subprocesso nativo,
+# substituindo o pdf-parse/pdfjs (bloqueava o event loop). Base node:20 é
+# Debian Bookworm, então apt-get está disponível. Não é capturado pelo Next
+# standalone tracing, precisa estar na imagem.
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED=1

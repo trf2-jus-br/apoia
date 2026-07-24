@@ -5,7 +5,7 @@
 const nextConfig = {
     // trailingSlash: true,
     output: "standalone",
-    serverExternalPackages: ['knex', 'pdf-parse'],
+    serverExternalPackages: ['knex'],
     turbopack: {
         rules: {
             '*.md': {
@@ -44,8 +44,7 @@ const nextConfig = {
                     'strong-oracle': 'strong-oracle',
                     oracledb: 'oracledb',
                     // pg: 'pg',
-                    'pg-query-stream': 'pg-query-stream',
-                    "pdfjs-dist/build/pdf.worker.min.js": "pdfjs-dist/build/pdf.worker.min.js"
+                    'pg-query-stream': 'pg-query-stream'
                 }
             ]
         }
