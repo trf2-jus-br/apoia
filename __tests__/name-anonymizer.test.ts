@@ -43,10 +43,10 @@ describe('Name Anonymizer', () => {
       .toBe('J.P. e M.C. são amigos.')
   })
 
-  test('should be accent sensitive', () => {
+  test('should be accent insensitive', () => {
     expect(
-      anonymizeNames('Maria da Silva e Mariá Barbosa.').text)
-      .toBe('M.S. e Mariá Barbosa.')
+      anonymizeNames('Mônica Samico e Monica Samico são a mesma pessoa.').text)
+      .toBe('M.S. e M.S. são a mesma pessoa.')
   })
 
   test('should handle uppercase names', () => {

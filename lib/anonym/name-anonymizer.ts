@@ -2,7 +2,9 @@ import { removeAccents } from '../utils/utils'
 import commonFirstNames from './common-first-names.json'
 import commonLastNames from './common-last-names.json'
 
-const firstNameSet = new Set(commonFirstNames.map(name => name.toLowerCase()))
+// Names are stored without accents; the candidate is normalized before lookup so
+// that accented spellings in the input (e.g. "Mônica") match their base form.
+const firstNameSet = new Set(commonFirstNames.map(name => removeAccents(name).toLowerCase()))
 
 // Break a long string into words or special characters and whitespaces and return an array of them
 function breakIntoWords(text: string): string[] {
@@ -13,7 +15,7 @@ function breakIntoWords(text: string): string[] {
 // Function to check if a word is a valid first name
 const isValidFirstName = (name: string): boolean => {
   if (!isValidName(name)) return false
-  return firstNameSet.has(name.toLowerCase())
+  return firstNameSet.has(removeAccents(name).toLowerCase())
 }
 
 // A valid name should starts with a capital letter and be followed by other letters
