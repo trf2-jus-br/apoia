@@ -90,6 +90,41 @@ function dataComTextosAnteriores(Frm: FormHelper, requests: GeneratedContent[], 
     return data
 }
 
+// Para prompts de alvo TEXTO (resumir, ementa, linguagem simples...), que esperam
+// um unico texto simples em vez da lista de textos anteriores, monta data.textos
+// contendo apenas o conteudo gerado pelo ULTIMO request anterior que nao seja
+// opcional. Opcionais (ativos ou nao) sao desconsiderados. Se nao houver nao-opcional
+// anterior ou seu conteudo ainda nao estiver pronto, mantem data.textos inalterado.
+function dataComUltimoTextoNaoOpcional(Frm: FormHelper, requests: GeneratedContent[], idx: number): PromptDataType {
+    const request = requests[idx]
+    const data = JSON.parse(JSON.stringify(request.data))
+
+    let sourceIdx = -1
+    for (let i = idx - 1; i >= 0; i--) {
+        if (requests[i].optional !== true) {
+            sourceIdx = i
+            break
+        }
+    }
+
+    if (sourceIdx >= 0) {
+        const content = Frm.get(`generated[${sourceIdx}]`)
+        if (content?.raw) {
+            const r = requests[sourceIdx]
+            const texto: TextoType = {
+                numeroDoProcesso: r?.data?.numeroDoProcesso || '',
+                slug: slugify(r.title),
+                descr: r.title,
+                texto: content?.json ? content.formatted : content.raw,
+                sigilo: '0',
+            }
+            data.textos = [texto]
+        }
+    }
+
+    return data
+}
+
 function previousArePending(Frm: FormHelper, requests: GeneratedContent[], idx: number): boolean {
     for (let i = 0; i < idx; i++) {
         const content = Frm.get(`generated[${i}]`)
@@ -109,8 +144,14 @@ function previousArePending(Frm: FormHelper, requests: GeneratedContent[], idx: 
 function requestSlot(Frm: FormHelper, requests: GeneratedContent[], idx: number, dossierCode: string, model: string, sidekick?: boolean, promptButtons?: ReactNode, sinkFromURL?: SinkFromURLType | null, sinkButtonText?: string | null, sourcePayload?: SourcePayloadType | null, dadosDoProcesso?: DadosDoProcessoType) {
     if (previousArePending(Frm, requests, idx)) return null
     const request = requests[idx]
+    const isTextoTarget = request.internalPrompt.metadata?.target === 'TEXTO'
     let requestComTextosAnteriores = request
-    requestComTextosAnteriores = { ...requestComTextosAnteriores, data: dataComTextosAnteriores(Frm, requests, idx) }
+    requestComTextosAnteriores = {
+        ...requestComTextosAnteriores,
+        data: isTextoTarget
+            ? dataComUltimoTextoNaoOpcional(Frm, requests, idx)
+            : dataComTextosAnteriores(Frm, requests, idx),
+    }
 
     const informationExtractionVariableName = `_information_extraction_${idx}`
     const dataHash = calcMd5(request.data)
