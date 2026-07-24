@@ -225,6 +225,9 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
 
         const request = requests[idx]
 
+        // Prompt comum: gate de pendência e requestSlot normais.
+        if (previousArePending(Frm, requests, idx)) break
+
         if (request.optional) {
             console.log('opcional: ', JSON.stringify(request))
             // Determina o fim da faixa contígua de opcionais a partir de idx.
@@ -238,7 +241,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
             for (let i = idx; i <= end; i++) {
                 if (Frm.get(`_optional_${i}`) !== true) {
                     optionalButtons.push(
-                        <button key={`optional-${i}`} className="btn btn-outline-primary text-end" onClick={() => Frm.set(`_optional_${i}`, true)}>
+                        <button key={`optional-${i}`} className="btn btn-outline-primary text-end ms-2" onClick={() => Frm.set(`_optional_${i}`, true)}>
                             {requests[i].title}
                         </button>
                     )
@@ -264,8 +267,6 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
             continue
         }
 
-        // Prompt comum: gate de pendência e requestSlot normais.
-        if (previousArePending(Frm, requests, idx)) break
         const ctrl = requestSlot(Frm, requests, idx, dadosDoProcesso.numeroDoProcesso, model, sidekick, promptButtons, sinkFromURL, sinkButtonText, sourcePayload, dadosDoProcesso)
         if (ctrl === null) break
         ctrls.push(ctrl)
