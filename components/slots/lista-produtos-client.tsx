@@ -238,7 +238,7 @@ export const ListaDeProdutos = ({ dadosDoProcesso, requests, model, sidekick, pr
             for (let i = idx; i <= end; i++) {
                 if (Frm.get(`_optional_${i}`) !== true) {
                     optionalButtons.push(
-                        <button key={`optional-${i}`} className="btn btn-secondary text-end" onClick={() => Frm.set(`_optional_${i}`, true)}>
+                        <button key={`optional-${i}`} className="btn btn-outline-primary text-end" onClick={() => Frm.set(`_optional_${i}`, true)}>
                             {requests[i].title}
                         </button>
                     )
