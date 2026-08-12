@@ -166,7 +166,7 @@ data:
   # JFES_MNI_WSDL_URL: "https://eproc-ws.jfes.jus.br/eproc/wsdl.php?srv=intercomunicacao2.2"
   # JFES_MNI_ENDPOINT_URL: "https://eproc-ws.jfes.jus.br/eproc/ws/controlador_ws.php?srv=intercomunicacao2.2"
 
-  PDPJ_JWK: '{"e": "AQAB", "kty": "RSA", "n": "y3XH41VyeaczOfJlhcSvsfJHBczfP4Ajd3ptmUOZhUz7h_U5OT5cHpaQSpAYJd97_Z07LnBgLDDZHTFwwe-8VCkC1dQiWb99KhwRY-HuJx3KXH-yD3fwrwR2t7NT_fBqFhyNTydQnkbLPWaSjF3wO5ziM8QMbVy_eG-38L6GEYhIhhaUtFKHxlPVd4cC9jljD4jo-b97C7YrYJyo0omPeCAAO6YZzETJho6Y3UdJVZ2ljskKj5G5ItAObzA7wqtzeH6vzMudoeNGcKOZ3fZeLyxzDCf-Wm4FTxiTKKKz1n2OwxpU1gWYaJfPxOxG0lf0045TtvABdwVCHH98_DurIw"}'
+  PDPJ_JWK: '{"e": "AQAB", "kty": "RSA", "n": "oTMd6bNKC1pny47uXEQVqwojOR5SHGvRtT5HvAPlauyM0_i-zdXbkZLLqO_qcsMFKT3DSn57SO_NOO7CgEF8U3LnflkYCEWqTeVUrsL-RPG2RDwccnXaK63sRbP_kxOOO7DH_tq8z5UfGRjPDg2ciyY2Hj_ibfaKcrtg5F3AMb1xAvN9sXAOsW_44nuXMJXx6JdOco4RfkjIiAcli8b1rpeJDPCgEwoNak3M4CX0X_THDboUZXyvVRAmmJzP5Wutr1kAXZqQ9biRM47qsr2mfW5PcqTECmcUiGD4GnPlJJa2YkKIvsZHlCvMl7SS2BpUybHn0bjmG6vNuAgvwGWMlw"}'
 
   SYSTEMS: "TRF2"
   TRF2_KIND: "BALCAOJUS"
