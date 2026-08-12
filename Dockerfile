@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM node:20 AS base
 USER root
 
@@ -13,13 +14,15 @@ WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 COPY .env.local.example .env.local
 
-RUN npm install
-
 RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
+  if [ -f yarn.lock ]; then \
+    --mount=type=cache,target=/usr/local/share/.cache/yarn yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then \
+    npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && pnpm i --frozen-lockfile; \
+  else \
+    echo "Lockfile not found." && exit 1; \
   fi
 
 # Rebuild the source code only when needed
@@ -29,8 +32,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 COPY .env.local.example .env.local
-
-RUN npm install
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -53,8 +54,8 @@ WORKDIR /app
 # substituindo o pdf-parse/pdfjs (bloqueava o event loop). Base node:20 é
 # Debian Bookworm, então apt-get está disponível. Não é capturado pelo Next
 # standalone tracing, precisa estar na imagem.
-RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends poppler-utils
 
 ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
@@ -77,11 +78,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/migrations/postgres/knex /app/migrations/postgres/knex
 # COPY --from=builder /app/migrations/mysql/knex /app/migrations/mysql/knex
 
-#USER nextjs
 USER root
 
 EXPOSE 80
-
 ENV PORT=80
 
 # server.js is created by next build from the standalone output

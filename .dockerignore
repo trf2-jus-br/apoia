@@ -1,7 +1,29 @@
-Dockerfile
-.dockerignore
+# build artifacts / deps
 node_modules
 npm-debug.log
-README.md
 .next
+
+# git / docker meta
 .git
+.gitignore
+Dockerfile
+.dockerignore
+
+# env files (segurança)
+.env
+.env.local
+.env*.local
+
+# docs / infra
+README.md
+kubernetes
+.gitlab-ci.yml
+
+# editor / os
+.vscode
+.idea
+.DS_Store
+
+# logs / coverage
+*.log
+coverage
