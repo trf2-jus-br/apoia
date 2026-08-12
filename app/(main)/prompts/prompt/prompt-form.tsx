@@ -228,7 +228,7 @@ export default function PromptForm(props) {
                                     }}><FontAwesomeIcon icon={faAdd} /> Predecessor</Button>
                                 </div>
                                 <div className="col col-6">
-                                    <label className="form-label fw-bold d-block">Propts Sucessores</label>
+                                    <label className="form-label fw-bold d-block">Prompts Sucessores</label>
                                     {(data.content?.workflow?.successors || []).map((succ, idx) => (
                                         <div key={idx} className="d-flex align-items-center mb-1 gap-2">
                                             <Form.Select size="sm" value={succ.uuid || ''} onChange={(e) => {
