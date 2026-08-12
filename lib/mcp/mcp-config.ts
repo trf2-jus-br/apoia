@@ -18,7 +18,7 @@ export type McpConfigResult = {
 
 // Determina a origem pública (scheme + host) do servidor, respeitando proxy headers.
 const getPublicOrigin = async (): Promise<string> => {
-    const configured = envString("NEXTAUTH_URL")
+    const configured = envString("NEXT_PUBLIC_URL")
     if (configured) return configured.replace(/\/$/, "")
     const headersList = await headers()
     const host = headersList.get("x-forwarded-host") || headersList.get("host")
