@@ -43,7 +43,8 @@ docker-build:
   script:
     - export IMAGE_VERSION="${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}"
     - echo "version:$IMAGE_VERSION"
-    - docker buildx create --use --driver docker-container
+    - docker context create ci-context --docker "host=$DOCKER_HOST,ca=$DOCKER_CERT_PATH/ca.pem,cert=$DOCKER_CERT_PATH/cert.pem,key=$DOCKER_CERT_PATH/key.pem"
+    - docker buildx create --use ci-context --driver docker-container
     - >
       docker buildx build --pull --push
       --build-arg IMAGE_VERSION="$IMAGE_VERSION"
