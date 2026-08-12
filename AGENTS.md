@@ -72,6 +72,13 @@
 - Links, redirects e fetches **sensíveis ao modo** (home, menu, chat, fluxo de prompts/processos, `/api/v1/ai`, `/api/v1/build-requests`, binary de peça) devem preservar o prefixo usando esses helpers. URLs que já vêm de `usePathname()` preservam o prefixo automaticamente.
 - O toggle "Modo SEI!" (`components/user-menu-mode.tsx`) apenas navega para a mesma página com/sem o prefixo.
 
+### Servidor MCP e tabela `ia_mcp_token`
+- Endpoint em `app/api/mcp/[transport]/route.ts` (mcp-handler, basePath `/api/mcp`); tools em `lib/mcp/mcp-registry.ts`; auth por `token_id` via header `Authorization: Apoia-MCP <id>` ou query `?token=<id>`.
+- 1 linha por usuário (PK `user_id`); `token_ciphertext` guarda o JWT PDPJ encriptado com `DATABASE_SECRET` (Cryptr); `token_id` curto vai na URL (`/api/mcp/mcp?token=<id>`, gerada em `lib/mcp/mcp-config.ts`, página `/mcp`).
+- O `token_id` é **estável**: a cada login, o callback `jwt` do NextAuth (`options.ts`) chama `McpTokenDao.refreshForUsername` (import dinâmico, evita ciclo com `lib/user.ts`), renovando `token_ciphertext`/`expires_at` — a URL configurada no cliente MCP não muda. Gerar novamente em `/mcp` rotaciona o `token_id` (= revogação).
+- Purge lazy em `issueForCurrentUser` só apaga tokens expirados há mais de 30 dias (grace para o login "reviver" o link); não há cron.
+- Nunca logar o JWT decifrado (já houve log assim em `resolveUserByTokenId`, removido).
+
 ### Migrations
 - Migrations SQL ficam em `migrations/postgres/knex/` e `migrations/mysql/`
 - São executadas automaticamente no startup via `lib/migrate-on-start.ts` usando Knex migration source

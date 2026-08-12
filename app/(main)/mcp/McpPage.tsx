@@ -104,9 +104,11 @@ export default function McpPage({ toolsList }: { toolsList: ToolMeta[] }) {
                             )}
 
                             {expiresAt && (
-                                <p className="mb-0"><strong>Atenção:</strong> o token de acesso embutido nesta URL
-                                    expira em <strong>{expiresAt}</strong>. Após esse horário, faça logout e login na Apoia e gere uma nova
-                                    URL. <strong>A URL é pessoal e deve ser tratada como uma senha - não a compartilhe</strong>.
+                                <p className="mb-0"><strong>Atenção:</strong> o token de acesso desta URL
+                                    expira em <strong>{expiresAt}</strong>, mas é renovado automaticamente
+                                    toda vez que você faz login na Apoia — não é preciso reconfigurar o cliente.
+                                    Gerar uma nova URL revoga a anterior. <strong>A URL é pessoal e deve ser
+                                    tratada como uma senha - não a compartilhe</strong>.
                                 </p>
                             )}
                         </CardBody>

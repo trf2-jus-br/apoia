@@ -66,6 +66,23 @@ const authOptions = {
         }
       }
       token = { roles, corporativo, preferredUsername, iss, accessToken: account?.access_token, ...token, ...user }
+
+      // Renova o token MCP (ia_mcp_token) a cada login: atualiza o JWT PDPJ encriptado e o
+      // expires_at mantendo o token_id estável, para que a URL já configurada no cliente MCP
+      // não precise ser regerada. Import dinâmico evita ciclo options.ts → mcp-token.dao →
+      // lib/user.ts → options.ts. Falhas não podem quebrar a autenticação (tratadas no DAO).
+      const freshJwt = account?.access_token ?? (user as any)?.accessToken
+      if (freshJwt) {
+        try {
+          const decoded: any = jose.decodeJwt(freshJwt)
+          if (decoded?.preferred_username && decoded?.exp) {
+            const { McpTokenDao } = await import('@/lib/db/dao/mcp-token.dao')
+            await McpTokenDao.refreshForUsername(decoded.preferred_username, freshJwt, new Date(decoded.exp * 1000))
+          }
+        } catch (e) {
+          console.error('MCP token refresh on login error:', e)
+        }
+      }
       return token
     },
     async session({ session, token, user }) {

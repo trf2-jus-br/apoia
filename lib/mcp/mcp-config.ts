@@ -35,8 +35,9 @@ const getPublicOrigin = async (): Promise<string> => {
  * clientes MCP. O endpoint decifra o JWT a partir do token_id e valida via getUserFromPdpjToken.
  *
  * 1 token por usuário (upsert): "gerar novamente" revoga o token anterior imediatamente.
- * Como o token é derivado da sessão atual (Keycloak), ele expira junto com o JWT PDPJ;
- * o expiresAt reflete essa validade e o usuário deve regerar a URL após a expiração.
+ * O token_id é estável: a cada login do usuário o JWT armazenado é renovado automaticamente
+ * (callback jwt do NextAuth → McpTokenDao.refreshForUsername), então a URL configurada no
+ * cliente MCP não precisa ser regerada. O expiresAt reflete a validade do JWT atual.
  */
 export const generateClaudeMcpConfig = async (): Promise<McpConfigResult> => {
     const user = await assertCurrentUser()
@@ -69,7 +70,7 @@ export const generateClaudeMcpConfig = async (): Promise<McpConfigResult> => {
     }
 
     const origin = await getPublicOrigin()
-    const url = `${process.env.NEXT_PUBLIC_URL}${MCP_HTTP_PATH}?${MCP_TOKEN_QUERY_PARAM}=${tokenId}`
+    const url = `${origin}${MCP_HTTP_PATH}?${MCP_TOKEN_QUERY_PARAM}=${tokenId}`
 
     return { url, expiresAt }
 }
