@@ -103,7 +103,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
     const { messages, setMessages, sendMessage, error, clearError } =
         useChat({
-            transport: new DefaultChatTransport({ api: `/api/v1/chat?withTools=${params.withTools ? 'true' : 'false'}${params.definition?.dbId ? `&promptId=${params.definition.dbId}` : ''}`, body: { execution_id: executionId, aggregator_prompt_id: aggregatorPromptId, dossierCode: processNumber || undefined } }),
+            transport: new DefaultChatTransport({ api: modeUrl(`/api/v1/chat?withTools=${params.withTools ? 'true' : 'false'}${params.definition?.dbId ? `&promptId=${params.definition.dbId}` : ''}`), body: { execution_id: executionId, aggregator_prompt_id: aggregatorPromptId, dossierCode: processNumber || undefined } }),
             // messages: fetchedMessages,
             onFinish: () => playTaskEndSound()
         })

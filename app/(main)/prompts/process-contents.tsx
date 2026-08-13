@@ -127,7 +127,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         // Janela deslizante via p-limit: no máx MAX_CONCURRENT_PIECE_FETCHES em voo.
         // Evita o thundering herd no servidor (pdfToText é CPU-bound).
         await Promise.all(toFetch.map(peca => limit(async () => {
-            const resp = await fetch(`/api/v1/process/${peca.numeroDoProcesso || dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/content`)
+            const resp = await fetch(modeUrl(`/api/v1/process/${peca.numeroDoProcesso || dadosDoProcesso.numeroDoProcesso}/piece/${peca.id}/content`))
             if (!resp.ok) {
                 const data = await resp.json().catch(() => ({}))
                 if (data.errormsg)

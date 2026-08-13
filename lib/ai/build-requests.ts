@@ -6,7 +6,7 @@ import devLog from "../utils/log"
 import { normalizeModelProfile } from "./model-types"
 import { GeneratedContent, PromptDataType, PromptDefinitionType, TextoType } from "./prompt-types"
 import { getPromptDefinition, getPromptDefinitionByUuid } from "./prompt-store"
-import { getMode } from "../utils/prefs"
+import { getMode, modeUrl } from "../utils/prefs"
 
 /**
  * Build requests from an aggregator's workflow successors (DB-driven).
@@ -59,7 +59,7 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
                 textos: [peca],
                 documentosDaBiblioteca
             }
-            requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: `/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`, data, title: peca.descr, produto: definition.kind, promptSlug: definition.kind, internalPrompt: definition })
+            requestArray.push({ documentCode: peca.id || null, documentDescr: peca.descr, documentLocation: peca.event, documentLink: await modeUrl(`/api/v1/process/${peca.numeroDoProcesso || numeroDoProcesso}/piece/${peca.id}/binary`), data, title: peca.descr, produto: definition.kind, promptSlug: definition.kind, internalPrompt: definition })
         }
     }
     if (prompt.content?.workflow?.predecessors?.length) {

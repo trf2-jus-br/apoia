@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { DadosDoProcessoType } from "@/lib/proc/process-types"
 import { detectarFaseDoProcesso } from "@/lib/proc/combinacoes"
 import { playClickSound } from "@/lib/sound"
+import { useModeUrl } from "@/lib/utils/use-mode-url"
 
 export interface UseProcessDataResult {
     numeroDoProcesso: string | null
@@ -35,6 +36,8 @@ export function useProcessData(
     const [faseAtual, setFaseAtual] = useState<string | undefined>(undefined)
     const [fases, setFases] = useState<string[] | undefined>(undefined)
 
+    const modeUrl = useModeUrl()
+
     useEffect(() => {
         if (number?.length === 20) {
             setNumeroDoProcesso(number)
@@ -44,7 +47,7 @@ export function useProcessData(
     }, [number])
 
     const loadProcess = async (numeroDoProcesso: string) => {
-        const response = await fetch(`/api/v1/process/${numeroDoProcesso}`)
+        const response = await fetch(modeUrl(`/api/v1/process/${numeroDoProcesso}`))
         if (response.ok) {
             const data = await response.json()
             if (data.errorMsg) {

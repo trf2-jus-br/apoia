@@ -12,6 +12,7 @@ const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: 
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
+import { useModeUrl } from '@/lib/utils/use-mode-url'
 
 export default function LibraryForm({ record, promptDefinition }: { record: any, promptDefinition: any }) {
   const [data, setData] = useState<any>({ ...record })
@@ -31,12 +32,13 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
   const isReadOnly = data.id && !data.is_mine
 
   const router = useRouter()
+  const modeUrl = useModeUrl()
 
   useEffect(() => { setData({ ...record }) }, [record])
   useEffect(() => {
     const load = async () => {
       if (!record?.id) return
-      const res = await fetch(`/api/v1/library/${record.id}/examples`)
+      const res = await fetch(modeUrl(`/api/v1/library/${record.id}/examples`))
       const j = await res.json()
       setExamples(j.items || [])
     }
@@ -57,7 +59,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
     try {
       if (data.id) {
         // Update existing record
-        await fetch(`/api/v1/library/${data.id}`, {
+        await fetch(modeUrl(`/api/v1/library/${data.id}`), {
           method: 'PATCH',
           body: JSON.stringify({
             title: data.title,
@@ -85,9 +87,9 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
           form.append('kind', data.kind)
           form.append('title', data.title || '')
           form.append('file', file)
-          res = await fetch('/api/v1/library', { method: 'POST', body: form })
+          res = await fetch(modeUrl('/api/v1/library'), { method: 'POST', body: form })
         } else {
-          res = await fetch('/api/v1/library', {
+          res = await fetch(modeUrl('/api/v1/library'), {
             method: 'POST',
             body: JSON.stringify({
               kind: data.kind,
@@ -127,8 +129,8 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
   const addExamples = async () => {
     setPending(true)
     try {
-      await fetch(`/api/v1/library/${data.id}/examples`, { method: 'POST', body: JSON.stringify({ processNumbers: csv, pieceType: data.model_subtype === 'PRIMEIRO_DESPACHO' ? 'DESPACHO_DECISAO' : data.model_subtype || undefined }) })
-      const list = await fetch(`/api/v1/library/${data.id}/examples`)
+      await fetch(modeUrl(`/api/v1/library/${data.id}/examples`), { method: 'POST', body: JSON.stringify({ processNumbers: csv, pieceType: data.model_subtype === 'PRIMEIRO_DESPACHO' ? 'DESPACHO_DECISAO' : data.model_subtype || undefined }) })
+      const list = await fetch(modeUrl(`/api/v1/library/${data.id}/examples`))
       const j = await list.json()
       setExamples(j.items || [])
       setShowExamples(false)
@@ -139,14 +141,14 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
   }
 
   const removeExample = async (pn: string) => {
-    await fetch(`/api/v1/library/${data.id}/examples?process_number=${pn}`, { method: 'DELETE' })
-    const list = await fetch(`/api/v1/library/${data.id}/examples`)
+    await fetch(modeUrl(`/api/v1/library/${data.id}/examples?process_number=${pn}`), { method: 'DELETE' })
+    const list = await fetch(modeUrl(`/api/v1/library/${data.id}/examples`))
     const j = await list.json()
     setExamples(j.items || [])
   }
 
   const openSelectPiece = async (pn: string) => {
-    const res = await fetch(`/api/v1/process/${pn}`)
+    const res = await fetch(modeUrl(`/api/v1/process/${pn}`))
     const j = await res.json()
     const list = (j.arrayDeDadosDoProcesso?.at(-1)?.pecas || []) as any[]
     setSelecting({ pn, pieces: list })
@@ -155,8 +157,8 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
 
   const confirmSelectPiece = async () => {
     if (!selecting || !selectedPieceId) return
-    await fetch(`/api/v1/library/${data.id}/examples`, { method: 'PATCH', body: JSON.stringify({ processNumber: selecting.pn, pieceId: selectedPieceId }) })
-    const list = await fetch(`/api/v1/library/${data.id}/examples`)
+    await fetch(modeUrl(`/api/v1/library/${data.id}/examples`), { method: 'PATCH', body: JSON.stringify({ processNumber: selecting.pn, pieceId: selectedPieceId }) })
+    const list = await fetch(modeUrl(`/api/v1/library/${data.id}/examples`))
     const j = await list.json()
     setExamples(j.items || [])
     setSelecting(null)

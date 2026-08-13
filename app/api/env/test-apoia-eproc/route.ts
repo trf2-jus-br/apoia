@@ -38,7 +38,7 @@ export async function GET(req: Request) {
     } catch (error) {
         return Response.json(
             { error: 'Failed to connect to apoia-eproc API', details: String(error), message: (error as Error).message, cause: (error as Error).cause },
-            { status: 502 }
+            { status: 510 }
         );
     }
 }
