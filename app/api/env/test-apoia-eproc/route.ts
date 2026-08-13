@@ -1,6 +1,6 @@
 export async function GET(req: Request) {
     try {
-        const baseUrl = process.env.TRIBUNAL_4_DATALAKE_API_URL;
+        const baseUrl = process.env.TRIBUNAL_4_DATALAKE_API_URL || "https://apoia-eproc.trf2.jus.br/api/v1";
 
         if (!baseUrl) {
             return Response.json(
