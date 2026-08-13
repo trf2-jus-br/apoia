@@ -1,7 +1,7 @@
 export async function GET(req: Request) {
     try {
         const baseUrl = process.env.TRIBUNAL_4_DATALAKE_API_URL;
-        
+
         if (!baseUrl) {
             return Response.json(
                 { error: 'TRIBUNAL_4_DATALAKE_API_URL not configured' },
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
         );
     } catch (error) {
         return Response.json(
-            { error: 'Failed to connect to apoia-eproc API', details: String(error) },
+            { error: 'Failed to connect to apoia-eproc API', details: String(error), message: (error as Error).message, cause: (error as Error).cause },
             { status: 502 }
         );
     }
