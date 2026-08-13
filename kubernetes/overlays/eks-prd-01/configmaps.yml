@@ -69,7 +69,7 @@ data:
   TRIBUNAL_4_USER_DAILY_USAGE_COST: "4"
   TRIBUNAL_4_DAILY_USAGE_COUNT: "5000"
   TRIBUNAL_4_DAILY_USAGE_COST: "200"
-  # TRIBUNAL_4_DATALAKE_API_URL: "https://apoia-eproc.trf2.jus.br/api/v1"
+  TRIBUNAL_4_DATALAKE_API_URL: "https://apoia-eproc.trf2.jus.br/api/v1"
   TRIBUNAL_4_SEI_API_URL: "https://sei.trf2.jus.br/sei/modulos/trf2/sei-rest-api-module/api.php?path=/apoia"
   TRIBUNAL_4_CONFIDENTIALITY_LEVEL_MAX: "1"
 

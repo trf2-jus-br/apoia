@@ -84,7 +84,7 @@ export default async function UserMenu({ }: {}) {
                             <ul className="dropdown-menu  dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><ModeLink className="dropdown-item" href="/prefs">Modelo de IA{model && ` (${model})`}</ModeLink></li>
                                 <UserMenuAnonymize isAnonymized={isAnonymized} />
-                                {betaTester && hasSeiApiUrl && <UserMenuMode />}
+                                {hasSeiApiUrl && <UserMenuMode />}
                                 {betaTester && <UserMenuBetaTester isBetaTester={betaTester} />}
                                 {user && <li><TicketFormButton label="Ajuda / Abrir chamado" className="dropdown-item" userName={user.name} userEmail={user.email} /></li>}
                                 {user && <li><ModeLink className="dropdown-item" href="/tickets">Meus chamados</ModeLink></li>}
