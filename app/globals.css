@@ -544,10 +544,11 @@
     span.citacao {
         color: #0b3415;
         background-color: #cdffd0b0;
+    }
 
-        /* text-decoration: underline;
-        text-decoration-color: #01e610;
-        text-decoration-thickness: 2px; */
+    div.chat-content span.citacao {
+        color: white;
+        background-color: #3c703cb0;
     }
 
     /* span.nao-citacao {

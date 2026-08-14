@@ -1,13 +1,14 @@
 'use client';
 
-import { PromptDataType, PromptDefinitionType } from '@/lib/ai/prompt-types';
+import { PromptDataType, PromptDefinitionType, TextoType } from '@/lib/ai/prompt-types';
+import { formatText } from '@/lib/ai/prompt-client';
 import { faEdit } from '@fortawesome/free-regular-svg-icons';
 import { faFileLines, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
 import showdown from 'showdown'
-import { ReactElement, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactElement, ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useChatAnalytics } from '@/lib/analytics/chatAnalytics'
 import TextareaAutosize from 'react-textarea-autosize'
 import { Modal, Button, Form } from 'react-bootstrap';
@@ -19,7 +20,10 @@ import { Suggestion } from '../suggestions/base';
 import MessageStatus from '../message-status';
 import MessageFooter from '../message-footer';
 import { useExecutionId, usePromptContext, useSelectedPromptId } from '@/app/(main)/prompts/context/PromptContext';
-import { InstanceKeyType } from '@/lib/proc/process-types';
+import { DadosDoProcessoType, InstanceKeyType, PecaType } from '@/lib/proc/process-types';
+import { InteropProcessoType } from '@/lib/interop/interop-types';
+import { highlightCitationsLongestMatch } from '@/lib/n-grams';
+import { addLinkToPieces } from '@/lib/ui/link-to-piece';
 import { useModeUrl } from '@/lib/utils/use-mode-url';
 import { playErrorSound, playTaskEndSound, playTaskStartSound } from '@/lib/sound';
 
@@ -64,10 +68,87 @@ function convertToUIMessages(modelMsgs: ModelMessage[], promptKind: string): UIM
     return ui
 }
 
+// Extrai peças (TextoType) do output textual da tool getPiecesText, que formata
+// cada peça via formatText como: DESCR:\n<slug event="N" id="..." label="...">\ntexto\n</slug>
+function parsePiecesFromToolOutput(output: string, processNumber: string): TextoType[] {
+    const pecas: TextoType[] = []
+    const re = /<([a-z0-9-]+)(?:\s+event="([^"]*)")?(?:\s+id="([^"]*)")?(?:\s+label="([^"]*)")?>\n([\s\S]*?)\n<\/\1>/g
+    let match
+    while ((match = re.exec(output)) !== null) {
+        const [, slug, event, id, label, texto] = match
+        if (!id) continue
+        // O tokenizer de n-grams só atribui peça no tooltip se houver event E label;
+        // event '-' faz o tooltip exibir apenas o label (convenção do formatter)
+        pecas.push({ id, numeroDoProcesso: processNumber, event: event || '-', label: label || slug.toUpperCase(), descr: slug, slug, texto, sigilo: '' })
+    }
+    return pecas
+}
+
+// Converte o output da tool getProcessMetadata (InteropProcessoType[]) em um
+// DadosDoProcessoType mínimo, suficiente para o addLinkToPieces (usa pecas[].id e pecas[].tipoDoConteudo)
+function metadataToDadosDoProcesso(metadata: InteropProcessoType[]): DadosDoProcessoType {
+    const pecas: PecaType[] = []
+    for (const proc of metadata) {
+        for (const mov of proc.movimentosEDocumentos || []) {
+            for (const doc of mov.documentos || []) {
+                pecas.push({
+                    id: doc.id,
+                    numeroDoProcesso: proc.numeroProcesso || '',
+                    numeroDoEvento: String(mov.sequencia ?? ''),
+                    descricaoDoEvento: mov.descricao || '',
+                    descr: doc.tipoDocumento || doc.nome || '',
+                    tipoDoConteudo: doc.tipoArquivo || '',
+                    sigilo: doc.nivelSigilo || '',
+                    pConteudo: undefined,
+                    conteudo: undefined,
+                    pDocumento: undefined,
+                    documento: undefined,
+                    categoria: undefined,
+                    // No PDPJ/SEI o nome do documento é o rótulo estilo INIC1 (ver pdpj.ts/sei.ts)
+                    rotulo: doc.nome || undefined,
+                    dataHora: undefined,
+                })
+            }
+        }
+    }
+    return { numeroDoProcesso: metadata[0]?.numeroProcesso, pecas, poloAtivo: '', poloPassivo: '' }
+}
+
+const messageText = (m: UIMessage) =>
+    m.parts.reduce((acc, part) => part.type === 'text' ? acc + part.text : acc, '')
+
+// Conteúdo HTML de uma mensagem; quando enrich=true (mensagem do assistente já
+// finalizada), realça citações das peças e inclui links para as peças citadas.
+const ChatMessageContent = memo(function ChatMessageContent(params: {
+    message: UIMessage, role: string, className: string, enrich: boolean,
+    sourceHtml: string, textos: TextoType[], dadosDoProcesso?: DadosDoProcessoType
+}) {
+    const html = useMemo(() => {
+        let result = preprocessar(params.message, params.role)
+        if (params.enrich && result) {
+            if (params.sourceHtml) {
+                try { result = highlightCitationsLongestMatch(params.sourceHtml, result) } catch (e) { console.error('Erro ao realçar citações:', e) }
+            }
+            if (params.dadosDoProcesso) {
+                try { result = addLinkToPieces(result, params.textos, params.dadosDoProcesso) } catch (e) { console.error('Erro ao incluir links para peças:', e) }
+            }
+        }
+        return result
+    }, [params.message, params.role, params.enrich, params.sourceHtml, params.textos, params.dadosDoProcesso])
+    return <div className={params.className} dangerouslySetInnerHTML={{ __html: html }} />
+}, (prev, next) =>
+    // Comparador barato baseado no texto: evita reprocessar n-grams de mensagens
+    // antigas a cada chunk do streaming, mesmo que o SDK troque a identidade dos objetos
+    messageText(prev.message) === messageText(next.message) &&
+    prev.role === next.role && prev.className === next.className &&
+    prev.enrich === next.enrich && prev.sourceHtml === next.sourceHtml &&
+    prev.textos === next.textos && prev.dadosDoProcesso === next.dadosDoProcesso
+)
+
 
 let loadingMessages = false
 
-export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, model: string, footer?: ReactElement, withTools?: boolean, setProcessNumber?: (number: string) => void, sidekick?: boolean, promptButtons?: ReactNode }) {
+export default function Chat(params: { definition: PromptDefinitionType, data: PromptDataType, model: string, footer?: ReactElement, withTools?: boolean, setProcessNumber?: (number: string) => void, sidekick?: boolean, promptButtons?: ReactNode, dadosDoProcesso?: DadosDoProcessoType }) {
     const modeUrl = useModeUrl()
     const [processNumber, setProcessNumber] = useState(params?.data?.numeroDoProcesso || '');
     const [input, setInput] = useState('')
@@ -101,7 +182,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         if (params.setProcessNumber) params.setProcessNumber(number)
     }
 
-    const { messages, setMessages, sendMessage, error, clearError } =
+    const { messages, setMessages, sendMessage, error, clearError, status } =
         useChat({
             transport: new DefaultChatTransport({ api: modeUrl(`/api/v1/chat?withTools=${params.withTools ? 'true' : 'false'}${params.definition?.dbId ? `&promptId=${params.definition.dbId}` : ''}`), body: { execution_id: executionId, aggregator_prompt_id: aggregatorPromptId, dossierCode: processNumber || undefined } }),
             // messages: fetchedMessages,
@@ -123,6 +204,71 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
 
     // Memoized dataKey to avoid deep comparison issues in useEffect
     const dataKey = useMemo(() => JSON.stringify(params.data ?? {}), [params.data])
+
+    // Peças disponíveis como fonte de citações/links: as textos passados na
+    // inicialização do chat mais as peças obtidas via tool getPiecesText.
+    // dadosDoProcesso: prop (híbrido) ou derivado do output da tool getProcessMetadata.
+    const { textos, dadosDoProcesso } = useMemo(() => {
+        const textos: TextoType[] = [...(params.data?.textos || [])]
+        let dados: DadosDoProcessoType | undefined = params.dadosDoProcesso
+        for (const m of messages) {
+            for (const part of (m.parts || []) as any[]) {
+                if (part.type === 'tool-getProcessMetadata' && part.state === 'output-available' && Array.isArray(part.output)) {
+                    if (!dados) dados = metadataToDadosDoProcesso(part.output)
+                } else if (part.type === 'tool-getPiecesText' && part.state === 'output-available' && typeof part.output === 'string') {
+                    for (const t of parsePiecesFromToolOutput(part.output, part.input?.processNumber || processNumber)) {
+                        if (!textos.some(x => x.id && x.id === t.id)) textos.push(t)
+                    }
+                }
+            }
+        }
+        return { textos, dadosDoProcesso: dados }
+    }, [messages, dataKey, params.dadosDoProcesso, processNumber])
+
+    // Fonte das citações para o realce n-grams: conteúdo das peças disponíveis.
+    // formatText envolve cada peça na tag <slug event="..." label="..." id="...">,
+    // que o tokenizer de n-grams usa para atribuir peça/evento/página no tooltip
+    // (sem ela, o tooltip cai no fallback "Informação extraída do prompt").
+    const sourceHtml = useMemo(() => {
+        const fontes: string[] = []
+        for (const t of textos) {
+            if (!t.texto) continue
+            try { fontes.push(formatText(t)) } catch { fontes.push(t.texto) }
+        }
+        return fontes.length ? converter.makeHtml(fontes.join('\n\n')) : ''
+    }, [textos])
+
+    // Peças passíveis de link: as peças com conteúdo (textos) mais TODAS as peças
+    // dos metadados do processo (dadosDoProcesso.pecas), que têm evento/rótulo/id
+    // mesmo sem conteúdo carregado. Usadas apenas pelo addLinkToPieces; o realce
+    // n-grams continua restrito às peças com conteúdo (sourceHtml acima).
+    const textosParaLinks = useMemo(() => {
+        if (!dadosDoProcesso?.pecas?.length) return textos
+        const result = []
+        for (const p of dadosDoProcesso.pecas) {
+            if (!p.rotulo || result.some(t => t.id === p.id)) continue
+            result.push({ id: p.id, numeroDoProcesso: p.numeroDoProcesso || processNumber, event: p.numeroDoEvento, label: p.rotulo, descr: p.descr || '', slug: '', texto: undefined, sigilo: p.sigilo || '' })
+        }
+        return result
+    }, [textos, dadosDoProcesso, processNumber])
+
+    // Clique delegado nos links de peças gerados pelo addLinkToPieces (.widgetlinkdocumento)
+    const articleRef = useRef<HTMLElement>(null)
+    useEffect(() => {
+        const container = articleRef.current
+        if (!container) return
+        const handleClick = (event: MouseEvent) => {
+            const target = event.target as HTMLElement
+            if (target.classList.contains('widgetlinkdocumento')) {
+                const idPiece = target.getAttribute('data-idpiece')
+                const numProcesso = target.getAttribute('data-numprocesso')
+                if (idPiece && numProcesso)
+                    window.open(modeUrl(`/api/v1/process/${numProcesso}/piece/${idPiece}/binary`), '_blank')
+            }
+        }
+        container.addEventListener('click', handleClick)
+        return () => container.removeEventListener('click', handleClick)
+    }, [modeUrl])
 
     useEffect(() => {
         if (hasRun.current) return; hasRun.current = true;
@@ -352,17 +498,22 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
     const btnClass = params.sidekick ? 'btn-light btn-outline-secondary' : 'btn-secondary btn-outline-light'
     const inputClass = params.sidekick ? 'btn-outline-secondary' : 'bg-secondary text-white'
 
+    const isStreaming = status === 'streaming' || status === 'submitted'
+
     const messagesContent = useMemo(() => (
-        <>{messages.slice(initialMessages?.length || 0).map((m, idx) => (
-            m.role === 'user' ?
+        <>{messages.slice(initialMessages?.length || 0).map((m, idx) => {
+            const globalIdx = idx + (initialMessages?.length || 0)
+            // Realça citações e links apenas em mensagens do assistente já finalizadas
+            const enrich = m.role === 'assistant' && !(isStreaming && globalIdx === messages.length - 1)
+            return m.role === 'user' ?
                 <div className="row justify-content-end ms-5 g-2 chat-user-container" key={m.id}>
                     <div className={`col col-auto mb-0 icon-container`}>
-                        <button type="button" className="btn btn-sm btn-link p-0" aria-label="Editar mensagem" onClick={() => handleEditMessage(idx + (initialMessages?.length || 0))}>
+                        <button type="button" className="btn btn-sm btn-link p-0" aria-label="Editar mensagem" onClick={() => handleEditMessage(globalIdx)}>
                             <FontAwesomeIcon icon={faEdit} className="text-white align-bottom" />
                         </button>
                     </div>
                     <div className={`col col-auto mb-0`}>
-                        <div className={`text-wrap mb-2 rounded chat-content chat-user${params.sidekick ? '-sidekick' : ''}`} dangerouslySetInnerHTML={{ __html: preprocessar(m, m.role) }} />
+                        <ChatMessageContent message={m} role={m.role} className={`text-wrap mb-2 rounded chat-content chat-user${params.sidekick ? '-sidekick' : ''}`} enrich={false} sourceHtml="" textos={[]} />
                         {/* Attached PDFs */}
                         {m.parts?.filter((p: any) => p.type === 'file' && p.mediaType === 'application/pdf').length > 0 && (
                             <div className="mb-3 mt-1">
@@ -382,12 +533,12 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
                     {
                         hasText(m) &&
                         <div className={`col col-auto mb-2`}>
-                            <div className={`text-wrap mb-0 rounded chat-content chat-ai${params.sidekick ? '-sidekick' : ''}`} dangerouslySetInnerHTML={{ __html: preprocessar(m, m.role) }} />
+                            <ChatMessageContent message={m} role={m.role} className={`text-wrap mb-0 rounded chat-content chat-ai${params.sidekick ? '-sidekick' : ''}`} enrich={enrich} sourceHtml={sourceHtml} textos={textosParaLinks} dadosDoProcesso={dadosDoProcesso} />
                             <MessageFooter message={m} />
                         </div>
                     }
                 </div>
-        ))}
+        })}
 
             {error && <div className="row justify-content-start">
                 <div className={`col col-auto mb-0`}>
@@ -407,7 +558,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
             </div>}
 
         </>
-    ), [messages, error, clientError, clearError, handleEditMessage])
+    ), [messages, error, clientError, clearError, handleEditMessage, initialMessages, isStreaming, sourceHtml, textosParaLinks, dadosDoProcesso, params.sidekick])
 
     const controlsContent = useMemo(() => (
         <>
@@ -510,7 +661,7 @@ export default function Chat(params: { definition: PromptDefinitionType, data: P
         </>
     ), [messagesContent, controlsContent])
 
-    return (<article className={params.sidekick ? 'sidekick-container' : (messages.find(m => m.role === 'assistant') ? '' : 'd-print-none h-print')}>
+    return (<article ref={articleRef} className={params.sidekick ? 'sidekick-container' : (messages.find(m => m.role === 'assistant') ? '' : 'd-print-none h-print')}>
         {params.sidekick
             ? <>
                 <div className="sidekick-chat-box pb-3">

@@ -137,7 +137,7 @@ export function mapPdpjToSimplified(processo: PdpjInput): InteropProcessoType[] 
 
         // Extract basic process information
         const processoSimplificado: InteropProcessoType = {
-            numeroProcesso: processo.numeroProcesso,
+            numeroProcesso: processo.id,
             tribunal: {
                 sigla: tramitacao.tribunal.sigla,
                 nome: tramitacao.tribunal.nome,
