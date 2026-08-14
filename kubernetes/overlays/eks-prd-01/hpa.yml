@@ -9,7 +9,7 @@ spec:
     kind: Deployment
     name: apoia
   minReplicas: 2
-  maxReplicas: 10
+  maxReplicas: 6
   metrics:
   - type: Resource
     resource:
