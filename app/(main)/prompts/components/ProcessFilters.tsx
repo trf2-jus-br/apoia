@@ -4,6 +4,8 @@ import { Instance, InstanceKeyType, Matter, Scope } from "@/lib/proc/process-typ
 import { usePromptContext } from "../context/PromptContext"
 import { FaseProcessual } from "@/lib/proc/combinacoes"
 import { IAPromptList } from "@/lib/db/mysql-types"
+import { modeFromPathname } from "@/lib/utils/mode-url"
+import { usePathname } from 'next/navigation'
 
 const Fase = ({ fase }: { fase: string | undefined }) => {
     if (!fase) return null
@@ -32,6 +34,9 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
         setMatter,
         faseAtual,
     } = usePromptContext()
+
+    const mode = modeFromPathname(usePathname())
+
     return (
         <div className="bg-primary text-white">
             <Container className="p-2 pb-3" fluid={false}>
@@ -105,57 +110,59 @@ export function ProcessFilters({ singleExecutablePrompt, onExecute }: { singleEx
                             style={{ width: '6em' }}
                         />
                     </div>
-                    <div className="col col-auto">
-                        <FormLabel className="mb-0" htmlFor="segmento">Segmento</FormLabel>
-                        <FormSelect
-                            id="segmento"
-                            value={scope}
-                            onChange={(e) => setScope(e.target.value)}
-                            className={`form-select ${scope ? ' bg-warning' : ''}`}
-                            style={{ width: '6em' }}
-                        >
-                            <option value="">Todos</option>
-                            {enumSorted(Scope).map((s) => (
-                                <option key={`key-scope-${s.value.name}`} value={s.value.name}>
-                                    {s.value.descr}
-                                </option>
-                            ))}
-                        </FormSelect>
-                    </div>
-                    <div className="col col-auto">
-                        <FormLabel className="mb-0" htmlFor="instancia">Instância</FormLabel>
-                        <FormSelect
-                            id="instancia"
-                            value={instance}
-                            onChange={(e) => setInstance(e.target.value as InstanceKeyType | undefined)}
-                            className={`form-select ${instance ? ' bg-warning' : ''}`}
-                            style={{ width: '6em' }}
-                        >
-                            <option value="">Todas</option>
-                            {enumSorted(Instance).map((s) => (
-                                <option key={`key-instance-${s.value.name}`} value={s.value.name}>
-                                    {s.value.descr}
-                                </option>
-                            ))}
-                        </FormSelect>
-                    </div>
-                    <div className="col col-auto">
-                        <FormLabel className="mb-0" htmlFor="natureza">Natureza</FormLabel>
-                        <FormSelect
-                            id="natureza"
-                            value={matter}
-                            onChange={(e) => setMatter(e.target.value)}
-                            className={`form-select ${matter ? ' bg-warning' : ''}`}
-                            style={{ width: '6em' }}
-                        >
-                            <option value="">Todas</option>
-                            {enumSorted(Matter).map((s) => (
-                                <option key={`key-matter-${s.value.name}`} value={s.value.name}>
-                                    {s.value.descr}
-                                </option>
-                            ))}
-                        </FormSelect>
-                    </div>
+                    {mode !== 'ADMINISTRATIVO' && <>
+                        <div className="col col-auto">
+                            <FormLabel className="mb-0" htmlFor="segmento">Segmento</FormLabel>
+                            <FormSelect
+                                id="segmento"
+                                value={scope}
+                                onChange={(e) => setScope(e.target.value)}
+                                className={`form-select ${scope ? ' bg-warning' : ''}`}
+                                style={{ width: '6em' }}
+                            >
+                                <option value="">Todos</option>
+                                {enumSorted(Scope).map((s) => (
+                                    <option key={`key-scope-${s.value.name}`} value={s.value.name}>
+                                        {s.value.descr}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                        </div>
+                        <div className="col col-auto">
+                            <FormLabel className="mb-0" htmlFor="instancia">Instância</FormLabel>
+                            <FormSelect
+                                id="instancia"
+                                value={instance}
+                                onChange={(e) => setInstance(e.target.value as InstanceKeyType | undefined)}
+                                className={`form-select ${instance ? ' bg-warning' : ''}`}
+                                style={{ width: '6em' }}
+                            >
+                                <option value="">Todas</option>
+                                {enumSorted(Instance).map((s) => (
+                                    <option key={`key-instance-${s.value.name}`} value={s.value.name}>
+                                        {s.value.descr}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                        </div>
+                        <div className="col col-auto">
+                            <FormLabel className="mb-0" htmlFor="natureza">Natureza</FormLabel>
+                            <FormSelect
+                                id="natureza"
+                                value={matter}
+                                onChange={(e) => setMatter(e.target.value)}
+                                className={`form-select ${matter ? ' bg-warning' : ''}`}
+                                style={{ width: '6em' }}
+                            >
+                                <option value="">Todas</option>
+                                {enumSorted(Matter).map((s) => (
+                                    <option key={`key-matter-${s.value.name}`} value={s.value.name}>
+                                        {s.value.descr}
+                                    </option>
+                                ))}
+                            </FormSelect>
+                        </div></>
+                    }
                 </FormGroup>
             </Container>
         </div>
