@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { IAPromptList, IALibrary } from "@/lib/db/mysql-types"
+import { IAPromptList, IALibraryList } from "@/lib/db/mysql-types"
 import { slugify } from "@/lib/utils/utils"
 import { decodeEnumParam, filterPrompts, findPromptFromParam } from "../utils/promptFilters"
 import { Instance, InstanceKeyType, Matter, Scope } from "@/lib/proc/process-types"
@@ -31,7 +31,7 @@ export interface UsePromptStateResult {
     setSinkFromURL: (sink: SinkFromURLType | null) => void
     sinkButtonText: string | null
     setSinkButtonText: (message: string | null) => void
-    allLibraryDocuments: IALibrary[]
+    allLibraryDocuments: IALibraryList[]
     promptInitialized: boolean
     sourcePayload: SourcePayloadType | null
     setSourcePayload: (payload: SourcePayloadType | null) => void
@@ -81,7 +81,7 @@ export function usePromptState(
     const [matter, setMatter] = useState<string | undefined>()
     const [promptInitialized, setPromptInitialized] = useState(false)
     const [pieceContent, setPieceContent] = useState({})
-    const [allLibraryDocuments, setAllLibraryDocuments] = useState<IALibrary[]>([])
+    const [allLibraryDocuments, setAllLibraryDocuments] = useState<IALibraryList[]>([])
     const [activeTab, setActiveTab] = useState<string>('principal')
     const [sourceFromURL, setSourceFromURL] = useState<string | null>(null)
     const [sinkFromURL, setSinkFromURL] = useState<SinkFromURLType | null>(null)

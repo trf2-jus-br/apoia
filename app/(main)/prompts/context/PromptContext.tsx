@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, ReactNode, useMemo } from 'react'
-import { IAPromptList, IALibrary } from '@/lib/db/mysql-types'
+import { IAPromptList, IALibraryList } from '@/lib/db/mysql-types'
 import { DadosDoProcessoType, InstanceKeyType } from '@/lib/proc/process-types'
 import { useProcessData } from '../hooks/useProcessData'
 import { usePromptState } from '../hooks/usePromptState'
@@ -44,7 +44,7 @@ interface PromptContextValue {
     setSinkFromURL: (sink: SinkFromURLType | null) => void
     sinkButtonText: string | null
     setSinkButtonText: (message: string | null) => void
-    allLibraryDocuments: IALibrary[]
+    allLibraryDocuments: IALibraryList[]
     promptInitialized: boolean
     sourcePayload: SourcePayloadType | null
     setSourcePayload: (payload: SourcePayloadType | null) => void

@@ -50,6 +50,15 @@
 - `category` (antigo `kind`) é nullable e atualmente setado como NULL
 - `mode` categoriza o prompt por modo de operação (JUDICIAL/ADMINISTRATIVO; NULL = ambos)
 
+### Tabela `ia_library` (Biblioteca de Documentos)
+- Versionamento como prompts: `base_id`/`uuid`/`is_latest`; editar (`updateLibrary`) cria nova versão (INSERT) e move anexos/exemplos para a nova linha; `share` é propriedade do documento e vale para todas as versões
+- `share` controla visibilidade: PADRAO (curadoria da Apoia, setado só por moderador), PUBLICO, NAO_LISTADO, PRIVADO (default)
+- Acessibilidade de leitura (todos os reads do `LibraryDao`): próprio OU favoritado OU `share IN (PADRAO, PUBLICO)`; escrita/exclusão restritas ao dono
+- Favoritos (`ia_library_favorite`) por **uuid** (`library_uuid`, dual-write como `prompt_uuid` na migration-020); links de compartilhamento/favoritar usam `/library/{uuid}/set-favorite` — ids sequenciais não funcionam mais
+- Auto-inclusão em prompts (`defaultLibraryDocumentIds` em `lib/ai/library-defaults.ts`, usada por client e server): `inclusion=SIM` próprio/favoritado + casamento `slugify(título) === slug do prompt` com prioridade **próprio > favoritado > PADRAO**; docs PADRAO só entram via casamento de nome (nunca entram em todos os prompts)
+- `ChooseLibrary` lista apenas próprios + favoritados + PADRAO com slug casante (`documentsForChooseLibrary`); coluna "Origem" diferencia Meu/Favorito/Padrão da Apoia; descoberta de docs PADRAO/PUBLICO de terceiros é em `/library` (tabs Principais/Não Avaliados)
+- Páginas `set-standard|set-public|set-private|set-unlisted` têm guard `isUserModerator`; rota `/api/v1/library` só aceita `share=PADRAO` de moderador
+
 ### Tabela `ia_ticket` (Sistema de Chamados)
 - PK `id` é **UUID** gerada pela aplicação (`crypto.randomUUID()` em `TicketDao.createTicket`); funciona como protocolo do chamado
 - Snapshot dos dados do solicitante em colunas próprias (`username`, `user_name`, `user_email`, `system`, `court_id`); nomes de tribunal são resolvidos em tempo de exibição via `CourtDao.getCourtById` (cache local)

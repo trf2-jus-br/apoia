@@ -1,6 +1,6 @@
 'use client'
 
-import { IALibrary, IALibraryInclusion } from "@/lib/db/mysql-types";
+import { IALibraryList } from "@/lib/db/mysql-types";
 import { PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
 import { ReactNode, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -21,7 +21,7 @@ import { usePromptContext } from "./context/PromptContext";
 import { useAppContext } from "@/app/context/appContext";
 import Listen from "@/components/slots/listen";
 import devLog from "@/lib/utils/log";
-import { slugify } from "@/lib/utils/utils";
+import { defaultLibraryDocumentIds as calcDefaultLibraryDocumentIds, documentsForChooseLibrary } from "@/lib/ai/library-defaults";
 import { useModeUrl } from "@/lib/utils/use-mode-url";
 import pLimit from "p-limit";
 
@@ -59,7 +59,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     if (!prompt || !dadosDoProcesso) return null
     const [selectedPieces, setSelectedPieces] = useState<PecaType[] | null>(null)
     const [defaultPieceIds, setDefaultPieceIds] = useState<string[] | null>(null)
-    const [selectedLibraryDocuments, setSelectedLibraryDocuments] = useState<IALibrary[] | null>(null)
+    const [selectedLibraryDocuments, setSelectedLibraryDocuments] = useState<IALibraryList[] | null>(null)
     const [defaultLibraryDocumentIds, setDefaultLibraryDocumentIds] = useState<string[] | null>(null)
     const [loadingPiecesProgress, setLoadingPiecesProgress] = useState(-1)
     const [requests, setRequests] = useState<GeneratedContent[]>([])
@@ -210,9 +210,10 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     useEffect(() => {
         if (!allLibraryDocuments || !Array.isArray(allLibraryDocuments) || allLibraryDocuments.length === 0) return
 
-        // Compute automatic default selection for baseline (documents with inclusion === SIM)
-        const autoDefault = allLibraryDocuments.filter(d => d.inclusion === IALibraryInclusion.SIM  || prompt?.slug === slugify(d.title))
-        setDefaultLibraryDocumentIds(autoDefault.map(d => d.id.toString()))
+        // Default calculado sobre a lista completa visível: inclusion=SIM próprio/favoritado
+        // + casamento de nome com o slug do prompt (próprio > favoritado > PADRAO)
+        const autoDefaultIds = calcDefaultLibraryDocumentIds(allLibraryDocuments, prompt?.slug)
+        setDefaultLibraryDocumentIds(autoDefaultIds)
 
         // If URL has explicit 'library' IDs (hyphen-separated), prefer them over automatic selection
         const libraryParam = searchParams.get('library')
@@ -225,8 +226,8 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
             return
         }
 
-        // Always set the auto default (either autoDefault or empty array if no documents with inclusion=SIM)
-        setSelectedLibraryDocuments(autoDefault)
+        // Always set the auto default (either autoDefault or empty array if no document matches)
+        setSelectedLibraryDocuments(allLibraryDocuments.filter(d => autoDefaultIds.includes(d.id.toString())))
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [allLibraryDocuments, searchParams])
 
@@ -251,7 +252,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         {children}
         {allLibraryDocuments && Array.isArray(allLibraryDocuments) && allLibraryDocuments.length > 0 && selectedLibraryDocuments !== null && <>
             <ChooseLibrary
-                allDocuments={allLibraryDocuments}
+                allDocuments={documentsForChooseLibrary(allLibraryDocuments, prompt?.slug)}
                 selectedDocuments={selectedLibraryDocuments}
                 onSave={(documentIds) => { setRequests([]); changeSelectedLibraryDocuments(documentIds) }}
                 onStartEditing={() => { setChoosingLibrary(true) }}

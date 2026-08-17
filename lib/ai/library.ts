@@ -1,6 +1,6 @@
 import { LibraryDao } from "../db/dao"
 import { IALibrary, IALibraryInclusion } from "../db/mysql-types"
-import { slugify } from "../utils/utils"
+import { defaultLibraryDocumentIds } from "./library-defaults"
 
 /**
  * Obtém e formata os documentos da biblioteca do usuário atual para inclusão em prompts.
@@ -57,13 +57,17 @@ export async function getLibraryDocuments(promptSlug?: string, ids?: string[]): 
         // Filtra documentos que têm conteúdo (já filtrado no banco, mas mantendo por segurança/tipagem)
         const validDocuments = documents.filter(doc => doc.content_markdown)
 
+        // Sem seleção explícita, o default segue a mesma regra de prioridade do client
+        // (inclusion=SIM próprio/favoritado + casamento de nome com o slug do prompt).
+        const defaultIds = ids === undefined
+            ? defaultLibraryDocumentIds(validDocuments, promptSlug).map(id => parseInt(id))
+            : safeNumericIds
+
         // Separa documentos por tipo de inclusão
-        const alwaysInclude = validDocuments.filter(doc =>
-            ((doc.inclusion === IALibraryInclusion.SIM || promptSlug === slugify(doc.title)) && ids === undefined) || safeNumericIds.includes(doc.id)
-        )
+        const alwaysInclude = validDocuments.filter(doc => defaultIds.includes(doc.id))
 
         const contextualDocuments = validDocuments.filter(doc =>
-            doc.inclusion === IALibraryInclusion.CONTEXTUAL && !safeNumericIds.includes(doc.id)
+            doc.inclusion === IALibraryInclusion.CONTEXTUAL && !defaultIds.includes(doc.id)
         )
 
         // Adiciona documentos com inclusão automática

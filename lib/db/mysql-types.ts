@@ -501,6 +501,20 @@ export const IALibraryInclusionLabels: Record<IALibraryInclusion, string> = {
     [IALibraryInclusion.CONTEXTUAL]: 'Contextual'
 }
 
+export enum IALibraryShare {
+    PADRAO = 'PADRAO',
+    PUBLICO = 'PUBLICO',
+    NAO_LISTADO = 'NAO_LISTADO',
+    PRIVADO = 'PRIVADO'
+}
+
+export const IALibraryShareLabels: Record<IALibraryShare, string> = {
+    [IALibraryShare.PADRAO]: 'Padrão da Apoia',
+    [IALibraryShare.PUBLICO]: 'Público',
+    [IALibraryShare.NAO_LISTADO]: 'Não Listado',
+    [IALibraryShare.PRIVADO]: 'Privado',
+}
+
 export type IAModelSubtype = 'PRIMEIRO_DESPACHO' | 'SENTENCA' | 'VOTO'
 
 export const IAModelSubtypeLabels: Record<IAModelSubtype, string> = {
@@ -520,6 +534,10 @@ export type IALibrary = {
     content_binary: Buffer | null
     inclusion: IALibraryInclusion | null
     context: string | null
+    share: IALibraryShare | string
+    base_id: number
+    uuid: string
+    is_latest: number
     created_at: Date | null
     created_by: number | null
 }
@@ -533,6 +551,14 @@ export type IALibraryToInsert = {
     model_subtype?: IAModelSubtype | null
     inclusion?: IALibraryInclusion | null
     context?: string | null
+    share?: IALibraryShare | string
+}
+
+// Retorno de listLibraryHeaders e insumo da UI (/library e ChooseLibrary)
+export type IALibraryList = Omit<IALibrary, 'content_markdown' | 'content_binary'> & {
+    is_mine: boolean
+    is_favorite: number
+    favorite_count: number
 }
 
 export type IALibraryExample = {

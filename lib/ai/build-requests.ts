@@ -75,6 +75,7 @@ export const buildRequests = async (prompt: IAPrompt, documentosDaBiblioteca: st
     if (prompt?.content?.system_prompt || prompt?.content?.prompt || prompt?.content?.template) {
         const definition: PromptDefinitionType = {
             kind: `prompt-${prompt.id}`,
+            name: prompt.name,
             prompt: prompt.content.prompt,
             systemPrompt: prompt.content.system_prompt,
             jsonSchema: prompt.content.json_schema,

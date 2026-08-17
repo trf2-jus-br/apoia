@@ -68,6 +68,7 @@ async function resolveApiPrompt(kind: string, promptSlug?: string, promptId?: nu
     const definition: PromptDefinitionType =
         prompt ? {
             kind: prompt.slug || prompt.category || `prompt-${prompt.id}`,
+            name: prompt.name,
             systemPrompt: prompt.content.system_prompt || undefined,
             prompt: prompt.content.prompt || '',
             jsonSchema: prompt.content.json_schema || undefined,

@@ -6,14 +6,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react"
 import TableRecords from '@/components/table-records'
-import { IALibrary } from "@/lib/db/mysql-types";
+import { IALibraryList } from "@/lib/db/mysql-types";
 import { Button } from "react-bootstrap";
 
 const canonicalLibrary = (libraryIds: string[]) => libraryIds.sort((a, b) => a.localeCompare(b)).join(',')
 
 function ChooseLibraryForm({ allDocuments, selectedDocuments, onSave, onClose, readyToStartAI }: {
-    allDocuments: IALibrary[],
-    selectedDocuments: IALibrary[],
+    allDocuments: IALibraryList[],
+    selectedDocuments: IALibraryList[],
     onSave: (documentIds: string[]) => void,
     onClose: () => void,
     readyToStartAI: boolean
@@ -56,8 +56,8 @@ export const ChooseLibraryLoading = () => {
 }
 
 export default function ChooseLibrary({ allDocuments, selectedDocuments, onSave, onStartEditing, onEndEditing, readyToStartAI, baselineDefaultIds }: {
-    allDocuments: IALibrary[],
-    selectedDocuments: IALibrary[],
+    allDocuments: IALibraryList[],
+    selectedDocuments: IALibraryList[],
     onSave: (documentIds: string[]) => void,
     onStartEditing: () => void,
     onEndEditing: () => void,

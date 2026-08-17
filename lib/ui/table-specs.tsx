@@ -184,6 +184,16 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                     cell: data => data.row.original.title
                 },
                 {
+                    id: 'origem', header: 'Origem', enableSorting: false, cell: data => {
+                        const doc = data.row.original
+                        if (doc.is_mine)
+                            return <span title="Documento próprio"><FontAwesomeIcon icon={faUser} className="me-1" aria-hidden="true" />Meu</span>
+                        if (doc.is_favorite)
+                            return <span title="Documento de outro usuário, favoritado por você"><FontAwesomeIcon icon={faHeart} className="me-1" aria-hidden="true" />Favorito</span>
+                        return <span title="Documento padrão da Apoia"><FontAwesomeIcon icon={faStar} className="me-1" aria-hidden="true" />Padrão da Apoia</span>
+                    }
+                },
+                {
                     header: 'Inclusão', accessorKey: 'inclusion', enableSorting: true, className: 'd-none d-lg-table-cell', cell: data => {
                         const { IALibraryInclusionLabels } = require('@/lib/db/mysql-types');
                         return data.row.original.inclusion ? IALibraryInclusionLabels[data.row.original.inclusion] : IALibraryInclusionLabels.NAO;
@@ -197,29 +207,41 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
         Library: {
             columns: [
                 {
-                    header: ' ', accessorKey: '', style: { textAlign: "center", width: "1%" }, enableSorting: false, cell: data => data.row.original.is_mine
-                        ? <span className="text-secondary opacity-50"><FontAwesomeIcon icon={faUserSolid} /></span>
-                        : <ModeLink prefetch={false} href={`/library/${data.row.original.id}/reset-favorite`} className="text-primary" title="Remover da biblioteca"><FontAwesomeIcon icon={faHeartSolid} /></ModeLink>
+                    id: 'acoes', header: <span className="visually-hidden">Ações</span>, accessorKey: '', style: { textAlign: "center", width: "1%" }, enableSorting: false, cell: data => {
+                        const doc = data.row.original
+                        if (doc.is_mine)
+                            return <span className="text-secondary opacity-50" title="Seu documento"><FontAwesomeIcon icon={faUserSolid} aria-hidden="true" /></span>
+                        if (doc.is_favorite)
+                            return <ModeLink prefetch={false} href={`/library/${doc.uuid}/reset-favorite`} className="text-primary" title="Remover dos favoritos" aria-label="Remover dos favoritos"><FontAwesomeIcon icon={faHeartSolid} aria-hidden="true" /></ModeLink>
+                        return <ModeLink prefetch={false} href={`/library/${doc.uuid}/set-favorite`} className="text-secondary opacity-50" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos"><FontAwesomeIcon icon={faHeart} aria-hidden="true" /></ModeLink>
+                    }
                 },
                 {
                     header: 'Título',
                     accessorKey: 'title',
                     enableSorting: true,
                     cell: data => {
-                        const title = data.row.original.title || 'Sem título';
+                        const doc = data.row.original;
+                        const title = doc.title || 'Sem título';
                         return (
                             <>
-                                <Link href={`${pathname}/${data.row.original.id}/edit`} className="text-primary">
+                                <Link href={`${pathname}/${doc.id}/edit`} className="text-primary">
                                     {title}
                                 </Link>
                                 <Dropdown style={{ display: "inline", cursor: 'pointer' }}>
-                                    <Dropdown.Toggle as="a" className="m-1" id={`dropdown-${data.row.original.id}`} />
+                                    <Dropdown.Toggle as="a" className="m-1" id={`dropdown-${doc.id}`} />
                                     <Dropdown.Menu>
-                                        <Dropdown.Item href={`${pathname}/${data.row.original.id}/edit`}>{data.row.original.is_mine ? 'Editar' : 'Visualizar'}</Dropdown.Item>
-                                        <Dropdown.Item onClick={() => onClick('copiar link para compartilhar', data.row.original)}>Copiar link para compartilhar</Dropdown.Item>
-                                        {!data.row.original.is_mine && (
-                                            <Dropdown.Item href={modeUrl(`/library/${data.row.original.id}/reset-favorite`)}>Remover da biblioteca</Dropdown.Item>
-                                        )}
+                                        <Dropdown.Item href={`${pathname}/${doc.id}/edit`}>{doc.is_mine ? 'Editar' : 'Visualizar'}</Dropdown.Item>
+                                        <Dropdown.Item onClick={() => onClick('copiar link para compartilhar', doc)}>Copiar link para compartilhar</Dropdown.Item>
+                                        {!doc.is_favorite && <Dropdown.Item href={modeUrl(`/library/${doc.uuid}/set-favorite`)}>Favoritar</Dropdown.Item>}
+                                        {!!doc.is_favorite && <Dropdown.Item href={modeUrl(`/library/${doc.uuid}/reset-favorite`)}>Desfavoritar</Dropdown.Item>}
+                                        {options?.isModerator && <>
+                                            <Dropdown.Divider />
+                                            <Dropdown.Item href={modeUrl(`/library/${doc.uuid}/set-standard`)} disabled={doc.share === 'PADRAO'}>Definir como Padrão da Apoia</Dropdown.Item>
+                                            <Dropdown.Item href={modeUrl(`/library/${doc.uuid}/set-public`)} disabled={doc.share === 'PUBLICO'}>Tornar Público</Dropdown.Item>
+                                            <Dropdown.Item href={modeUrl(`/library/${doc.uuid}/set-unlisted`)} disabled={doc.share === 'NAO_LISTADO'}>Tornar Não Listado</Dropdown.Item>
+                                            <Dropdown.Item href={modeUrl(`/library/${doc.uuid}/set-private`)} disabled={doc.share === 'PRIVADO'}>Tornar Privado</Dropdown.Item>
+                                        </>}
                                     </Dropdown.Menu>
                                 </Dropdown>
                             </>
@@ -235,10 +257,16 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 {
                     header: 'Inclusão', accessorKey: 'inclusion', enableSorting: true, cell: data => {
                         const { IALibraryInclusionLabels } = require('@/lib/db/mysql-types');
-                        const React = require('react');
                         return data.row.original.inclusion ? IALibraryInclusionLabels[data.row.original.inclusion] : IALibraryInclusionLabels.NAO;
                     }
                 },
+                {
+                    header: 'Compart.', accessorKey: 'share', enableSorting: true, style: { textAlign: "center" }, cell: data => {
+                        const { IALibraryShareLabels } = require('@/lib/db/mysql-types');
+                        return IALibraryShareLabels[data.row.original.share] || 'Não Encontrado';
+                    }
+                },
+                { id: 'favoritos', header: <span title="Favoritos"><FontAwesomeIcon icon={faHeart} aria-hidden="true" /><span className="visually-hidden">Favoritos</span></span>, accessorKey: 'favorite_count', enableSorting: true, style: { textAlign: "center" }, cell: data => Number(data.row.original.favorite_count || 0) },
                 { header: 'Contexto', accessorKey: 'context', enableSorting: true, cell: data => data.row.original.context ? (data.row.original.context.length > 50 ? data.row.original.context.substring(0, 50) + '...' : data.row.original.context) : '-' },
             ],
             tableClassName: 'table table-bordered table-hover mb-0',

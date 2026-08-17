@@ -9,7 +9,7 @@ import LibraryAttachments from '@/components/library-attachments'
 import { deleteLibraryAction } from '@/app/(main)/library/actions'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
-import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
+import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IALibraryShare, IALibraryShareLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
 import { useRouter } from 'next/navigation'
 import ProcessTextarea from '@/components/ProcessTextarea'
 import { useModeUrl } from '@/lib/utils/use-mode-url'
@@ -58,7 +58,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
     setPending(true)
     try {
       if (data.id) {
-        // Update existing record
+        // Update existing record (cria nova versão do documento)
         await fetch(modeUrl(`/api/v1/library/${data.id}`), {
           method: 'PATCH',
           body: JSON.stringify({
@@ -68,6 +68,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
             model_subtype: data.model_subtype,
             inclusion: data.inclusion,
             context: data.context,
+            share: data.share || IALibraryShare.PRIVADO,
           })
         })
       } else {
@@ -86,6 +87,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
           const form = new FormData()
           form.append('kind', data.kind)
           form.append('title', data.title || '')
+          form.append('share', data.share || IALibraryShare.PRIVADO)
           form.append('file', file)
           res = await fetch(modeUrl('/api/v1/library'), { method: 'POST', body: form })
         } else {
@@ -99,6 +101,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
               model_subtype: data.model_subtype,
               inclusion: data.inclusion,
               context: data.context,
+              share: data.share || IALibraryShare.PRIVADO,
             })
           })
         }
@@ -223,6 +226,18 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
         </Form.Group>
       </div>
 
+      <div className="col-2">
+        <Form.Group className="mb-3">
+          <Form.Label>Compartilhamento</Form.Label>
+          <Form.Select value={data.share || IALibraryShare.PRIVADO} onChange={e => setData({ ...data, share: e.target.value as IALibraryShare })} disabled={isReadOnly}>
+            <option value={IALibraryShare.PADRAO} disabled>{IALibraryShareLabels[IALibraryShare.PADRAO]} (somente moderadores)</option>
+            {Object.entries(IALibraryShareLabels).filter(([value]) => value !== IALibraryShare.PADRAO).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+      </div>
+
       <div className="col-12" style={{ display: data.inclusion !== IALibraryInclusion.CONTEXTUAL ? 'none' : 'block' }}>
         <Form.Group className="mb-3">
           <Form.Label>Contexto</Form.Label>
@@ -230,6 +245,15 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
           <div className="form-text text-muted">Explique para a IA em que contexto esse documento deve ser automaticamente considerado. Exemplo: &quot;Processo de propriedade industrial.&quot;</div>
         </Form.Group>
       </div>
+
+      {(data.share || IALibraryShare.PRIVADO) === IALibraryShare.PUBLICO && !isReadOnly && (
+        <div className="col-12">
+          <div className="alert alert-danger mb-0 mt-3">
+            <p><strong>Atenção:</strong> Um documento público fica visível para todos os usuários.</p>
+            <p className="mb-0">Para que seu documento permaneça público, certifique-se de <strong>revisar o conteúdo</strong> antes de disponibilizá-lo, a fim de verificar que ele apresenta as informações esperadas.</p>
+          </div>
+        </div>
+      )}
 
       <div className="col-12">
         {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.GUIDELINE) && (
