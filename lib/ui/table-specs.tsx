@@ -10,7 +10,6 @@ import { RatingCell } from "@/components/RatingCell"
 import devLog from "../utils/log"
 import { wrapTitle } from "@/app/(main)/prompts/components/PromptButton"
 import { useModeUrl } from "../utils/use-mode-url"
-import ModeLink from "@/components/mode-link"
 
 
 const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void, options?: any) => {
@@ -209,11 +208,15 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                 {
                     id: 'acoes', header: <span className="visually-hidden">Ações</span>, accessorKey: '', style: { textAlign: "center", width: "1%" }, enableSorting: false, cell: data => {
                         const doc = data.row.original
-                        if (doc.is_mine)
-                            return <span className="text-secondary opacity-50" title="Seu documento"><FontAwesomeIcon icon={faUserSolid} aria-hidden="true" /></span>
-                        if (doc.is_favorite)
-                            return <ModeLink prefetch={false} href={`/library/${doc.uuid}/reset-favorite`} className="text-primary" title="Remover dos favoritos" aria-label="Remover dos favoritos"><FontAwesomeIcon icon={faHeartSolid} aria-hidden="true" /></ModeLink>
-                        return <ModeLink prefetch={false} href={`/library/${doc.uuid}/set-favorite`} className="text-secondary opacity-50" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos"><FontAwesomeIcon icon={faHeart} aria-hidden="true" /></ModeLink>
+                        const isFavorite = doc.is_favorite
+
+                        return isFavorite
+                            ? <button type="button" className="btn btn-link p-0 text-primary" aria-label={doc.is_mine ? "Remover dos meus documentos" : "Remover dos favoritos"} onClick={() => onClick('favoritar', { uuid: doc.uuid, action: 'reset' })}>
+                                <FontAwesomeIcon className="me-1" icon={doc.is_mine ? faUserSolid : faHeartSolid} />
+                            </button>
+                            : <button type="button" className="btn btn-link p-0 text-secondary opacity-50" aria-label={doc.is_mine ? "Adicionar aos meus documentos" : "Adicionar aos favoritos"} onClick={() => onClick('favoritar', { uuid: doc.uuid, action: 'set' })}>
+                                <FontAwesomeIcon className="me-1" icon={doc.is_mine ? faUser : faHeart} />
+                            </button>
                     }
                 },
                 {
@@ -260,6 +263,7 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                         return data.row.original.inclusion ? IALibraryInclusionLabels[data.row.original.inclusion] : IALibraryInclusionLabels.NAO;
                     }
                 },
+                { header: 'Contexto', accessorKey: 'context', enableSorting: true, cell: data => data.row.original.context ? (data.row.original.context.length > 50 ? data.row.original.context.substring(0, 50) + '...' : data.row.original.context) : '-' },
                 {
                     header: 'Compart.', accessorKey: 'share', enableSorting: true, style: { textAlign: "center" }, cell: data => {
                         const { IALibraryShareLabels } = require('@/lib/db/mysql-types');
@@ -267,9 +271,8 @@ const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void,
                     }
                 },
                 { id: 'favoritos', header: <span title="Favoritos"><FontAwesomeIcon icon={faHeart} aria-hidden="true" /><span className="visually-hidden">Favoritos</span></span>, accessorKey: 'favorite_count', enableSorting: true, style: { textAlign: "center" }, cell: data => Number(data.row.original.favorite_count || 0) },
-                { header: 'Contexto', accessorKey: 'context', enableSorting: true, cell: data => data.row.original.context ? (data.row.original.context.length > 50 ? data.row.original.context.substring(0, 50) + '...' : data.row.original.context) : '-' },
             ],
-            tableClassName: 'table table-bordered table-hover mb-0',
+            tableClassName: 'table table-striped table-border-sides mb-0',
             pageSizes: [10, 20, 50, 100],
         },
 

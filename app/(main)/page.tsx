@@ -39,7 +39,7 @@ export default async function HomePage() {
             description: "Converse com a IA sobre assuntos administrativos (RH, Contratos, etc.)",
             href: "/chat?prompt=chat-administrativo",
             color: "text-success",
-            //mode: 'ADMINISTRATIVO'
+            mode: 'ADMINISTRATIVO'
         },
         {
             icon: faDatabase,
@@ -47,6 +47,13 @@ export default async function HomePage() {
             description: "Banco de Prompts para Inteligência Artificial por categoria jurídica",
             href: "/prompts",
             color: "text-info"
+        },
+        {
+            icon: faBookOpen,
+            title: "Biblioteca",
+            description: "Acesse sua coleção de documentos e recursos jurídicos",
+            href: "/library",
+            color: "text-library"
         },
         {
             icon: faList,
@@ -121,13 +128,6 @@ export default async function HomePage() {
             color: "text-library",
             betaOnly: true,
             mode: 'JUDICIAL'
-        },
-        {
-            icon: faBookOpen,
-            title: "Biblioteca",
-            description: "Acesse sua coleção de documentos e recursos jurídicos",
-            href: "/library",
-            color: "text-library"
         },
         {
             icon: faBoxArchive,

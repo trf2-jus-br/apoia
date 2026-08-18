@@ -509,7 +509,7 @@ export enum IALibraryShare {
 }
 
 export const IALibraryShareLabels: Record<IALibraryShare, string> = {
-    [IALibraryShare.PADRAO]: 'Padrão da Apoia',
+    [IALibraryShare.PADRAO]: 'Padrão',
     [IALibraryShare.PUBLICO]: 'Público',
     [IALibraryShare.NAO_LISTADO]: 'Não Listado',
     [IALibraryShare.PRIVADO]: 'Privado',

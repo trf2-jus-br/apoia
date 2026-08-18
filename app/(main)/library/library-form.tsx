@@ -230,7 +230,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
         <Form.Group className="mb-3">
           <Form.Label>Compartilhamento</Form.Label>
           <Form.Select value={data.share || IALibraryShare.PRIVADO} onChange={e => setData({ ...data, share: e.target.value as IALibraryShare })} disabled={isReadOnly}>
-            <option value={IALibraryShare.PADRAO} disabled>{IALibraryShareLabels[IALibraryShare.PADRAO]} (somente moderadores)</option>
+            <option value={IALibraryShare.PADRAO} disabled={false}>{IALibraryShareLabels[IALibraryShare.PADRAO]}</option>
             {Object.entries(IALibraryShareLabels).filter(([value]) => value !== IALibraryShare.PADRAO).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
@@ -245,15 +245,6 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
           <div className="form-text text-muted">Explique para a IA em que contexto esse documento deve ser automaticamente considerado. Exemplo: &quot;Processo de propriedade industrial.&quot;</div>
         </Form.Group>
       </div>
-
-      {(data.share || IALibraryShare.PRIVADO) === IALibraryShare.PUBLICO && !isReadOnly && (
-        <div className="col-12">
-          <div className="alert alert-danger mb-0 mt-3">
-            <p><strong>Atenção:</strong> Um documento público fica visível para todos os usuários.</p>
-            <p className="mb-0">Para que seu documento permaneça público, certifique-se de <strong>revisar o conteúdo</strong> antes de disponibilizá-lo, a fim de verificar que ele apresenta as informações esperadas.</p>
-          </div>
-        </div>
-      )}
 
       <div className="col-12">
         {(data.kind === IALibraryKind.MARKDOWN || data.kind === IALibraryKind.GUIDELINE) && (
@@ -292,6 +283,14 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
           </Form.Group>
         )}
       </div>
+      {(data.share || IALibraryShare.PRIVADO) === IALibraryShare.PUBLICO && !isReadOnly && (
+        <div className="col-12">
+          <div className="alert alert-danger mt-0 mb-3">
+            <p><strong>Atenção:</strong> Um documento público fica visível para todos os usuários.</p>
+            <p className="mb-0">Para que seu documento permaneça público, certifique-se de <strong>revisar o conteúdo</strong> antes de disponibilizá-lo, a fim de verificar que ele apresenta as informações esperadas.</p>
+          </div>
+        </div>
+      )}
       <div className="col-12">
         <div className="row">
           <div className="col">

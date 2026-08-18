@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { LibraryDao } from '@/lib/db/dao'
 import { IALibraryShare } from '@/lib/db/mysql-types'
 import { assertCurrentUser, isUserModerator } from '@/lib/user'
+import devLog from '@/lib/utils/log'
 
 export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
   await assertCurrentUser()
@@ -21,11 +22,14 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   if (body.share !== undefined) {
     if (!Object.values(IALibraryShare).includes(body.share as IALibraryShare))
       return NextResponse.json({ errormsg: 'Valor inválido para share' }, { status: 400 })
-    if (body.share === IALibraryShare.PADRAO && !(await isUserModerator(user)))
-      return NextResponse.json({ errormsg: 'Apenas moderadores podem definir documentos como PADRAO' }, { status: 403 })
   }
   const libraryId = await LibraryDao.resolveLibraryId(id)
   if (!libraryId) return NextResponse.json({ errormsg: 'Not found' }, { status: 404 })
+
+  const item = await LibraryDao.getLibraryById(id)
+  if (body.share === IALibraryShare.PADRAO && !(await isUserModerator(user)) && item?.share !== IALibraryShare.PADRAO)
+    return NextResponse.json({ errormsg: 'Apenas moderadores podem definir documentos como PADRAO' }, { status: 403 })
+
   const ok = await LibraryDao.updateLibrary(libraryId, body)
   if (!ok) return NextResponse.json({ errormsg: 'Not found' }, { status: 404 })
   return NextResponse.json({ status: 'OK' })
