@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     const form = await req.formData()
     const kind = String(form.get('kind') || '') as any
     const title = String(form.get('title') || '')
+    const author = form.get('author')
     const share = form.get('share')
     const file = form.get('file') as File | null
     if (!kind || !title) return NextResponse.json({ errormsg: 'kind e title são obrigatórios' }, { status: 400 })
@@ -43,17 +44,18 @@ export async function POST(req: Request) {
       content_binary = Buffer.from(bytes)
       fileContentType = file.type || 'application/octet-stream'
     }
-    const id = await LibraryDao.insertLibrary({ kind, title, content_type: fileContentType, content_binary, ...(share !== null ? { share: String(share) as IALibraryShare } : {}) })
+    const id = await LibraryDao.insertLibrary({ kind, title, author: author === null ? null : String(author) || null, content_type: fileContentType, content_binary, ...(share !== null ? { share: String(share) as IALibraryShare } : {}) })
     return NextResponse.json({ id })
   } else {
     const body = await req.json()
-    const { kind, title, content_type, content_markdown, model_subtype, inclusion, context, share } = body
+    const { kind, title, author, content_type, content_markdown, model_subtype, inclusion, context, share } = body
     if (!kind || !title) return NextResponse.json({ errormsg: 'kind e title são obrigatórios' }, { status: 400 })
     const shareError = await validateShare(share, user)
     if (shareError) return NextResponse.json({ errormsg: shareError }, { status: 403 })
     const id = await LibraryDao.insertLibrary({
       kind,
       title,
+      author: author ?? null,
       content_type: content_type ?? null,
       content_markdown: content_markdown ?? null,
       model_subtype: model_subtype ?? null,

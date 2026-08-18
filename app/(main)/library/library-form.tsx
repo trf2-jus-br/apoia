@@ -2,11 +2,12 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState, Suspense } from 'react'
-import { Button, Form, Modal, Table } from 'react-bootstrap'
+import { Button, Form, Modal, Table, Toast, ToastContainer } from 'react-bootstrap'
 import AiContent from '@/components/ai-content'
 import { findUnclosedMarking } from '@/lib/ai/template'
 import LibraryAttachments from '@/components/library-attachments'
 import { deleteLibraryAction } from '@/app/(main)/library/actions'
+import { playErrorSound } from '@/lib/sound'
 
 const EditorComp = dynamic(() => import('@/components/EditorComponent'), { ssr: false })
 import { IALibraryKind, IALibraryKindLabels, IALibraryInclusion, IALibraryInclusionLabels, IALibraryShare, IALibraryShareLabels, IAModelSubtype, IAModelSubtypeLabels } from '@/lib/db/mysql-types'
@@ -28,6 +29,7 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
   const [selecting, setSelecting] = useState<{ pn: string, pieces: any[] } | null>(null)
   const [selectedPieceId, setSelectedPieceId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
+  const [errorToast, setErrorToast] = useState<string | null>(null)
   const isGuideline = data.kind === IALibraryKind.GUIDELINE
   const isReadOnly = data.id && !data.is_mine
 
@@ -57,12 +59,15 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
 
     setPending(true)
     try {
+      let res: Response
+
       if (data.id) {
         // Update existing record (cria nova versão do documento)
-        await fetch(modeUrl(`/api/v1/library/${data.id}`), {
+        res = await fetch(modeUrl(`/api/v1/library/${data.id}`), {
           method: 'PATCH',
           body: JSON.stringify({
             title: data.title,
+            author: data.author || null,
             content_markdown: data.content_markdown,
             content_type: data.content_type,
             model_subtype: data.model_subtype,
@@ -71,61 +76,67 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
             share: data.share || IALibraryShare.PRIVADO,
           })
         })
+      } else if (data.kind === IALibraryKind.ARQUIVO) {
+        if (!file) {
+          setFileError('Selecione um arquivo para enviar')
+          return
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          setFileError('Arquivo maior que 10MB')
+          return
+        }
+        const form = new FormData()
+        form.append('kind', data.kind)
+        form.append('title', data.title || '')
+        form.append('author', data.author || '')
+        form.append('share', data.share || IALibraryShare.PRIVADO)
+        form.append('file', file)
+        res = await fetch(modeUrl('/api/v1/library'), { method: 'POST', body: form })
       } else {
         // Create new record
-        let res: Response
-
-        if (data.kind === IALibraryKind.ARQUIVO) {
-          if (!file) {
-            setFileError('Selecione um arquivo para enviar')
-            return
-          }
-          if (file.size > 10 * 1024 * 1024) {
-            setFileError('Arquivo maior que 10MB')
-            return
-          }
-          const form = new FormData()
-          form.append('kind', data.kind)
-          form.append('title', data.title || '')
-          form.append('share', data.share || IALibraryShare.PRIVADO)
-          form.append('file', file)
-          res = await fetch(modeUrl('/api/v1/library'), { method: 'POST', body: form })
-        } else {
-          res = await fetch(modeUrl('/api/v1/library'), {
-            method: 'POST',
-            body: JSON.stringify({
-              kind: data.kind,
-              title: data.title,
-              content_markdown: data.content_markdown,
-              content_type: data.content_type,
-              model_subtype: data.model_subtype,
-              inclusion: data.inclusion,
-              context: data.context,
-              share: data.share || IALibraryShare.PRIVADO,
-            })
+        res = await fetch(modeUrl('/api/v1/library'), {
+          method: 'POST',
+          body: JSON.stringify({
+            kind: data.kind,
+            title: data.title,
+            author: data.author || null,
+            content_markdown: data.content_markdown,
+            content_type: data.content_type,
+            model_subtype: data.model_subtype,
+            inclusion: data.inclusion,
+            context: data.context,
+            share: data.share || IALibraryShare.PRIVADO,
           })
-        }
+        })
+      }
 
-        if (!res.ok) {
-          const j = await res.json()
-          console.error('Error creating library item:', j)
-          return
-        }
+      // Em caso de erro, exibe a mensagem da API e mantém o usuário na página de edição
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        console.error('Error saving library item:', j)
+        playErrorSound()
+        setErrorToast(j.errormsg || 'Erro ao salvar o documento')
+        return
+      }
 
-        // If staying on page, update state with new id
-        if (stayOnPage) {
-          const j = await res.json()
-          setData((d: any) => ({ ...d, id: j.id, is_mine: true }))
-          return
-        }
+      // If staying on page, update state with new id
+      if (!data.id && stayOnPage) {
+        const j = await res.json()
+        setData((d: any) => ({ ...d, id: j.id, is_mine: true }))
+        if (callback) callback()
+        return
       }
 
       if (!stayOnPage) {
         router.push(`/library`)
       }
+      if (callback) callback()
+    } catch (error) {
+      console.error('Erro ao salvar o documento:', error)
+      playErrorSound()
+      setErrorToast('Erro ao comunicar com o servidor')
     } finally {
       setPending(false)
-      if (callback) callback()
     }
   }
 
@@ -187,6 +198,14 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
         <Form.Group className="mb-3">
           <Form.Label>Título</Form.Label>
           <Form.Control value={data.title || ''} onChange={e => setData({ ...data, title: e.target.value })} disabled={isReadOnly} />
+        </Form.Group>
+      </div>
+
+      <div className="col-6">
+        <Form.Group className="mb-3">
+          <Form.Label>Autor</Form.Label>
+          <Form.Control value={data.author || ''} onChange={e => setData({ ...data, author: e.target.value })} disabled={isReadOnly} maxLength={64} />
+          <div className="form-text text-muted">Use maiúsculas e minúsculas.</div>
         </Form.Group>
       </div>
 
@@ -471,6 +490,15 @@ export default function LibraryForm({ record, promptDefinition }: { record: any,
           <Button variant="primary" onClick={addExamples} disabled={pending || !csv.trim()}>Confirmar</Button>
         </Modal.Footer>
       </Modal>
+
+      <ToastContainer position="bottom-end" className="p-3">
+        <Toast onClose={() => setErrorToast(null)} show={!!errorToast} delay={10000} autohide bg="danger">
+          <Toast.Header>
+            <strong className="me-auto">Atenção</strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">{errorToast}</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </div >
   )
 }

@@ -529,13 +529,14 @@ export type IALibrary = {
     kind: IALibraryKind
     model_subtype: IAModelSubtype | null
     title: string
+    author: string | null
     content_type: string | null
     content_markdown: string | null
     content_binary: Buffer | null
     inclusion: IALibraryInclusion | null
     context: string | null
     share: IALibraryShare | string
-    base_id: number
+    base_id: number | null
     uuid: string
     is_latest: number
     created_at: Date | null
@@ -545,6 +546,7 @@ export type IALibrary = {
 export type IALibraryToInsert = {
     kind: IALibraryKind
     title: string
+    author?: string | null
     content_type?: string | null
     content_markdown?: string | null
     content_binary?: Buffer | null

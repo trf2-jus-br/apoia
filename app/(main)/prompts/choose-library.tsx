@@ -30,7 +30,7 @@ function ChooseLibraryForm({ allDocuments, selectedDocuments, onSave, onClose, r
     const alteredDocuments = canonicalLibrary(selectedIds) !== canonicalOriginalDocuments
 
     return <div className="mt-4 mb-4 h-print">
-        <div className="alert alert-info pt-0">
+        <div className="alert alert-info pt-0 mb-0">
             <div className="row">
                 <div className="col-12">
                     <TableRecords records={allDocuments} spec="ChooseLibrary" options={{}} pageSize={10} selectedIds={selectedIds} onSelectdIdsChanged={onSelectedIdsChanged}>
@@ -44,6 +44,7 @@ function ChooseLibraryForm({ allDocuments, selectedDocuments, onSave, onClose, r
                 </div>
             </div>
         </div>
+        <p className="form-text text-muted mt-1 mb-3">São listados apenas os documentos criados por você, os seus favoritos e os documentos padrão da Apoia cujo título corresponde ao nome do prompt. Os demais documentos da Biblioteca podem ser incluídos aqui ao serem favoritados. Documentos com inclusão 'Sempre' e os relacionados ao prompt já vêm selecionados por padrão; os demais você escolhe manualmente.</p>
     </div>
 }
 
@@ -135,7 +136,7 @@ export default function ChooseLibrary({ allDocuments, selectedDocuments, onSave,
         } else {
             s += l[0] + ' + ' + (l.length - 1)
         }
-        return <p className="text-body-tertiary text-center h-print mb-0">{s} - <button type="button" className="btn btn-link p-0" onClick={() => { setEditing(true); onStartEditing() }} style={{marginTop: "-.35em"}}><span className="text-primary"><FontAwesomeIcon icon={faEdit} /> Alterar</span></button></p>
+        return <p className="text-body-tertiary text-center h-print mb-0">{s} - <button type="button" className="btn btn-link p-0" onClick={() => { setEditing(true); onStartEditing() }} style={{ marginTop: "-.35em" }}><span className="text-primary"><FontAwesomeIcon icon={faEdit} /> Alterar</span></button></p>
     }
     return <ChooseLibraryForm onSave={onSaveLocal} onClose={onClose} allDocuments={allDocuments} selectedDocuments={selectedDocuments} readyToStartAI={readyToStartAI} />
 }

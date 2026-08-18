@@ -41,7 +41,7 @@ export class LibraryDao {
         const userId = await UserDao.getCurrentUserId()
         const rows = await knex('ia_library')
             .leftJoin('ia_library_favorite', LibraryDao.favoriteJoin(userId))
-            .select('ia_library.id', 'ia_library.user_id', 'ia_library.kind', 'ia_library.model_subtype', 'ia_library.title', 'ia_library.content_type', 'ia_library.inclusion', 'ia_library.context', 'ia_library.share', 'ia_library.base_id', 'ia_library.uuid', 'ia_library.is_latest', 'ia_library.created_at', 'ia_library.created_by')
+            .select('ia_library.id', 'ia_library.user_id', 'ia_library.kind', 'ia_library.model_subtype', 'ia_library.title', 'ia_library.author', 'ia_library.content_type', 'ia_library.inclusion', 'ia_library.context', 'ia_library.share', 'ia_library.base_id', 'ia_library.uuid', 'ia_library.is_latest', 'ia_library.created_at', 'ia_library.created_by')
             .select(knex.raw('ia_library.user_id = ? as is_mine', [userId]))
             .select(knex.raw('CASE WHEN COUNT(ia_library_favorite.id) > 0 THEN 1 ELSE 0 END as is_favorite'))
             .select(knex.raw('(SELECT COUNT(*) FROM ia_library_favorite as lf WHERE lf.library_uuid = ia_library.uuid) as favorite_count'))
@@ -56,7 +56,7 @@ export class LibraryDao {
         const userId = await UserDao.getCurrentUserId()
         const query = knex('ia_library')
             .leftJoin('ia_library_favorite', LibraryDao.favoriteJoin(userId))
-            .select('ia_library.id', 'ia_library.user_id', 'ia_library.kind', 'ia_library.model_subtype', 'ia_library.title', 'ia_library.content_type', 'ia_library.content_markdown', 'ia_library.inclusion', 'ia_library.context', 'ia_library.share', 'ia_library.base_id', 'ia_library.uuid', 'ia_library.is_latest', 'ia_library.created_at', 'ia_library.created_by')
+            .select('ia_library.id', 'ia_library.user_id', 'ia_library.kind', 'ia_library.model_subtype', 'ia_library.title', 'ia_library.author', 'ia_library.content_type', 'ia_library.content_markdown', 'ia_library.inclusion', 'ia_library.context', 'ia_library.share', 'ia_library.base_id', 'ia_library.uuid', 'ia_library.is_latest', 'ia_library.created_at', 'ia_library.created_by')
             .select(knex.raw('ia_library.user_id = ? as is_mine', [userId]))
             .select(knex.raw('CASE WHEN COUNT(ia_library_favorite.id) > 0 THEN 1 ELSE 0 END as is_favorite'))
             .where('ia_library.is_latest', 1)
@@ -138,6 +138,7 @@ export class LibraryDao {
             user_id: userId,
             kind: data.kind,
             title: data.title,
+            author: data.author ?? null,
             content_type: data.content_type ?? null,
             content_markdown: data.content_markdown ?? null,
             content_binary: data.content_binary ?? null,
@@ -174,6 +175,7 @@ export class LibraryDao {
                 user_id: current.user_id,
                 kind: patch.kind ?? current.kind,
                 title: patch.title !== undefined ? patch.title : current.title,
+                author: patch.author !== undefined ? patch.author : current.author,
                 content_type: patch.content_type !== undefined ? patch.content_type : current.content_type,
                 content_markdown: patch.content_markdown !== undefined ? patch.content_markdown : current.content_markdown,
                 content_binary: patch.content_binary !== undefined ? patch.content_binary : current.content_binary,

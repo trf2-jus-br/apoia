@@ -97,7 +97,7 @@ export default function Contents({ items, isModerator }: { items: any[], isModer
                         <p className="mb-0">
                             <strong>Atenção:</strong> Os documentos não avaliados são compartilhados publicamente por outros usuários.
                             Esses documentos não passam por nenhum tipo de validação e podem conter informações imprecisas
-                            ou inadequadas para seu contexto.
+                            ou inadequadas para seu contexto. Favorite os documentos que você considera úteis e confiáveis para que eles possam ser incluídos em seus prompts.
                         </p>
                     </div>
                 </Tab>
