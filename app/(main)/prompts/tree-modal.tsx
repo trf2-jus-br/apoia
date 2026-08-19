@@ -62,7 +62,7 @@ export function TreeModal({ show, onClose, pieces, onSave, selectedIds, onSelect
 
             // Convert buffer to Blob URL
             const uint8Array = new Uint8Array(response.data);
-            const blob = new Blob([uint8Array], { type: response.headers["content-type"] });
+            const blob = new Blob([uint8Array], { type: String(response.headers["content-type"] ?? "application/pdf") });
             const blobUrl = URL.createObjectURL(blob);
 
             // Get visibility flag from response header
