@@ -7,9 +7,7 @@ import Redirecting from "./redirecting"
 const AuthKeycloak = async ({ searchParams }) => {
     const sp = await searchParams
     const raw = sp?.redirect || sp?.callbackUrl
-    // Apenas caminhos relativos da própria aplicação (começam com "/" e não com "//"),
-    // para evitar redirect aberto para hosts externos
-    const callbackUrl = (typeof raw === 'string' && /^\/(?!\/)/.test(raw)) ? raw : '/'
+    const callbackUrl = (typeof raw === 'string' && /^(\/|http:\/\/|https:\/\/)\S+$/.test(raw)) ? raw : '/'
 
     const session = await getServerSession(authOptions)
     if (session && session.user) redirect(callbackUrl)
