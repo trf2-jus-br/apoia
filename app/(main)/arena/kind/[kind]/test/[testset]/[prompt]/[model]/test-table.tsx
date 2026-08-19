@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { OverlayTrigger, Popover } from "react-bootstrap";
 import { format } from "@/lib/ai/format";
 import { preprocess, VisualizationEnum } from "@/lib/ui/preprocess";
+import { sanitizeHtml } from "@/lib/ui/sanitize-html";
 import { PromptDefinitionType } from "@/lib/ai/prompt-types";
 import React from "react";
 
@@ -30,11 +31,11 @@ export function TestTable({ testset, test, promptFormat }: { testset: IATestset,
                                     <Popover id={`popover-${idxTest}-${idx}-result`}>
                                         <Popover.Header as="h3">Resultado do Prompt</Popover.Header>
                                         <Popover.Body dangerouslySetInnerHTML={{
-                                            __html: preprocess(
+                                            __html: sanitizeHtml(preprocess(
                                                 test.content.tests[idxTest].attempts[idx].result,
                                                 { kind: '', prompt: '', format: promptFormat } as PromptDefinitionType,
                                                 { textos: testset.content.tests[idxTest].texts?.map(t => ({ numeroDoProcesso: '', descr: t.name, slug: t.name, texto: t.value, sigilo: '0' })) },
-                                                true, VisualizationEnum.DIFF).text
+                                                true, VisualizationEnum.DIFF).text)
                                         }} />
                                     </Popover>
                                 }>

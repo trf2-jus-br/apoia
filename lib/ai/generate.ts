@@ -1,4 +1,4 @@
-'use server'
+import 'server-only'
 
 import { streamText, StreamTextResult, LanguageModel, streamObject, StreamObjectResult, DeepPartial, ModelMessage, generateText, ToolSet, stepCountIs, Output } from 'ai'
 import { IAGenerated, IAGeneration } from '../db/mysql-types'

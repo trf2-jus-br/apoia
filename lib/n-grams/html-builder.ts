@@ -5,6 +5,7 @@
 import { Token, HtmlBuilderState } from './types';
 import { isBlockTag } from './tokenizer';
 import { formatContextToString } from './formatter';
+import { escapeHtml } from '../ui/sanitize-html';
 
 // ============================================================================
 // ESTADO DO BUILDER
@@ -166,7 +167,7 @@ export function handleMatchedToken(
     
     if (!state.insideCitation) {
         // Abre novo span de citação
-        state.outputHtml += `<span class="citacao" title="${tokenContextStr}">`;
+        state.outputHtml += `<span class="citacao" title="${escapeHtml(tokenContextStr)}">`;
         
         // Adiciona as tags inline extraídas DENTRO do span
         for (const tag of leadingInlineTags) {
@@ -178,7 +179,7 @@ export function handleMatchedToken(
     } else if (shouldBreakForBlock || tokenContextStr !== state.currentContextString) {
         // Fecha span atual e abre novo (contexto mudou ou block boundary)
         state.outputHtml += '</span>';
-        state.outputHtml += `<span class="citacao" title="${tokenContextStr}">`;
+        state.outputHtml += `<span class="citacao" title="${escapeHtml(tokenContextStr)}">`;
         
         // Adiciona as tags inline extraídas DENTRO do novo span
         for (const tag of leadingInlineTags) {
@@ -241,7 +242,7 @@ export function handleTagToken(
             
             // Verifica se deve reabrir o span
             if (hasNextMatchWithSameContext(tokens, index, state.currentContextString)) {
-                state.outputHtml += `<span class="citacao" title="${state.currentContextString}">`;
+                state.outputHtml += `<span class="citacao" title="${escapeHtml(state.currentContextString)}">`;
                 state.insideCitation = true;
             }
         } else {

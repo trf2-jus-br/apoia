@@ -39,7 +39,6 @@ export default function PromptTests(props) {
         }
         if (data.testset_id === testset?.id) return
         setTestset(await getTestsetById(data.testset_id))
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data.testset_id, testset?.id])
 
     const updateYaml = (newData) => {

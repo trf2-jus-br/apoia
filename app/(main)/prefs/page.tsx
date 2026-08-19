@@ -9,7 +9,6 @@ import devLog from '@/lib/utils/log';
 export const metadata = { title: 'Preferências' }
 
 // export const runtime = 'edge'
-export const preferredRegion = 'home'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {

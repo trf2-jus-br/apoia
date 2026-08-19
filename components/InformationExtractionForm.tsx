@@ -5,6 +5,7 @@ import { FormHelper } from '@/lib/ui/form-support'
 import { flatternPromptVariables, parsePromptVariablesFromMarkdown, PromptVariableType } from '@/lib/ai/auto-json'
 import { Button } from 'react-bootstrap'
 import { preprocess } from '@/lib/ui/preprocess'
+import { escapeHtml, sanitizeHtml } from '@/lib/ui/sanitize-html'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
 import devLog from '@/lib/utils/log'
 
@@ -93,14 +94,15 @@ export const InformationExtractionForm: React.FC<PromptFormProps> = ({ promptMar
     // if (!variables || variables.length === 0) return null
 
     if (!Frm.get('information_extraction_editing')) {
-        let html = JSON.stringify(Frm.get(variableName), null, 2).replaceAll('\n', '<br/>').replaceAll(' ', '&nbsp;')
+        // Escape antes de inserir as marcações de formatação: JSON.stringify não escapa < >
+        let html = escapeHtml(JSON.stringify(Frm.get(variableName), null, 2)).replaceAll('\n', '<br/>').replaceAll(' ', '&nbsp;')
         let promptFormatPreprocessed = promptFormat
         if (promptFormat) {
             promptFormatPreprocessed = promptFormatPreprocessed.replace(/{{/g, '<ins class="diffins-highlight">{{')
             promptFormatPreprocessed = promptFormatPreprocessed.replace(/}}/g, '}}</ins>')
             promptFormatPreprocessed = promptFormatPreprocessed.replace(/{=/g, '{{')
             promptFormatPreprocessed = promptFormatPreprocessed.replace(/=}/g, '}}')
-            html = preprocess(JSON.stringify(Frm.get(variableName)), { format: promptFormatPreprocessed } as PromptDefinitionType, undefined, true).text
+            html = sanitizeHtml(preprocess(JSON.stringify(Frm.get(variableName)), { format: promptFormatPreprocessed } as PromptDefinitionType, undefined, true).text)
         }
         return <>
             <div className="alert alert-info ai-content mb-3" dangerouslySetInnerHTML={{ __html: html }} />

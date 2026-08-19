@@ -1,8 +1,8 @@
-'use server'
+import 'server-only'
 
 import authOptions from '../app/api/auth/[...nextauth]/options'
 import { getServerSession } from 'next-auth';
-import { NavDropdown, NavItem } from 'react-bootstrap';
+import { NavItem } from 'react-bootstrap';
 import Link from 'next/link'
 import UserMenuSignout from './user-menu-signout'
 import { unstable_noStore as noStore } from 'next/cache'
@@ -15,7 +15,6 @@ import { getSelectedModelName, getSelectedModelParams } from '@/lib/ai/model-ser
 import { getAnonymize, getMode, getModeUrl, isBetaTester } from '@/lib/utils/prefs';
 import ErrorSpan from './error-span';
 import TicketFormButton from './ticket-form';
-import Cryptr from 'cryptr';
 import UserMenuAnonymize from './user-menu-anonymize';
 import UserMenuBetaTester from './user-menu-beta-tester';
 import UserMenuMode from './user-menu-mode';

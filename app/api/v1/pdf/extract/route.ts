@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { pdfToText } from '@/lib/pdf/pdf'
+import { assertApiUser } from '@/lib/user'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
+    await assertApiUser()
     try {
         const formData = await request.formData()
         const file = formData.get('file') as File

@@ -15,7 +15,7 @@ import { config } from '@fortawesome/fontawesome-svg-core';
 import { envString } from "@/lib/utils/env"
 import NonCorporateUserWarning from "@/components/non-corporate-user-warning"
 import { Suspense } from "react"
-config.autoAddCss = false; /* eslint-disable import/first */
+config.autoAddCss = false;
 
 
 export default async function RootLayout({

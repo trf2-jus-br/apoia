@@ -34,7 +34,7 @@ export async function generateMetadata(
     return metadata;
 }
 
-config.autoAddCss = false; /* eslint-disable import/first */
+config.autoAddCss = false;
 
 export default async function RootLayout({
     children,

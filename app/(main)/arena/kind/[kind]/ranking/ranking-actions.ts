@@ -2,6 +2,7 @@
 
 import { FormState, fromErrorToFormState } from '@/lib/ui/form-state'
 import { PromptDao, TestDao } from '@/lib/db/dao'
+import { assertCurrentUser } from '@/lib/user'
 import test from 'node:test'
 import z, { ZodError } from 'zod'
 import { numericString } from '@/lib/ui/form-util'
@@ -33,6 +34,7 @@ export const save = async (object: any) => {
 }
 
 export const loadRanking = async (kind: string, testset_id: number, prompt_id?: number, model_id?: number) => {
+    await assertCurrentUser()
     const ranking = await TestDao.retrieveRanking(kind, testset_id, prompt_id, model_id)
     return ranking
 }

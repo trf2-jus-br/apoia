@@ -126,6 +126,12 @@
 - Usar Bootstrap alerts para feedback visual claro
 - Validar estados e dar feedback apropriado
 
+### Renderização de HTML (prevenção de XSS)
+- Todo `dangerouslySetInnerHTML` com conteúdo dinâmico (geração de IA, mensagens, dados de outros usuários) **deve** passar por `sanitizeHtml` (`lib/ui/sanitize-html.ts`) como último passo antes da injeção — depois dos enriquecimentos (citações n-grams, links de peças, spinner), não antes.
+- Em código server-side que monta HTML (rotas de API), usar `sanitizeHtmlServer` (`lib/utils/sanitize-html-server.ts`, JSDOM com a mesma config).
+- Para interpolar valores dinâmicos em template strings que viram HTML (atributos `title`/`data-*`, células de tabela), usar `escapeHtml` (`lib/ui/sanitize-html.ts`).
+- Não introduzir novo `dangerouslySetInnerHTML` sem sanitize ou escape; strings estritamente estáticas do código são a única exceção.
+
 ### Acessibilidade
 
 O projeto segue uma iniciativa de acessibilidade baseada em `accessKey` + letra sublinhada, feedback sonoro e ARIA. Os padrões abaixo são aditivos (sem mudar layout/comportamento) e devem ser aplicados em novos componentes.

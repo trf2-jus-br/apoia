@@ -3,9 +3,14 @@ import * as mysqlTypes from '../mysql-types'
 import { slugify } from '../../utils/utils'
 import { Instance, Matter, Scope } from '../../proc/process-types'
 import { PublicError } from '../../utils/public-error'
-import { assertCurrentUser, isUserModerator } from '../../user'
+import { assertCurrentUser, getCurrentUser, isUserModerator } from '../../user'
 import { UserDao } from './user.dao'
 import { getId } from './utils'
+
+const assertModerator = async (message: string) => {
+    const user = await getCurrentUser()
+    if (!user || !(await isUserModerator(user))) throw new PublicError(message)
+}
 
 export class PromptDao {
     static dehydratatePromptContent = (content: any): void => {
@@ -59,12 +64,17 @@ export class PromptDao {
         const slug = slugify(name)
         const user = await assertCurrentUser()
         const isModerator = await isUserModerator(user)
-        const created_by_or_current_user = isModerator && created_by ? created_by : (await UserDao.getCurrentUserId())
+        const current_user_id = await UserDao.getCurrentUserId()
+        const created_by_or_current_user = isModerator && created_by ? created_by : current_user_id
+        // if (share === 'PADRAO' && !isModerator)
+        //     throw new PublicError('Compartilhamento PADRAO é exclusivo de moderadores')
 
         // Resolve uuid: reuse from existing version when editing, generate new for new prompts
         let uuid: string
         if (data.base_id) {
-            const existing = await knex('ia_prompt').select('uuid').where({ base_id: data.base_id }).first()
+            const existing = await knex('ia_prompt').select('uuid', 'created_by').where({ base_id: data.base_id }).first()
+            if (existing && existing.created_by !== current_user_id && !isModerator)
+                throw new PublicError('Somente o autor pode criar novas versões deste prompt')
             uuid = existing?.uuid || crypto.randomUUID()
             await knex('ia_prompt').update({ is_latest: 0 }).where({ base_id: data.base_id })
         } else {
@@ -85,6 +95,7 @@ export class PromptDao {
     }
 
     static async setOfficialPrompt(id: number): Promise<boolean> {
+        await assertModerator('Apenas moderadores podem promover prompts a oficiais')
         const trx = await knex.transaction()
 
         const prompt = await PromptDao.retrievePromptById(id)
@@ -106,6 +117,7 @@ export class PromptDao {
     }
 
     static async removeOfficialPrompt(id: number): Promise<boolean> {
+        await assertModerator('Apenas moderadores podem remover prompts oficiais')
         const updates = await knex('ia_prompt').update({
             is_official: 0
         }).where({ id }).returning('*')

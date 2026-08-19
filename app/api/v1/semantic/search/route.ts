@@ -1,5 +1,6 @@
 import { searchSemantic } from '@/lib/ai-tools/tools-semantic-search'
 import { withErrorHandler, BadRequestError } from '@/lib/utils/api-error'
+import { assertApiUser } from '@/lib/user'
 
 export const maxDuration = 30
 
@@ -37,6 +38,7 @@ export const maxDuration = 30
  *         description: Parâmetros inválidos
  */
 async function POST_HANDLER(request: Request) {
+    await assertApiUser()
     const body = await request.json()
     const { query, limit = 10, offset = 0 } = body
 

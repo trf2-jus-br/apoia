@@ -3,6 +3,13 @@ import * as mysqlTypes from '../mysql-types'
 import { slugify } from '../../utils/utils'
 import { UserDao } from './user.dao'
 import { getId } from './utils'
+import { getCurrentUser, isUserModerator } from '../../user'
+import { PublicError } from '../../utils/public-error'
+
+const assertModerator = async (message: string) => {
+    const user = await getCurrentUser()
+    if (!user || !(await isUserModerator(user))) throw new PublicError(message)
+}
 
 export class TestsetDao {
     static async insertIATestset(data: mysqlTypes.IATestsetToInsert): Promise<mysqlTypes.IATestset | undefined> {
@@ -17,6 +24,7 @@ export class TestsetDao {
     }
 
     static async setOfficialTestset(id: number): Promise<boolean> {
+        await assertModerator('Apenas moderadores podem promover testsets a oficiais')
         const trx = await knex.transaction()
         try {
             const testset = await TestsetDao.retrieveTestsetById(id)
@@ -42,6 +50,7 @@ export class TestsetDao {
     }
 
     static async removeOfficialTestset(id: number): Promise<boolean> {
+        await assertModerator('Apenas moderadores podem remover testsets oficiais')
         await knex('ia_testset').update({ is_official: 0 }).where({ id })
         return true
     }

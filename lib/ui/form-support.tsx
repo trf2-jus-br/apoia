@@ -22,6 +22,11 @@ type FormErrorProps = {
     formState: FormState
 }
 
+// Fallback estável de chave para itens não serializáveis (referências circulares):
+// mesma chave para o mesmo objeto entre renders, em vez de Math.random().
+const circularItemIds = new WeakMap<object, number>()
+let circularItemSeq = 0
+
 const FieldError = ({ formState, name }: FieldErrorProps) => {
     if (!formState.fieldErrors || !formState.fieldErrors[name]) return ''
     return (
@@ -342,7 +347,16 @@ function AsyncMultiSelectComponent<T>({
         try {
             return JSON.stringify(item)
         } catch {
-            return String(Math.random())
+            if (typeof item === 'bigint') return item.toString()
+            if (item && typeof item === 'object') {
+                let id = circularItemIds.get(item)
+                if (id === undefined) {
+                    id = ++circularItemSeq
+                    circularItemIds.set(item, id)
+                }
+                return `circular-${id}`
+            }
+            return 'unknown'
         }
     }
 

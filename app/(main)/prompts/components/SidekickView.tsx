@@ -179,7 +179,7 @@ export function SidekickView({
                             promptButtons={
                                 <>
                                     <p className="text-center mt-3 ms-3 me-3">
-                                        <img src="/apoia-logo-horiz-cor-fundo-claro.png" className="mb-3" style={{ height: "3em" }} />
+                                        <img src="/apoia-logo-horiz-cor-fundo-claro.png" alt="Apoia" className="mb-3" style={{ height: "3em" }} />
                                         <br />
                                         {/* Converse comigo, selecione um dos seus prompts favoritos, ou lance a Apoia em uma{' '}
                                         <a href={urlNovaAba} target="_blank" rel="noopener noreferrer">nova aba</a>. */}

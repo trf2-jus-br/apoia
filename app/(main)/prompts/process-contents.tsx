@@ -1,7 +1,7 @@
 'use client'
 
-import { IALibraryList } from "@/lib/db/mysql-types";
-import { PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
+import { IALibraryList, IAPromptList } from "@/lib/db/mysql-types";
+import { DadosDoProcessoType, PecaType, TEXTO_PECA_COM_ERRO } from "@/lib/proc/process-types";
 import { ReactNode, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PieceStrategy, selecionarPecasPorPadraoComFase, T } from "@/lib/proc/combinacoes";
@@ -15,6 +15,7 @@ import ErrorMsg from "./error-msg";
 import { ListaDeProdutos } from "@/components/slots/lista-produtos-client";
 import { PromptParaCopiar } from "./prompt-to-copy";
 import { buildFooterFromPieces } from "@/lib/utils/footer";
+import { escapeHtml } from "@/lib/ui/sanitize-html";
 import { formatDateTime } from "@/lib/utils/date";
 
 import { usePromptContext } from "./context/PromptContext";
@@ -36,16 +37,32 @@ const isNivelDeSigiloPermitidoClient = (maxConfidentialityLevel: number, nivel: 
 const MAX_CONCURRENT_PIECE_FETCHES = 3
 const limit = pLimit(MAX_CONCURRENT_PIECE_FETCHES)
 
-export default function ProcessContents({ apiKeyProvided, model, children, sidekick, promptButtons }: {
+function LoadingPieces({ progress, total }: { progress: number, total: number }) {
+    if (progress === -1 || total === 0) return null
+    return <div className="mb-4" role="status" aria-live="polite">Carregando Peças...<ProgressBar variant="primary" striped={true} now={progress / total * 100} label={`${progress}/${total}`} /></div>
+}
+
+interface ProcessContentsProps {
     apiKeyProvided: boolean,
     model?: string,
     children?: ReactNode,
     sidekick?: boolean
     promptButtons?: ReactNode
+}
+
+// O guard de prompt/processo precisa ficar antes de qualquer hook; o corpo com
+// hooks vive no componente interno, que só monta quando ambos existem no contexto.
+export default function ProcessContents(props: ProcessContentsProps) {
+    const { prompt, dadosDoProcesso } = usePromptContext()
+    if (!prompt || !dadosDoProcesso) return null
+    return <ProcessContentsWithProcess {...props} prompt={prompt} dadosDoProcesso={dadosDoProcesso} />
+}
+
+function ProcessContentsWithProcess({ apiKeyProvided, model, children, sidekick, promptButtons, prompt, dadosDoProcesso }: ProcessContentsProps & {
+    prompt: IAPromptList,
+    dadosDoProcesso: DadosDoProcessoType
 }) {
     const {
-        prompt,
-        dadosDoProcesso,
         pieceContent,
         setPieceContent,
         allLibraryDocuments,
@@ -56,7 +73,6 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
     } = usePromptContext()
     const { mode, isBetaTester } = useAppContext()
 
-    if (!prompt || !dadosDoProcesso) return null
     const [selectedPieces, setSelectedPieces] = useState<PecaType[] | null>(null)
     const [defaultPieceIds, setDefaultPieceIds] = useState<string[] | null>(null)
     const [selectedLibraryDocuments, setSelectedLibraryDocuments] = useState<IALibraryList[] | null>(null)
@@ -165,11 +181,6 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         if (prompt.name === 'Chat') setChoosingPieces(false)
     }
 
-    const LoadingPieces = () => {
-        if (loadingPiecesProgress === -1 || !selectedPieces || selectedPieces.length === 0) return null
-        return <div className="mb-4" role="status" aria-live="polite">Carregando Peças...<ProgressBar variant="primary" striped={true} now={loadingPiecesProgress / selectedPieces.length * 100} label={`${loadingPiecesProgress}/${selectedPieces.length}`} /></div>
-    }
-
     useEffect(() => {
         if (prompt?.slug === 'chat' && prompt?.origin) return
         setReadyToStartAI(false)
@@ -263,7 +274,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         </>}
         {selectedPieces && <>
             <ChoosePieces allPieces={dadosDoProcesso.pecas} selectedPieces={selectedPieces} onSave={(pieces) => { setRequests([]); changeSelectedPieces(pieces) }} onStartEditing={() => { setChoosingPieces(true) }} onEndEditing={() => setChoosingPieces(false)} editing={choosingPieces} dossierNumber={dadosDoProcesso.numeroDoProcesso} readyToStartAI={readyToStartAI} baselineDefaultIds={defaultPieceIds || []} mode={mode} />
-            <LoadingPieces />
+            <LoadingPieces progress={loadingPiecesProgress} total={selectedPieces.length} />
             <ErrorMsg dadosDoProcesso={dadosDoProcesso} />
             {/* <div className="mb-4"></div> */}
             {readyToStartAI && requests?.length > 0 && (
@@ -280,7 +291,7 @@ export default function ProcessContents({ apiKeyProvided, model, children, sidek
         {!sidekick && <>
             <hr className="mt-5 h-listen" />
             <p className="h-listen" style={{ textAlign: 'center' }}>Este documento foi gerado pela Apoia, ferramenta de inteligência artificial desenvolvida exclusivamente para facilitar a triagem de acervo, e não substitui a elaboração de relatório específico em cada processo, a partir da consulta manual aos eventos dos autos. Textos gerados por inteligência artificial podem conter informações imprecisas ou incorretas.</p>
-            <p className="h-listen" style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${prompt.name} (${prompt.id}), em ${formatDateTime(new Date().toISOString())}, ${buildFooterFromPieces(model, (selectedPieces || []).map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
+            <p className="h-listen" style={{ textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: `O prompt ${escapeHtml(prompt.name)} (${escapeHtml('' + prompt.id)}), em ${formatDateTime(new Date().toISOString())}, ${buildFooterFromPieces(model, (selectedPieces || []).map(p => ({ ...p, conteudo: pieceContent[p.id] })))?.toLowerCase()}` }} />
         </>}
     </div >
 }

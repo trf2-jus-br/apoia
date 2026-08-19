@@ -1,4 +1,4 @@
-'use server'
+import 'server-only'
 
 import { redirect } from "next/navigation"
 import { acceptSelectableModel, enumSortById, enumSorted, getSelectableModelsForApiKey, mergeSelectableModelLists, Model, ModelProfileKey, ModelProvider, ModelProviderType, ModelProviderValueType, parseModelConfig, parseOnPremisesModels, parseOpenRouterModels, resolveProfileModel } from "./model-types"

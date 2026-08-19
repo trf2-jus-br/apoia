@@ -33,7 +33,7 @@ export default function TicketsClient({ items }: { items: TicketItem[] }) {
         <Container className="mt-4">
             <h2 className="mb-4">Meus chamados</h2>
             {items.length === 0 && (
-                <p className="text-muted">Você ainda não abriu nenhum chamado. Use a opção "Ajuda / Abrir chamado" no menu do usuário.</p>
+                <p className="text-muted">Você ainda não abriu nenhum chamado. Use a opção &quot;Ajuda / Abrir chamado&quot; no menu do usuário.</p>
             )}
             {items.map(ticket => {
                 const status = STATUS_LABELS[ticket.status] || { label: ticket.status, variant: 'secondary' }

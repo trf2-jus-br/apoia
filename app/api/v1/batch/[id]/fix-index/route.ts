@@ -4,7 +4,7 @@ import { Plugin } from '@/lib/proc/combinacoes'
 import { PromptDataType } from '@/lib/ai/prompt-types'
 import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { generateContent } from '@/lib/ai/generate'
-import { UnauthorizedError, withErrorHandler } from '@/lib/utils/api-error'
+import { UnauthorizedError, ForbiddenError, withErrorHandler } from '@/lib/utils/api-error'
 
 export const maxDuration = 60
 
@@ -13,6 +13,8 @@ async function POST_HANDLER(_req: Request, props: { params: Promise<{ id: string
   const user = await assertApiUser()
   const params = await props.params
   const id: number = Number(params.id)
+    const owns = await BatchDao.assertBatchOwnership(id)
+    if (!owns) throw new ForbiddenError()
     const enum_id = await EnumDao.assertIAEnumId(Plugin.TRIAGEM)
     const items = await BatchDao.retrieveByBatchIdAndEnumId(id, enum_id)
 

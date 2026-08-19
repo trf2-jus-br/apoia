@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react'
 import showdown from 'showdown'
+import { sanitizeHtml } from '@/lib/ui/sanitize-html'
 import { ReactElement, ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useChatAnalytics } from '@/lib/analytics/chatAnalytics'
 import TextareaAutosize from 'react-textarea-autosize'
@@ -133,7 +134,7 @@ const ChatMessageContent = memo(function ChatMessageContent(params: {
                 try { result = addLinkToPieces(result, params.textos, params.dadosDoProcesso) } catch (e) { console.error('Erro ao incluir links para peças:', e) }
             }
         }
-        return result
+        return sanitizeHtml(result)
     }, [params.message, params.role, params.enrich, params.sourceHtml, params.textos, params.dadosDoProcesso])
     return <div className={params.className} dangerouslySetInnerHTML={{ __html: html }} />
 }, (prev, next) =>

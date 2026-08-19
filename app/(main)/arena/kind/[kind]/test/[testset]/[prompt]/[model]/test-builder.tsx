@@ -129,7 +129,7 @@ export default function TestBuilder({ kind, testset, prompt, model }: { kind: st
                 <h1>Status</h1>
                 {errormsg && <div className={`alert alert-danger`}>{errormsg}</div>}
                 {progress && <div className={`alert alert-warning`}>
-                    <div dangerouslySetInnerHTML={{ __html: progress.s }} />
+                    <div>{progress.s}</div>
                     {progress.percent > 0 && <div className="progress"><div className="progress-bar" role="progressbar" style={{ width: `${progress.percent}%` }} aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}></div></div>}
                 </div>}
                 {!errormsg && !progress && <ResumoDePecaLoading />}

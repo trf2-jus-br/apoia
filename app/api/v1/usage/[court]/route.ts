@@ -2,6 +2,7 @@ import fetcher from "@/lib/utils/fetcher"
 import { NextResponse } from "next/server"
 import { UserDao } from "@/lib/db/dao"
 import { withErrorHandler } from '@/lib/utils/api-error'
+import { assertApiUser } from '@/lib/user'
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -59,6 +60,7 @@ async function GET_HANDLER(
   req: Request,
   props: { params: Promise<{ court }> }
 ) {
+  await assertApiUser()
   const params = await props.params
   const court_id = parseInt(params.court)
   const { searchParams } = new URL(req.url)

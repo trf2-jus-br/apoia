@@ -19,8 +19,8 @@ import tableSpecs from '@/lib/ui/table-specs'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAdd } from '@fortawesome/free-solid-svg-icons'
 import Link from 'next/link'
-import { glob, link } from 'fs'
 import { usePathname } from "next/navigation"
+import { useModeUrl } from '@/lib/utils/use-mode-url'
 
 // customFilterFn moved inside the component to access state
 
@@ -44,7 +44,8 @@ export default function Table({ records, spec, linkToAdd, linkToBack, pageSize, 
     const [sorting, setSorting] = useState([])
     const [globalFilter, setGlobalFilter] = useState('')
     const pathname = usePathname()
-    const { columns, thead, tr, tableClassName, theadClassName, pageSizes } = typeof (spec) === 'string' ? tableSpecs(pathname, onClick, options)[spec] : spec
+    const modeUrl = useModeUrl()
+    const { columns, thead, tr, tableClassName, theadClassName, pageSizes } = typeof (spec) === 'string' ? tableSpecs(pathname, onClick, options, modeUrl)[spec] : spec
     const [rowSelection, setRowSelection] = useState<RowSelectionState>(selectedIds ? selectedIds.reduce((acc, value) => ({ ...acc, [value]: true }), {}) : {})
     const [apenasSelecionadas, setApenasSelecionadas] = useState(options?.apenasSelecionadas || false)
 

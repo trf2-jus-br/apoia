@@ -1,4 +1,4 @@
-'use server'
+import 'server-only'
 
 import { LibraryDao } from '@/lib/db/dao'
 import { assertCurrentUser, isUserModerator } from '@/lib/user'

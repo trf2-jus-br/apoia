@@ -1,7 +1,7 @@
-'use server'
+import 'server-only'
 
 import { getSelectedModelParams } from "@/lib/ai/model-server"
-import { assertCurrentUser, getCurrentUser } from "@/lib/user"
+import { getCurrentUser } from "@/lib/user"
 import { faBook, faKey } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from "next/link"

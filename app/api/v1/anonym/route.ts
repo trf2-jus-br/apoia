@@ -1,5 +1,6 @@
 import { anonymizeText } from '@/lib/anonym/anonym'
 import { withErrorHandler, BadRequestError } from '@/lib/utils/api-error'
+import { assertApiUser } from '@/lib/user'
 
 export const maxDuration = 30
 
@@ -32,6 +33,7 @@ export const maxDuration = 30
  *         description: Não autorizado.
  */
 async function POST_HANDLER(req: Request) {
+  await assertApiUser()
   const { text, options } = await req.json()
   if (text == null) throw new BadRequestError('Campo text é obrigatório')
   const r = anonymizeText(String(text || ''), options || {})

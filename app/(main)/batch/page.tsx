@@ -6,7 +6,6 @@ import { faPenToSquare } from '@fortawesome/free-regular-svg-icons'
 import { fetchDollar } from './[id]/page'
 import { BatchDao } from '@/lib/db/dao'
 import { getSelectedModelParams } from '@/lib/ai/model-server'
-import ApiKeyMissing from '@/components/api-key-missing'
 import { faBook, faKey } from '@fortawesome/free-solid-svg-icons'
 import ModeLink from '@/components/mode-link'
 

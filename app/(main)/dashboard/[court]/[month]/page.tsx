@@ -8,8 +8,15 @@ import { CourtUsageData, UserUsageData, DailyUsageData } from '@/lib/db/mysql-ty
 import { dailyLimits } from '@/lib/utils/limits';
 import { displayUserName } from '@/lib/utils/utils';
 import ModeLink from '@/components/mode-link';
+import { assertCurrentUser, isUserModerator } from '@/lib/user';
+import { redirect } from 'next/navigation';
+import { modeUrl } from '@/lib/utils/prefs';
 
 export default async function DashboardPage(props) {
+    const currentUser = await assertCurrentUser();
+    // if (!(await isUserModerator(currentUser))) 
+    //     redirect(await modeUrl('/'));
+
     const params = await props.params;
     const searchParams = await props.searchParams;
     const court_id: number = Number(params?.court?.toString());

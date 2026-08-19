@@ -1,6 +1,9 @@
 import { SystemDao } from "@/lib/db/dao"
+import { assertApiUser } from "@/lib/user"
+import { withErrorHandler } from '@/lib/utils/api-error'
 
-export async function GET(req: Request) {
+async function GET_HANDLER(req: Request) {
+    await assertApiUser()
     const systemId = await SystemDao.assertSystemId('PDPJ')
 
     const r: any = {
@@ -18,3 +21,5 @@ export async function GET(req: Request) {
 
     return Response.json(r)
 }
+
+export const GET = withErrorHandler(GET_HANDLER as any)

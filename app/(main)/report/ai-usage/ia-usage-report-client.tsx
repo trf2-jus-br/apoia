@@ -6,6 +6,7 @@ import { Container, Row, Col, Form, Button, Table, Spinner, Modal } from 'react-
 import { maiusculasEMinusculas } from '@/lib/utils/utils'
 import Print from '@/components/slots/print'
 import { preprocess } from '@/lib/ui/preprocess'
+import { sanitizeHtml } from '@/lib/ui/sanitize-html'
 import ErrorMessage from '@/components/error-message'
 
 function formatDate(dt?: Date | null) {
@@ -150,7 +151,7 @@ export default function IAUsageReportClient({ usdBrl, isModerator }: Props) {
     function openModal(generation: string | null, row?: any) {
         if (!generation) return
         const processed = preprocess(generation, { kind: '', prompt: '' } as any, { textos: [] } as any, true).text
-        setModalContent(processed)
+        setModalContent(sanitizeHtml(processed))
         setModalRow(row || null)
         setModalOpen(true)
     }

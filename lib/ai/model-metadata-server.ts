@@ -1,4 +1,4 @@
-"use server"
+import 'server-only'
 
 import devLog from '../utils/log'
 import { EMPTY_PREFS_COOKIE } from '@/lib/utils/prefs-types'

@@ -2,6 +2,7 @@ import { PieceStrategy, selecionarPecasPorPadraoComFase } from '@/lib/proc/combi
 import { getAggregatorByKind } from '@/lib/ai/prompt-store';
 import { PecaType } from '@/lib/proc/process-types';
 import { BadRequestError, withErrorHandler } from '@/lib/utils/api-error';
+import { assertApiUser } from '@/lib/user';
 
 export const maxDuration = 60
 // export const runtime = 'edge'
@@ -62,6 +63,7 @@ export const maxDuration = 60
  *         description: Erro interno ao selecionar peças
  */
 async function POST_HANDLER(req: Request) {
+  await assertApiUser();
   const body = await req.json();
   const { pieces, kind } = body;
   if (!pieces || !Array.isArray(pieces) || !kind) {

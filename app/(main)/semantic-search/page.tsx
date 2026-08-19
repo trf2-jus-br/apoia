@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import nunjucks from "nunjucks";
+import { sanitizeHtml } from "@/lib/ui/sanitize-html";
 import type { DataSource, SearchResponse, SearchResult, SearchMode } from "./types";
 import { Container } from "react-bootstrap";
 
@@ -100,15 +101,15 @@ export default function SearchComponent() {
         // Use Nunjucks to render the template
         // Configure Nunjucks to not auto-escape HTML (since we want to preserve formatting)
         nunjucks.configure({ autoescape: false });
-        return nunjucks.renderString(template, data);
+        return sanitizeHtml(nunjucks.renderString(template, data));
       } catch (error) {
         console.error("Error rendering template:", error);
-        return result.item.content;
+        return sanitizeHtml(result.item.content);
       }
     }
 
     // Default: just return the plain content
-    return result.item.content;
+    return sanitizeHtml(result.item.content);
   };
 
   return (

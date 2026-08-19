@@ -2,6 +2,7 @@ import { TextoType } from "../ai/prompt-types"
 import { identificarSituacaoDaPeca } from "../proc/process-types"
 import { PecaType } from "../proc/process-types"
 import { slugify } from "./utils"
+import { escapeHtml } from "../ui/sanitize-html"
 
 const normalizeModels = (model: string | string[]): string[] => Array.from(new Set((Array.isArray(model) ? model : [model]).filter(Boolean)))
 
@@ -33,7 +34,7 @@ export const buildFooter = (model: string | string[], pecasComConteudo: TextoTyp
     if (pecasComConteudo?.length) {
         const pecasNomes = pecasComConteudo.map(p => {
             const { sigilosa, inacessivel, parcial, vazia, explicacao } = identificarSituacaoDaPeca(p.texto)
-            return `<span title="${explicacao}" class="${sigilosa ? 'peca-sigilosa' : inacessivel ? 'peca-inacessivel' : parcial ? 'peca-parcial' : vazia ? 'peca-vazia' : ''}">${p.descr?.toLowerCase()} (e.${p.event}${sigilosa ? ', sigilosa' : inacessivel ? ', inacessível' : parcial ? ', parcial' : vazia ? ', vazia' : ''})</span>`
+            return `<span title="${escapeHtml(explicacao)}" class="${sigilosa ? 'peca-sigilosa' : inacessivel ? 'peca-inacessivel' : parcial ? 'peca-parcial' : vazia ? 'peca-vazia' : ''}">${escapeHtml(p.descr?.toLowerCase())} (e.${escapeHtml('' + p.event)}${sigilosa ? ', sigilosa' : inacessivel ? ', inacessível' : parcial ? ', parcial' : vazia ? ', vazia' : ''})</span>`
         })
         if (pecasNomes.length === 1) {
             pecasStr = pecasNomes[0]

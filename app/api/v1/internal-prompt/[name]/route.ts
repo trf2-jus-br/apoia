@@ -2,6 +2,7 @@ import { getPromptDefinition } from '@/lib/ai/prompt-store'
 import { PromptDefinitionType } from '@/lib/ai/prompt-types'
 import { BadRequestError, NotFoundError, withErrorHandler } from '@/lib/utils/api-error'
 import { slugify } from '@/lib/utils/utils'
+import { assertApiUser } from '@/lib/user'
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 60
@@ -62,6 +63,7 @@ export const maxDuration = 60
  *         description: Erro interno do servidor
  */
 async function GET_HANDLER(_req: Request, context: any): Promise<Response> { // afrouxa tipagem para compatibilidade com tipos internos
+    await assertApiUser()
     const params = await Promise.resolve(context?.params)
     const name = params?.name
     if (!name) throw new BadRequestError('Missing prompt name')

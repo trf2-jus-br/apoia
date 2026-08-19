@@ -1,5 +1,6 @@
 import { searchPangea, PANGEA_DEFAULT_ORGAOS, PANGEA_DEFAULT_TIPOS } from '@/lib/ai-tools/tools-pangea'
 import { withErrorHandler, BadRequestError } from '@/lib/utils/api-error'
+import { assertApiUser } from '@/lib/user'
 
 export const maxDuration = 30
 
@@ -43,6 +44,7 @@ export const maxDuration = 30
  *         description: Parâmetros inválidos
  */
 async function POST_HANDLER(request: Request) {
+    await assertApiUser()
     const body = await request.json()
     const { query, page = 1, orgaos, especies } = body
 

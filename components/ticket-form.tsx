@@ -119,7 +119,7 @@ export function TicketFormModal({ show, onHide, kind, errorContext, encryptedErr
                 {createdUuid
                     ? <Alert variant="success" className="mb-0" role="status">
                         Chamado aberto com sucesso. Anote o protocolo: <strong>{createdUuid.substring(0, 8)}</strong>.
-                        Você pode acompanhar o status em "Meus chamados" no menu do usuário.
+                        Você pode acompanhar o status em &quot;Meus chamados&quot; no menu do usuário.
                     </Alert>
                     : <>
                         {(userName || userEmail) && (

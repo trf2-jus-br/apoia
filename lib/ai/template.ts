@@ -1,3 +1,5 @@
+import { escapeHtml } from '../ui/sanitize-html'
+
 export function closeTag(s: string, tag: string): string {
     const openTag = `<${tag}`
     const closeTag = `</${tag}>`;
@@ -129,10 +131,10 @@ export function findUnclosedMarking(template: string): UnclosedMarking | null {
         }
         
         const columnIndex = unclosed.charIndex - lineStartIndex;
-        const highlightedLine = 
-            lineContent.substring(0, columnIndex) +
+        const highlightedLine =
+            escapeHtml(lineContent.substring(0, columnIndex)) +
             `<strong>${unclosed.kind}</strong>` +
-            lineContent.substring(columnIndex + unclosed.kind.length);
+            escapeHtml(lineContent.substring(columnIndex + unclosed.kind.length));
 
         return {
             kind: unclosed.kind,

@@ -2,6 +2,7 @@ import { BatchDao, EnumDao } from "@/lib/db/dao"
 import { Plugin } from "@/lib/proc/combinacoes"
 import { formatBrazilianDate, maiusculasEMinusculas, slugify } from "@/lib/utils/utils"
 import { preprocess } from "@/lib/ui/preprocess"
+import { sanitizeHtmlServer } from "@/lib/utils/sanitize-html-server"
 import { fixText } from "@/lib/fix"
 import { tua } from "@/lib/proc/tua"
 import { getCurrentUser, assertApiUser } from "@/lib/user"
@@ -20,7 +21,9 @@ const computeScaledKeywords = (wordAndFrequency, max) => {
     const listUnitarySquaredSum = listUnitarySquared.reduce((acc, r) => acc + r, 0)
     const c = Math.sqrt(40000 / listUnitarySquaredSum)
     const listScaled = list.map((r, i) => [r[0], listUnitary[i] as number * c])
-    const json = JSON.stringify(listScaled)
+    // < virado em escape JS: o JSON é embutido dentro de <script> inline e um
+    // "</script>" no texto (enum_item_descr vem do banco) fecharia o bloco
+    const json = JSON.stringify(listScaled).replace(/</g, '\\u003c')
     return json
 }
 
@@ -289,7 +292,7 @@ async function GET_HANDLER(req: NextRequest, props: { params: Promise<{ id: stri
                     text = text.replace(/(^|\n)##\s+Aplicação da Norma[\r\n]+[\s\S]*?(?=(\n##\s|\n#\s|$))/g, '$1');
                 }
 
-                html += `<h2>${g.document_id ? maiusculasEMinusculas(g.descr) : g.descr}</h2><div class="ai-content">${preprocess(text, { kind: g.prompt, prompt: '' }, { textos: [] }, true).text}</div>`
+                html += `<h2>${g.document_id ? maiusculasEMinusculas(g.descr) : g.descr}</h2><div class="ai-content">${sanitizeHtmlServer(preprocess(text, { kind: g.prompt, prompt: '' }, { textos: [] }, true).text)}</div>`
             }
             html += `</div>`
             html += `<hr style="margin-top: 2em;" />`

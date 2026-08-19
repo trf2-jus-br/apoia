@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { preprocess, VisualizationEnum, Visualization } from '@/lib/ui/preprocess';
-import DOMPurify from 'dompurify';
+import { sanitizeHtml } from '@/lib/ui/sanitize-html';
 
 // Allowed visualization ids exposed by parent via INIT (subset of VisualizationEnum)
 // We trust only numeric enum values that exist in VisualizationEnum
@@ -105,7 +105,7 @@ const DiffPage: React.FC = () => {
             if (!initReceived) return '';
             const result = preprocess(newMarkdown, { format: undefined } as any, { textos: [{ texto: oldMarkdown }] } as any, true, activeVis, oldMarkdown);
             // Sanitize
-            return DOMPurify.sanitize(result.text, { USE_PROFILES: { html: true } });
+            return sanitizeHtml(result.text);
         } catch (e: any) {
             setError(e.message || 'Erro ao gerar diff');
             return '<p>Erro</p>';

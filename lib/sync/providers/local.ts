@@ -19,7 +19,9 @@ export class LocalProvider implements OriginProvider {
         this.origin = origin
         // Extract fs path from origin URI: 'local:./prompts' -> './prompts'
         const fsPath = origin.replace(/^local:/, '')
-        this.dirPath = path.resolve(process.cwd(), fsPath)
+        // Caminho resolvido em runtime a partir da origin configurada (não é
+        // estático para o Turbopack); o ignore evita o trace do projeto inteiro.
+        this.dirPath = path.resolve(/* turbopackIgnore: true */ process.cwd(), fsPath)
     }
 
     async read(): Promise<OriginContents> {

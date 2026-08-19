@@ -1,11 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { assertApiUser } from '@/lib/user';
+
+// Origens consideradas "próprias" para o proxy. O objetivo do proxy é apenas repassar
+// o cookie de sessão às rotas de peça da própria aplicação (ex.: /api/v1/process/...),
+// portanto qualquer URL externa é rejeitada (mitigação de SSRF).
+function isSameOriginUrl(target: URL, request: NextRequest): boolean {
+    const allowedOrigins = new Set<string>()
+    for (const base of [process.env.NEXT_PUBLIC_BASE_URL, process.env.NEXT_PUBLIC_URL]) {
+        if (base) {
+            try { allowedOrigins.add(new URL(base).origin) } catch { /* env malformado: ignorar */ }
+        }
+    }
+    allowedOrigins.add(request.nextUrl.origin)
+    // Atrás de reverse proxy sem env de origem configurada: confia no x-forwarded-host
+    // (header definido pelo proxy), não no Host (controlável pelo cliente).
+    const forwardedHost = request.headers.get('x-forwarded-host')
+    if (forwardedHost) {
+        const proto = request.headers.get('x-forwarded-proto') || 'https'
+        allowedOrigins.add(`${proto}://${forwardedHost}`)
+    }
+    return allowedOrigins.has(target.origin)
+}
 
 export async function GET(request: NextRequest) {
     try {
+        await assertApiUser()
+
         const url = request.nextUrl.searchParams.get('url');
 
         if (!url) {
             return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
+        }
+
+        let target: URL
+        try {
+            target = new URL(url)
+        } catch {
+            return NextResponse.json({ error: 'URL inválida' }, { status: 400 });
+        }
+        if ((target.protocol !== 'http:' && target.protocol !== 'https:') || !isSameOriginUrl(target, request)) {
+            return NextResponse.json({ error: 'Apenas URLs da própria aplicação são permitidas' }, { status: 400 });
         }
 
         // Get authentication headers

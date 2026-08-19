@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { trackAIStart, trackAIComplete, trackAIError } from '@/lib/utils/ga'
 import EvaluationModal from './ai-evaluation'
-import { evaluate } from '../lib/ai/generate'
+import { evaluateGeneration } from '@/lib/ai/generation-actions'
 import { preprocess, Visualization, VisualizationEnum } from '@/lib/ui/preprocess'
+import { sanitizeHtml } from '@/lib/ui/sanitize-html'
 import { ResumoDePecaLoading } from '@/components/loading'
 import { ContentType, PromptConfigType, PromptDataType, PromptDefinitionType, PromptOptionsType, UsageType } from '@/lib/ai/prompt-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -152,7 +153,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         if (evaluation_id) {
             try {
                 const generationId = (currentMessage?.metadata as any)?.generationId
-                setEvaluated(await evaluate(params.definition, params.data, evaluation_id, descr, generationId))
+                setEvaluated(await evaluateGeneration(params.definition, params.data, evaluation_id, descr, generationId))
             } catch (e) {
                 setErrormsg(`Não foi possível registrar a avaliação: ${(e as Error)?.message || e}`)
             }
@@ -365,7 +366,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
         }
         if (params.dadosDoProcesso)
             resultText = addLinkToPieces(resultText, params.data.textos || [], params.dadosDoProcesso)
-        return resultText
+        return sanitizeHtml(resultText)
     }, [complete, visualizationId, currentMessage?.metadata, preprocessed.text])
 
     useEffect(() => {
@@ -427,7 +428,7 @@ export default function AiContent(params: { definition: PromptDefinitionType, da
                         <div
                             key="content-id"
                             className="ai-content mb-3"
-                            dangerouslySetInnerHTML={{ __html: preprocessed.templateTable }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(preprocessed.templateTable) }}
                         />
                     </div>
                 }

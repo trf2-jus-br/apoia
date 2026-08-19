@@ -2,6 +2,7 @@
 
 import { fromErrorToFormState } from '@/lib/ui/form-state'
 import { TestsetDao } from '@/lib/db/dao'
+import { assertCurrentUser } from '@/lib/user'
 import z from 'zod'
 import { numericString } from '@/lib/ui/form-util'
 
@@ -61,5 +62,6 @@ export const removeOfficial = async (id: number) => {
 }
 
 export const getTestsetById = async (id: number) => {
+    await assertCurrentUser()
     return await TestsetDao.retrieveTestsetById(id)
 }

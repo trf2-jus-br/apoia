@@ -9,11 +9,9 @@ import { formatDateTime, formatDuration } from "../utils/date"
 import { RatingCell } from "@/components/RatingCell"
 import devLog from "../utils/log"
 import { wrapTitle } from "@/app/(main)/prompts/components/PromptButton"
-import { useModeUrl } from "../utils/use-mode-url"
 
 
-const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void, options?: any) => {
-    const modeUrl = useModeUrl()
+const tableSpecs = (pathname: string, onClick: (kind: string, row: any) => void, options?: any, modeUrl: (url: string) => string = (url) => url) => {
     // Prefixo de modo ("/adm") presente na URL corrente; links para APIs
     // sensíveis ao modo (ex.: binary de peça) precisam mantê-lo.
     return {

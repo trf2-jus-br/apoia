@@ -6,8 +6,10 @@ import template from '@/lib/pdf/template.html'
 import axios from 'axios'
 import https from 'https'
 import { BadRequestError, withErrorHandler } from '@/lib/utils/api-error'
+import { assertApiUser } from '@/lib/user'
 
 async function POST_HANDLER(req: Request, props: { params: Promise<{ id: string }> }) {
+    await assertApiUser()
     const params = await props.params;
     const id: string = (params?.id?.toString() || '') as string
     const json = await req.formData()
